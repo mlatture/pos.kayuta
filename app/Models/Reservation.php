@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Reservation extends Model
+{
+    use HasFactory;
+
+    protected $guarded = [];
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'customernumber');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'cartid', 'cartid');
+    }
+
+    public function site()
+    {
+        return $this->hasOne(Site::class, 'siteid', 'siteid');
+    }
+
+    public function getAllPaginate()
+    {
+        return self::with(['user'])->orderBy('id', 'DESC')->paginate(10);
+    }
+
+    public function getAll()
+    {
+        return self::with(['user'])->orderBy('cid', 'DESC')->get();
+    }
+
+    public function getAllReservationsByReport($where = [], $filters = [])
+    {
+        return self::with(['user', 'site'])->where($where)
+            ->when(count($filters) > 0, function ($query) use ($filters) {
+                $query->when(isset($filters['date']) && !empty($filters['date']), function ($query) use ($filters) {
+                    $filters['date'] = explode('-', $filters['date']);
+                    $query->where('cid', '>', date('Y-m-d', strtotime($filters['date'][0])))->where('cod', '<', date('Y-m-d', strtotime($filters['date'][1])));
+
+                    // $query->whereBetween(
+                    //     'created_at',
+                    //     [
+                    //         date('Y-m-d', strtotime($filters['date'][0])),
+                    //         date('Y-m-d', strtotime($filters['date'][1]))
+                    //     ]
+                    // );
+                });
+            });
+    }
+
+    public function findReservation($id)
+    {
+        return self::find($id);
+    }
+
+    public function storeReservation($data = [])
+    {
+        return self::create($data);
+    }
+
+    public function getWhereInIds($ids = [])
+    {
+        return self::whereIn('id', $ids)->get();
+    }
+
+    public function whereGet($where = [])
+    {
+        return self::where($where)->get();
+    }
+
+    public function getCustomerName()
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function formattedTotal()
+    {
+        return number_format($this->total, 2);
+    }
+
+    public function receivedAmount()
+    {
+        return $this->payment->payment ?? 0;
+    }
+}

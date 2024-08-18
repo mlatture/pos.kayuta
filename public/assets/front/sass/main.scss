@@ -1,0 +1,78 @@
+// Custom.scss
+// Option A: Include all of Bootstrap
+$primary: #efc368;
+$secondary: #041307;
+$dark: #000000;
+
+// Include any default variable overrides here (though functions won't be available)
+
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+// Required
+@import "../../../node_modules/bootstrap//scss/functions";
+// Default variable overrides
+$body-bg: #041307;
+$body-color: #fff;
+$font-family-sans-serif: "poppins";
+$h1-font-size: "70px";
+$h2-font-size: "53px";
+$h3-font-size: "35px";
+$h4-font-size: "26px";
+$h5-font-size: "20px";
+$h6-font-size: "15px";
+$headings-font-family: "Adamina";
+$headings-color: #fff;
+$headings-font-weight: 400;
+$btn-font-weight: 700;
+$border-color: #0000005e;
+
+// Required
+@import "../../../node_modules/bootstrap/scss/variables";
+@import "../../../node_modules/bootstrap/scss/utilities";
+
+@each $color, $value in $colors {
+    .bg-#{$color} {
+        background-color: $value !important;
+    }
+    .text-#{$color} {
+        color: $value !important;
+    }
+}
+//Generating All Shades of Gray
+@each $key, $value in $grays {
+    .bg-gray-#{$key} {
+        background-color: $value !important;
+    }
+
+    .text-gray-#{$key} {
+        color: $value !important;
+    }
+}
+$blues: (
+    "100": $blue-100,
+    "200": $blue-200,
+    "300": $blue-300,
+    "400": $blue-400,
+    "500": $blue-500,
+    "600": $blue-600,
+    "700": $blue-700,
+    "800": $blue-800,
+    "900": $blue-900,
+) !default;
+@each $key, $value in $blues {
+    .bg-blue-#{$key} {
+        background-color: $value !important;
+    }
+
+    .text-blue-#{$key} {
+        color: $value !important;
+    }
+}
+
+@import "../../../node_modules/bootstrap/scss/maps";
+@import "../../../node_modules/bootstrap/scss/mixins";
+@import "../../../node_modules/bootstrap/scss/root";
+
+// Optional Bootstrap components here
+@import "../../../node_modules/bootstrap/scss/reboot";
+@import "../../../node_modules/bootstrap/scss/type";
+// etc

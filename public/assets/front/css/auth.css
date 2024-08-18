@@ -1,0 +1,146 @@
+header#header {
+    display: none !important;
+}
+footer#footer {
+    display: none !important;
+}
+.auth-images figure {
+    margin: 0;
+}
+/* Customize the label (the container) */
+.container-wrapper {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    font-family: "poppins";
+    color: #ababab;
+    font-weight: 300;
+    font-size: 18px;
+}
+/* Hide the browser's default checkbox */
+.container-wrapper input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    /* background-color: #eee; */
+    border: 1px solid #fff;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.container-wrapper input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.container-wrapper .checkmark:after {
+    left: 8px;
+    top: 4px;
+    width: 7px;
+    height: 12px;
+    border: solid #efc368;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+.auth-images {
+    text-align: center;
+    /* margin-bottom: 20px; */
+}
+.main-heading {
+    text-align: center;
+}
+.main-heading h3 {
+    font-family: "poppins";
+    font-weight: 700;
+    font-size: 33px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+.forget-password-heading {
+    text-align: end;
+}
+.forget-password-heading h5 a {
+    font-family: "poppins";
+    font-weight: 400 !important;
+    font-size: 16px;
+}
+.checkbox-wrapper {
+    margin-bottom: 7px;
+}
+h6.or-text {
+    color: #ababab;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 400;
+    padding: 10px 0;
+}
+.socail-btn a {
+    background: #fff;
+    padding: 10px;
+    color: #333333;
+    font-size: 12px;
+    width: 100% !important;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.signup-account-text h5 {
+    color: #ababab;
+    font-family: "poppins";
+    font-weight: 400;
+    font-size: 16px;
+    text-align: center;
+}
+.signup-account-text {
+    margin: 20px 0;
+}
+.form-label {
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 3px;
+    font-family: "poppins";
+    font-weight: 500;
+}
+.form-group input::placeholder {
+    font-size: 14px !important;
+}
+/* responsive starts here */
+@media (max-width: 800px) {
+    .login-wrapper-main {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+}
+/* responsive ends here */
+section#auth .socail-btn a:hover {
+    background: #efc368;
+    color: #000;
+}

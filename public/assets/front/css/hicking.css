@@ -1,0 +1,26 @@
+.hicking-sec {
+    padding: 100px 0px;
+    overflow-x: hidden;
+    background-image: url("../img/hicking-bg.webp");
+}
+.hicking-content-wrapper ul li {
+    opacity: 0.6;
+    font-weight: 400;
+}
+.hicking-content-wrapper h3 {
+    padding: 5px;
+    background-image: linear-gradient(54deg, #285d33, #285d3300, transparent);
+    font-size: 30px;
+    margin-bottom: 20px;
+    border-left: 4px solid #efc368;
+    text-transform: capitalize;
+    font-family: "poppins";
+    font-weight: 700;
+}
+/* responsive starts here */
+@media (max-width: 800px) {
+    .hicking-sec {
+        padding: 100px 0px 0px 0px;
+    }
+}
+/* responsive ends here */

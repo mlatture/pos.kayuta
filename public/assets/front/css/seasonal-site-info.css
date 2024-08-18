@@ -1,0 +1,21 @@
+.site-infow-sec {
+    padding: 100px 0px;
+}
+.banner-form-wrapper input::placeholder {
+    color: #fff;
+}
+/* responsive starts here */
+@media (max-width: 480px) {
+    .seasonal-form-wrapper h2 {
+        font-size: 24px;
+        line-height: 1.5;
+    }
+    .seasonal-form-sec input {
+        margin-bottom: 15px;
+    }
+    .site-content-wrapper h3 {
+        font-size: 25px;
+        margin-bottom: 20px;
+    }
+}
+/* responsive ends here */

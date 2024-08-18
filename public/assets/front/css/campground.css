@@ -1,0 +1,22 @@
+.lake-bg-wrapper {
+    background-image: url("../img/camp-bg.webp");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+}
+.kayuta-lake-sec {
+    padding: 100px 0px 100px 0px;
+}
+.kayuta-lake-img-wrapper {
+    padding: 20px 20px 30px 20px;
+    background: #00000099;
+    border: 1px solid #898989;
+    border-radius: 5px;
+    position: relative;
+}
+.download-sec h3{
+    font-size: 30px;
+}
+footer {
+    background-image: none !important;
+}

@@ -1,0 +1,28 @@
+.lake-bg-wrapper {
+    background-image: url("../img/lake-bg.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+}
+.kayuta-lake-sec {
+    padding: 200px 0px 100px 0px;
+}
+.kayuta-lake-img-wrapper {
+    padding: 20px 20px 30px 20px;
+    background: #00000099;
+    border: 1px solid #898989;
+    border-radius: 5px;
+    position: relative;
+}
+/* responsive starts here */
+@media (max-width: 800px) {
+    .availabel-list-wrapper ul {
+        flex-wrap: wrap;
+    }
+}
+@media (max-width: 480px) {
+    .lake-form .lake-heading-wrapper h2 {
+        font-size: 35px;
+    }
+}
+/* responsive ends here */
