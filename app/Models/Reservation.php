@@ -12,6 +12,9 @@ class Reservation extends Model
 {
     use HasFactory;
 
+    protected $dates = ['cid', 'cod'];
+
+
     protected $guarded = [];
 
     public function user()

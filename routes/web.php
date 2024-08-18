@@ -13,6 +13,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVendorController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\NewReservationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\TaxTypeController;
@@ -45,16 +46,21 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::resource('orders', OrderController::class);
     Route::get('orders-generate-invoice/{id}', [OrderController::class, 'generateInvoice'])->name('orders.generate.invoice');
-    Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
-    Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
-    Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
-    Route::post('reservations/add-to-cart', [ReservationController::class, 'addToCart'])->name('reservations.add-to-cart');
-    Route::post('reservations/update-dates', [ReservationController::class, 'updateDates'])->name('reservations.update-dates');
-    Route::post('reservations/update-sites', [ReservationController::class, 'updateSites'])->name('reservations.update-sites');
-    Route::get('reservations/remove-cart/{bookingId}/{cartId}', [ReservationController::class, 'removeCart'])->name('reservations.remove-cart');
-    Route::post('reservations/apply-coupon', [ReservationController::class, 'applyCoupon'])->name('reservations.apply-coupon');
-    Route::post('reservations/do-checkout/{bookingId}', [ReservationController::class, 'doCheckout'])->name('reservations.do-checkout');
-    Route::resource('reservations', ReservationController::class);
+    // Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
+    // Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
+    // Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
+    // Route::post('reservations/add-to-cart', [ReservationController::class, 'addToCart'])->name('reservations.add-to-cart');
+    // Route::post('reservations/update-dates', [ReservationController::class, 'updateDates'])->name('reservations.updateDates');
+    // Route::post('reservations/update-sites', [ReservationController::class, 'updateSites'])->name('reservations.update-sites');
+    // Route::get('reservations/remove-cart/{bookingId}/{cartId}', [ReservationController::class, 'removeCart'])->name('reservations.remove-cart');
+    // Route::post('reservations/apply-coupon', [ReservationController::class, 'applyCoupon'])->name('reservations.apply-coupon');
+    // Route::post('reservations/do-checkout/{bookingId}', [ReservationController::class, 'doCheckout'])->name('reservations.do-checkout');
+
+    Route::get('/reservations', [NewReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
+    Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
+
+    // Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
     Route::resource('tax-types', TaxTypeController::class);
     Route::resource('gift-cards', GiftCardController::class);

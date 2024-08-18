@@ -173,15 +173,22 @@ class ReservationController extends Controller
         return redirect()->route('reservations.create');
     }
 
-    public function updateDates(ReservationDateRequest $request)
+
+    public function updateDates(Request $request)
     {
-        $reservation = Reservation::findOrFail($request->reservationId);
-        $reservation->update([
-           'cid' => $request->cid,
-           'cod' => $request->cod,
-        ]);
-        return response()->json(['status' => 'success', 'message' => 'Success, Reservation dates has been updated successfully.'], 200);
+        $reservation = Reservation::find($request->id);
+
+        if ($reservation) {
+            $reservation->cid = Carbon::parse($request->start);
+            $reservation->cod = Carbon::parse($request->end);
+            $reservation->save();
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
     }
+
 
     public function updateSites(ReservationSiteRequest $request)
     {
