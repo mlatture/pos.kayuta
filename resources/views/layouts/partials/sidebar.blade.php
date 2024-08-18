@@ -1,69 +1,43 @@
+
 <style>
-#sidebar {
-    width: 250px;
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background-color: #343a40;
-    color: white;
-    transition: transform 0.3s ease;
-    transform: translateX(0); 
-    z-index: 900000;
+.sidebar {
+    overflow: auto; 
 }
 
-#sidebar.hidden {
-    transform: translateX(-100%); 
-  
+.sidebar::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
 }
 
-@media (max-width: 768px) {
-    #sidebar {
-        transform: translateX(-100%); 
-        width: 250px;
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100%;
-        background-color: #343a40;
-        color: white;
-        transition: transform 0.3s ease;
-      
-        z-index: 900000;
-    }
-
-    #sidebar.show {
-        transform: translateX(0); 
-        width: 250px;
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100%;
-        background-color: #343a40;
-        color: white;
-        transition: transform 0.3s ease;
-        z-index: 900000;
-    }
+.sidebar:hover::-webkit-scrollbar {
+    width: 8px;
 }
 
-#sidebar.hidden + .content-wrapper {
-    margin-left: 0; 
-    width: 10px;
+/* For Firefox */
+.sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.sidebar:hover {
+    scrollbar-color: #888 transparent;
 }
 
 
 
 </style>
-<aside id="sidebar" class="main-sidebar bg-dark text-white">
+<aside class="offcanvas main-sidebar sidebar-dark-info elevation-4  bg-dark " tabindex="-1" id="offcanvasExample"
+    aria-labelledby="offcanvasExampleLabel">
     <div class="offcanvas-header">
         <a href="{{ route('home') }}" class="brand-link">
             <img src="{{ asset('images/poslg.png') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
                 style="opacity: .8">
+
+
         </a>
 
-        {{-- <button type="button" class="btn btn-info btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button> --}}
     </div>    
-    <div class="body ">
+    <div class="body" id="body">
         <div class="sidebar">
             <nav class="mt-2 ">
                 <ul class="nav nav-pills nav-sidebar flex-column " data-widget="treeview" role="menu"
@@ -112,7 +86,7 @@
                     <div class="accordion" id="accordionExample">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingTwo">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                                     <i class="nav-icon fas fa-chart-line"></i>
                                     <span class="ps-3">Store Setup</span>
@@ -122,7 +96,7 @@
                                 data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
 
-                                    <ul class="list-unstyled">
+                                    <ul class="list-unstyled ">
                                         @hasPermission(config('constants.role_modules.list_products.value'))
                                         <li class="nav-item has-treeview">
                                             <a href="{{ route('products.index') }}"
@@ -189,7 +163,7 @@
                     <div class="accordion" id="accordionExample">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingThree">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                <button class="accordion-button collapsed  bg-dark" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
                                     <i class="nav-icon fas fa-chart-line"></i>
                                     <span class="ps-3">Settings</span>
@@ -240,7 +214,7 @@
                     <div class="accordion" id="accordionExample">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingOne">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                                     <i class="nav-icon fas fa-chart-line"></i>
                                     <span class="ps-3"> Reports</span>
@@ -319,44 +293,3 @@
         </div>
     </div>
 </aside>
-<script>
- document.addEventListener('DOMContentLoaded', function () {
-    const toggleButton = document.querySelector('[data-custom-toggle="sidebar"]');
-    const sidebar = document.getElementById('sidebar');
-    const contentActions = document.getElementById('content-actions');
-    const contentWrapper = document.querySelector('.content-wrapper');
-
-    if (toggleButton && sidebar && contentActions) {
-        toggleButton.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            if (window.innerWidth <= 768) {
-                if (sidebar.classList.contains('show')) {
-                    sidebar.classList.remove('show');
-                    sidebar.classList.add('hidden');
-                    contentWrapper.style.marginLeft = '250px'
-                    contentActions.classList.remove('expanded');
-                } else {
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.add('show');
-                    contentActions.classList.add('expanded');
-                }
-            } else {
-                if (sidebar.classList.contains('hidden')) {
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.add('show');
-                    contentActions.classList.add('expanded');
-                } else {
-                    sidebar.classList.add('hidden');
-                    sidebar.classList.remove('show');
-                    contentActions.classList.remove('expanded');
-                }
-            }
-        });
-      
-    }
-});
-
-
-</script>
-    
