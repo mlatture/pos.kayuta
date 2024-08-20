@@ -69344,6 +69344,7 @@ __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 
 __webpack_require__(/*! ./components/Cart */ "./resources/js/components/Cart.js");
 
+
 /***/ }),
 
 /***/ "./resources/js/bootstrap.js":

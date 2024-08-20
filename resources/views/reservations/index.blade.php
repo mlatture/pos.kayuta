@@ -8,48 +8,14 @@
 @endHasPermission
 @endsection
 
+@section('content')
 <style>
-    .fc-event-main{
-        border:2px solid green !important;
-        background: green;
+    .fc{
+        height: 70%;
     }
-  
-    .fc-scrollgrid{
-        color: white;
-        height: 60vh !important;
-    }
-    thead{
-        background: #212529;
-    }
-    .fc-col-header-cell-cushion {
-        text-decoration: none !important;
-        color: white;
-    }
-    .fc-daygrid-day-number{
-        text-decoration: none;
-        color: #212529;
-    }
-
-    .fc-event-time{
-        display: none;
-    }
-
-
-    .resource-site1 {
-        background-color: rgba(255, 99, 132, 0.2); /* Color for site1 */
-    }
-
-    .resource-site2 {
-        background-color: rgba(54, 162, 235, 0.2); /* Color for site2 */
-    }
-
 </style>
 
-
-@section('content')
-
-
-{{-- <header class="reservation__head bg-dark py-2">
+<header class="reservation__head bg-dark py-2">
     <div
         class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
         <div class="d-flex align-items-center gap-3">
@@ -73,7 +39,7 @@
             </a>
         </div>
     </div>
-</header> --}}
+</header>
 {{-- <div
     class="table-actions d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between pe-2 pt-md-3 pt-2">
     <div class="d-flex align-items-center action__links">
@@ -109,105 +75,112 @@
                     <span class="ti-calendar"></span>
                 </span>
             </div>
-          
+
             <button id="submitRange" class="btn btn-info text-white font-small">Submit Dates</button>
         </form>
     </div>
 
-   
-</div> --}}
-<div class="overflow-auto">
- 
-    <div id='calendar' ></div>
 
+</div> --}}
+<div class="overflow-auto mt-3">
+    <div class="row" style="overflow: none">
+        <div class="col md-2" style="">
+            <div class="container" style="height: 100%;">
+                <select id="limitSelector">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+
+                <div style="height: 400px; overflow-y: auto;">
+                    <table class="table align-middle mb-0 bg-white" id="reservationTable" style="width: 100%;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Site</th>
+                                <th>Type</th>
+                                <th>Check In Date</th>
+                                <th>Check Out Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows go here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="paginationLinks"></div>
+            </div>
+
+        </div>
+        <div class="col md-2">
+               <p>
+                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                    Add Customer
+               </button>
+               
+               </p>
+
+              <div class="collapse" id="collapseExample">
+                <div class="card card-body">
+                    <form id="customerForm">
+                        <div class="form-row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fname">First Name</label>
+                                    <input type="text" class="form-control" name="fname" id="fname">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="lname">Last Name</label>
+                                    <input type="text" class="form-control" name="lname" id="lname">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" class="form-control" name="email" id="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="contactno">Contact Number</label>
+                                    <input type="text" class="form-control" name="contactno" id="contactno">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="address">Address</label>
+                            <input type="text" class="form-control" name="address" id="address">
+                        </div>
+                    </form>
+               </div>
+                <div class="card card-footer">
+                    <button type="button" class="btn btn-success" id="saveCustomer">Save</button>
+                </div>
+              </div>
+            <div id="calendar"></div>
+
+        </div>
+    </div>
 </div>
 
-@extends('reservations.modals.modals')
 
+@extends('reservations.modals.modals')
+@extends('reservations.modals.reservations-modal')
 
 @endsection
 
 @push('js')
-<script>
-    toastr.options = {
-        "closeButton": true,
-        "debug": false,
-        "newestOnTop": false,
-        "progressBar": true,
-        "positionClass": "toast-top-right",
-        "preventDuplicates": false,
-        "onclick": null,
-        "showDuration": "300",
-        "hideDuration": "1000",
-        "timeOut": "5000",
-        "extendedTimeOut": "1000",
-        "showEasing": "swing",
-        "hideEasing": "linear",
-        "showMethod": "fadeIn",
-        "hideMethod": "fadeOut"
-    };
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = $('#calendar')[0];
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'timeGridWeek', 
-            editable: true,
-            droppable: true,
-            events: function(info, successCallback, failureCallback) {
-                $.ajax({
-                    url: 'reservepeople',
-                    method: 'GET',
-                    success: function(response) {
-                        successCallback(response.events);
-                    },
-                    error: function() {
-                        failureCallback();
-                    }
-                });
-            },
-            eventClassNames: function(arg) {
-                return ['custom-event-' + arg.event.extendedProps.siteclass];
-            },
-            eventContent: function(arg) {
-                return {
-                    html: `<b>${arg.event.title}</b><br>${arg.event.extendedProps.siteclass}`
-                };
-            },
-            eventDrop: function(info) {
-                var reservationId = info.event.id;
-                var resource = info.event.extendedProps.resource;
-                var startDate = info.event.start.toISOString();
-                var endDate = info.event.end.toISOString();
-
-                $.ajax({
-                    url: 'reservations/update/' + reservationId,
-                    method: 'POST',
-                    cache: false,
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        start_date: startDate,
-                        end_date: endDate
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success('Reservation updated successfully');
-                        }
-                    },
-                    error: function() {
-                        toastr.error('An error occurred');
-                    }
-                });
-            },
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'timeGridDay,timeGridWeek,dayGridMonth,listWeek'
-            }
-           
-        });
-
-        calendar.render();
-    });
-</script>
 @endpush

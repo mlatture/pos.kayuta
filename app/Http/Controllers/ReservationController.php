@@ -176,17 +176,12 @@ class ReservationController extends Controller
 
     public function updateDates(Request $request)
     {
-        $reservation = Reservation::find($request->id);
+        $reservation = Reservation::findOrFail($id);
+        $reservation->cid = $request->input('start_date');
+        $reservation->cod = $request->input('end_date');
+        $reservation->save();
 
-        if ($reservation) {
-            $reservation->cid = Carbon::parse($request->start);
-            $reservation->cod = Carbon::parse($request->end);
-            $reservation->save();
-
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false], 404);
+        return response()->json(['success' => true]);
     }
 
 

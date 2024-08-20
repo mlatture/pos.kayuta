@@ -107,7 +107,8 @@
 
 
     <!-- For Reservations  -->
-    <script src="{{ asset('js/reservations.js') }}"></script>
+    <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
+    <script src="{{ asset('js/reservations/create.js') }}"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
     @yield('js')
