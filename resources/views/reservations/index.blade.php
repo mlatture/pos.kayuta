@@ -10,7 +10,7 @@
 
 @section('content')
 <style>
-    .fc{
+    .fc {
         height: 70%;
     }
 </style>
@@ -83,9 +83,10 @@
 
 </div> --}}
 <div class="overflow-auto mt-3">
-    <div class="row" style="overflow: none">
-        <div class="col md-2" style="">
+    <div class="row">
+        <div class="col-md-6">
             <div class="container" style="height: 100%;">
+                <h5>Paid Customers</h5>
                 <select id="limitSelector">
                     <option value="5">5</option>
                     <option value="10" selected>10</option>
@@ -93,37 +94,68 @@
                     <option value="50">50</option>
                 </select>
 
-                <div style="height: 400px; overflow-y: auto;">
-                    <table class="table align-middle mb-0 bg-white" id="reservationTable" style="width: 100%;">
+                <div style="height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <table class="table align-middle mb-0 bg-white" id="reservationTable" style="table-layout: fixed;">
                         <thead class="bg-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Site</th>
-                                <th>Type</th>
-                                <th>Check In Date</th>
-                                <th>Check Out Date</th>
-                                <th>Actions</th>
+                                <th style="width: 200px;">Name</th>
+                                <th style="width: 200px;">Site</th>
+                                <th style="width: 200px;">Type</th>
+                                <th style="width: 200px;">Check In Date</th>
+                                <th style="width: 200px;">Check Out Date</th>
+                                <th style="width: 200px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Table rows go here -->
                         </tbody>
                     </table>
                 </div>
 
                 <div id="paginationLinks"></div>
             </div>
-
         </div>
-        <div class="col md-2">
-               <p>
-                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                    Add Customer
-               </button>
-               
-               </p>
 
-              <div class="collapse" id="collapseExample">
+        <div class="col-md-6">
+
+            <div class="container" style="height: 100%;">
+                <h5>Not Reserve Customer</h5>
+                <select id="limitSelectorNotReserve">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+
+                <div style="height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <table class="table align-middle mb-0 bg-white" id="notReserveTable" style="table-layout: fixed;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="width: 200px;">Name</th>
+                                <th style="width: 200px;">Site</th>
+                                <th style="width: 200px;">Type</th>
+                                <th style="width: 200px;">Check In Date</th>
+                                <th style="width: 200px;">Check Out Date</th>
+                                <th style="width: 200px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="paginationLinks1"></div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <p>
+                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                    Add Customer
+                </button>
+            </p>
+
+            <div class="collapse" id="collapseExample">
                 <div class="card card-body">
                     <form id="customerForm">
                         <div class="form-row mb-3">
@@ -159,20 +191,22 @@
                             <input type="text" class="form-control" name="address" id="address">
                         </div>
                     </form>
-               </div>
+                </div>
                 <div class="card card-footer">
                     <button type="button" class="btn btn-success" id="saveCustomer">Save</button>
                 </div>
-              </div>
-            <div id="calendar"></div>
+            </div>
 
+            <div id="calendar"></div>
         </div>
     </div>
+
 </div>
 
 
 @extends('reservations.modals.modals')
 @extends('reservations.modals.reservations-modal')
+
 
 @endsection
 
@@ -182,5 +216,6 @@
 
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
 
 @endpush

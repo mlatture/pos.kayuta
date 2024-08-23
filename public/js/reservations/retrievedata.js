@@ -19,29 +19,96 @@ toastr.options = {
 
 $(document).ready(function () {
    
-    function fetchReservations(page = 1, limit = 10) {
+    // Fetch Reservations Data
+function fetchReservations(page = 1, limit = 10) {
+    $.ajax({
+        type: "GET",
+        url: "reservepeople",
+        data: { page: page, limit: limit },
+        dataType: "json",
+        cache: false,
+        success: function (data) {
+            let tableBody = $('#reservationTable tbody');
+            tableBody.empty();
+
+            $.each(data.data, function (index, item) {
+                let cid = new Date(item.cid).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long', 
+                    day: 'numeric'  
+                });
+
+                let cod = new Date(item.cod).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                tableBody.append(`
+                    <tr>
+                        <td>${item.fname} ${item.lname}</td>
+                        <td>${item.siteid}</td>
+                        <td>${item.siteclass}</td>
+                        <td>${cid}</td>
+                        <td>${cod}</td>
+                        <td>
+                            <div class="">
+                                <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
+                                    <i class="fa-solid fa-eye " style="color: #74C0FC;"></i>
+                                </a>
+                                <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
+                                    <i class="fa-solid fa-pen-to-square " style="color: #74C0FC;"></i>
+                                </a>
+                                <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
+                                    <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            let paginationLinks = '';
+            if (data.prev_page_url) {
+                paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
+            }
+            paginationLinks += `Page ${data.current_page} of ${data.last_page} `;
+            if (data.next_page_url) {
+                paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
+            }
+            $('#paginationLinks').html(paginationLinks);
+        },
+        error: function (xhr, status, error) {
+            console.error('Error fetching reservations: ', error);
+        }
+    });
+}
+
+// Fetch NotReserve Data
+    function fetchNotReserve(page = 1, limit = 10) {
         $.ajax({
             type: "GET",
-            url: "reservepeople",
+            url: "getnotreserve",
             data: { page: page, limit: limit },
             dataType: "json",
             cache: false,
             success: function (data) {
-                let tableBody = $('#reservationTable tbody');
+                let tableBody = $('#notReserveTable tbody');
                 tableBody.empty();
 
                 $.each(data.data, function (index, item) {
                     let cid = new Date(item.cid).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long', 
-                            day: 'numeric'  
-                        });
+                        year: 'numeric',
+                        month: 'long', 
+                        day: 'numeric'  
+                    });
 
-                        let cod = new Date(item.cod).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        });
+                    let cod = new Date(item.cod).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
                     tableBody.append(`
                         <tr>
                             <td>${item.fname} ${item.lname}</td>
@@ -51,59 +118,91 @@ $(document).ready(function () {
                             <td>${cod}</td>
                             <td>
                                 <div class="">
-                                    <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-pen-to-square " style="color: #74C0FC;"></i>
-                                    </a>
-                                    <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
-                                    </a>
+                                    
+                                    <div class="btn btn-info" data-id="${item.id}" type="submit" id="paymentbtn">
+                                        <i class="fa-solid fa-hand-holding-dollar"></i>
+
+                                    </div>
+
                                 </div>
                             </td>
                         </tr>
                     `);
                 });
 
-                let paginationLinks = '';
+                let paginationLinks1 = '';
                 if (data.prev_page_url) {
-                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
+                    paginationLinks1 += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
                 }
-                paginationLinks += `Page ${data.current_page} of ${data.last_page} `;
+                paginationLinks1 += `Page ${data.current_page} of ${data.last_page} `;
                 if (data.next_page_url) {
-                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
+                    paginationLinks1 += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
                 }
-                $('#paginationLinks').html(paginationLinks);
+                $('#paginationLinks1').html(paginationLinks1);
             },
             error: function (xhr, status, error) {
-                console.error('Error fetching reservations: ', error);
+                console.error('Error fetching not reserved: ', error);
             }
         });
     }
 
+   
+    
     $('#limitSelector').change(function () {
         fetchReservations(1, $(this).val());
     });
-
+    
+    $('#limitSelectorNotReserve').change(function(){
+        fetchNotReserve(1, $(this).val());
+    });
+    
     $(document).on('click', '#paginationLinks a', function () {
         let page = $(this).data('page');
         let limit = $('#limitSelector').val();
         fetchReservations(page, limit);
     });
+    
+    $(document).on('click', '#paginationLinks1 a', function () {
+        let page = $(this).data('page');
+        let limit = $('#limitSelectorNotReserve').val();
+        fetchNotReserve(page, limit);
+    });
+    
 
-    fetchReservations();
+    // Date Picker
+    var selectedFromDate = null;
+    var selectedToDate = null;
 
-        $.ajax({
-            type: "GET",
-            url: "getcustomers",
-            dataType: "json",
-            cache: false,
-            success: function (data) {
-                $('#customerSelector').append(`<option value="" disabled selected>Select Customer</option>`);
-                $.each(data, function (index, item) {
-                    $('#customerSelector').append(`<option  value="${item.id}" data-fname="${item.first_name}" data-lname="${item.last_name}" data-email="${item.email}">${item.first_name} ${item.last_name}</option>`);
-                });
-            }
-        });
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        datesSet: function() {
+            // Add hover indicator on dates
+            $('.fc-daygrid-day').click(function() {
+                var selectedDate = $(this).data('date');
+                var formattedDate = formatDate(new Date(selectedDate));
 
+                if (selectedFromDate) {
+                    $('#toDate').val(formattedDate); 
+                    selectedToDate = formattedDate;
+                    $('#dateRangeModal').modal('show');
+                } else {
+                    $('#fromDate').val(formattedDate); 
+                    selectedFromDate = formattedDate;
+                }
+            });
+        }
+    });
+
+    calendar.render();
+
+        function formatDate(date) {
+            var options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Intl.DateTimeFormat('en-US', options).format(date);
+        }
+
+      
 
         $('#customerSelector').change(function(){
             var selectedOption = $(this).find('option:selected');
@@ -116,42 +215,6 @@ $(document).ready(function () {
         });
 
 
-        // Date Picker
-        var selectedFromDate = null;
-        var selectedToDate = null;
-
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            selectable: true,
-            datesSet: function() {
-                // Add hover indicator on dates
-                $('.fc-daygrid-day').click(function() {
-                    var selectedDate = $(this).data('date');
-                    var formattedDate = formatDate(new Date(selectedDate));
-
-                    if (selectedFromDate) {
-                        $('#toDate').val(formattedDate); 
-                        selectedToDate = formattedDate;
-                        $('#dateRangeModal').modal('show');
-                    } else {
-                        $('#fromDate').val(formattedDate); 
-                        selectedFromDate = formattedDate;
-                    }
-                });
-            }
-        });
-
-        calendar.render();
-
-        function formatDate(date) {
-            var options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Intl.DateTimeFormat('en-US', options).format(date);
-        }
-
-        $('#customerSelector').change(function(){
-            selectedCustomer
-        });
 
         $('#toDate').datepicker({
             dateFormat: 'mm/dd/yyyy',
@@ -181,4 +244,13 @@ $(document).ready(function () {
             selectedToDate = null;
         });
 
+
+        fetchReservations();
+        fetchNotReserve();
+        
+        setInterval(function() {
+            fetchReservations();
+            fetchNotReserve();
+        }, 5000);
+        
     });

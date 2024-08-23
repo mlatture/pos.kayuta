@@ -60,9 +60,16 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
     Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
 
-    //Add Customer
+    //Reservation Modal
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);
+    Route::get('/getsiteclasses', [NewReservationController::class, 'getSiteClasses']);
+    Route::get('/getsitehookups', [NewReservationController::class, 'getSiteHookups']);
+    Route::get('/getsite', [NewReservationController::class, 'getSites']);
+    Route::get('/getnotreserve', [NewReservationController::class, 'noCart']);
+    Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
+    Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
+
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
