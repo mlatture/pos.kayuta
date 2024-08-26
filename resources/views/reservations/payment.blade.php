@@ -94,14 +94,14 @@
                         <td>{{ $reservation->adults ?? 0 }}</td>
                         <td>5</td>
                         <td>0</td>
-                        <td>{{ $reservation->pets ?? 0}}</td>
-                        <td>Daily Rate</td>
-                        <td>$100</td>
+                        <td>{{ $reservation->pets ?? 0 }}</td>
+                        <td>{{ $reservation->description }}</td>
+                        <td>${{ number_format($reservation->subtotal, 2) }}</td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="7"></td>
                         <td class="text-end">Subtotal</td>
-                        <td>$300</td>
+                        <td>${{ number_format( $reservation->subtotal, 2) }}</td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="2"></td>
@@ -109,53 +109,64 @@
                         <td></td>
                         <td></td>
                         <td colspan="3">Sales Tax (8.75%)</td>
-                        <td>$39.38</td>
+                        <td>${{ number_format($reservation->totaltax, 2) }}</td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="7"></td>
                         <td class="text-end">Total Payments</td>
-                        <td>$500</td>
+                        <td>${{ number_format($reservation->total, 2) }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-    <form action="" id="paymentchoices">
+    <form  id="paymentchoices" method="POST">
         <header class="invoice-header mt-4">
             <h4>Payments</h4>
         </header>
         <div class="container-invoice">
             <div class="form-row mb-3">
-                <div class="col-md-6">
+                <div class="col">
                     <div class="form-group">
                         <label for="adults">Transaction Type</label>
-                        <input type="number" class="form-control" id="adults" 
-                        name="adults" placeholder="Enter Number of Adults">
+                        <select name="transactionType" id="transactionType" class="form-control">
+                            <option value="" selected disabled>Select Transaction Type</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                </div>
+               
+            </div>
+            <div class="form-row mb-3" id="creditcard"  style="display: none;">
+                <div class="col-md-6">
+                    <div class="form-group ">
+                        <input type="text" maxlength="16" name="xCardNum" id="xCardNum" required
+                            class="form-control" placeholder="Credit Card:">
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="under">Payment Type</label>
-                        <input type="number" class="form-control" id="under" 
-                        name="under" placeholder="Enter Number of Childrens">
+                    <div class="form-group ">
+                        <input type="text" name="xExp" id="xExp" required
+                            class="form-control" placeholder="Expiration:" maxlength="5">
                     </div>
+                    <input type="hidden" name="xAmount" id="xAmount" value="{{ $reservation->total }}">
+
                 </div>
             </div>
-            <div class="form-row mb-3">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="adults">Credit Card Type</label>
-                        <input type="number" class="form-control" id="adults" 
-                        name="adults" placeholder="Enter Number of Adults">
+            <div class="form-row mb-3" id="cash" style="display: none;">
+                <div class="col">
+                    <div class="form-group ">
+                        <input type="text"  name="xCash" id="xCash" required
+                            class="form-control" placeholder="Cash:">
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="under">Credit Card Number</label>
-                        <input type="number" class="form-control" id="under" 
-                        name="under" placeholder="Enter Number of Childrens">
-                    </div>
-                </div>
+               
+            </div>
+            <input type="hidden"  name="cartid" value="{{ $reservation->cartid }}">
+            <input type="hidden"  name="id" value="{{ $reservation->id }}">
+            <div class="form-row d-flex justify-content-end mr-1">
+                <div class="btn btn-success " id="payBtn">Pay</div>
             </div>
         </div>
     </form>

@@ -68,6 +68,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/getsite', [NewReservationController::class, 'getSites']);
     Route::get('/getnotreserve', [NewReservationController::class, 'noCart']);
     Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
+    Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
 
 

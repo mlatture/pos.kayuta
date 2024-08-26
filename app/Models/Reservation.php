@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\User;
+use Carbon\Carbon;
+use App\Models\RateTier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,10 +14,64 @@ class Reservation extends Model
 {
     use HasFactory;
 
+    protected $table = 'reservations';
+
     protected $dates = ['cid', 'cod'];
 
 
+
     protected $guarded = [];
+
+
+
+    public function rateTier()
+    {
+        return $this->belongsTo(RateTier::class);
+    }
+
+
+    // public function calculateRate()
+    // {
+    //     $rateTier = $this->rateTier;
+     
+    //     $days = $this->cod->diffInDays($this->cid);
+
+    //     if($days >= 30){
+    //         return $rateTier->monthlyrate;
+    //     }elseif($days >= 7){
+    //         return $rateTier->weeklyrate;
+    //     }else {
+    //         $totalRate = 0;
+    //         $currentDate = $this->cid->copy();
+    //         for($i = 0; $i < $days; $i++){
+    //             switch($currentDate->dayOfWeek){
+    //                 case Carbon::SUNDAY:
+    //                     $totalRate += $rateTier->sundayrate;
+    //                     break;
+    //                 case Carbon::MONDAY:
+    //                     $totalRate += $rateTier->mondayrate;
+    //                     break;
+    //                 case Carbon::TUESDAY:
+    //                     $totalRate += $rateTier->tuesdayrate;
+    //                     break;
+    //                 case Carbon::WEDNESDAY:
+    //                     $totalRate += $rateTier->wednesdayrate;
+    //                     break;
+    //                 case Carbon::THURSDAY:
+    //                     $totalRate += $rateTier->thursdayrate;
+    //                     break;
+    //                 case Carbon::FRIDAY:
+    //                     $totalRate += $rateTier->fridayrate;
+    //                     break;
+    //                 case Carbon::SATURDAY:
+    //                     $totalRate += $rateTier->saturdayrate;
+    //             }
+    //             $currentDate->addDay();
+
+    //         }
+    //         return $totalRate;
+    //     }
+    // }
 
     public function user()
     {

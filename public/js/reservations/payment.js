@@ -6,6 +6,17 @@ $(document).ready(function(){
     });
 
    
+    $("#transactionType").change(function(){
+       
+        if($(this).val() == "Cash"){
+            $("#cash").show();
+            $("#creditcard").hide();
+        }else{
+            $("#creditcard").show();
+            $("#cash").hide();
+        }
+    })
 
+ 
    
 });

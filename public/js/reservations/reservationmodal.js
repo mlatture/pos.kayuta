@@ -24,7 +24,7 @@ $(document).ready(function() {
         sessionStorage.setItem('hookup', hookup);
 
         $('.firstpage-modal').fadeOut(400, function(){
-            $('#closeModal').hide();
+            
             $('.secondpage-modal').fadeIn(400, function(){
                 $('#backInfo').show();
                 // $('.thirdpage-modal').hide();
@@ -47,9 +47,9 @@ $(document).ready(function() {
     $('#backInfo').on('click', function(){
         $('.secondpage-modal').fadeOut(400, function(){
             $('#backInfo').hide();
-          
         $('.firstpage-modal').fadeIn(400, function(){
-               
+                $('#submitReservations').hide();
+                $('#nextInfo').show();
                 $('#closeModal').show();
             });
         });
@@ -99,7 +99,7 @@ $(document).ready(function() {
                             .length == 0
                     ) {
                         $("#customerSelector").append(
-                            `<option value="${item.id}" data-fname="${item.first_name}" data-lname="${item.last_name}" data-email="${item.email}">${item.first_name} ${item.last_name}</option>`
+                            `<option value="${item.id}" data-fname="${item.first_name}" data-cust="${item.id}" data-lname="${item.last_name}" data-email="${item.email}">${item.first_name} ${item.last_name}</option>`
                         );
                     }
                 });
@@ -112,9 +112,11 @@ $(document).ready(function() {
         var fname = selectedOption.data("fname");
         var lname = selectedOption.data("lname");
         var email = selectedOption.data("email");
+        var custnum = selectedOption.data("cust");
         $("#fname").val(fname);
         $("#lname").val(lname);
         $("#email").val(email);
+        $("#custnum").val(custnum);
     });
 
     function loadSiteClasses() {
@@ -187,14 +189,11 @@ $(document).ready(function() {
     $('#siteclass').trigger('change');
 
  
- 
-
-    setInterval(function() {
-        loadSites();
-        loadCustomers();
-        loadSiteClasses();
-        loadSiteHookups();
-    }, 5000);
+    loadSiteClasses();
+    loadSiteHookups();
+    loadSites();
+    loadCustomers();
+   
 
 });
 //Customers

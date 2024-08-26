@@ -11,6 +11,11 @@ class RateTier extends Model
 
     protected $guarded = [];
 
+    protected $fillable = [
+        'monthlyrate', 'weeklyrate', 'sundayrate', 'mondayrate', 'tuesdayrate', 
+        'wednesdayrate', 'thursdayrate', 'fridayrate', 'saturdayrate'
+    ];
+    
     public function getAll()
     {
         return self::all();

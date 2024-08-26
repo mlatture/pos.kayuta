@@ -39,6 +39,17 @@ $('#submitReservations').click(function() {
         },
         success: function(response){
             toastr.success('Information added successfully'); 
+            $('#dateRangeModal').modal('hide');
+            $('#dateRangeForm')[0].reset();
+            $("#openDatePicker").datepicker("setDate", null);
+
+            $('.secondpage-modal').hide();
+            $('.thirdpage-modal').hide();
+            $('#backInfo').hide();
+            $('#submitReservations').hide();
+            $('.firstpage-modal').show();
+            $('#nextInfo').show();
+            $('#closeModal').show();
         },
         error: function(xhr){
             if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -47,5 +58,31 @@ $('#submitReservations').click(function() {
                 });
             }
         }
-    })
-})
+    });
+});
+
+$("#payBtn").click(function(){
+    var formDataPayment = new FormData($('#paymentchoices')[0]);
+    var reservationId = $('input[name="id"]').val(); 
+    $.ajax({
+        url: '/admin/reservations/payment/' + reservationId + '/postpayment',
+        type: 'POST',
+        data: formDataPayment,
+        contentType: false, 
+        processData: false,  
+        cache: false,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response){
+            toastr.success('Payment added successfully');
+        },
+        error: function(xhr){
+            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                $.each(xhr.responseJSON.errors, function(key, value) {
+                    toastr.error(value[0]); 
+                });
+            }
+        }
+    });
+});

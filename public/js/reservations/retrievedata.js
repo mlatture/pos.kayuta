@@ -20,69 +20,72 @@ toastr.options = {
 $(document).ready(function () {
    
     // Fetch Reservations Data
-function fetchReservations(page = 1, limit = 10) {
-    $.ajax({
-        type: "GET",
-        url: "reservepeople",
-        data: { page: page, limit: limit },
-        dataType: "json",
-        cache: false,
-        success: function (data) {
-            let tableBody = $('#reservationTable tbody');
-            tableBody.empty();
+    function fetchReservations(page = 1, limit = 10) {
+        $.ajax({
+            type: "GET",
+            url: "reservepeople",
+            data: { page: page, limit: limit },
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                
+                let tableBody = $('#reservationTable tbody');
+                tableBody.empty();
+    
+                $.each(data.data, function (index, item) {
+                    let cid = new Date(item.cid).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+    
+                    let cod = new Date(item.cod).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
 
-            $.each(data.data, function (index, item) {
-                let cid = new Date(item.cid).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long', 
-                    day: 'numeric'  
+                    
+                    tableBody.append(`
+                        <tr>
+                            <td>${item.fname} ${item.lname} </td>
+                            <td>${item.siteid}</td>
+                            <td>${item.siteclass}</td>
+                            <td>${cid}</td>
+                            <td>${cod}</td>
+                            <td>
+                                <div class="">
+                                    <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
+                                        <i class="fa-solid fa-eye " style="color: #74C0FC;"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
+                                        <i class="fa-solid fa-pen-to-square " style="color: #74C0FC;"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
+                                        <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    `);
                 });
-
-                let cod = new Date(item.cod).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-
-                tableBody.append(`
-                    <tr>
-                        <td>${item.fname} ${item.lname}</td>
-                        <td>${item.siteid}</td>
-                        <td>${item.siteclass}</td>
-                        <td>${cid}</td>
-                        <td>${cod}</td>
-                        <td>
-                            <div class="">
-                                <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                    <i class="fa-solid fa-eye " style="color: #74C0FC;"></i>
-                                </a>
-                                <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                    <i class="fa-solid fa-pen-to-square " style="color: #74C0FC;"></i>
-                                </a>
-                                <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
-                                    <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                `);
-            });
-
-            let paginationLinks = '';
-            if (data.prev_page_url) {
-                paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
+    
+                let paginationLinks = '';
+                if (data.prev_page_url) {
+                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
+                }
+                paginationLinks += `Page ${data.current_page} of ${data.last_page} `;
+                if (data.next_page_url) {
+                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
+                }
+                $('#paginationLinks').html(paginationLinks);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error fetching reservations: ', error);
             }
-            paginationLinks += `Page ${data.current_page} of ${data.last_page} `;
-            if (data.next_page_url) {
-                paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
-            }
-            $('#paginationLinks').html(paginationLinks);
-        },
-        error: function (xhr, status, error) {
-            console.error('Error fetching reservations: ', error);
-        }
-    });
-}
+        });
+    }
+    
 
 // Fetch NotReserve Data
     function fetchNotReserve(page = 1, limit = 10) {
@@ -111,7 +114,7 @@ function fetchReservations(page = 1, limit = 10) {
 
                     tableBody.append(`
                         <tr>
-                            <td>${item.fname} ${item.lname}</td>
+                            <td>${item.first_name} ${item.last_name}</td>
                             <td>${item.siteid}</td>
                             <td>${item.siteclass}</td>
                             <td>${cid}</td>
@@ -167,40 +170,102 @@ function fetchReservations(page = 1, limit = 10) {
         let limit = $('#limitSelectorNotReserve').val();
         fetchNotReserve(page, limit);
     });
-    
 
+  
     // Date Picker
-    var selectedFromDate = null;
-    var selectedToDate = null;
+    // var selectedFromDate = null;
+    // var selectedToDate = null;
 
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        selectable: true,
-        datesSet: function() {
-            // Add hover indicator on dates
-            $('.fc-daygrid-day').click(function() {
-                var selectedDate = $(this).data('date');
-                var formattedDate = formatDate(new Date(selectedDate));
+    // var calendarEl = document.getElementById('calendar');
+    // var calendar = new FullCalendar.Calendar(calendarEl, {
+    //     initialView: 'dayGridMonth',
+    //     selectable: true,
+    //     datesSet: function() {
+    //         // Add hover indicator on dates
+    //         $('.fc-daygrid-day').click(function() {
+    //             var selectedDate = $(this).data('date');
+    //             var formattedDate = formatDate(new Date(selectedDate));
 
-                if (selectedFromDate) {
-                    $('#toDate').val(formattedDate); 
-                    selectedToDate = formattedDate;
-                    $('#dateRangeModal').modal('show');
-                } else {
-                    $('#fromDate').val(formattedDate); 
-                    selectedFromDate = formattedDate;
+    //             if (selectedFromDate) {
+    //                 $('#toDate').val(formattedDate); 
+    //                 selectedToDate = formattedDate;
+    //                 $('#dateRangeModal').modal('show');
+    //             } else {
+    //                 $('#fromDate').val(formattedDate); 
+    //                 selectedFromDate = formattedDate;
+    //             }
+    //         });
+    //     }
+    // });
+
+    // calendar.render();
+
+    //     function formatDate(date) {
+    //         var options = { year: 'numeric', month: 'long', day: 'numeric' };
+    //         return new Intl.DateTimeFormat('en-US', options).format(date);
+    //     }
+
+    $(function() {
+        var fromDate, toDate;
+    
+        $("#openDatePicker").click(function() {
+            var datePickerDiv = $("<div></div>").datepicker({
+                numberOfMonths: 2,
+                minDate: 0,
+                onSelect: function(selectedDate) {
+                    var option = fromDate ? "maxDate" : "minDate";
+                    var date = $.datepicker.parseDate("mm/dd/yy", selectedDate);
+    
+                    if (!fromDate) {
+                        fromDate = date;
+                        $("#fromDate").val($.datepicker.formatDate("MM d, yy", fromDate));
+                        $(this).datepicker("option", option, date);
+                    } else {
+                        toDate = date;
+                        $("#toDate").val($.datepicker.formatDate("MM d, yy", toDate));
+                        $(this).dialog("close");
+                        $('#dateRangeModal').modal('show');
+                        fromDate = toDate = null;
+                       
+                        datePickerDiv.datepicker("setDate", null)
+                            .datepicker("option", "minDate", 0)
+                            .datepicker("option", "maxDate", null);
+                    }
+                },
+                beforeShowDay: function(date) {
+                    if (fromDate && toDate) {
+                        return [true, "ui-state-highlight"];
+                    }
+                    if (fromDate) {
+                        return [true, date >= fromDate ? "ui-state-highlight" : ""];
+                    }
+                    return [true, ""];
                 }
             });
-        }
+    
+            datePickerDiv.dialog({
+                modal: true,
+                title: "Select Date Range",
+                width: 600,
+                autoOpen: true,
+                resizable: false, 
+                position: { my: "center", at: "center", of: window },
+                buttons: {
+                    "Clear": function() {
+                        fromDate = toDate = null;
+                        $("#fromDate, #toDate").val("");
+                        datePickerDiv.datepicker("setDate", null)
+                            .datepicker("option", "minDate", 0)
+                            .datepicker("option", "maxDate", null);
+                    },
+                    "Close": function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+        });
     });
-
-    calendar.render();
-
-        function formatDate(date) {
-            var options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Intl.DateTimeFormat('en-US', options).format(date);
-        }
+    
 
       
 
@@ -215,34 +280,6 @@ function fetchReservations(page = 1, limit = 10) {
         });
 
 
-
-        $('#toDate').datepicker({
-            dateFormat: 'mm/dd/yyyy',
-            autoclose: true,
-            todayHighlight: true,
-            onSelect: function(selectedDate) {
-                selectedToDate = selectedDate;
-            }
-        });
-
-        $('#fromDate').datepicker({
-            dateFormat: 'mm/dd/yyyy',
-            autoclose: true,
-            todayHighlight: true,
-            onSelect: function(selectedDate) {
-                var minDate = $('#fromDate').datepicker('getDate');
-                $('#toDate').datepicker('option', 'minDate', minDate);
-            }
-        });
-
-
-
-        $('#dateRangeModal').on('hidden.bs.modal', function() {
-            $('#fromDate').val('');
-            $('#toDate').val('');
-            selectedFromDate = null;
-            selectedToDate = null;
-        });
 
 
         fetchReservations();
