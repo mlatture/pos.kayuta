@@ -177,7 +177,6 @@ $(document).ready(function() {
 
     $('#siteclass').on('change', function() {
         var selectedValue = $(this).val();
-        console.log("Selected site class value:", selectedValue);
         if ($(this).val() != '1') {
             $('#forRv').hide();
         } else {

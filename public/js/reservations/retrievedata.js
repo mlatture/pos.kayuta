@@ -18,7 +18,7 @@ toastr.options = {
 
 
 $(document).ready(function () {
-   
+    
     // Fetch Reservations Data
     function fetchReservations(page = 1, limit = 10) {
         $.ajax({
@@ -28,38 +28,62 @@ $(document).ready(function () {
             dataType: "json",
             cache: false,
             success: function (data) {
-                
                 let tableBody = $('#reservationTable tbody');
                 tableBody.empty();
     
+                let now = new Date();
+    
                 $.each(data.data, function (index, item) {
-                    let cid = new Date(item.cid).toLocaleDateString('en-US', {
+                    let cidDate = new Date(item.cid);
+                    let codDate = new Date(item.cod);
+    
+                    let cid = cidDate.toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                     });
     
-                    let cod = new Date(item.cod).toLocaleDateString('en-US', {
+                    let cod = codDate.toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                     });
-
-                    
+    
+                    let dateStatus = '';
+                    let statusClass = '';
+                
+                    if (cidDate.toDateString() === now.toDateString()) {
+                        dateStatus = 'Arrival';
+                        statusClass = 'bg-success';
+                    } else if (codDate.toDateString() === now.toDateString()) {
+                        dateStatus = 'Departure';
+                        statusClass = 'bg-danger';
+                    } else if (cidDate <= now && codDate >= now) {
+                        dateStatus = 'Occupied';
+                        statusClass = 'bg-info';
+                    } else if (cidDate > now) {
+                        dateStatus = 'Pending';
+                        statusClass = 'bg-warning';
+                    } else if (codDate < now) {
+                        dateStatus = 'Completed';
+                        statusClass = 'bg-primary';
+                    }
+    
                     tableBody.append(`
                         <tr>
-                            <td>${item.fname} ${item.lname} </td>
+                            <td>${item.fname} ${item.lname}</td>
                             <td>${item.siteid}</td>
                             <td>${item.siteclass}</td>
                             <td>${cid}</td>
                             <td>${cod}</td>
+                            <td><span class="${statusClass} rounded p-2">${dateStatus}</span></td>
                             <td>
                                 <div class="">
                                     <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-eye " style="color: #74C0FC;"></i>
+                                        <i class="fa-solid fa-eye" style="color: #74C0FC;"></i>
                                     </a>
                                     <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-pen-to-square " style="color: #74C0FC;"></i>
+                                        <i class="fa-solid fa-pen-to-square" style="color: #74C0FC;"></i>
                                     </a>
                                     <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
                                         <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
@@ -85,6 +109,7 @@ $(document).ready(function () {
             }
         });
     }
+    
     
 
 // Fetch NotReserve Data
@@ -112,6 +137,7 @@ $(document).ready(function () {
                         day: 'numeric'
                     });
 
+                  
                     tableBody.append(`
                         <tr>
                             <td>${item.first_name} ${item.last_name}</td>
@@ -119,6 +145,7 @@ $(document).ready(function () {
                             <td>${item.siteclass}</td>
                             <td>${cid}</td>
                             <td>${cod}</td>
+                         
                             <td>
                                 <div class="">
                                     
@@ -172,39 +199,6 @@ $(document).ready(function () {
     });
 
   
-    // Date Picker
-    // var selectedFromDate = null;
-    // var selectedToDate = null;
-
-    // var calendarEl = document.getElementById('calendar');
-    // var calendar = new FullCalendar.Calendar(calendarEl, {
-    //     initialView: 'dayGridMonth',
-    //     selectable: true,
-    //     datesSet: function() {
-    //         // Add hover indicator on dates
-    //         $('.fc-daygrid-day').click(function() {
-    //             var selectedDate = $(this).data('date');
-    //             var formattedDate = formatDate(new Date(selectedDate));
-
-    //             if (selectedFromDate) {
-    //                 $('#toDate').val(formattedDate); 
-    //                 selectedToDate = formattedDate;
-    //                 $('#dateRangeModal').modal('show');
-    //             } else {
-    //                 $('#fromDate').val(formattedDate); 
-    //                 selectedFromDate = formattedDate;
-    //             }
-    //         });
-    //     }
-    // });
-
-    // calendar.render();
-
-    //     function formatDate(date) {
-    //         var options = { year: 'numeric', month: 'long', day: 'numeric' };
-    //         return new Intl.DateTimeFormat('en-US', options).format(date);
-    //     }
-
     $(function() {
         var fromDate, toDate;
     
@@ -284,10 +278,5 @@ $(document).ready(function () {
 
         fetchReservations();
         fetchNotReserve();
-        
-        setInterval(function() {
-            fetchReservations();
-            fetchNotReserve();
-        }, 5000);
-        
+   
     });

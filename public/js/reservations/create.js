@@ -12,7 +12,13 @@ $('#saveCustomer').click(function() {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response){
+            toastr.options.timeOut = 1000;
+            toastr.options.onHidden = function() {
+                window.location.reload();
+            }
+            $('#saveCustomer').prop('disabled', true);
             toastr.success('Customer added successfully'); 
+            
         },
         error: function(xhr){
             if (xhr.responseJSON && xhr.responseJSON.errors) {

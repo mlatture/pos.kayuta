@@ -34,17 +34,26 @@ class NewReservationController extends Controller
     {
         $limit = $request->input('limit', 10);
         $paymentCartIds = Payment::pluck('cartid')->toArray();
-    
-       
-    
+        $today = now()->toDateString();
+
         $reservations = Reservation::whereIn('cartid', $paymentCartIds)
                                     ->orderBy('id', 'DESC')
                                     ->paginate($limit);
-    
-        \Log::info('Reservations Data:', $reservations->toArray());
-    
+
+        // $reservations->getCollection()->transform(function ($reservation) use ($today) {
+        //     if ($reservation->cid == $today) {
+        //         $reservation->status = 'Arrival';
+        //     } elseif ($reservation->cod == $today) {
+        //         $reservation->status = 'Departure';
+        //     } else {
+        //         $reservation->status = 'Pending';
+        //     }
+        //     return $reservation;
+        // });
+
         return response()->json($reservations);
     }
+
     
     
     
@@ -125,6 +134,8 @@ class NewReservationController extends Controller
            
             if (in_array($request->hookup, $rvSiteClasses)) {
                 $tier = RateTier::where('tier', $request->hookup)->first();
+            } else if ($request->hookup === 'No Hookup') {
+                $tier = RateTier::where('tier', 'NOHU')->first();
             } else {
                 return response()->json(['error' => 'Invalid hookup type selected'], 400);
             }

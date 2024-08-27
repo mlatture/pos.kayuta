@@ -10,7 +10,6 @@
 
 @section('content')
     <style>
-        /* Base styles for datepicker and dialog */
         .ui-datepicker {
             font-family: Arial, sans-serif;
             border: 1px solid #ddd;
@@ -106,6 +105,70 @@
                 font-size: 16px;
             }
         }
+
+        .table th,
+        .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .form-select {
+            appearance: none;
+            padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+
+        .pagination-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .pagination-links a {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            color: #007bff;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            background: #fff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .pagination-links a:hover {
+            background: #007bff;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .pagination-links a.disabled {
+            color: #6c757d;
+            pointer-events: none;
+            border-color: #ddd;
+            background: #f8f9fa;
+        }
+
+        .pagination-links span {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            color: #6c757d;
+            border: 1px solid #ddd;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            background: #f8f9fa;
+        }
+
+        .pagination-links .active {
+            background: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
     </style>
 
     <header class="reservation__head bg-dark py-2">
@@ -113,8 +176,9 @@
             class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
             <div class="d-flex align-items-center gap-3">
 
-              
-              <a href="javacript:void(0)" class="text-white"  data-bs-toggle="collapse" data-bs-target="#collapseExample"    aria-expanded="false" aria-controls="collapseExample"> Add Customer</a>
+
+                <a href="javacript:void(0)" class="text-white" data-bs-toggle="collapse" data-bs-target="#collapseExample"
+                    aria-expanded="false" aria-controls="collapseExample"> Add Customer</a>
                 <a href="javacript:void(0)" class="text-white" id="openDatePicker">Select Date Range</a>
             </div>
             <div>
@@ -167,77 +231,94 @@
             <button type="button" class="btn btn-success" id="saveCustomer">Save</button>
         </div>
     </div>
-    {{--    
-    <div id="calendar"></div> --}}
 
-    <div class="overflow-auto mt-3">
+    <div class="container mt-4">
         <div class="row">
+            <!-- Paid Customers Section -->
             <div class="col-md-6">
-                <div class="container" style="height: 100%;">
-                    <h5>Paid Customers</h5>
-                    <select id="limitSelector">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Paid Customers</h5>
 
-                    <div style="height: 400px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table align-middle mb-0 bg-white" id="reservationTable" style="table-layout: fixed;">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th style="width: 200px;">Name</th>
-                                    <th style="width: 200px;">Site</th>
-                                    <th style="width: 200px;">Type</th>
-                                    <th style="width: 200px;">Check In Date</th>
-                                    <th style="width: 200px;">Check Out Date</th>
-                                    <th style="width: 200px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
                     </div>
+                    <div class="card-body">
 
-                    <div id="paginationLinks"></div>
+
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <label for="limitSelector" class="form-label">Show:</label>
+                            <select id="limitSelector" class="form-select w-auto">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                        <div style="height: 400px; overflow-y: auto;">
+                            <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="min-width: 150px;">Name</th>
+                                        <th style="min-width: 150px;">Site</th>
+                                        <th style="min-width: 150px;">Type</th>
+                                        <th style="min-width: 150px;">Check In Date</th>
+                                        <th style="min-width: 150px;">Check Out Date</th>
+                                        <th style="min-width: 100px;">Status</th>
+                                        <th style="min-width: 100px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="paginationLinks" class="pagination-links mt-3 text-center"></div>
+                    </div>
                 </div>
             </div>
 
             <div class="col-md-6">
-
-                <div class="container" style="height: 100%;">
-                    <h5>Not Reserve Customer</h5>
-                    <select id="limitSelectorNotReserve">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-
-                    <div style="height: 400px; overflow-y: auto; overflow-x: auto;">
-                        <table class="table align-middle mb-0 bg-white" id="notReserveTable" style="table-layout: fixed;">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th style="width: 200px;">Name</th>
-                                    <th style="width: 200px;">Site</th>
-                                    <th style="width: 200px;">Type</th>
-                                    <th style="width: 200px;">Check In Date</th>
-                                    <th style="width: 200px;">Check Out Date</th>
-                                    <th style="width: 200px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Not Reserve Customers</h5>
                     </div>
+                    <div class="card-body">
 
-                    <div id="paginationLinks1"></div>
+
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <label for="limitSelectorNotReserve" class="form-label">Show:</label>
+                            <select id="limitSelectorNotReserve" class="form-select w-auto">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+
+                        <div style="height: 400px; overflow-y: auto;">
+                            <table class="table table-striped table-hover align-middle mb-0" id="notReserveTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="min-width: 150px;">Name</th>
+                                        <th style="min-width: 150px;">Site</th>
+                                        <th style="min-width: 150px;">Type</th>
+                                        <th style="min-width: 150px;">Check In Date</th>
+                                        <th style="min-width: 150px;">Check Out Date</th>
+                                        <th style="min-width: 100px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="paginationLinks1" class="pagination-links mt-3 text-center"></div>
+                    </div>
                 </div>
             </div>
-
-
         </div>
-
     </div>
 
 
