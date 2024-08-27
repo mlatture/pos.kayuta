@@ -37,19 +37,10 @@ class NewReservationController extends Controller
         $today = now()->toDateString();
 
         $reservations = Reservation::whereIn('cartid', $paymentCartIds)
-                                    ->orderBy('id', 'DESC')
-                                    ->paginate($limit);
+            ->orderBy('id', 'DESC')
+            ->paginate($limit);
 
-        // $reservations->getCollection()->transform(function ($reservation) use ($today) {
-        //     if ($reservation->cid == $today) {
-        //         $reservation->status = 'Arrival';
-        //     } elseif ($reservation->cod == $today) {
-        //         $reservation->status = 'Departure';
-        //     } else {
-        //         $reservation->status = 'Pending';
-        //     }
-        //     return $reservation;
-        // });
+
 
         return response()->json($reservations);
     }

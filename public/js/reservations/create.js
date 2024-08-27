@@ -56,6 +56,10 @@ $('#submitReservations').click(function() {
             $('.firstpage-modal').show();
             $('#nextInfo').show();
             $('#closeModal').show();
+            setTimeout(function() {
+                window.location.reload();
+
+            }, 1000);
         },
         error: function(xhr){
             if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -81,7 +85,11 @@ $("#payBtn").click(function(){
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response){
+            toastr.options.timeOut = 3000;
             toastr.success('Payment added successfully');
+            setTimeout(function() {
+                window.location.href = "/admin/reservations";
+            }, 1000);
         },
         error: function(xhr){
             if (xhr.responseJSON && xhr.responseJSON.errors) {
