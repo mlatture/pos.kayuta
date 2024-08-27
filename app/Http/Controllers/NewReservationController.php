@@ -34,17 +34,14 @@ class NewReservationController extends Controller
     {
         $limit = $request->input('limit', 10);
         $paymentCartIds = Payment::pluck('cartid')->toArray();
-        $today = now()->toDateString();
-
         $reservations = Reservation::whereIn('cartid', $paymentCartIds)
-            ->orderBy('id', 'DESC')
-            ->paginate($limit);
-
-
-
+                                    ->orderBy('id', 'DESC')
+                                    ->paginate($limit);
+        
+        
+    
         return response()->json($reservations);
     }
-
     
     
     
@@ -354,7 +351,9 @@ class NewReservationController extends Controller
                 //     // $this->cartReservation->deleteById($cart->cartid);
                 // }
         
-                return response()->json(['success' => true, 'reservation_ids' => $reservationIds]);
+                return response()->json(['success' => true]);
+
+                // return response()->json(['success' => true, 'reservation_ids' => $reservationIds]);
             } else {
                 return redirect()->back()->with('error', 'Unexpected response from payment gateway.');
             }
