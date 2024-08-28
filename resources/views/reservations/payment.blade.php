@@ -65,7 +65,9 @@
     }
 </style>
 @endpush
-
+@php
+    use Illuminate\Support\Facades\Request;
+@endphp
 <div class="overflow-auto ">
     <header class="invoice-header">
         <h4>Invoice</h4>
@@ -95,7 +97,12 @@
                         <td>5</td>
                         <td>0</td>
                         <td>{{ $reservation->pets ?? 0 }}</td>
-                        <td>{{ $reservation->description }}</td>
+                        @if(Request::is('admin/reservations/invoice/*'))
+                            <td>{{ $cart->description }}</td>
+                        @else 
+                            <td>{{ $reservation->description }}</td>
+
+                        @endif
                         <td>${{ number_format($reservation->subtotal, 2) }}</td>
                     </tr>
                     <tr class="total-row">
@@ -114,8 +121,18 @@
                     <tr class="total-row">
                         <td colspan="7"></td>
                         <td class="text-end">Total Payments</td>
-                        <td>${{ number_format($reservation->total, 2) }}</td>
+                        <td >${{ number_format($reservation->total, 2) }}</td>
                     </tr>
+                  
+                    @if (Request::is('admin/reservations/invoice/*'))
+                        @php   $balance = $reservation->total - $payment->payment; @endphp
+                        <tr class="total-row">
+                            <td colspan="7"></td>
+                            <td class="text-end">Balance </td>
+                            <td >${{ number_format($balance, 2) }}</td>
+                        </tr>
+                    @endif
+                   
                 </tbody>
             </table>
         </div>
@@ -128,17 +145,42 @@
             <div class="form-row mb-3">
                 <div class="col">
                     <div class="form-group">
-                        <label for="adults">Transaction Type</label>
+                        <label for="">Transaction Type</label>
                         <select name="transactionType" id="transactionType" class="form-control">
                             <option value="" selected disabled>Select Transaction Type</option>
                             <option value="Cash">Cash</option>
+                            <option value="Check">Check</option>
+                            <option value="Credit Card - Manual">Credit Card - Manual</option>
                             <option value="Credit Card">Credit Card</option>
+                            <option value="Gift Card">Gift Card</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
                
             </div>
-            <div class="form-row mb-3" id="creditcard"  style="display: none;">
+            <div class="form-row mb-3">
+                <div class="col">
+                    <div class="form-group ">
+                        <label for="">Total Amount</label>
+                        @if(Request::is('admin/reservations/invoice/*'))
+                            <input class="form-control" type="text" name="xBalance" id="xAmount" value="{{ number_format($balance, 2) }}" readonly>
+
+                        @else 
+                            <input class="form-control" type="text" name="xAmount" id="xAmount" value="{{ number_format( $reservation->total, 2) }}" readonly>
+
+                        @endif
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group ">
+                        <label for="">Description</label>
+                        <input class="form-control" type="text" name="description" id="">
+                    </div>
+                </div>
+
+            </div>
+            <div class="form-row mb-3" id="creditcard-manual"  style="display: none;">
                 <div class="col-md-6">
                     <div class="form-group ">
                         <input type="text" maxlength="16" name="xCardNum" id="xCardNum" required
@@ -150,23 +192,46 @@
                         <input type="text" name="xExp" id="xExp" required
                             class="form-control" placeholder="Expiration:" maxlength="5">
                     </div>
-                    <input type="hidden" name="xAmount" id="xAmount" value="{{ $reservation->total }}">
 
                 </div>
             </div>
             <div class="form-row mb-3" id="cash" style="display: none;">
                 <div class="col">
                     <div class="form-group ">
-                        <input type="text"  name="xCash" id="xCash" required
+                        <label for="">Amount Tendered</label>
+                        <input type="number"  name="xCash" id="xCash" required
                             class="form-control" placeholder="Cash:">
                     </div>
+
                 </div>
-               
+                <div class="col">
+                    <div class="form-group ">
+                        <label for="">Change Due</label>
+                        <input type="text"  id="xChange" readoly
+                            class="form-control" placeholder="Change Due:">
+                    </div>
+                </div>
             </div>
+
+            <div class="form-row mb-3" id="check" style="display: none;">
+                <div class="col">
+                    <div class="form-group ">
+                        <label for="">Check Number</label>
+                        <input type="text"  name="xCheckNum" id="xCheck" required
+                            class="form-control" placeholder="Check Number:">
+                    </div>
+                </div>
+            </div>
+          
+
             <input type="hidden"  name="cartid" value="{{ $reservation->cartid }}">
             <input type="hidden"  name="id" value="{{ $reservation->id }}">
             <div class="form-row d-flex justify-content-end mr-1">
-                <div class="btn btn-success " id="payBtn">Pay</div>
+                @if(Request::is('admin/reservations/invoice/*'))
+                    <div class="btn btn-success " id="payBalance"><i class="fa-solid fa-money-bill-transfer"></i> Process</div>
+                @else 
+                    <div class="btn btn-success " id="payBtn"><i class="fa-solid fa-money-bill-transfer"></i> Process</div>
+                @endif
             </div>
         </div>
     </form>

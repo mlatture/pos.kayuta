@@ -232,13 +232,13 @@
         </div>
     </div>
 
-    <div class="container mt-4">
+    <div class="container-fluid mt-4">
         <div class="row">
             <!-- Paid Customers Section -->
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
+            <div class="col-md-8">
+                <div class="card shadow-sm w-100 h-100">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Paid Customers</h5>
+                        <h5 class="card-title mb-0">Confirmed Customers</h5>
 
                     </div>
                     <div class="card-body">
@@ -278,10 +278,10 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Not Reserve Customers</h5>
+                        <h5 class="card-title mb-0">Non-Reserved Customers</h5>
                     </div>
                     <div class="card-body">
 
@@ -302,10 +302,10 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th style="min-width: 150px;">Name</th>
-                                        <th style="min-width: 150px;">Site</th>
+                                        {{-- <th style="min-width: 150px;">Site</th>
                                         <th style="min-width: 150px;">Type</th>
                                         <th style="min-width: 150px;">Check In Date</th>
-                                        <th style="min-width: 150px;">Check Out Date</th>
+                                        <th style="min-width: 150px;">Check Out Date</th> --}}
                                         <th style="min-width: 100px;">Actions</th>
                                     </tr>
                                 </thead>

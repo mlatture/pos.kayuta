@@ -79,15 +79,12 @@ $(document).ready(function () {
                             <td><span class="${statusClass} rounded p-2">${dateStatus}</span></td>
                             <td>
                                 <div class="">
-                                    <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-eye" style="color: #74C0FC;"></i>
-                                    </a>
-                                    <a href="javascript:void(0)" onclick="openReservationModal(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-pen-to-square" style="color: #74C0FC;"></i>
-                                    </a>
-                                    <a href="javascript:void(0)" onclick="deleteReservation(${item.id})" class="m-2">
-                                        <i class="fa-solid fa-trash" style="color: #ff3d3d;"></i>
-                                    </a>
+                              
+                              
+                                    <div class="btn btn-info" type="button" id="viewInvoice" data-id="${item.cartid}">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </div>
+                             
                                 </div>
                             </td>
                         </tr>
@@ -141,17 +138,13 @@ $(document).ready(function () {
                     tableBody.append(`
                         <tr>
                             <td>${item.first_name} ${item.last_name}</td>
-                            <td>${item.siteid}</td>
-                            <td>${item.siteclass}</td>
-                            <td>${cid}</td>
-                            <td>${cod}</td>
+                        
                          
                             <td>
                                 <div class="">
                                     
                                     <div class="btn btn-info" data-id="${item.id}" type="submit" id="paymentbtn">
                                         <i class="fa-solid fa-hand-holding-dollar"></i>
-
                                     </div>
 
                                 </div>

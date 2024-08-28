@@ -70,7 +70,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
-
+    Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
