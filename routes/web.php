@@ -60,7 +60,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
     Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
 
-    //Reservation Modal
+    //Reservations
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);
     Route::get('/getsiteclasses', [NewReservationController::class, 'getSiteClasses']);
@@ -71,6 +71,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
+    Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');

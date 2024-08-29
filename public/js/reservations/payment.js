@@ -22,12 +22,16 @@ $(document).ready(function(){
             $("#check").show();
             $("#creditcard-manual").hide();
             $("#cash").hide();
-        }else if($(this).val() == "Credit Card - Manual"){
+        }else if($(this).val() == "Manual"){
             
             $("#creditcard-manual").show();
             $("#check").hide();
             $("#cash").hide();
-        } else {
+        } else if($(this).val() == 'Other'){
+            $("#creditcard-manual").hide();
+            $("#check").hide();
+            $("#cash").hide();
+        }else {
             $("#creditcard-manual").show();
         }
     })

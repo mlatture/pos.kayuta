@@ -150,7 +150,7 @@
                             <option value="" selected disabled>Select Transaction Type</option>
                             <option value="Cash">Cash</option>
                             <option value="Check">Check</option>
-                            <option value="Credit Card - Manual">Credit Card - Manual</option>
+                            <option value="Manual">Credit Card - Manual</option>
                             <option value="Credit Card">Credit Card</option>
                             <option value="Gift Card">Gift Card</option>
                             <option value="Other">Other</option>
@@ -161,7 +161,7 @@
             </div>
             <div class="form-row mb-3">
                 <div class="col">
-                    <div class="form-group ">
+                    <div class="form-group " id="totalAmount">
                         <label for="">Total Amount</label>
                         @if(Request::is('admin/reservations/invoice/*'))
                             <input class="form-control" type="text" name="xBalance" id="xAmount" value="{{ number_format($balance, 2) }}" readonly>
@@ -213,15 +213,8 @@
                 </div>
             </div>
 
-            <div class="form-row mb-3" id="check" style="display: none;">
-                <div class="col">
-                    <div class="form-group ">
-                        <label for="">Check Number</label>
-                        <input type="text"  name="xCheckNum" id="xCheck" required
-                            class="form-control" placeholder="Check Number:">
-                    </div>
-                </div>
-            </div>
+          
+
           
 
             <input type="hidden"  name="cartid" value="{{ $reservation->cartid }}">
