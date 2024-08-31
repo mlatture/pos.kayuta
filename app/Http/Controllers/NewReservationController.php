@@ -128,15 +128,15 @@ class NewReservationController extends Controller
             $tier = RateTier::where('tier', $request->siteclass)->first();
         }
 
-        if(!$tier){
+        if (!$tier) {
             return response()->json(['error' => 'Rate tier not found'], 400);
         }
 
-        if($numberOfNights === 30){
+        if ($numberOfNights === 30) {
             $rate = $tier->monthlyrate;
-        } elseif($numberOfNights === 7){
+        } elseif ($numberOfNights === 7) {
             $rate = $tier->weeklyrate;
-        } elseif($numberOfNights === 1){
+        } elseif ($numberOfNights === 1) {
             $rates = [
                 'Sunday' => $tier->sundayrate,
                 'Monday' => $tier->mondayrate,
@@ -147,16 +147,16 @@ class NewReservationController extends Controller
                 'Saturday' => $tier->saturdayrate,
             ];
             $baseRate = 0;
-            for($i = 0; $i < $numberOfNights; $i++){
+            for ($i = 0; $i < $numberOfNights; $i++) {
                 $day = $fromDate->copy()->addDays($i)->format('l');
                 $baseRate += $rates[$day];
             }
-            
+
             $rate = $baseRate;
         } else {
             return response()->json(['error' => 'Invalid number of nights'], 400);
         }
-       
+
         $siteLockValue = $request->siteLock === 'on' ? 20 : 0;
         $subtotal = $rate + $siteLockValue;
         $taxRate = 0.0875;
@@ -206,92 +206,61 @@ class NewReservationController extends Controller
     {
         $cart_reservation = CartReservation::findOrFail($id);
         $customer = Customer::where('id', $cart_reservation->customernumber)->first();
-        $randomReceiptID = rand(0000, 10000); // Ensure the range is correct
-
-        if ($request->transactionType === 'Cash') {
-            // Handle Cash payment
-            $savepayment = new Payment();
-            $savepayment->cartid = $request->cartid;
-            $savepayment->receipt = $randomReceiptID;
-            $savepayment->method = $request->transactionType;
-            $savepayment->customernumber = $cart_reservation->customernumber;
-            $savepayment->description = $request->description ?? '';
-            $savepayment->checknumber = $request->xCheckNum ?? '';
-            $savepayment->email = $cart_reservation->email;
-            $savepayment->payment = $request->xCash;
-            $savepayment->save();
-
-            $savereservation = new Reservation();
-            $savereservation->fill([
-                'cartid' => $request->cartid,
-                'source' => 'Walk In',
-                'email' => $cart_reservation->email,
-                'fname' => $customer->first_name,
-                'lname' => $customer->last_name,
-                'customernumber' => $cart_reservation->customernumber,
-                'siteid' => $cart_reservation->siteid,
-                'cid' => $cart_reservation->cid,
-                'cod' => $cart_reservation->cod,
-                'total' => $cart_reservation->total,
-                'subtotal' => $cart_reservation->subtotal,
-                'taxrate' => $cart_reservation->taxrate,
-                'totaltax' => $cart_reservation->totaltax,
-                'siteclass' => $cart_reservation->siteclass,
-                'nights' => $cart_reservation->nights,
-                'base' => $cart_reservation->base,
-                'sitelock' => $cart_reservation->sitelock,
-                'rigtype' => $cart_reservation->hookups,
-                'riglength' => $cart_reservation->riglength,
-                'xconfnum' => 0,
-                'createdby' => 'Admin',
-                'receipt' => $savepayment->receipt,
-                'rateadjustment' => 0,
-                'rid' => 'uc',
-            ]);
-            $savereservation->save();
-
-            return response()->json(['success' => true]);
-        } elseif ($request->transactionType === 'Check') {
-            // Handle Check payment
-            $apiKey = config('services.cardknox.api_key');
-            $checkNumber = $request->input('xCheckNum');
-
-            $data = [
-                'xKey' => $apiKey,
-                'xVersion' => '4.5.5',
-                'xCommand' => 'cc:Sale',
-                'xAmount' => $cart_reservation->total,
-                'xCheckNum' => $checkNumber,
-                'xSoftwareVersion' => '1.0',
-                'xSoftwareName' => 'KayutaLake',
-            ];
-
-            $ch = curl_init('https://x1.cardknox.com/gateway');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-
-            $responseContent = curl_exec($ch);
-            curl_close($ch);
-
-            if ($responseContent === false) {
-                return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
-            }
-
-            $responseArray = json_decode($responseContent, true);
-
-            if (isset($responseArray['xResult']) && $responseArray['xResult'] === '00') {
+        $randomReceiptID = rand(0000, 10000);
+    
+        $token = $request->input('xToken');
+        $amount = $request->input('xAmount');
+        $apiKey = config('services.cardknox.api_key');
+        $cardNumber = $request->input('xCardNum');
+        $xExp = str_replace('/', '', $request->xExp);
+    
+        $data = [
+            'xKey' => $apiKey,
+            'xVersion' => '4.5.5',
+            'xCommand' => 'cc:Sale',
+            'xAmount' => $amount,
+            'xCardNum' => $cardNumber,
+            'xExp' => $xExp,
+            'xSoftwareVersion' => '1.0',
+            'xSoftwareName' => 'KayutaLake',
+        ];
+    
+        $data1 = [
+            'xKey' => $apiKey,
+            'xVersion' => '4.5.5',
+            'xCommand' => 'check:Sale',
+            'xAmount' => $amount,
+            'xAccount' => $cardNumber,
+            'xSoftwareVersion' => '1.0',
+            'xSoftwareName' => 'KayutaLake',
+        ];
+    
+        $data2 = [
+            'xKey' => $apiKey,
+            'xVersion' => '4.5.5',
+            'xCommand' => 'cc:Sale',
+            'xAmount' => $amount,
+            'xSoftwareVersion' => '1.0',
+            'xSoftwareName' => 'KayutaLake',
+        ];
+    
+        $paymentType = $request->paymentType;
+    
+        switch ($paymentType) {
+            case 'Cash':
+            case 'Other':
+                // Handle Cash payment and Other payment
                 $savepayment = new Payment();
                 $savepayment->cartid = $request->cartid;
                 $savepayment->receipt = $randomReceiptID;
-                $savepayment->method = $request->transactionType;
+                $savepayment->method = $paymentType;
                 $savepayment->customernumber = $cart_reservation->customernumber;
                 $savepayment->description = $request->description ?? '';
                 $savepayment->checknumber = $request->xCheckNum ?? '';
                 $savepayment->email = $cart_reservation->email;
-                $savepayment->payment = $cart_reservation->total ?? '';
+                $savepayment->payment = $request->xCash;
                 $savepayment->save();
-
+    
                 $savereservation = new Reservation();
                 $savereservation->fill([
                     'cartid' => $request->cartid,
@@ -320,129 +289,172 @@ class NewReservationController extends Controller
                     'rid' => 'uc',
                 ]);
                 $savereservation->save();
-
+    
                 return response()->json(['success' => true]);
-            } else {
-                return response()->json(
-                    [
-                        'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
-                    ],
-                    400,
-                );
-            }
-        } elseif ($request->transactionType === 'Manual') {
-            // Handle Manual credit card payment
-            $apiKey = config('services.cardknox.api_key');
-            $cardNumber = $request->input('xCardNum');
-            $xExp = str_replace('/', '', $request->xExp);
-
-            $data = [
-                'xKey' => $apiKey,
-                'xVersion' => '4.5.5',
-                'xCommand' => 'cc:Sale',
-                'xAmount' => $cart_reservation->total,
-                'xCardNum' => $cardNumber,
-                'xExp' => $xExp,
-                'xSoftwareVersion' => '1.0',
-                'xSoftwareName' => 'KayutaLake',
-            ];
-
-            $ch = curl_init('https://x1.cardknox.com/gateway');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-
-            $responseContent = curl_exec($ch);
-            curl_close($ch);
-
-            if ($responseContent === false) {
-                return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
-            }
-
-            parse_str($responseContent, $responseArray);
-
-            if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
-                $xAuthCode = $responseArray['xAuthCode'] ?? '';
-                $xToken = $responseArray['xToken'] ?? '';
-
-                $savepayment = new Payment();
-                $savepayment->cartid = $request->cartid;
-                $savepayment->receipt = $randomReceiptID;
-                $savepayment->method = $request->transactionType;
-                $savepayment->customernumber = $cart_reservation->customernumber;
-                $savepayment->email = $cart_reservation->email;
-                $savepayment->payment = $cart_reservation->total;
-                $savepayment->save();
-
-                $savereservation = new Reservation();
-                $savereservation->fill([
-                    'cartid' => $request->cartid,
-                    'source' => 'Walk In',
-                    'email' => $cart_reservation->email,
-                    'fname' => $customer->first_name,
-                    'lname' => $customer->last_name,
-                    'customernumber' => $cart_reservation->customernumber,
-                    'siteid' => $cart_reservation->siteid,
-                    'cid' => $cart_reservation->cid,
-                    'cod' => $cart_reservation->cod,
-                    'total' => $cart_reservation->total,
-                    'subtotal' => $cart_reservation->subtotal,
-                    'taxrate' => $cart_reservation->taxrate,
-                    'totaltax' => $cart_reservation->totaltax,
-                    'siteclass' => $cart_reservation->siteclass,
-                    'nights' => $cart_reservation->nights,
-                    'base' => $cart_reservation->base,
-                    'sitelock' => $cart_reservation->sitelock,
-                    'rigtype' => $cart_reservation->hookups,
-                    'riglength' => $cart_reservation->riglength,
-                    'xconfnum' => $xAuthCode,
-                    'createdby' => 'Admin',
-                    'receipt' => $savepayment->receipt,
-                    'rateadjustment' => 0,
-                    'rid' => 'uc',
-                ]);
-                $savereservation->save();
-
-                return response()->json(['success' => true, 'Payment Process' => $responseArray]);
-            } else {
-                // Log the full response for debugging
-                Log::error('Payment failed', ['response' => $responseArray]);
-                return response()->json(
-                    [
-                        'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unexpected error occurred.'),
-                    ],
-                    400,
-                );
-            }
-        } elseif ($request->transactionType === 'Other') {
-            
+    
+            case 'Check':
+                $ch = curl_init('https://x1.cardknox.com/gateway');
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data1));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+                $responseContent = curl_exec($ch);
+                curl_close($ch);
+    
+                if ($responseContent === false) {
+                    return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+                }
+    
+                $responseArray = json_decode($responseContent, true);
+    
+                if (isset($responseArray['xResult']) && $responseArray['xResult'] === '00') {
+                    $savepayment = new Payment();
+                    $savepayment->cartid = $request->cartid;
+                    $savepayment->receipt = $randomReceiptID;
+                    $savepayment->method = $paymentType;
+                    $savepayment->customernumber = $cart_reservation->customernumber;
+                    $savepayment->description = $request->description ?? '';
+                    $savepayment->checknumber = $request->xCheckNum ?? '';
+                    $savepayment->email = $cart_reservation->email;
+                    $savepayment->payment = $cart_reservation->total ?? '';
+                    $savepayment->save();
+    
+                    $savereservation = new Reservation();
+                    $savereservation->fill([
+                        'cartid' => $request->cartid,
+                        'source' => 'Walk In',
+                        'email' => $cart_reservation->email,
+                        'fname' => $customer->first_name,
+                        'lname' => $customer->last_name,
+                        'customernumber' => $cart_reservation->customernumber,
+                        'siteid' => $cart_reservation->siteid,
+                        'cid' => $cart_reservation->cid,
+                        'cod' => $cart_reservation->cod,
+                        'total' => $cart_reservation->total,
+                        'subtotal' => $cart_reservation->subtotal,
+                        'taxrate' => $cart_reservation->taxrate,
+                        'totaltax' => $cart_reservation->totaltax,
+                        'siteclass' => $cart_reservation->siteclass,
+                        'nights' => $cart_reservation->nights,
+                        'base' => $cart_reservation->base,
+                        'sitelock' => $cart_reservation->sitelock,
+                        'rigtype' => $cart_reservation->hookups,
+                        'riglength' => $cart_reservation->riglength,
+                        'xconfnum' => 0,
+                        'createdby' => 'Admin',
+                        'receipt' => $savepayment->receipt,
+                        'rateadjustment' => 0,
+                        'rid' => 'uc',
+                    ]);
+                    $savereservation->save();
+    
+                    return response()->json(['success' => true]);
+    
+                } else {
+                    return response()->json(
+                        [
+                            'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+                        ],
+                        400,
+                    );
+                }
+    
+            case 'Manual':
+                $ch = curl_init('https://x1.cardknox.com/gateway');
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+                $responseContent = curl_exec($ch);
+                curl_close($ch);
+    
+                if ($responseContent === false) {
+                    return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+                }
+    
+                parse_str($responseContent, $responseArray);
+    
+                if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+                    $xAuthCode = $responseArray['xAuthCode'] ?? '';
+                    $xToken = $responseArray['xToken'] ?? '';
+    
+                    $savepayment = new Payment();
+                    $savepayment->cartid = $request->cartid;
+                    $savepayment->receipt = $randomReceiptID;
+                    $savepayment->method = $paymentType;
+                    $savepayment->customernumber = $cart_reservation->customernumber;
+                    $savepayment->email = $cart_reservation->email;
+                    $savepayment->payment = $cart_reservation->total;
+                    $savepayment->save();
+    
+                    $savereservation = new Reservation();
+                    $savereservation->fill([
+                        'cartid' => $request->cartid,
+                        'source' => 'Walk In',
+                        'email' => $cart_reservation->email,
+                        'fname' => $customer->first_name,
+                        'lname' => $customer->last_name,
+                        'customernumber' => $cart_reservation->customernumber,
+                        'siteid' => $cart_reservation->siteid,
+                        'cid' => $cart_reservation->cid,
+                        'cod' => $cart_reservation->cod,
+                        'total' => $cart_reservation->total,
+                        'subtotal' => $cart_reservation->subtotal,
+                        'taxrate' => $cart_reservation->taxrate,
+                        'totaltax' => $cart_reservation->totaltax,
+                        'siteclass' => $cart_reservation->siteclass,
+                        'nights' => $cart_reservation->nights,
+                        'base' => $cart_reservation->base,
+                        'sitelock' => $cart_reservation->sitelock,
+                        'rigtype' => $cart_reservation->hookups,
+                        'riglength' => $cart_reservation->riglength,
+                        'xconfnum' => 0,
+                        'createdby' => 'Admin',
+                        'receipt' => $savepayment->receipt,
+                        'rateadjustment' => 0,
+                        'rid' => 'uc',
+                    ]);
+                    $savereservation->save();
+    
+                    return response()->json(['success' => true]);
+                } else {
+                    return response()->json(
+                        [
+                            'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+                        ],
+                        400,
+                    );
+                }
+    
+            default:
+                return response()->json(['message' => 'Invalid payment type.'], 400);
         }
     }
+    
 
     public function payBalance(Request $request, $cartid)
     {
+        $apiKey = config('services.cardknox.api_key');
+        $cardNumber = $request->input('xCardNum');
+        $xExp = str_replace('/', '', $request->xExp);
+
+        $data = [
+            'xKey' => $apiKey,
+            'xVersion' => '4.5.5',
+            'xCommand' => 'cc:Sale',
+            'xAmount' => $request->xBalance,
+            'xCardNum' => $cardNumber,
+            'xExp' => $xExp,
+            'xSoftwareVersion' => '1.0',
+            'xSoftwareName' => 'KayutaLake',
+        ];
+
         $payment = Payment::where('cartid', $cartid)->firstOrFail();
-        if($request->transactionType === 'Cash'){       
+        if ($request->paymentType === 'Cash' || $request->paymentType === 'Other') {
             $payment->payment += $request->xCash;
             $payment->save();
             return response()->json(['success' => true]);
-
-        }elseif($request->transactionType === 'Manual'){
-            $apiKey = config('services.cardknox.api_key');
-            $cardNumber = $request->input('xCardNum');
-            $xExp = str_replace('/', '', $request->xExp);
-
-            $data = [
-                'xKey' => $apiKey,
-                'xVersion' => '4.5.5',
-                'xCommand' => 'cc:Sale',
-                'xAmount' => $request->xBalance,
-                'xCardNum' => $cardNumber,
-                'xExp' => $xExp,
-                'xSoftwareVersion' => '1.0',
-                'xSoftwareName' => 'KayutaLake',
-            ];
-
+        } elseif ($request->paymentType === 'Manual') {
             $ch = curl_init('https://x1.cardknox.com/gateway');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
@@ -471,7 +483,5 @@ class NewReservationController extends Controller
                 );
             }
         }
-
-        
     }
 }

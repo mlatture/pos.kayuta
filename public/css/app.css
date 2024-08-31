@@ -13184,7 +13184,6 @@ body.sidebar-collapse:not(.sidebar-mini-xs):not(.sidebar-mini-md):not(.sidebar-m
     body:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav)
         .main-header {
         transition: margin-left 0.3s ease-in-out;
-        margin-left: 250px;
     }
 }
 @media (min-width: 768px) and (prefers-reduced-motion: reduce) {
@@ -13225,7 +13224,7 @@ body.sidebar-collapse:not(.sidebar-mini-xs):not(.sidebar-mini-md):not(.sidebar-m
     .sidebar-mini-md .main-footer,
     .sidebar-mini-md .main-header {
         transition: margin-left 0.3s ease-in-out;
-        margin-left: 250px;
+        
     }
 }
 @media (min-width: 768px) and (prefers-reduced-motion: reduce) {
@@ -13261,7 +13260,6 @@ body.sidebar-collapse:not(.sidebar-mini-xs):not(.sidebar-mini-md):not(.sidebar-m
     .sidebar-mini-xs .main-footer,
     .sidebar-mini-xs .main-header {
         transition: margin-left 0.3s ease-in-out;
-        margin-left: 250px;
     }
 }
 @media (min-width: 768px) and (prefers-reduced-motion: reduce) {
@@ -60048,7 +60046,6 @@ a.text-muted:hover {
 .dark-mode .dark-mode.accent-gray-dark .page-item .page-link:hover {
     color: #3f474e;
 }
-@charset "UTF-8";
 
 /*!
  * Font Awesome Free 5.15.3 by @fontawesome - https://fontawesome.com

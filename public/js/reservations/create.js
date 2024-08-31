@@ -71,10 +71,12 @@ $('#submitReservations').click(function() {
     });
 });
 
-$("#payBtn").click(function() {
+function sendPaymentRequest() {
     var formDataPayment = new FormData($('#paymentchoices')[0]);
     var reservationId = $('input[name="id"]').val(); 
-    
+
+    showLoader();
+
     $.ajax({
         url: '/admin/reservations/payment/' + reservationId + '/postpayment',
         type: 'POST',
@@ -86,31 +88,52 @@ $("#payBtn").click(function() {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response) {
-            toastr.options.timeOut = 3000;
-            toastr.success('Payment added successfully');
-            setTimeout(function() {
-                window.location.href = "/admin/reservations";
-            }, 1000);
+            hideLoader();
+            if (response.success) {
+                toastr.options.timeOut = 3000;
+                toastr.success('Payment added successfully');
+                setTimeout(function() {
+                    window.location.href = "/admin/reservations";
+                }, 1000);
+            } else {
+                toastr.error(response.message || 'Payment failed');
+            }
         },
         error: function(xhr) {
-         
-            if (xhr.responseJSON) {
-                if (xhr.responseJSON.errors) {
-                    $.each(xhr.responseJSON.errors, function(key, value) {
-                        toastr.error(value[0]); 
-                    });
-                } else if (xhr.responseJSON.message) {
-                    toastr.error(xhr.responseJSON.message);
-                } else {
-                    toastr.error('An unexpected error occurred.');
-                }
-            } else {
-                toastr.error('An unexpected error occurred.');
-            }
+            hideLoader();
+            handleError(xhr);
         }
     });
-});
+}
 
+$("#payBtn").click(sendPaymentRequest);
+
+function showLoader() {
+    
+    $('#loader').show();
+}
+
+function hideLoader() {
+   
+    $('#loader').hide();
+}
+
+
+function handleError(xhr) {
+    if (xhr.responseJSON) {
+        if (xhr.responseJSON.errors) {
+            $.each(xhr.responseJSON.errors, function(key, value) {
+                toastr.error(value[0]); 
+            });
+        } else if (xhr.responseJSON.message) {
+            toastr.error(xhr.responseJSON.message);
+        } else {
+            toastr.error('An unexpected error occurred.');
+        }
+    } else {
+        toastr.error('An unexpected error occurred.');
+    }
+}
 $("#payBalance").click(function(){
     var formDataPayment = new FormData($('#paymentchoices')[0]);
     var cartId = $('input[name="cartid"]').val(); 
@@ -150,3 +173,49 @@ $("#payBalance").click(function(){
         }
     })
 })
+
+
+$("#startTerminalTransaction").click(function() {
+    TerminalSDK.startTransaction({
+        amount: $('input[name="xAmount"]').val(),
+        onSuccess: function(response) {
+            $.ajax({
+                url: '/admin/reservations/invoice/' + $('input[name="cartid"]').val() + '/paybalance',
+                type: 'POST',
+                data: {
+                    transactionType: 'Terminal',
+                    xToken: response.token, 
+                    xAmount: response.amount,
+                    cartid: $('input[name="cartid"]').val(),
+                    id: $('input[name="id"]').val(),
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    toastr.options.timeOut = 3000;
+                    toastr.success('Payment added successfully');
+                    setTimeout(function() {
+                        window.location.href = "/admin/reservations";
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            $.each(xhr.responseJSON.errors, function(key, value) {
+                                toastr.error(value[0]);
+                            });
+                        } else if (xhr.responseJSON.message) {
+                            toastr.error(xhr.responseJSON.message);
+                        } else {
+                            toastr.error('An unexpected error occurred.');
+                        }
+                    } else {
+                        toastr.error('An unexpected error occurred.');
+                    }
+                }
+            });
+        },
+        onError: function(error) {
+            toastr.error('Terminal transaction failed: ' + error.message);
+        }
+    });
+});

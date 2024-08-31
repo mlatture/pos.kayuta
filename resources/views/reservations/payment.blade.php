@@ -147,11 +147,23 @@
                     <div class="form-group">
                         <label for="">Transaction Type</label>
                         <select name="transactionType" id="transactionType" class="form-control">
-                            <option value="" selected disabled>Select Transaction Type</option>
+                           <option value="" selected disabled>Select Transaction Type</option>
+                            <option value="Full">Full Payment</option>
+                            <option value="Partial">Partial Payment</option>
+
+                        </select>
+                    </div>
+                </div>
+               
+                <div class="col">
+                    <div class="form-group">
+                        <label for="">Payment Type</label>
+                        <select name="paymentType" id="paymentType" class="form-control">
+                            <option value="" selected disabled>Select Payment Type</option>
                             <option value="Cash">Cash</option>
                             <option value="Check">Check</option>
                             <option value="Manual">Credit Card - Manual</option>
-                            <option value="Credit Card">Credit Card</option>
+                            <option value="Terminal">Credit Card</option>
                             <option value="Gift Card">Gift Card</option>
                             <option value="Other">Other</option>
                         </select>
@@ -195,6 +207,15 @@
 
                 </div>
             </div>
+            {{-- <div class="form-row mb-3" id="check"  style="display: none;">
+                <div class="col-md-6">
+                    <div class="form-group ">
+                        <input type="text"  name="xCheck" id="xCheck" required
+                            class="form-control" placeholder="Check Number:">
+                    </div>
+                </div>
+                
+            </div> --}}
             <div class="form-row mb-3" id="cash" style="display: none;">
                 <div class="col">
                     <div class="form-group ">
@@ -212,8 +233,22 @@
                     </div>
                 </div>
             </div>
+            <div class="form-row mb-3" id="creditcard-terminal" style="display: none;">
+                <div class="col-md-12">
+                    <div class="form-group">
+                            <h2>
+                                Start Terminal Transaction
+                            </h2>
+                    </div>
+                </div>
+            </div>
 
-          
+            <div id="loader" style="display:none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p>Waiting for card insertion...</p>
+            </div>
 
           
 
@@ -228,5 +263,6 @@
             </div>
         </div>
     </form>
+   
 </div>
 @endsection
