@@ -99,19 +99,21 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request)
     {
-        $image_path = '';
-
+        $filename = '';
+    
         if ($request->hasFile('image')) {
+           
             $image_path = $request->file('image')->store('products', 'public');
+            $filename = basename($image_path);
         }
-
+    
         $product = Product::create([
             'organization_id' => auth()->user()->organization_id,
             'category_id'   =>  $request->category_id ?? 0,
             'tax_type_id'   =>  $request->tax_type_id ?? 0,
             'name'          =>  $request->name,
             'description'   =>  $request->description,
-            'image'         =>  $image_path,
+            'image'         =>  $filename,
             'barcode'       =>  $request->barcode,
             'price'         =>  $request->price,
             'quantity'      =>  $request->quantity,
@@ -122,12 +124,13 @@ class ProductController extends Controller
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
         ]);
-
+    
         if (!$product) {
             return redirect()->back()->with('error', 'Sorry, Something went wrong while creating product.');
         }
         return redirect()->route('products.index')->with('success', 'Success, New product has been added successfully!');
     }
+    
 
 
     /**
@@ -186,13 +189,10 @@ class ProductController extends Controller
         // $product->tax           =   $request->tax;
 
         if ($request->hasFile('image')) {
-            // Delete old image
             if ($product->image) {
                 Storage::delete($product->image);
             }
-            // Store image
             $image_path = $request->file('image')->store('products', 'public');
-            // Save to Database
             $product->image = $image_path;
         }
 

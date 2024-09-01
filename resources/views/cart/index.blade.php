@@ -6,7 +6,7 @@
     <link href="{!! asset('plugins/toast-master/css/jquery.toast.css') !!}" rel="stylesheet">
     <style>
         .nav-tabs .nav-link.active {
-            background-color:  #EFC368;
+            background-color: #EFC368;
             color: #fff;
             outline: none;
             border-radius: .25rem;
@@ -51,39 +51,6 @@
             margin: 0;
             font-size: 10px;
             text-align: center;
-        }
-
-
-
-
-        .item img {
-            width: 10px;
-            max-height: 80px;
-            object-fit: cover;
-        }
-
-        .order-product {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .order-product .item {
-            flex: 1 1 calc(10.333% - 10px);
-
-            margin-bottom: 15px;
-        }
-
-        .order-product .item h5 {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .form-control {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: .25rem;
-            color: #000;
         }
     </style>
 @endpush
@@ -228,39 +195,71 @@
                             </div>
                         </ul>
                         <div class="tab-content mt-2" id="myTabContent">
-                        <div class="tab-pane fade show active" id="quick" role="tabpanel"
-                            aria-labelledby="quick-tab">
-                            <div class="order-product product-section">
-                                @foreach ($products as $product)
-                                    <div class="item product-item" data-barcode="{{ $product->barcode }}"
+                            <div class="tab-pane fade show active" id="quick" role="tabpanel"
+                                aria-labelledby="quick-tab">
+                                <div class="order-product product-section">
+
+                                    <div class="row">
+                                        @foreach ($products as $product)
+                                            <div class="col-md-3" style="cursor: pointer">
+                                                <div class="card product-item" data-barcode="{{ $product->barcode }}"
+                                                    data-id="{{ $product->id }}" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" data-bs-html="true"
+                                                    title="Product Name: {{ $product->name }}">
+                                                    <span
+                                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                        {{ $product->quantity < 0 ? 0 : $product->quantity }}
+                                                        <span class="visually-hidden">unread messages</span>
+                                                    </span>
+                                                    @php
+                                                        $imagePath = 'storage/products/' . $product->image;
+                                                        $fallbackImageUrl = 'images/product-thumbnail.jpg';
+                                                        $imageUrl = file_exists(public_path($imagePath)) ? asset($imagePath) : asset($fallbackImageUrl);
+                                                    @endphp
+                                                
+                                                <img src="{{ $imageUrl }}" class="rounded mx-auto d-block img-fluid" alt="Product Image">
+                                                
+
+
+                                                    <div class="card-body">
+                                                        <div class="btn-products-container">
+                                                            <p class="card-text t">{{ Str::limit($product->name, 5) }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    {{-- <div class="item product-item" data-barcode="{{ $product->barcode }}"
                                         data-id="{{ $product->id }}"><img src="{{ $product->image_url }}"
                                             class="rounded mx-auto d-block" alt="Product Image">
                                       <div class="btn-products-container">
                                         <h5>{{ Str::limit($product->name, 10) }}</h5>
                                       </div>
-                                    </div>
-                                @endforeach
+                                    </div> --}}
+                                </div>
                             </div>
-                        </div>
-                        <div class="tab-pane fade" id="catgories" role="tabpanel" aria-labelledby="catgories-tab">
-                            <div class="order-product  ">
-                                @foreach ($categories as $category)
-                                    <div class="item category-item" data-id="{{ $category->id }}"><img
-                                            src="{{ asset('images/product-thumbnail.jpg') }}"
-                                            class="rounded mx-auto d-block" alt="Product Image">
-                                        <div class="btn-products-container">
-                                            <h5>{{ Str::limit($category->name, 10) }} </h5>
+                            <div class="tab-pane fade" id="catgories" role="tabpanel" aria-labelledby="catgories-tab">
+                                <div class="order-product  ">
+                                    @foreach ($categories as $category)
+                                        <div class="item category-item" data-id="{{ $category->id }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="top"
+                                            title="{{ $category->name }}"><img
+                                                src="{{ asset('images/product-thumbnail.jpg') }}"
+                                                class="rounded mx-auto d-block" alt="Product Image">
+                                            <div class="btn-products-container">
+                                                <h5>{{ Str::limit($category->name, 10) }} </h5>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
+                            {{-- <div class="tab-pane fade" id="recent" role="tabpanel" aria-labelledby="recent-tab">...</div> --}}
                         </div>
-                        {{-- <div class="tab-pane fade" id="recent" role="tabpanel" aria-labelledby="recent-tab">...</div> --}}
                     </div>
                 </div>
-            </div>
 
-        </div>
+            </div>
         </div>
     </section>
 
@@ -272,6 +271,13 @@
     <script src="{!! asset('plugins/toast-master/js/jquery.toast.js') !!}"></script>
 
     <script>
+        // document.addEventListener('DOMContentLoaded', function () {
+        //     // Initialize all tooltips on the page
+        //     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        //     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        //         return new bootstrap.Tooltip(tooltipTriggerEl);
+        //     });
+        // });
         function limitText(text, maxLength) {
             if (text.length > maxLength) {
                 return text.substring(0, maxLength) + "..."; // Add ellipsis (...) to indicate the text has been truncated
@@ -740,7 +746,7 @@
                         if (products.length > 0) {
                             var html = '';
                             $.each(products, function(key, val) {
-                                console.log(val.barcode)
+
                                 html += `<div class="item product-item" data-barcode="${val.barcode}" data-id="${val.id}" ><img
                                             src="${val.image_url}" class="rounded mx-auto d-block"
                                             alt="Product Image">
