@@ -34,11 +34,29 @@ class NewReservationController extends Controller
     public function getReservations(Request $request)
     {
         $limit = $request->input('limit', 10);
+        $siteId = $request->input('siteId'); 
+        $type = $request->input('tier');
         $paymentCartIds = Payment::pluck('cartid')->toArray();
-        $reservations = Reservation::whereIn('cartid', $paymentCartIds)->orderBy('id', 'DESC')->paginate($limit);
-
+        
+        $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
+            ->whereIn('reservations.cartid', $paymentCartIds)
+            ->select('reservations.*', 'customers.phone', 'customers.address')
+            ->orderBy('reservations.id', 'DESC');
+        
+        if (!empty($siteId)) {
+            $reservationsQuery->where('siteid', $siteId);
+        }
+        
+        if (!empty($type)) {
+            $reservationsQuery->whereIn('siteclass', $type);
+        }
+        
+        $reservations = $reservationsQuery->paginate($limit);
+        
         return response()->json($reservations);
     }
+    
+    
 
     public function noCart(Request $request)
     {
@@ -61,6 +79,9 @@ class NewReservationController extends Controller
         $siteclass = SiteClass::all();
         return response()->json($siteclass);
     }
+
+
+
 
     public function getSiteHookups()
     {

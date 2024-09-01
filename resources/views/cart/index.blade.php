@@ -5,7 +5,86 @@
 @push('css')
     <link href="{!! asset('plugins/toast-master/css/jquery.toast.css') !!}" rel="stylesheet">
     <style>
+        .nav-tabs .nav-link.active {
+            background-color:  #EFC368;
+            color: #fff;
+            outline: none;
+            border-radius: .25rem;
+        }
 
+        .nav-tabs .nav-link {
+            background-color: #041307;
+            color: #fff;
+            margin-right: 10px;
+            border-radius: .25rem;
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+        }
+
+        .container-tab {
+            background: #041307;
+            color: #fff;
+            height: 100%;
+            width: 100%;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .btn-products-container {
+
+            background-color: #EFC368;
+            border: none;
+            color: white;
+
+            border-radius: .25rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+
+        }
+
+        .btn-products-container h5 {
+            margin: 0;
+            font-size: 10px;
+            text-align: center;
+        }
+
+
+
+
+        .item img {
+            width: 10px;
+            max-height: 80px;
+            object-fit: cover;
+        }
+
+        .order-product {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .order-product .item {
+            flex: 1 1 calc(10.333% - 10px);
+
+            margin-bottom: 15px;
+        }
+
+        .order-product .item h5 {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .form-control {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: .25rem;
+            color: #000;
+        }
     </style>
 @endpush
 
@@ -32,10 +111,10 @@
                                 @endforeach
                             </select>
                         </div>
-{{--                        <div class="col">--}}
-{{--                            <button type="button" class="btn w-100 btn-primary" data-bs-toggle="modal"--}}
-{{--                                data-bs-target="#addUserModal">Add User</button>--}}
-{{--                        </div>--}}
+                        {{--                        <div class="col"> --}}
+                        {{--                            <button type="button" class="btn w-100 btn-primary" data-bs-toggle="modal" --}}
+                        {{--                                data-bs-target="#addUserModal">Add User</button> --}}
+                        {{--                        </div> --}}
                     </div>
                     <div class="user-cart">
                         <div class="card">
@@ -128,25 +207,27 @@
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-6">
-                    <ul class="nav nav-tabs" id="myTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="quick-tab" data-bs-toggle="tab" data-bs-target="#quick"
-                                type="button" role="tab" aria-controls="quick" aria-selected="true">Quick Pick</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="catgories-tab" data-bs-toggle="tab" data-bs-target="#catgories"
-                                type="button" role="tab" aria-controls="catgories"
-                                aria-selected="false">Categories</button>
-                        </li>
-                        {{-- <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent"
-                                type="button" role="tab" aria-controls="recent" aria-selected="false">Recent</button>
-                        </li> --}}
-                        <div class="mb-2 mx-2"><input type="text" id="search-product" class="form-control"
-                                placeholder="Search Product...">
-                        </div>
-                    </ul>
-                    <div class="tab-content mt-2" id="myTabContent">
+                    <div class="container-tab">
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="quick-tab" data-bs-toggle="tab" data-bs-target="#quick"
+                                    type="button" role="tab" aria-controls="quick" aria-selected="true">Quick
+                                    Pick</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="catgories-tab" data-bs-toggle="tab" data-bs-target="#catgories"
+                                    type="button" role="tab" aria-controls="catgories"
+                                    aria-selected="false">Categories</button>
+                            </li>
+                            {{-- <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent"
+                                    type="button" role="tab" aria-controls="recent" aria-selected="false">Recent</button>
+                            </li> --}}
+                            <div class="mb-2 mx-2"><input type="text" id="search-product" class="form-control"
+                                    placeholder="Search Product...">
+                            </div>
+                        </ul>
+                        <div class="tab-content mt-2" id="myTabContent">
                         <div class="tab-pane fade show active" id="quick" role="tabpanel"
                             aria-labelledby="quick-tab">
                             <div class="order-product product-section">
@@ -154,18 +235,22 @@
                                     <div class="item product-item" data-barcode="{{ $product->barcode }}"
                                         data-id="{{ $product->id }}"><img src="{{ $product->image_url }}"
                                             class="rounded mx-auto d-block" alt="Product Image">
-                                        <h5>{{ Str::limit($product->name, 10) }} ({{ $product->quantity }})</h5>
+                                      <div class="btn-products-container">
+                                        <h5>{{ Str::limit($product->name, 10) }}</h5>
+                                      </div>
                                     </div>
                                 @endforeach
                             </div>
                         </div>
                         <div class="tab-pane fade" id="catgories" role="tabpanel" aria-labelledby="catgories-tab">
-                            <div class="order-product category-section">
+                            <div class="order-product  ">
                                 @foreach ($categories as $category)
                                     <div class="item category-item" data-id="{{ $category->id }}"><img
                                             src="{{ asset('images/product-thumbnail.jpg') }}"
                                             class="rounded mx-auto d-block" alt="Product Image">
-                                        <h5>{{ $category->name }}</h5>
+                                        <div class="btn-products-container">
+                                            <h5>{{ Str::limit($category->name, 10) }} </h5>
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -174,43 +259,13 @@
                     </div>
                 </div>
             </div>
+
+        </div>
         </div>
     </section>
 
     {{-- user add modal starts here --}}
-
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="addUserModalLabel">Add User</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row">
-                            <div class="col-md-6">
-                                <x-forms.input label="First name" input-id="f_name" input-name="f_name" :value="old('f_name')" :errors="$errors->get('f_name')" placeholder="Enter First Name" :required="true" />
-                            </div>
-                            <div class="col-md-6">
-                                <x-forms.input label="Last name" input-id="l_name" input-name="l_name" :value="old('l_name')" :errors="$errors->get('l_name')" placeholder="Enter Last Name" :required="true" />
-                            </div>
-                        </div>
-
-                        <x-forms.input label="Email" input-id="email" input-name="email" :value="old('email')" :errors="$errors->get('email')" placeholder="Enter Email" :required="true" type="email" />
-
-                        <x-forms.input label="Password" input-id="password" input-name="password" :value="old('password')" :errors="$errors->get('password')" placeholder="Enter Password" :required="true" type="password" />
-                        <button class="btn btn-success btn-block btn-lg" type="submit">Submit</button>
-                    </form>
-                </div>
-                {{-- <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div> --}}
-            </div>
-        </div>
-    </div>
+    @include('cart.modals.user-add-modal')
 @endsection
 
 @push('js')
@@ -307,8 +362,8 @@
             // $(".select2").select2();
             $("#customer_id").select2();
 
-            $("#customer_id").on('change',function(e){
-                if(e.target.value === 'add_new_user'){
+            $("#customer_id").on('change', function(e) {
+                if (e.target.value === 'add_new_user') {
                     addUserModal.show();
                 }
             });

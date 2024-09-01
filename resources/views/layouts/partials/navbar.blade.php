@@ -21,7 +21,7 @@
 
 .dropdown-menu .dropdown-item {
     padding: 0.75rem 1.25rem;
-    color: #333; 
+  
 }
 
 .dropdown-menu .dropdown-item:hover {
@@ -30,21 +30,29 @@
 
 .main-header.navbar {
     align-items: center;
+    background-color: #041307;
 }
 
 .navbar-brand {
     margin-right: auto;
 }
 
+.nav-item .nav-link {
+    color: #f8f9fa;
+}
 
+.nav-link.active {
+  
+    color:  #EFC368; 
+}
 </style>
 
-<nav class="main-header navbar navbar-expand navbar-white navbar-light d-flex justify-content-between">
+<nav class="main-header navbar navbar-expand  d-flex justify-content-between">
     <a class="navbar-brand" href="{{ url('/') }}">
-        <img src="{{ asset('path/to/your/logo.png') }}" alt="Logo" class="navbar-logo">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="navbar-logo">
     </a>
 
-    <ul class="navbar-nav ms-auto d-flex flex-row">
+    <ul class="navbar-nav ms-auto  d-flex flex-row">
         <!-- Optional Offcanvas Toggle Button -->
         {{-- 
       <li class="nav-item">
@@ -66,11 +74,11 @@
         @endif
 
         @hasPermission(config('constants.role_modules.pos_management.value'))
-            <li class="nav-item">
-                <a href="{{ route('cart.index') }}" class="nav-link {{ activeSegment('cart') }}">
-                    <div class="d-flex align-items-center">
+            <li class="nav-item ">
+                <a href="{{ route('cart.index') }}" class="nav-link  {{ activeSegment('cart') }}">
+                    <div class="d-flex align-items-center  ">
                         <i class="nav-icon fas fa-cash-register"></i>
-                        <span class="ms-2">POS</span>
+                        <span class="ms-2 " >POS</span>
                     </div>
                 </a>
             </li>

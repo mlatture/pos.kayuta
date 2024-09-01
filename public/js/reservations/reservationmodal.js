@@ -55,11 +55,6 @@ $(document).ready(function() {
         });
     });
 
-  
-
-
-  
-
     function loadSites() {  
         $.ajax({
             type: "GET",

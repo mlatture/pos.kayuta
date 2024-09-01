@@ -33,11 +33,10 @@ function generateLinearCalendar($start_date, $end_date)
 {
     $calendar = [];
 
-    // Convert start and end dates to DateTime objects
+  
     $start = new DateTime($start_date);
     $end = new DateTime($end_date);
 
-    // Iterate through dates and add to calendar array
     $current = clone $start;
     while ($current <= $end) {
         $calendar[] = $current->format('Y-m-d');

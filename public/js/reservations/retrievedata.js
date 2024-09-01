@@ -18,13 +18,37 @@ toastr.options = {
 
 
 $(document).ready(function () {
+   
+  
+    $(document).on('click', '#paginationLinks a', function () {
+        let page = $(this).data('page');
+        let limit = $('#limitSelector').val();
+        let tier = $(this).data('tier') ? $(this).data('tier').split(',') : [];
+        let siteId = $(this).data('siteid') || ''; 
+        fetchReservations(page, limit, siteId, tier);
+    });
+    
+    // Site filter change event
+    $("#siteSelectors").change(function() {
+        let selectedSiteId = $(this).val() || '';
+        let selectedType = $("#type").val() || []; 
+        fetchReservations(1, 10, selectedSiteId, selectedType);
+    });
+    
+    // Type filter change event
+    $("#type").change(function() {
+        let selectedType = $(this).val() || []; 
+        let selectedSiteId = $("#siteSelectors").val() || ''; 
+        fetchReservations(1, 10, selectedSiteId, selectedType);
+    });
+    
     
     // Fetch Reservations Data
-    function fetchReservations(page = 1, limit = 10) {
+    function fetchReservations(page = 1, limit = 10, siteId = '', tier = []) {
         $.ajax({
             type: "GET",
             url: "reservepeople",
-            data: { page: page, limit: limit },
+            data: { page: page, limit: limit, siteId: siteId, tier: tier },
             dataType: "json",
             cache: false,
             success: function (data) {
@@ -51,7 +75,7 @@ $(document).ready(function () {
     
                     let dateStatus = '';
                     let statusClass = '';
-                
+    
                     if (cidDate.toDateString() === now.toDateString()) {
                         dateStatus = 'Arrival';
                         statusClass = 'bg-success';
@@ -63,41 +87,44 @@ $(document).ready(function () {
                         statusClass = 'bg-info';
                     } else if (cidDate > now) {
                         dateStatus = 'Pending';
-                        statusClass = 'bg-warning';
+                        statusClass = 'bg-warning text-white';
                     } else if (codDate < now) {
                         dateStatus = 'Completed';
                         statusClass = 'bg-primary';
                     }
     
                     tableBody.append(`
-                        <tr>
+                        <tr
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Arrival: ${cid}\nDeparture: ${cod}\nSite: ${item.siteid} - ${item.siteclass}\nAddress: ${item.address} \nPhone: ${item.phone}\nCust#: ${item.customernumber}">
                             <td>${item.fname} ${item.lname}</td>
                             <td>${item.siteid}</td>
                             <td>${item.siteclass}</td>
-                            <td>${cid}</td>
-                            <td>${cod}</td>
-                            <td><span class="${statusClass} rounded p-2">${dateStatus}</span></td>
+                           
                             <td>
-                                <div class="">
-                              
-                              
-                                    <div class="btn btn-info" type="button" id="viewInvoice" data-id="${item.cartid}">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </div>
-                             
+                                <span class="${statusClass} badge rounded-pill p-2" style="font-size: 12px;">
+                                    ${dateStatus}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn btn-info" type="button" id="viewInvoice" data-id="${item.cartid}">
+                                    <i class="fa-solid fa-eye"></i>
                                 </div>
                             </td>
                         </tr>
                     `);
                 });
     
+              
+    
                 let paginationLinks = '';
                 if (data.prev_page_url) {
-                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}">Previous</a> `;
+                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}" data-siteid="${siteId}" data-tier="${tier ? tier.join(',') : ''}">Previous</a> `;
                 }
                 paginationLinks += `Page ${data.current_page} of ${data.last_page} `;
                 if (data.next_page_url) {
-                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}">Next</a>`;
+                    paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page + 1}" data-siteid="${siteId}" data-tier="${tier ? tier.join(',') : ''}">Next</a>`;
                 }
                 $('#paginationLinks').html(paginationLinks);
             },
@@ -179,11 +206,8 @@ $(document).ready(function () {
         fetchNotReserve(1, $(this).val());
     });
     
-    $(document).on('click', '#paginationLinks a', function () {
-        let page = $(this).data('page');
-        let limit = $('#limitSelector').val();
-        fetchReservations(page, limit);
-    });
+   
+   
     
     $(document).on('click', '#paginationLinks1 a', function () {
         let page = $(this).data('page');
