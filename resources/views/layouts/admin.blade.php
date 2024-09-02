@@ -104,7 +104,8 @@
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
     <script src="{{ asset('js/reservations/payment.js') }}"></script>
     <script src="{{ asset('js/reservations/filter.js') }}"></script>
-
+    <script src="{{ asset('js/cart/create.js')}}"></script>
+    <script src="{{ asset('js/cart/random.js')}}"></script>
     @yield('js')
     @stack('js')
 </body>

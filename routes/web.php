@@ -33,7 +33,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
     Route::resource('product-vendors', ProductVendorController::class);
     Route::resource('products', ProductController::class);
-    Route::post('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
+    Route::get('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
     Route::resource('categories', CategoryController::class);
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);

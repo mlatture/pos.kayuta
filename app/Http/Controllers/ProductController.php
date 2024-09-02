@@ -56,23 +56,38 @@ class ProductController extends Controller
     {
         try {
             $products = Product::query();
-            if(auth()->user()->organization_id){
-                $products->where('organization_id',auth()->user()->organization_id);
+    
+            if (auth()->user()->organization_id) {
+                $products->where('organization_id', auth()->user()->organization_id);
             }
+    
             if ($request->search) {
-                $products = $products->with(['taxType'])->where('name', 'LIKE', "%{$request->search}%");
+                $searchTerm = strtolower($request->search);
+               
+    
+                $products->where(function ($query) use ($searchTerm) {
+                    $query->whereRaw('LOWER(name) LIKE ?', ['%' . $searchTerm . '%'])
+                          ->orWhereRaw('LOWER(barcode) LIKE ?', ['%' . $searchTerm . '%']);
+                });
             }
-
+    
             if ($request->category_id) {
-                $products   =   $products->where('category_id', $request->category_id);
+                $products->where('category_id', $request->category_id);
             }
-
-            $products = $products->latest()->simplePaginate(10);
-            return $this->object->respond(ProductResource::collection($products), [], true, '');
+    
+            $products = $products->latest()->get();
+            
+            
+    
+            return response()->json(['data' => $products], 200);
         } catch (Exception $e) {
-            return $this->object->respondBadRequest(['error' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+    
+    
+
+    
 
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\View\View
