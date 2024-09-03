@@ -206,11 +206,14 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.category-item', function() {
+    $(document).on('click', '.category-item', function(e) {
+        e.preventDefault();  // Correct method name
         var category_id = $(this).data('id');
+        console.log(category_id);
+    
         $.ajax({
             url: cartCategoryUrl,
-            type: 'POST',
+            type: 'GET',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -218,16 +221,18 @@ $(document).ready(function() {
                 category_id: category_id,
             },
             success: function(response) {
-                let products = response.response.data;
+                console.log(response);  
+    
+                let products = response.data;  
+                
                 let html = '';
-            
+    
                 if (products.length > 0) {
                     html += '<div class="row">';
             
                     $.each(products, function(key, val) {
                         let truncatedName = val.name.length > 10 ? val.name.substring(0, 10) + '...' : val.name;
             
-                  
                         let imagePath = `/storage/products/${val.image}`;
                         let fallbackImageUrl = '/images/product-thumbnail.jpg'; 
                         let imageUrl = imagePath; 
@@ -270,7 +275,6 @@ $(document).ready(function() {
                             heading: 'Error',
                             text: val,
                             position: 'top-right',
-                            // bgColor: '#FF1356',
                             loaderBg: '#a94442',
                             icon: 'error',
                             hideAfter: 4000,
@@ -284,14 +288,13 @@ $(document).ready(function() {
                         heading: 'Error',
                         text: errors.message,
                         position: 'top-right',
-                        // bgColor: '#FF1356',
                         loaderBg: '#a94442',
                         icon: 'error',
                         hideAfter: 4000,
                         stack: 6
                     });
                 }
-
+    
                 if (reject.status === 400) {
                     var errors = $.parseJSON(reject.responseText);
                     $.each(errors.errors, function(key, val) {
@@ -299,7 +302,6 @@ $(document).ready(function() {
                             heading: 'Error',
                             text: val,
                             position: 'top-right',
-                            // bgColor: '#FF1356',
                             loaderBg: '#a94442',
                             icon: 'error',
                             hideAfter: 4000,
@@ -310,6 +312,7 @@ $(document).ready(function() {
             }
         });
     });
+    
 
     // $(document).on('input', '#search-product', function() {
     //     var search = $(this).val();
@@ -391,9 +394,7 @@ $(document).ready(function() {
     $(document).ready(function() {
         $('#search-product').on('input', function() {
             let searchTerm = $(this).val();
-            console.log('Search term:', searchTerm); 
-            console.log('Request URL:', cartCategoryUrl);
-
+       
             $.ajax({
                 url: cartCategoryUrl, 
                 type: 'GET',

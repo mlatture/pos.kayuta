@@ -58,6 +58,7 @@
 @section('content')
     {{-- <div id="cart"></div> --}}
     <section class="content">
+        @include('cart.components.header')
         <div id="cart">
             <div class="row">
                 <div class="col-md-6 col-lg-6">
