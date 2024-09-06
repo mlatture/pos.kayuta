@@ -581,32 +581,31 @@ class NewReservationController extends Controller
     // }
 
     public function makeCurlRequest($url, $data)
-{
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-    
-   
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
-    $responseContent = curl_exec($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
+        $responseContent = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
 
-    if ($responseContent === false) {
-        return ['error' => 'Error communicating with payment gateway: ' . $error];
+        if ($responseContent === false) {
+            return ['error' => 'Error communicating with payment gateway. Curl error: ' . $error];
+        }
+
+        parse_str($responseContent, $responseArray);
+        return $responseArray;
     }
-
-    parse_str($responseContent, $responseArray);
-    return $responseArray;
-}
 
     public function postTerminalPayment(Request $request, $id)
     {
         $cart_reservation = CartReservation::findOrFail($id);
         $amount = $request->input('amount');
         $apiKey = config('services.cardknox.api_key');
-    
+
         $data = [
             'xKey' => $apiKey,
             'xAmount' => $amount,
@@ -622,49 +621,49 @@ class NewReservationController extends Controller
             'xExitFormIfApproved' => '1',
             'xCommand' => 'cc:encrypt',
         ];
-    
-        $response = $this->makeCurlRequest('https://x2.cardknox.com/gateway', $data);
-    
-        if (isset($response['error'])) {
-            return response()->json(['success' => false, 'message' => $response['error']]);
+
+        $url = 'https://x2.cardknox.com/gateway';
+        $responseArray = $this->makeCurlRequest($url, $data);
+
+        if (isset($responseArray['error'])) {
+            return response()->json(['success' => false, 'message' => $responseArray['error']]);
         }
-    
-        $response = json_decode($response, true);
-    
-        if (isset($response['xStatus']) && $response['xStatus'] == 'Success') {
-            return response()->json(['success' => true, 'transactionId' => $response['xTransactionId']]);
+
+        if (isset($responseArray['xStatus']) && $responseArray['xStatus'] == 'Success') {
+            return response()->json(['success' => true, 'transactionId' => $responseArray['xTransactionId']]);
         } else {
-            return response()->json(['success' => false, 'message' => $response['xMessage'] ?? 'Transaction failed']);
+            return response()->json(['success' => false, 'message' => $responseArray['xMessage'] ?? 'Transaction failed']);
         }
     }
-    
+
+   
 
     public function checkPaymentStatus($id)
     {
-        $transactionId = '123'; 
-    
+        $transactionId = '123';
+
         $data = [
             'xKey' => config('services.cardknox.api_key'),
-            'xCommand' => 'cc:get', 
+            'xCommand' => 'cc:get',
             'xTransactionId' => $transactionId,
         ];
-    
-        $ch = curl_init('https://x2.cardknox.com/gateway'); 
+
+        $ch = curl_init('https://x2.cardknox.com/gateway');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-type: application/x-www-form-urlencoded',
             'X-Recurring-Api-Version: 1.0'
         ]);
-    
+
         $response = curl_exec($ch);
         $error = curl_error($ch);
         curl_close($ch);
-    
+
         if ($response === false) {
             return response()->json(['paymentStatus' => 'Error', 'message' => 'Curl error: ' . $error]);
         }
-    
+
         $response = json_decode($response, true);
         if (isset($response['xStatus']) && $response['xStatus'] == 'Approved') {
             return response()->json(['paymentStatus' => 'Success']);
@@ -672,7 +671,7 @@ class NewReservationController extends Controller
             return response()->json(['paymentStatus' => 'Pending']);
         }
     }
-    
+
     public function storePayment(Request $request, $id)
     {
         $cart_reservation = CartReservation::findOrFail($id);
