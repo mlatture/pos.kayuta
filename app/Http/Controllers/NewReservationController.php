@@ -590,35 +590,26 @@ class NewReservationController extends Controller
             'xKey' => $apiKey,
             'xAmount' => $amount,
             'xDeviceName' => 'BBPOS',
-            'xDeviceComPort' => 'COM9', 
+            'xDeviceComPort' => 'COM9',
             'xDeviceBaud' => '115200',
-            'xDeviceParity' => 'None', 
+            'xDeviceParity' => 'None',
             'xDeviceDataBits' => '8',
-            'xDeviceTimeOut' => '60', 
+            'xDeviceTimeOut' => '60',
             'xEnableDeviceSwipe' => '1',
             'xEnableAmountConfirmationPrompt' => '1',
             'xResponseFormat' => 'JSON',
             'xExitFormIfApproved' => '1',
-            'xCommand' => 'cc:encrypt', 
+            'xCommand' => 'cc:encrypt',
         ];
     
-        $ch = curl_init('https://x2.cardknox.com/gateway'); 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-type: application/x-www-form-urlencoded',
-            'X-Recurring-Api-Version: 1.0'
-        ]);
+        $response = $this->makeCurlRequest('https://x2.cardknox.com/gateway', $data);
     
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
-    
-        if ($response === false) {
-            return response()->json(['success' => false, 'message' => 'Curl error: ' . $error]);
+        if (isset($response['error'])) {
+            return response()->json(['success' => false, 'message' => $response['error']]);
         }
     
         $response = json_decode($response, true);
+    
         if (isset($response['xStatus']) && $response['xStatus'] == 'Success') {
             return response()->json(['success' => true, 'transactionId' => $response['xTransactionId']]);
         } else {
