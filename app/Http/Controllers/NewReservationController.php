@@ -223,234 +223,552 @@ class NewReservationController extends Controller
         return response()->json(['success' => true]);
     }
 
+//     public function storePayment(Request $request, $id)
+//     {
+//         $cart_reservation = CartReservation::findOrFail($id);
+//         $customer = Customer::where('id', $cart_reservation->customernumber)->first();
+//         $randomReceiptID = rand(0000, 10000);
+    
+//         $token = $request->input('xToken');
+//         $amount = $request->input('xAmount');
+//         $apiKey = config('services.cardknox.api_key');
+//         $cardNumber = $request->input('xCardNum');
+//         $xExp = str_replace('/', '', $request->xExp);
+    
+//         $data = [
+//             'xKey' => $apiKey,
+//             'xVersion' => '4.5.5',
+//             'xCommand' => 'cc:Sale',
+//             'xAmount' => $amount,
+//             'xCardNum' => $cardNumber,
+//             'xExp' => $xExp,
+//             'xSoftwareVersion' => '1.0',
+//             'xSoftwareName' => 'KayutaLake',
+//         ];
+    
+//         $data1 = [
+//             'xKey' => $apiKey,
+//             'xVersion' => '4.5.5',
+//             'xCommand' => 'check:Sale',
+//             'xAmount' => $amount,
+//             'xAccount' => $cardNumber,
+//             'xSoftwareVersion' => '1.0',
+//             'xSoftwareName' => 'KayutaLake',
+//         ];
+    
+//         $data2 = [
+//             'xKey' => $apiKey,
+//             'xVersion' => '4.5.5',
+//             'xCommand' => 'cc:Sale',
+//             'xAmount' => $amount,
+//             'xSoftwareVersion' => '1.0',
+//             'xSoftwareName' => 'KayutaLake',
+//         ];
+    
+//         $paymentType = $request->paymentType;
+    
+//         switch ($paymentType) {
+//             case 'Cash':
+//             case 'Other':
+//                 // Handle Cash payment and Other payment
+//                 $savepayment = new Payment();
+//                 $savepayment->cartid = $request->cartid;
+//                 $savepayment->receipt = $randomReceiptID;
+//                 $savepayment->method = $paymentType;
+//                 $savepayment->customernumber = $cart_reservation->customernumber;
+//                 $savepayment->description = $request->description ?? '';
+//                 $savepayment->checknumber = $request->xCheckNum ?? '';
+//                 $savepayment->email = $cart_reservation->email;
+//                 $savepayment->payment = $request->xCash;
+//                 $savepayment->save();
+    
+//                 $savereservation = new Reservation();
+//                 $savereservation->fill([
+//                     'cartid' => $request->cartid,
+//                     'source' => 'Walk In',
+//                     'email' => $cart_reservation->email,
+//                     'fname' => $customer->first_name,
+//                     'lname' => $customer->last_name,
+//                     'customernumber' => $cart_reservation->customernumber,
+//                     'siteid' => $cart_reservation->siteid,
+//                     'cid' => $cart_reservation->cid,
+//                     'cod' => $cart_reservation->cod,
+//                     'total' => $cart_reservation->total,
+//                     'subtotal' => $cart_reservation->subtotal,
+//                     'taxrate' => $cart_reservation->taxrate,
+//                     'totaltax' => $cart_reservation->totaltax,
+//                     'siteclass' => $cart_reservation->siteclass,
+//                     'nights' => $cart_reservation->nights,
+//                     'base' => $cart_reservation->base,
+//                     'sitelock' => $cart_reservation->sitelock,
+//                     'rigtype' => $cart_reservation->hookups,
+//                     'riglength' => $cart_reservation->riglength,
+//                     'xconfnum' => 0,
+//                     'createdby' => 'Admin',
+//                     'receipt' => $savepayment->receipt,
+//                     'rateadjustment' => 0,
+//                     'rid' => 'uc',
+//                 ]);
+//                 $savereservation->save();
+    
+//                 return response()->json(['success' => true]);
+    
+//             case 'Check':
+//                 $ch = curl_init('https://x1.cardknox.com/gateway');
+//                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data1));
+//                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+//                 $responseContent = curl_exec($ch);
+//                 curl_close($ch);
+    
+//                 if ($responseContent === false) {
+//                     return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+//                 }
+    
+//                 $responseArray = json_decode($responseContent, true);
+    
+//                 if (isset($responseArray['xResult']) && $responseArray['xResult'] === '00') {
+//                     $savepayment = new Payment();
+//                     $savepayment->cartid = $request->cartid;
+//                     $savepayment->receipt = $randomReceiptID;
+//                     $savepayment->method = $paymentType;
+//                     $savepayment->customernumber = $cart_reservation->customernumber;
+//                     $savepayment->description = $request->description ?? '';
+//                     $savepayment->checknumber = $request->xCheckNum ?? '';
+//                     $savepayment->email = $cart_reservation->email;
+//                     $savepayment->payment = $cart_reservation->total ?? '';
+//                     $savepayment->save();
+    
+//                     $savereservation = new Reservation();
+//                     $savereservation->fill([
+//                         'cartid' => $request->cartid,
+//                         'source' => 'Walk In',
+//                         'email' => $cart_reservation->email,
+//                         'fname' => $customer->first_name,
+//                         'lname' => $customer->last_name,
+//                         'customernumber' => $cart_reservation->customernumber,
+//                         'siteid' => $cart_reservation->siteid,
+//                         'cid' => $cart_reservation->cid,
+//                         'cod' => $cart_reservation->cod,
+//                         'total' => $cart_reservation->total,
+//                         'subtotal' => $cart_reservation->subtotal,
+//                         'taxrate' => $cart_reservation->taxrate,
+//                         'totaltax' => $cart_reservation->totaltax,
+//                         'siteclass' => $cart_reservation->siteclass,
+//                         'nights' => $cart_reservation->nights,
+//                         'base' => $cart_reservation->base,
+//                         'sitelock' => $cart_reservation->sitelock,
+//                         'rigtype' => $cart_reservation->hookups,
+//                         'riglength' => $cart_reservation->riglength,
+//                         'xconfnum' => 0,
+//                         'createdby' => 'Admin',
+//                         'receipt' => $savepayment->receipt,
+//                         'rateadjustment' => 0,
+//                         'rid' => 'uc',
+//                     ]);
+//                     $savereservation->save();
+    
+//                     return response()->json(['success' => true]);
+    
+//                 } else {
+//                     return response()->json(
+//                         [
+//                             'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+//                         ],
+//                         400,
+//                     );
+//                 }
+    
+//             case 'Manual':
+//                 $ch = curl_init('https://x1.cardknox.com/gateway');
+//                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+//                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+//                 $responseContent = curl_exec($ch);
+//                 curl_close($ch);
+    
+//                 if ($responseContent === false) {
+//                     return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+//                 }
+    
+//                 parse_str($responseContent, $responseArray);
+    
+//                 if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+//                     $xAuthCode = $responseArray['xAuthCode'] ?? '';
+//                     $xToken = $responseArray['xToken'] ?? '';
+    
+//                     $savepayment = new Payment();
+//                     $savepayment->cartid = $request->cartid;
+//                     $savepayment->receipt = $randomReceiptID;
+//                     $savepayment->method = $paymentType;
+//                     $savepayment->customernumber = $cart_reservation->customernumber;
+//                     $savepayment->email = $cart_reservation->email;
+//                     $savepayment->payment = $cart_reservation->total;
+//                     $savepayment->save();
+    
+//                     $savereservation = new Reservation();
+//                     $savereservation->fill([
+//                         'cartid' => $request->cartid,
+//                         'source' => 'Walk In',
+//                         'email' => $cart_reservation->email,
+//                         'fname' => $customer->first_name,
+//                         'lname' => $customer->last_name,
+//                         'customernumber' => $cart_reservation->customernumber,
+//                         'siteid' => $cart_reservation->siteid,
+//                         'cid' => $cart_reservation->cid,
+//                         'cod' => $cart_reservation->cod,
+//                         'total' => $cart_reservation->total,
+//                         'subtotal' => $cart_reservation->subtotal,
+//                         'taxrate' => $cart_reservation->taxrate,
+//                         'totaltax' => $cart_reservation->totaltax,
+//                         'siteclass' => $cart_reservation->siteclass,
+//                         'nights' => $cart_reservation->nights,
+//                         'base' => $cart_reservation->base,
+//                         'sitelock' => $cart_reservation->sitelock,
+//                         'rigtype' => $cart_reservation->hookups,
+//                         'riglength' => $cart_reservation->riglength,
+//                         'xconfnum' => 0,
+//                         'createdby' => 'Admin',
+//                         'receipt' => $savepayment->receipt,
+//                         'rateadjustment' => 0,
+//                         'rid' => 'uc',
+//                     ]);
+//                     $savereservation->save();
+    
+//                     return response()->json(['success' => true]);
+//                 } else {
+//                     return response()->json(
+//                         [
+//                             'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+//                         ],
+//                         400,
+//                     );
+//                 }
+
+//             case 'Terminal':
+//                 $ch = curl_init('https://x1.cardknox.com/gateway');
+//                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+//                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+            
+//                 $responseContent = curl_exec($ch);
+//                 curl_close($ch);
+    
+//                 if ($responseContent === false) {
+//                     return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+//                 }
+    
+//                 parse_str($responseContent, $responseArray);
+    
+//                 if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+//                     $xAuthCode = $responseArray['xAuthCode'] ?? '';
+//                     $xToken = $responseArray['xToken'] ?? '';
+    
+//                     $savepayment = new Payment();
+//                     $savepayment->cartid = $request->cartid;
+//                     $savepayment->receipt = $randomReceiptID;
+//                     $savepayment->method = $paymentType;
+//                     $savepayment->customernumber = $cart_reservation->customernumber;
+//                     $savepayment->email = $cart_reservation->email;
+//                     $savepayment->payment = $cart_reservation->total;
+//                     $savepayment->save();
+    
+//                     $savereservation = new Reservation();
+//                     $savereservation->fill([
+//                         'cartid' => $request->cartid,
+//                         'source' => 'Walk In',
+//                         'email' => $cart_reservation->email,
+//                         'fname' => $customer->first_name,
+//                         'lname' => $customer->last_name,
+//                         'customernumber' => $cart_reservation->customernumber,
+//                         'siteid' => $cart_reservation->siteid,
+//                         'cid' => $cart_reservation->cid,
+//                         'cod' => $cart_reservation->cod,
+//                         'total' => $cart_reservation->total,
+//                         'subtotal' => $cart_reservation->subtotal,
+//                         'taxrate' => $cart_reservation->taxrate,
+//                         'totaltax' => $cart_reservation->totaltax,
+//                         'siteclass' => $cart_reservation->siteclass,
+//                         'nights' => $cart_reservation->nights,
+//                         'base' => $cart_reservation->base,
+//                         'sitelock' => $cart_reservation->sitelock,
+//                         'rigtype' => $cart_reservation->hookups,
+//                         'riglength' => $cart_reservation->riglength,
+//                         'xconfnum' => 0,
+//                         'createdby' => 'Admin',
+//                         'receipt' => $savepayment->receipt,
+//                         'rateadjustment' => 0,
+//                         'rid' => 'uc',
+//                     ]);
+//                     $savereservation->save();
+    
+//                     return response()->json(['success' => true]);
+//                 } else {
+//                     return response()->json(
+//                         [
+//                             'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+//                         ],
+//                         400,
+//                     );
+//                 }
+//             case 'Gift Card':
+//             {
+//                 $savepayment = new Payment();
+//                 $savepayment->cartid = $request->cartid;
+//                 $savepayment->receipt = $randomReceiptID;
+//                 $savepayment->method = $paymentType;
+//                 $savepayment->customernumber = $cart_reservation->customernumber;
+//                 $savepayment->description = $request->description ?? '';
+//                 $savepayment->checknumber = $request->xCheckNum ?? '';
+//                 $savepayment->email = $cart_reservation->email;
+//                 $savepayment->payment = $request->xCash;
+//                 $savepayment->save();
+    
+//                 $savereservation = new Reservation();
+//                 $savereservation->fill([
+//                     'cartid' => $request->cartid,
+//                     'source' => 'Walk In',
+//                     'email' => $cart_reservation->email,
+//                     'fname' => $customer->first_name,
+//                     'lname' => $customer->last_name,
+//                     'customernumber' => $cart_reservation->customernumber,
+//                     'siteid' => $cart_reservation->siteid,
+//                     'cid' => $cart_reservation->cid,
+//                     'cod' => $cart_reservation->cod,
+//                     'total' => $cart_reservation->total,
+//                     'subtotal' => $cart_reservation->subtotal,
+//                     'taxrate' => $cart_reservation->taxrate,
+//                     'totaltax' => $cart_reservation->totaltax,
+//                     'siteclass' => $cart_reservation->siteclass,
+//                     'nights' => $cart_reservation->nights,
+//                     'base' => $cart_reservation->base,
+//                     'sitelock' => $cart_reservation->sitelock,
+//                     'rigtype' => $cart_reservation->hookups,
+//                     'riglength' => $cart_reservation->riglength,
+//                     'xconfnum' => 0,
+//                     'createdby' => 'Admin',
+//                     'receipt' => $savepayment->receipt,
+//                     'rateadjustment' => 0,
+//                     'rid' => 'uc',
+//                 ]);
+//                 $savereservation->save();
+    
+//                 return response()->json(['success' => true]);
+// }    
+//             default:
+//                 return response()->json(['message' => 'Invalid payment type.'], 400);
+//         }
+//     }
+
+    public function makeCurlRequest($url, $data) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+        $responseContent = curl_exec($ch);
+        curl_close($ch);
+        
+        if ($responseContent === false) {
+            return ['error' => 'Error communicating with payment gateway.'];
+        }
+        
+        parse_str($responseContent, $responseArray);
+        return $responseArray;
+    }
+
+    public function postTerminalPayment(Request $request, $id)
+    {
+        $cart_reservation = CartReservation::findOrFail($id);
+        $amount = $request->input('amount');
+        $apiKey = config('services.cardknox.api_key');
+
+        $data = [
+            'xKey' => $apiKey,
+            'xVersion' => '4.5.6',
+            'xSoftwareName' => 'kayutaLake',
+            'xSoftwareVersion' => '1.0',
+            'xCommand' => 'cc:Sale',  
+            'xAmount' => $amount,  
+        ];
+
+        $ch = curl_init('https://x1.cardknox.com/gateway');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded']);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $responseArray = json_decode($response, true);
+
+        if(isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+            return response()->json(['success' => true, 'transactionId' => $responseArray['xTID']]);
+        } else {
+            return response()->json(['success' => false, 'message' => $responseArray['xError'] ?? 'Payment failed']);
+        }
+    }
+
+    public function checkPaymentStatus($id)
+    {
+       
+        $transactionId = '123';  
+
+        $data = [
+            'xKey' => config('services.cardknox.api_key'),
+            'xVersion' => '4.5.6',
+            'xCommand' => 'cc:Status',
+            'xTID' => $transactionId
+        ];
+
+        $ch = curl_init('https://x1.cardknox.com/gateway');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded']);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $responseArray = json_decode($response, true);
+
+        if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+            return response()->json(['paymentStatus' => 'Success']); 
+        } else {
+            return response()->json(['paymentStatus' => 'Pending']);
+        }
+    }
+
     public function storePayment(Request $request, $id)
     {
         $cart_reservation = CartReservation::findOrFail($id);
-        $customer = Customer::where('id', $cart_reservation->customernumber)->first();
-        $randomReceiptID = rand(0000, 10000);
-    
-        $token = $request->input('xToken');
-        $amount = $request->input('xAmount');
+        $customer = Customer::find($cart_reservation->customernumber);
+        $randomReceiptID = rand(1000, 9999);
         $apiKey = config('services.cardknox.api_key');
-        $cardNumber = $request->input('xCardNum');
-        $xExp = str_replace('/', '', $request->xExp);
-    
+        $paymentType = $request->paymentType;
+        $amount = $request->input('xAmount');
+        
         $data = [
             'xKey' => $apiKey,
             'xVersion' => '4.5.5',
-            'xCommand' => 'cc:Sale',
-            'xAmount' => $amount,
-            'xCardNum' => $cardNumber,
-            'xExp' => $xExp,
-            'xSoftwareVersion' => '1.0',
-            'xSoftwareName' => 'KayutaLake',
-        ];
-    
-        $data1 = [
-            'xKey' => $apiKey,
-            'xVersion' => '4.5.5',
-            'xCommand' => 'check:Sale',
-            'xAmount' => $amount,
-            'xAccount' => $cardNumber,
-            'xSoftwareVersion' => '1.0',
-            'xSoftwareName' => 'KayutaLake',
-        ];
-    
-        $data2 = [
-            'xKey' => $apiKey,
-            'xVersion' => '4.5.5',
-            'xCommand' => 'cc:Sale',
             'xAmount' => $amount,
             'xSoftwareVersion' => '1.0',
             'xSoftwareName' => 'KayutaLake',
         ];
-    
-        $paymentType = $request->paymentType;
     
         switch ($paymentType) {
             case 'Cash':
             case 'Other':
-                // Handle Cash payment and Other payment
-                $savepayment = new Payment();
-                $savepayment->cartid = $request->cartid;
-                $savepayment->receipt = $randomReceiptID;
-                $savepayment->method = $paymentType;
-                $savepayment->customernumber = $cart_reservation->customernumber;
-                $savepayment->description = $request->description ?? '';
-                $savepayment->checknumber = $request->xCheckNum ?? '';
-                $savepayment->email = $cart_reservation->email;
-                $savepayment->payment = $request->xCash;
-                $savepayment->save();
-    
-                $savereservation = new Reservation();
-                $savereservation->fill([
-                    'cartid' => $request->cartid,
-                    'source' => 'Walk In',
-                    'email' => $cart_reservation->email,
-                    'fname' => $customer->first_name,
-                    'lname' => $customer->last_name,
-                    'customernumber' => $cart_reservation->customernumber,
-                    'siteid' => $cart_reservation->siteid,
-                    'cid' => $cart_reservation->cid,
-                    'cod' => $cart_reservation->cod,
-                    'total' => $cart_reservation->total,
-                    'subtotal' => $cart_reservation->subtotal,
-                    'taxrate' => $cart_reservation->taxrate,
-                    'totaltax' => $cart_reservation->totaltax,
-                    'siteclass' => $cart_reservation->siteclass,
-                    'nights' => $cart_reservation->nights,
-                    'base' => $cart_reservation->base,
-                    'sitelock' => $cart_reservation->sitelock,
-                    'rigtype' => $cart_reservation->hookups,
-                    'riglength' => $cart_reservation->riglength,
-                    'xconfnum' => 0,
-                    'createdby' => 'Admin',
-                    'receipt' => $savepayment->receipt,
-                    'rateadjustment' => 0,
-                    'rid' => 'uc',
-                ]);
-                $savereservation->save();
-    
-                return response()->json(['success' => true]);
+                $this->handleCashOrOtherPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType);
+                break;
     
             case 'Check':
-                $ch = curl_init('https://x1.cardknox.com/gateway');
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data1));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-    
-                $responseContent = curl_exec($ch);
-                curl_close($ch);
-    
-                if ($responseContent === false) {
-                    return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
-                }
-    
-                $responseArray = json_decode($responseContent, true);
-    
-                if (isset($responseArray['xResult']) && $responseArray['xResult'] === '00') {
-                    $savepayment = new Payment();
-                    $savepayment->cartid = $request->cartid;
-                    $savepayment->receipt = $randomReceiptID;
-                    $savepayment->method = $paymentType;
-                    $savepayment->customernumber = $cart_reservation->customernumber;
-                    $savepayment->description = $request->description ?? '';
-                    $savepayment->checknumber = $request->xCheckNum ?? '';
-                    $savepayment->email = $cart_reservation->email;
-                    $savepayment->payment = $cart_reservation->total ?? '';
-                    $savepayment->save();
-    
-                    $savereservation = new Reservation();
-                    $savereservation->fill([
-                        'cartid' => $request->cartid,
-                        'source' => 'Walk In',
-                        'email' => $cart_reservation->email,
-                        'fname' => $customer->first_name,
-                        'lname' => $customer->last_name,
-                        'customernumber' => $cart_reservation->customernumber,
-                        'siteid' => $cart_reservation->siteid,
-                        'cid' => $cart_reservation->cid,
-                        'cod' => $cart_reservation->cod,
-                        'total' => $cart_reservation->total,
-                        'subtotal' => $cart_reservation->subtotal,
-                        'taxrate' => $cart_reservation->taxrate,
-                        'totaltax' => $cart_reservation->totaltax,
-                        'siteclass' => $cart_reservation->siteclass,
-                        'nights' => $cart_reservation->nights,
-                        'base' => $cart_reservation->base,
-                        'sitelock' => $cart_reservation->sitelock,
-                        'rigtype' => $cart_reservation->hookups,
-                        'riglength' => $cart_reservation->riglength,
-                        'xconfnum' => 0,
-                        'createdby' => 'Admin',
-                        'receipt' => $savepayment->receipt,
-                        'rateadjustment' => 0,
-                        'rid' => 'uc',
-                    ]);
-                    $savereservation->save();
-    
-                    return response()->json(['success' => true]);
-    
-                } else {
-                    return response()->json(
-                        [
-                            'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
-                        ],
-                        400,
-                    );
-                }
-    
+                $data['xCommand'] = 'check:Sale';
+                $data['xAccount'] = $request->input('xCheckNum');
+                return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType);
+                
             case 'Manual':
-                $ch = curl_init('https://x1.cardknox.com/gateway');
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-    
-                $responseContent = curl_exec($ch);
-                curl_close($ch);
-    
-                if ($responseContent === false) {
-                    return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
-                }
-    
-                parse_str($responseContent, $responseArray);
-    
-                if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
-                    $xAuthCode = $responseArray['xAuthCode'] ?? '';
-                    $xToken = $responseArray['xToken'] ?? '';
-    
-                    $savepayment = new Payment();
-                    $savepayment->cartid = $request->cartid;
-                    $savepayment->receipt = $randomReceiptID;
-                    $savepayment->method = $paymentType;
-                    $savepayment->customernumber = $cart_reservation->customernumber;
-                    $savepayment->email = $cart_reservation->email;
-                    $savepayment->payment = $cart_reservation->total;
-                    $savepayment->save();
-    
-                    $savereservation = new Reservation();
-                    $savereservation->fill([
-                        'cartid' => $request->cartid,
-                        'source' => 'Walk In',
-                        'email' => $cart_reservation->email,
-                        'fname' => $customer->first_name,
-                        'lname' => $customer->last_name,
-                        'customernumber' => $cart_reservation->customernumber,
-                        'siteid' => $cart_reservation->siteid,
-                        'cid' => $cart_reservation->cid,
-                        'cod' => $cart_reservation->cod,
-                        'total' => $cart_reservation->total,
-                        'subtotal' => $cart_reservation->subtotal,
-                        'taxrate' => $cart_reservation->taxrate,
-                        'totaltax' => $cart_reservation->totaltax,
-                        'siteclass' => $cart_reservation->siteclass,
-                        'nights' => $cart_reservation->nights,
-                        'base' => $cart_reservation->base,
-                        'sitelock' => $cart_reservation->sitelock,
-                        'rigtype' => $cart_reservation->hookups,
-                        'riglength' => $cart_reservation->riglength,
-                        'xconfnum' => 0,
-                        'createdby' => 'Admin',
-                        'receipt' => $savepayment->receipt,
-                        'rateadjustment' => 0,
-                        'rid' => 'uc',
-                    ]);
-                    $savereservation->save();
-    
-                    return response()->json(['success' => true]);
-                } else {
-                    return response()->json(
-                        [
-                            'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
-                        ],
-                        400,
-                    );
-                }
+            case 'Terminal':
+                $data['xCommand'] = 'cc:Sale';
+                $data['xCardNum'] = $request->input('xCardNum');
+                $data['xExp'] = str_replace('/', '', $request->input('xExp'));
+                return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType);
+                
+            case 'Gift Card':
+                $this->handleCashOrOtherPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType);
+                break;
     
             default:
-                return response()->json(['message' => 'Invalid payment type.'], 400);
+                return response()->json(['message' => 'Invalid payment type'], 400);
+        }
+    
+        return response()->json(['success' => true]);
+    }
+    
+    private function handleCashOrOtherPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType)
+    {
+        $payment = new Payment([
+            'cartid' => $request->cartid,
+            'receipt' => $randomReceiptID,
+            'method' => $paymentType,
+            'customernumber' => $cart_reservation->customernumber,
+            'description' => $request->description ?? '',
+            'checknumber' => $request->xCheckNum ?? '',
+            'email' => $cart_reservation->email,
+            'payment' => $request->xCash,
+        ]);
+        $payment->save();
+    
+        $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+    }
+    
+    private function handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType)
+    {
+        $ch = curl_init('https://x1.cardknox.com/gateway');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+        
+        $responseContent = curl_exec($ch);
+        curl_close($ch);
+        
+        if ($responseContent === false) {
+            return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+        }
+    
+        parse_str($responseContent, $responseArray);
+        
+        if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
+            $payment = new Payment([
+                'cartid' => $request->cartid,
+                'receipt' => $randomReceiptID,
+                'method' => $paymentType,
+                'customernumber' => $cart_reservation->customernumber,
+                'email' => $cart_reservation->email,
+                'payment' => $cart_reservation->total,
+            ]);
+            $payment->save();
+            
+            $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+    
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error')], 400);
         }
     }
+    
+    private function saveReservation($cart_reservation, $customer, $randomReceiptID, $request)
+    {
+        $reservation = new Reservation([
+            'cartid' => $request->cartid,
+            'source' => 'Walk In',
+            'email' => $cart_reservation->email,
+            'fname' => $customer->first_name,
+            'lname' => $customer->last_name,
+            'customernumber' => $cart_reservation->customernumber,
+            'siteid' => $cart_reservation->siteid,
+            'cid' => $cart_reservation->cid,
+            'cod' => $cart_reservation->cod,
+            'total' => $cart_reservation->total,
+            'subtotal' => $cart_reservation->subtotal,
+            'taxrate' => $cart_reservation->taxrate,
+            'totaltax' => $cart_reservation->totaltax,
+            'siteclass' => $cart_reservation->siteclass,
+            'nights' => $cart_reservation->nights,
+            'base' => $cart_reservation->base,
+            'sitelock' => $cart_reservation->sitelock,
+            'rigtype' => $cart_reservation->hookups,
+            'riglength' => $cart_reservation->riglength,
+            'xconfnum' => 0,
+            'createdby' => 'Admin',
+            'receipt' => $randomReceiptID,
+            'rateadjustment' => 0,
+            'rid' => 'uc',
+        ]);
+        $reservation->save();
+    }
+    
     
 
     public function payBalance(Request $request, $cartid)

@@ -19,4 +19,6 @@ class UserController extends Controller
         User::create($validated);
         return redirect()->back()->with('success','User Added!');
     }
+
+  
 }

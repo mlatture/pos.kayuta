@@ -27,41 +27,61 @@ $(document).ready(function(){
         }
         
     })
-    $("#paymentType").change(function() {
-        var selectedValue = $(this).val();
-    
-        switch (selectedValue) {
-            case "Cash":
-            case "Other":
-                $("#cash").show();
-                $("#creditcard-manual").hide();
-                $("#creditcard-terminal").hide();
-                break;
-            case "Check":
-                $("#creditcard-manual").show();
-                $("#xCardNum").attr('placeholder', 'Account Number: ');
-                $("#xExp").hide();
-                $("#creditcard-terminal").hide();
-                $("#cash").hide();
-                break;
-            case "Manual":
-                $("#creditcard-manual").show();
-                $("#creditcard-terminal").hide();
-                $("#xCardNum").attr('placeholder', 'Card Number: ');
-                $("#xExp").show();
-                $("#cash").hide();
-                break;
-            case "Terminal":
-                $("#creditcard-terminal").show();
-                $("#creditcard-manual").hide();
-                $("#cash").hide();
-                break;
-            default:
-                // Optionally handle unexpected values
-                console.log('Unexpected payment type');
-                break;
-        }
-    });
+   
+        $("#paymentType").change(function() {
+            var selectedValue = $(this).val();
+            
+            $("#cash, #creditcard-manual, #creditcard-terminal, #gift-card").hide();
+            $("#xExpGroup").show(); 
+            
+            switch (selectedValue) {
+                case "Cash":
+                case "Other":
+                    $("#cash").show();
+                    break;
+                case "Check":
+                    $("#creditcard-manual").show();
+                    $("#xCardNum").attr('placeholder', 'Account Number');
+                    $("#xExpGroup").hide();
+                    break;
+                case "Manual":
+                    $("#creditcard-manual").show();
+                    $("#xCardNum").attr('placeholder', 'Card Number');
+                    break;
+                case "Terminal":
+                    $("#creditcard-terminal").show();
+                    break;
+                case "Gift Card":
+                    $("#gift-card").show();
+                    break;
+                default:
+                    console.log('Unexpected payment type');
+            }
+        });
+
+        $("#xBarcode").on('input', function(){
+            var xBarcode = $(this).val();
+
+            if(xBarcode.length > 0){
+                $.ajax({
+                    url: checkGiftCart,
+                    method: 'GET',
+                    data: { barcode: xBarcode },
+                    success: function(response){
+                        if (response.exists) {
+                            $('#gift-card-message').text('Gift card found: ' + response.data.amount + ' available.');
+                        } else {
+                            $('#gift-card-message').text('Gift card not found.');
+                        }
+                    
+                    },
+                    error: function(xhr, status, error){
+                        alart('Error checking gift card', error)
+                    }
+                })
+            }
+        })
+  
     
     
     $("#xCash, #xAmount").on('input', function() {

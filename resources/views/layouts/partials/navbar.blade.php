@@ -1,50 +1,50 @@
 <style>
-.navbar-logo {
-    height: 40px; 
-    width: auto;  
-}
+    .navbar-logo {
+        height: 40px;
+        width: auto;
+    }
 
-.nav-link {
-    padding: 0.5rem 1rem;
-    color: #333; 
-    font-size: 1rem; 
-}
+    .nav-link {
+        padding: 0.5rem 1rem;
+        color: #333;
+        font-size: 1rem;
+    }
 
-.navbar-nav .nav-item {
-    margin-left: 1rem;
+    .navbar-nav .nav-item {
+        margin-left: 1rem;
 
-}
+    }
 
-.dropdown-menu {
-    min-width: 10rem;
-}
+    .dropdown-menu {
+        min-width: 10rem;
+    }
 
-.dropdown-menu .dropdown-item {
-    padding: 0.75rem 1.25rem;
-  
-}
+    .dropdown-menu .dropdown-item {
+        padding: 0.75rem 1.25rem;
 
-.dropdown-menu .dropdown-item:hover {
-    background-color: #f8f9fa; 
-}
+    }
 
-.main-header.navbar {
-    align-items: center;
-    background-color: #041307;
-}
+    .dropdown-menu .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
 
-.navbar-brand {
-    margin-right: auto;
-}
+    .main-header.navbar {
+        align-items: center;
+        background-color: #041307;
+    }
 
-.nav-item .nav-link {
-    color: #f8f9fa;
-}
+    .navbar-brand {
+        margin-right: auto;
+    }
 
-.nav-link.active {
-  
-    color:  #EFC368; 
-}
+    .nav-item .nav-link {
+        color: #f8f9fa;
+    }
+
+    .nav-link.active {
+
+        color: #EFC368;
+    }
 </style>
 
 <nav class="main-header navbar navbar-expand  d-flex justify-content-between">
@@ -78,7 +78,7 @@
                 <a href="{{ route('cart.index') }}" class="nav-link  {{ activeSegment('cart') }}">
                     <div class="d-flex align-items-center  ">
                         <i class="nav-icon fas fa-cash-register"></i>
-                        <span class="ms-2 " >POS</span>
+                        <span class="ms-2 ">POS</span>
                     </div>
                 </a>
             </li>
@@ -254,6 +254,16 @@
                 <form action="{{ route('logout') }}" method="POST" id="logout-form">
                     @csrf
                 </form>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+
+                <div class="d-flex align-items-center">
+                  {{ auth()->user()->name }}
+
+                </div>
+
             </a>
         </li>
     </ul>

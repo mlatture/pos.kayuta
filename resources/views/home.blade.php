@@ -11,7 +11,7 @@
                 <div class="small-box bg-purple">
                     <div class="inner">
                         <h3>..</h3>
-                        <p>POS System</p>
+                        <p>POS System </p>
                     </div>
                     <div class="icon">
                         <i class="fas fa-dolly-flatbed"></i>

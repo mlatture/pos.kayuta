@@ -27,6 +27,8 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::prefix('admin')->middleware('auth')->group(function () {
+
+
     Route::post('users',[\App\Http\Controllers\UserController::class,'store'])->name('users.store');
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
@@ -69,6 +71,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/getnotreserve', [NewReservationController::class, 'noCart']);
     Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
+    Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'postTerminalPayment']);
+    Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
     Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
@@ -83,8 +87,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
     Route::get('reports/payment-report', [ReportController::class, 'paymentReport'])->name('reports.paymentReport');
 
+    Route::post('gift-cards/store', [GiftCardController::class, 'store'])->name('gift-cards.store');
     Route::post('gift-cards/apply', [GiftCardController::class, 'appltGiftCard'])->name('gift-cards.apply');
-
+    Route::get('check-gift-card', [GiftCardController::class,'checkGiftCard'])->name('check.gift-card');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');

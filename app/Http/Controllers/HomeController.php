@@ -35,7 +35,7 @@ class HomeController extends Controller
         $sitesQuery = Site::query();
         $ordersQuery = Order::query();
         $bestProductsQuery = Product::query();
-
+     
         if(auth()->user()->organization_id){
             $reservationsQuery->where('organization_id',auth()->user()->organization_id);
             $customersQuery->where('organization_id',auth()->user()->organization_id);
@@ -76,7 +76,8 @@ class HomeController extends Controller
             'income_today'          =>  $income_today,
             'customers_count'       =>  $customers_count,
             'site_count'            =>  $site_count,
-            'best_products'         =>  $best_products
+            'best_products'         =>  $best_products,
+        
         ]);
     }
 }

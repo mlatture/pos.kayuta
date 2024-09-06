@@ -11,6 +11,8 @@ class GiftCard extends Model
 
     protected $guarded = [];
 
+    protected $table = 'gift_cards';
+
     public function orders()
     {
         return $this->hasMany(Order::class);

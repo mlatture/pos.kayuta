@@ -63,20 +63,32 @@ class GiftCardController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreGiftCardRequest $request)
+    public function store(Request $request)
     {
-        try {
-            $data   =   $request->except(['_token']);
-            $data['organization_id'] = auth()->user()->organization_id;
-            $giftCard   =   $this->giftCard->storeGiftCard($data);
+        // try {
+        //     $data   =   $request->except(['_token']);
+        //     $data['organization_id'] = auth()->user()->organization_id;
+        //     $giftCard   =   $this->giftCard->storeGiftCard($data);
 
-            if (!$giftCard) {
-                return redirect()->back()->with('error', 'Sorry, Something went wrong while creating gift card.');
-            }
-            return redirect()->route('gift-cards.index')->with('success', 'Success, New gift card has been added successfully!');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+        //     if (!$giftCard) {
+        //         return redirect()->back()->with('error', 'Sorry, Something went wrong while creating gift card.');
+        //     }
+        //     return redirect()->route('gift-cards.index')->with('success', 'Success, New gift card has been added successfully!');
+        // } catch (Exception $e) {
+        //     return redirect()->back()->with('error', $e->getMessage());
+        // }
+
+        $giftCard = new GiftCard;
+        $giftCard->organization_id = auth()->user()->organization_id;
+        $giftCard->user_email = $request->user_email;
+        $giftCard->expire_date = $request->expire_date;
+        $giftCard->status = $request->status;
+        $giftCard->barcode = $request->barcode;
+        $giftCard->amount = $request->amount;
+        $giftCard->modified_by = $request->modified_by;
+        $giftCard->save();
+
+        return response()->json(['success', 'Success, New gift card has been added successfully!']);
     }
 
     /**
@@ -201,5 +213,24 @@ class GiftCardController extends Controller
                 'message' => $exception->getMessage(),
             ], 500);
         }
+    }
+
+
+    public function checkGiftCard(Request $request)
+    {
+        $barcode = $request->get('barcode');
+        $giftCard = GiftCard::where('barcode', $barcode)->first();
+
+        if($giftCard)
+        {
+            return response()->json([
+                'exists' => true,
+                'data' => [
+                    'amount' => $giftCard->amount
+                ]
+            ]);
+        }
+
+        return response()->json(['exists' => false]);
     }
 }

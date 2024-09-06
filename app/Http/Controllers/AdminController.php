@@ -81,4 +81,10 @@ class AdminController extends Controller
         Admin::findOrFail($id)->delete();
         return redirect()->route('admins.index')->with('success','Admin deleted successfully');
     }
+
+    public function profile(){
+        $users = auth()->user();
+
+        return view('layouts.partials.navbar', compact('users'));
+    }
 }
