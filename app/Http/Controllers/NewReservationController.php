@@ -563,22 +563,43 @@ class NewReservationController extends Controller
 //         }
 //     }
 
+    // public function makeCurlRequest($url, $data)
+    // {
+    //     $ch = curl_init($url);
+    //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    //     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    //     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    //     $responseContent = curl_exec($ch);
+    //     curl_close($ch);
+
+    //     if ($responseContent === false) {
+    //         return ['error' => 'Error communicating with payment gateway.'];
+    //     }
+
+    //     parse_str($responseContent, $responseArray);
+    //     return $responseArray;
+    // }
+
     public function makeCurlRequest($url, $data)
-    {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-        $responseContent = curl_exec($ch);
-        curl_close($ch);
+{
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+    
+   
 
-        if ($responseContent === false) {
-            return ['error' => 'Error communicating with payment gateway.'];
-        }
+    $responseContent = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
 
-        parse_str($responseContent, $responseArray);
-        return $responseArray;
+    if ($responseContent === false) {
+        return ['error' => 'Error communicating with payment gateway: ' . $error];
     }
+
+    parse_str($responseContent, $responseArray);
+    return $responseArray;
+}
 
     public function postTerminalPayment(Request $request, $id)
     {
