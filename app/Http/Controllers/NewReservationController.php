@@ -589,20 +589,20 @@ class NewReservationController extends Controller
         $data = [
             'xKey' => $apiKey,
             'xAmount' => $amount,
-            'xDeviceName' => 'BBPOS', 
-            'xDeviceComPort' => 'COM3', 
-            'xDeviceBaud' => '9600',
-            'xDeviceParity' => 'None',
+            'xDeviceName' => 'BBPOS',
+            'xDeviceComPort' => 'COM9', 
+            'xDeviceBaud' => '115200',
+            'xDeviceParity' => 'None', 
             'xDeviceDataBits' => '8',
             'xDeviceTimeOut' => '60', 
             'xEnableDeviceSwipe' => '1',
-            'xEnableAmountConfirmationPrompt' => '1', 
-            'xResponseFormat' => 'JSON', 
-            'xExitFormIfApproved' => '1', 
-            'xCommand' => 'cc:encrypt',
+            'xEnableAmountConfirmationPrompt' => '1',
+            'xResponseFormat' => 'JSON',
+            'xExitFormIfApproved' => '1',
+            'xCommand' => 'cc:encrypt', 
         ];
     
-        $ch = curl_init('https://x1.cardknox.com/gateway');
+        $ch = curl_init('https://x2.cardknox.com/gateway'); 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -611,9 +611,14 @@ class NewReservationController extends Controller
         ]);
     
         $response = curl_exec($ch);
+        $error = curl_error($ch);
         curl_close($ch);
     
-        $response = json_decode($response, true); 
+        if ($response === false) {
+            return response()->json(['success' => false, 'message' => 'Curl error: ' . $error]);
+        }
+    
+        $response = json_decode($response, true);
         if (isset($response['xStatus']) && $response['xStatus'] == 'Success') {
             return response()->json(['success' => true, 'transactionId' => $response['xTransactionId']]);
         } else {
@@ -622,36 +627,40 @@ class NewReservationController extends Controller
     }
     
 
-
     public function checkPaymentStatus($id)
     {
-        $transactionId = '123';
-
+        $transactionId = '123'; 
+    
         $data = [
             'xKey' => config('services.cardknox.api_key'),
-            'xCommand' => 'cc:get', // Get transaction status
-            'xTransactionId' => $transactionId, // The transaction ID from postTerminalPayment
+            'xCommand' => 'cc:get', 
+            'xTransactionId' => $transactionId,
         ];
-
-        $ch = curl_init('https://x1.cardknox.com/gateway');
+    
+        $ch = curl_init('https://x2.cardknox.com/gateway'); 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-type: application/x-www-form-urlencoded',
             'X-Recurring-Api-Version: 1.0'
         ]);
-
+    
         $response = curl_exec($ch);
+        $error = curl_error($ch);
         curl_close($ch);
-
-        $response = json_decode($response, true); // Assuming JSON format
+    
+        if ($response === false) {
+            return response()->json(['paymentStatus' => 'Error', 'message' => 'Curl error: ' . $error]);
+        }
+    
+        $response = json_decode($response, true);
         if (isset($response['xStatus']) && $response['xStatus'] == 'Approved') {
             return response()->json(['paymentStatus' => 'Success']);
         } else {
             return response()->json(['paymentStatus' => 'Pending']);
         }
     }
-
+    
     public function storePayment(Request $request, $id)
     {
         $cart_reservation = CartReservation::findOrFail($id);
