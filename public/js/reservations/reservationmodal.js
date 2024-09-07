@@ -77,37 +77,47 @@ $(document).ready(function() {
             }
         })
     }
+
+    $('#customerSelector').on('select2:select', function(e){
+        var data = e.params.data;
+
+        $('#lname').val(data.lname);
+        $('#fname').val(data.fname);
+        $('#custnum').val(data.customernumber);
+        $('#email').val(data.email);
+    })
     
     function loadCustomers() {
         $.ajax({
             type: "GET",
-            url: "getcustomers",
+            url: "getcustomers", 
             dataType: "json",
             cache: false,
             success: function(data) {
                 $("#customerSelector").empty();
                 $("#customerSelector").append('<option value="" disabled selected>Select a Customer</option>');
-
+    
                 $.each(data, function(index, item) {
-                    if (
-                        $('#customerSelector option[value="' + item.id + '"]')
-                            .length == 0
-                    ) {
-                        $("#customerSelector").append(
-                            `<option value="${item.id}" data-fname="${item.first_name}" data-cust="${item.id}" data-lname="${item.last_name}" data-email="${item.email}">${item.first_name} ${item.last_name}</option>`
-                        );
-                    }
+                    $("#customerSelector").append(
+                        `<option value="${item.id}" data-fname="${item.first_name}" data-cust="${item.id}" data-lname="${item.last_name}" data-email="${item.email}">${item.first_name} ${item.last_name}</option>`
+                    );
                 });
             }
         });
     }
-
+    
+  
+    
+    
+    
     $("#customerSelector").change(function() {
         var selectedOption = $(this).find("option:selected");
+    
         var fname = selectedOption.data("fname");
         var lname = selectedOption.data("lname");
         var email = selectedOption.data("email");
         var custnum = selectedOption.data("cust");
+    
         $("#fname").val(fname);
         $("#lname").val(lname);
         $("#email").val(email);
@@ -182,11 +192,11 @@ $(document).ready(function() {
 
     $('#siteclass').trigger('change');
 
- 
+    
+    loadCustomers();
     loadSiteClasses();
     loadSiteHookups();
     loadSites();
-    loadCustomers();
    
 
 });

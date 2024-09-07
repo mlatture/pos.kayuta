@@ -207,7 +207,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.category-item', function(e) {
-        e.preventDefault();  // Correct method name
+        e.preventDefault(); 
         var category_id = $(this).data('id');
         console.log(category_id);
     
@@ -221,7 +221,6 @@ $(document).ready(function() {
                 category_id: category_id,
             },
             success: function(response) {
-                console.log(response);  
     
                 let products = response.data;  
                 
@@ -314,123 +313,44 @@ $(document).ready(function() {
     });
     
 
-    // $(document).on('input', '#search-product', function() {
-    //     var search = $(this).val();
-    //     console.log(search);
-    //     $.ajax({
-    //         url: cartCategoryUrl,
-    //         type: 'POST',
-    //         headers: {
-    //             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    //         },
-    //         data: {
-    //             search: search,
-    //         },
-    //         success: function(response) {
-    //             let products = response.response.data;
-
-    //             if (products.length > 0) {
-    //                 var html = '';
-    //                 $.each(products, function(key, val) {
-
-    //                     html += `<div class="item product-item" data-barcode="${val.barcode}" data-id="${val.id}" ><img
-    //                                 src="${val.image_url}" class="rounded mx-auto d-block"
-    //                                 alt="Product Image">
-    //                             <h5>${limitText(val.name, 10)} (${val.quantity})</h5>
-    //                         </div>`;
-    //                 });
-    //                 $(".product-section").html(html);
-    //             }
-    //         },
-    //         error: function(reject) {
-    //             if (reject.status === 422) {
-    //                 var errors = $.parseJSON(reject.responseText);
-    //                 $.each(errors.errors, function(key, val) {
-    //                     $.toast({
-    //                         heading: 'Error',
-    //                         text: val,
-    //                         position: 'top-right',
-    //                         // bgColor: '#FF1356',
-    //                         loaderBg: '#a94442',
-    //                         icon: 'error',
-    //                         hideAfter: 4000,
-    //                         stack: 6
-    //                     });
-    //                 });
-    //             }
-    //             if (reject.status === 401) {
-    //                 var errors = $.parseJSON(reject.responseText);
-    //                 $.toast({
-    //                     heading: 'Error',
-    //                     text: errors.message,
-    //                     position: 'top-right',
-    //                     // bgColor: '#FF1356',
-    //                     loaderBg: '#a94442',
-    //                     icon: 'error',
-    //                     hideAfter: 4000,
-    //                     stack: 6
-    //                 });
-    //             }
-
-    //             if (reject.status === 400) {
-    //                 var errors = $.parseJSON(reject.responseText);
-    //                 $.each(errors.errors, function(key, val) {
-    //                     $.toast({
-    //                         heading: 'Error',
-    //                         text: val,
-    //                         position: 'top-right',
-    //                         // bgColor: '#FF1356',
-    //                         loaderBg: '#a94442',
-    //                         icon: 'error',
-    //                         hideAfter: 4000,
-    //                         stack: 6
-    //                     });
-    //                 });
-    //             }
-    //         }
-    //     });
-    // });
-
-    $(document).ready(function() {
-        $('#search-product').on('input', function() {
-            let searchTerm = $(this).val();
-       
-            $.ajax({
-                url: cartCategoryUrl, 
-                type: 'GET',
-                data: { search: searchTerm },
-                success: function(response) {
-                    console.log('Response:', response); 
-                    let productsHtml = '';
-                    $.each(response.data, function(index, product) {
-                     
-                        let imagePath = `/storage/products/${product.image}`;
-                        let fallbackImageUrl = '/images/product-thumbnail.jpg'; 
-                        let imageUrl = imagePath; 
-                        
-                        productsHtml += `
-                            <div class="col-md-3" style="cursor: pointer">
-                                <div class="card product-item" data-barcode="${product.barcode}"
-                                    data-id="${product.id}" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-html="true" title="Product Name: ${product.name}">
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        ${product.quantity < 0 ? 0 : product.quantity}
-                                    </span>
-                                    <img src="${imageUrl}" class="rounded mx-auto d-block img-fluid" alt="Product Image" onError="this.onerror=null; this.src='${fallbackImageUrl}';">
-                                    <div class="card-body">
-                                        <div class="btn-products-container">
-                                            <p class="card-text t">${product.name.substring(0, 10)}</p>
-                                        </div>
+    $('#search-product').on('input', function() {
+        let searchTerm = $(this).val();
+   
+        $.ajax({
+            url: cartCategoryUrl, 
+            type: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                console.log('Response:', response); 
+                let productsHtml = '';
+                $.each(response.data, function(index, product) {
+                 
+                    let imagePath = `/storage/products/${product.image}`;
+                    let fallbackImageUrl = '/images/product-thumbnail.jpg'; 
+                    let imageUrl = imagePath; 
+                    
+                    productsHtml += `
+                        <div class="col-md-3" style="cursor: pointer">
+                            <div class="card product-item" data-barcode="${product.barcode}"
+                                data-id="${product.id}" data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-html="true" title="Product Name: ${product.name}">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    ${product.quantity < 0 ? 0 : product.quantity}
+                                </span>
+                                <img src="${imageUrl}" class="rounded mx-auto d-block img-fluid" alt="Product Image" onError="this.onerror=null; this.src='${fallbackImageUrl}';">
+                                <div class="card-body">
+                                    <div class="btn-products-container">
+                                        <p class="card-text t">${product.name.substring(0, 10)}</p>
                                     </div>
                                 </div>
-                            </div>`;
-                    });
-                    $('#product-list').html(productsHtml);
-                },
-                error: function(xhr) {
-                    console.error('Failed to fetch products:', xhr);
-                }
-            });
+                            </div>
+                        </div>`;
+                });
+                $('#product-list').html(productsHtml);
+            },
+            error: function(xhr) {
+                console.error('Failed to fetch products:', xhr);
+            }
         });
     });
     
@@ -572,91 +492,7 @@ $(document).ready(function() {
                         });
                     }
                 }).then((result) => {
-                    // if (result.isConfirmed) {
-                    //     $.ajax({
-                    //         url: '{!! route('orders.store') !!}',
-                    //         type: 'POST',
-                    //         headers: {
-                    //             'X-CSRF-TOKEN': $(
-                    //                 'meta[name="csrf-token"]').attr(
-                    //                 'content')
-                    //         },
-                    //         data: {
-                    //             amount: amount,
-                    //             customer_id: customer_id,
-                    //             gift_card_id: gift_card_id,
-                    //             gift_card_discount: gift_card_discount
-                    //         },
-                    //         success: function(response) {
-                    //             $.toast({
-                    //                 heading: 'Success',
-                    //                 text: response.message,
-                    //                 position: 'top-right',
-                    //                 // bgColor: '#FF1356',
-                    //                 loaderBg: '#00c263',
-                    //                 icon: 'success',
-                    //                 hideAfter: 2000,
-                    //                 stack: 6
-                    //             });
-                    //             window.location.reload();
-                    //         },
-                    //         error: function(reject) {
-                    //             if (reject.status === 422) {
-                    //                 var errors = $.parseJSON(reject
-                    //                     .responseText);
-                    //                 $.each(errors.errors, function(
-                    //                     key, val) {
-                    //                     $.toast({
-                    //                         heading: 'Error',
-                    //                         text: val,
-                    //                         position: 'top-right',
-                    //                         // bgColor: '#FF1356',
-                    //                         loaderBg: '#a94442',
-                    //                         icon: 'error',
-                    //                         hideAfter: 4000,
-                    //                         stack: 6
-                    //                     });
-                    //                 });
-                    //             }
-                    //             if (reject.status === 401) {
-                    //                 var errors = $.parseJSON(reject
-                    //                     .responseText);
-                    //                 $.toast({
-                    //                     heading: 'Error',
-                    //                     text: errors
-                    //                         .message,
-                    //                     position: 'top-right',
-                    //                     // bgColor: '#FF1356',
-                    //                     loaderBg: '#a94442',
-                    //                     icon: 'error',
-                    //                     hideAfter: 4000,
-                    //                     stack: 6
-                    //                 });
-                    //             }
-
-                    //             if (reject.status === 400) {
-                    //                 var errors = $.parseJSON(reject
-                    //                     .responseText);
-                    //                 $.each(errors.errors, function(
-                    //                     key, val) {
-                    //                     $.toast({
-                    //                         heading: 'Error',
-                    //                         text: val,
-                    //                         position: 'top-right',
-                    //                         // bgColor: '#FF1356',
-                    //                         loaderBg: '#a94442',
-                    //                         icon: 'error',
-                    //                         hideAfter: 4000,
-                    //                         stack: 6
-                    //                     });
-                    //                 });
-                    //             }
-                    //         }
-                    //     });
-                    // } else if (result.isDenied) {
-                    //     Swal.fire("Changes are not saved", "", "info");
-                    // }
-
+                   
                     if (result.isConfirmed && result.value) {
                         $.toast({
                             heading: 'Success',
@@ -731,29 +567,7 @@ $(document).ready(function() {
                         Request failed: ${error}
                     `);
                 }
-                // return new Promise((resolve) => {
-                //     $.ajax({
-                //         url: '{!! route('gift-cards.apply') !!}',
-                //         type: 'POST',
-                //         headers: {
-                //             'X-CSRF-TOKEN': $(
-                //                 'meta[name="csrf-token"]'
-                //             ).attr('content')
-                //         },
-                //         data: {
-
-                //         },
-                //         success: function(response) {
-                //             resolve(response);
-                //         },
-                //         error: function(reject) {
-                //             // Error handling code
-                //             Swal.getConfirmButton();
-                //             Swal.enableButtons();
-                //             resolve(reject);
-                //         }
-                //     });
-                // });
+       
             },
             allowOutsideClick: () => !Swal.isLoading()
         }).then((result) => {

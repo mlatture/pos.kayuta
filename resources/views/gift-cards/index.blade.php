@@ -21,7 +21,7 @@
                         <th>User Email</th>
                         <th>Barcode</th>
                         {{-- <th>Discount Type</th> --}}
-                        <th>Discount</th>
+                        <th>Amount </th>
                         {{-- <th>Start Date</th> --}}
                         <th>Expiry Date</th>
                         {{-- <th>Minimum Purchase</th>
@@ -41,7 +41,7 @@
                             <td>{{ $gift->user_email ?? '' }}</td>
                             <td>{{ $gift->barcode ?? '' }}</td>
                             {{-- <td>{{$gift->discount_type ? ucwords(str_replace('_', '', $gift->discount_type)) : 'N/A'}}</td> --}}
-                            <td>{{ $gift->discount ?? 'N/A' }}</td>
+                            <td>{{ $gift->amount ?? 0 }}</td>
                             {{-- <td>{{ date('Y-m-d', strtotime($gift->start_date)) }}</td> --}}
                             <td>{{ date('Y, M d', strtotime($gift->expire_date)) }}</td>
                             {{-- <td>{{$gift->min_purchase ?? 0}}</td>

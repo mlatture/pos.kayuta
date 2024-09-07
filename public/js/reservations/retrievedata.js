@@ -44,6 +44,7 @@ $(document).ready(function () {
     
     
     // Fetch Reservations Data
+    let etag = '';
     function fetchReservations(page = 1, limit = 10, siteId = '', tier = []) {
         $.ajax({
             type: "GET",
@@ -51,7 +52,9 @@ $(document).ready(function () {
             data: { page: page, limit: limit, siteId: siteId, tier: tier },
             dataType: "json",
             cache: false,
+          
             success: function (data) {
+               
                 let tableBody = $('#reservationTable tbody');
                 tableBody.empty();
     
@@ -101,7 +104,7 @@ $(document).ready(function () {
                             <td>${item.fname} ${item.lname}</td>
                             <td>${item.siteid}</td>
                             <td>${item.siteclass}</td>
-                           
+                        
                             <td>
                                 <span class="${statusClass} badge rounded-pill p-2" style="font-size: 12px;">
                                     ${dateStatus}
@@ -116,7 +119,7 @@ $(document).ready(function () {
                     `);
                 });
     
-              
+            
     
                 let paginationLinks = '';
                 if (data.prev_page_url) {
@@ -292,8 +295,7 @@ $(document).ready(function () {
 
 
 
-
         fetchReservations();
-        fetchNotReserve();
+        fetchNotReserve();  
    
     });

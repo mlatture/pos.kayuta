@@ -149,8 +149,7 @@
                     <div class="form-group">
                         <label for="transactionType">Transaction Type</label>
                         <select name="transactionType" id="transactionType" class="form-control">
-                            <option value="" selected disabled>Select Transaction Type</option>
-                            <option value="Full">Full Payment</option>
+                            <option value="Full" selected>Full Payment</option>
                             <option value="Partial">Partial Payment</option>
                         </select>
                     </div>
