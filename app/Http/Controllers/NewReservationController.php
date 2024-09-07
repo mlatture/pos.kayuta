@@ -581,96 +581,106 @@ class NewReservationController extends Controller
     // }
 
     public function makeCurlRequest($url, $data)
-    {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+{
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded']);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_VERBOSE, true);
 
-        $responseContent = curl_exec($ch);
+    $responseContent = curl_exec($ch);
+    
+    if (curl_errno($ch)) {
         $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($responseContent === false) {
-            return ['error' => 'Error communicating with payment gateway. Curl error: ' . $error];
-        }
-
-        parse_str($responseContent, $responseArray);
-        return $responseArray;
+        curl_close($ch); 
+        return ['error' => 'Curl error: ' . $error];
     }
 
-    public function postTerminalPayment(Request $request, $id)
-    {
-        $cart_reservation = CartReservation::findOrFail($id);
-        $amount = $request->input('amount');
-        $apiKey = config('services.cardknox.api_key');
-
-        $data = [
-            'xKey' => $apiKey,
-            'xAmount' => $amount,
-            'xDeviceName' => 'BBPOS',
-            'xDeviceComPort' => 'COM9',
-            'xDeviceBaud' => '115200',
-            'xDeviceParity' => 'None',
-            'xDeviceDataBits' => '8',
-            'xDeviceTimeOut' => '60',
-            'xEnableDeviceSwipe' => '1',
-            'xEnableAmountConfirmationPrompt' => '1',
-            'xResponseFormat' => 'JSON',
-            'xExitFormIfApproved' => '1',
-            'xCommand' => 'cc:encrypt',
-        ];
-
-        $url = 'https://x2.cardknox.com/gateway';
-        $responseArray = $this->makeCurlRequest($url, $data);
-
-        if (isset($responseArray['error'])) {
-            return response()->json(['success' => false, 'message' => $responseArray['error']]);
-        }
-
-        if (isset($responseArray['xStatus']) && $responseArray['xStatus'] == 'Success') {
-            return response()->json(['success' => true, 'transactionId' => $responseArray['xTransactionId']]);
+    curl_close($ch);
+    
+    if ($responseContent) {
+        $responseArray = json_decode($responseContent, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $responseArray;
         } else {
-            return response()->json(['success' => false, 'message' => $responseArray['xMessage'] ?? 'Transaction failed']);
+            return ['error' => 'Invalid JSON response: ' . $responseContent];
         }
+    } else {
+        return ['error' => 'No response from the server.'];
+    }
+}
+
+public function postTerminalPayment(Request $request, $id)
+{
+    $cart_reservation = CartReservation::findOrFail($id);
+    $amount = $request->input('amount');
+    $apiKey = config('services.cardknox.api_key');
+
+    $data = [
+        'xKey' => $apiKey,
+        'xAmount' => $amount,
+        'xDeviceName' => 'BBPOS', 
+        'xDeviceComPort' => 'COM9', 
+        'xDeviceBaud' => '115200',
+        'xDeviceParity' => 'None',
+        'xDeviceDataBits' => '8',
+        'xDeviceTimeOut' => '60',
+        'xEnableDeviceSwipe' => '1',
+        'xEnableAmountConfirmationPrompt' => '1',
+        'xResponseFormat' => 'JSON', 
+        'xExitFormIfApproved' => '1',
+        'xCommand' => 'cc:encrypt',
+        'xVersion' => '4.5.5', 
+        'xSoftwareName' => 'Kayutalake',
+        'xSoftwareVersion' => '1.0',
+
+    ];
+
+    $url = 'https://x2.cardknox.com/gateway';
+    // $url = 'https://localemv.com:8887';
+    $responseArray = $this->makeCurlRequest($url, $data);
+
+    if (isset($responseArray['error'])) {
+        return response()->json(['success' => false, 'message' => $responseArray['error']]);
     }
 
-   
-
-    public function checkPaymentStatus($id)
-    {
-        $transactionId = '123';
-
-        $data = [
-            'xKey' => config('services.cardknox.api_key'),
-            'xCommand' => 'cc:get',
-            'xTransactionId' => $transactionId,
-        ];
-
-        $ch = curl_init('https://x2.cardknox.com/gateway');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-type: application/x-www-form-urlencoded',
-            'X-Recurring-Api-Version: 1.0'
-        ]);
-
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($response === false) {
-            return response()->json(['paymentStatus' => 'Error', 'message' => 'Curl error: ' . $error]);
-        }
-
-        $response = json_decode($response, true);
-        if (isset($response['xStatus']) && $response['xStatus'] == 'Approved') {
-            return response()->json(['paymentStatus' => 'Success']);
-        } else {
-            return response()->json(['paymentStatus' => 'Pending']);
-        }
+    if (isset($responseArray['xStatus']) && $responseArray['xStatus'] == 'Success') {
+        return response()->json(['success' => true, 'transactionId' => $responseArray['xTransactionId']]);
+    } else {
+        return response()->json(['success' => false, 'message' => $responseArray['xMessage'] ?? 'Transaction failed']);
     }
+}
+
+
+public function checkPaymentStatus($id)
+{
+    $transactionId = '123'; // Replace with your actual transaction ID
+
+    $data = [
+        'xKey' => config('services.cardknox.api_key'),
+        'xCommand' => 'cc:get',
+        'xTransactionId' => $transactionId,
+        'xVersion' => '4.5.5',
+        'xSoftwareName' => 'Kayutalake',
+        'xSoftwareVersion' => '1.0',
+
+    ];
+
+    $url = 'https://x2.cardknox.com/gateway';
+    $response = $this->makeCurlRequest($url, $data);
+
+    if (isset($response['error'])) {
+        return response()->json(['paymentStatus' => 'Error', 'message' => 'Curl error: ' . $response['error']]);
+    }
+
+    if (isset($response['xStatus']) && $response['xStatus'] == 'Approved') {
+        return response()->json(['paymentStatus' => 'Success']);
+    } else {
+        return response()->json(['paymentStatus' => 'Pending']);
+    }
+}
+
 
     public function storePayment(Request $request, $id)
     {
