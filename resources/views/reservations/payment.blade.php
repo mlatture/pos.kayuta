@@ -118,6 +118,14 @@
                         <td></td>
                         <td></td>
                         <td colspan="3">Sales Tax (8.75%)</td>
+                        <td>$ {{$reservation->taxrate}}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2"></td>
+                        <td>Tax</td>
+                        <td></td>
+                        <td></td>
+                        <td colspan="3">Total Tax</td>
                         <td>${{ number_format($reservation->totaltax, 2) }}</td>
                     </tr>
                     <tr class="total-row">

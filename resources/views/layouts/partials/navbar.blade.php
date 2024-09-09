@@ -101,13 +101,7 @@
                     </a></li>
                 @endHasPermission
 
-                @hasPermission(config('constants.role_modules.orders.value'))
 
-                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">
-                        <i class="nav-icon fas fa-box me-2"></i>
-                        <span class="">Order Records</span>
-                    </a></li>
-                @endHasPermission
                 @hasPermission(config('constants.role_modules.reservation_management.value'))
 
                 <li><a class="dropdown-item d-flex align-items-center" href="{{ route('reservations.index') }}">

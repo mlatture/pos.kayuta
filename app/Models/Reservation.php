@@ -30,49 +30,6 @@ class Reservation extends Model
     }
 
 
-    // public function calculateRate()
-    // {
-    //     $rateTier = $this->rateTier;
-     
-    //     $days = $this->cod->diffInDays($this->cid);
-
-    //     if($days >= 30){
-    //         return $rateTier->monthlyrate;
-    //     }elseif($days >= 7){
-    //         return $rateTier->weeklyrate;
-    //     }else {
-    //         $totalRate = 0;
-    //         $currentDate = $this->cid->copy();
-    //         for($i = 0; $i < $days; $i++){
-    //             switch($currentDate->dayOfWeek){
-    //                 case Carbon::SUNDAY:
-    //                     $totalRate += $rateTier->sundayrate;
-    //                     break;
-    //                 case Carbon::MONDAY:
-    //                     $totalRate += $rateTier->mondayrate;
-    //                     break;
-    //                 case Carbon::TUESDAY:
-    //                     $totalRate += $rateTier->tuesdayrate;
-    //                     break;
-    //                 case Carbon::WEDNESDAY:
-    //                     $totalRate += $rateTier->wednesdayrate;
-    //                     break;
-    //                 case Carbon::THURSDAY:
-    //                     $totalRate += $rateTier->thursdayrate;
-    //                     break;
-    //                 case Carbon::FRIDAY:
-    //                     $totalRate += $rateTier->fridayrate;
-    //                     break;
-    //                 case Carbon::SATURDAY:
-    //                     $totalRate += $rateTier->saturdayrate;
-    //             }
-    //             $currentDate->addDay();
-
-    //         }
-    //         return $totalRate;
-    //     }
-    // }
-
     public function user()
     {
         return $this->hasOne(User::class, 'id', 'customernumber');

@@ -1,4 +1,3 @@
-
 <header class="reservation__head bg-dark py-2 mb-2">
     <div
         class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
@@ -14,9 +13,8 @@
                     <option value="Register 2">Register 2</option>
                 </select>
             </a>
-            <a href="javacript:void(0)" class="text-white text-decoration-none">
-                <i class="fa-solid fa-cart-arrow-down"></i>
-                New Sale
+            <a href="javacript:void(0)" type="button" class="text-white text-decoration-none cart-empty">
+                <i class="fa-solid fa-cart-arrow-down cart-empty"></i> New Sale
             </a>
             <a href="javacript:void(0)" class="text-white text-decoration-none">
 
@@ -35,10 +33,13 @@
                 <i class="fa-solid fa-bars-progress"></i>
                 In Progress
             </a>
-            <a href="javacript:void(0)" class="text-white text-decoration-none">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                History
+            @hasPermission(config('constants.role_modules.orders.value'))
+            <a href="{{ route('orders.index') }}" class="text-white text-decoration-none">
+                <i class="nav-icon fas fa-box me-2"></i>
+                <span class="">History</span>
             </a>
+            @endHasPermission
+
             <a href="#" class="text-white text-decoration-none">
                 <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
                 Help

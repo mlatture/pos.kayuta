@@ -9,6 +9,7 @@ class CardsOnFile extends Model
 {
     use HasFactory;
 
+    protected $table = 'cards_on_files';
     protected $guarded = [];
 
     public function storeCards($data = [])

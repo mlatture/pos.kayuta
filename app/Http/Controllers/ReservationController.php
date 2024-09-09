@@ -174,7 +174,7 @@ class ReservationController extends Controller
     }
 
 
-    public function updateDates(Request $request)
+    public function updateDates(Request $request, $id)
     {
         $reservation = Reservation::findOrFail($id);
         $reservation->cid = $request->input('start_date');
