@@ -83,7 +83,8 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return $this->object->respond([],[], true, 'Order Placed Successfully!');
+            return response()->json(['success', 'Order Placed Successfully!']);
+            // return back()->with('success', 'Order Placed Successfully!');
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);

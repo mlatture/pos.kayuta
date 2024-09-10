@@ -48,6 +48,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::resource('orders', OrderController::class);
     Route::get('orders-generate-invoice/{id}', [OrderController::class, 'generateInvoice'])->name('orders.generate.invoice');
+    Route::post('orders-submit', [OrderController::class, 'store'])->name('orders.store');
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
     Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
@@ -76,6 +77,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
     Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
+
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');

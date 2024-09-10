@@ -87,7 +87,7 @@
                 </div>
                 <div class="user-cart">
                     <div class="card">
-                        <table class="table table-striped">
+                        <table class="table table-striped" id="selected-product">
                             <thead>
                                 <tr>
                                     <th>Product</th>
@@ -145,8 +145,10 @@
                             Gift Card
                         </button>
                     </div>
-                    <div class="col"><button type="button"
-                            class="btn btn-success btn-block submit-order">Submit</button></div>
+                    <div class="col">
+                        <button type="button"
+                            class="btn btn-success btn-block submit-order">Submit</button>
+                        </div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-6">

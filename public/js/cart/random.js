@@ -421,102 +421,177 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.submit-order', function() {
-        var totalAmount = $("#total-amount").val();
-        Swal.fire({
-            title: "Enter Order Amount",
-            input: "text",
-            inputAttributes: {
-                autocapitalize: "off"
-            },
-            showCancelButton: true,
-            confirmButtonText: "Submit",
-            showLoaderOnConfirm: true,
-            inputValidator: (value) => {
-                if (!value) {
-                    return "Please Enter Amount!";
-                }
-            },
-            // showLoaderOnConfirm: true,
-            // preConfirm: async (amount) => {
+    // $(document).on('click', '.submit-order', function() {
 
-            // },
-            allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
+    //     var totalAmount = $("#total-amount").val();
+    //     Swal.fire({
+    //         title: "Enter Order Amount",
+    //         input: "text",
+    //         inputAttributes: {
+    //             autocapitalize: "off"
+    //         },
+    //         showCancelButton: true,
+    //         confirmButtonText: "Submit",
+    //         showLoaderOnConfirm: true,
+    //         inputValidator: (value) => {
+    //             if (!value) {
+    //                 return "Please Enter Amount!";
+    //             }
+    //         },
+          
+    //         allowOutsideClick: () => !Swal.isLoading()
+    //     }).then((result) => {
+    //         if (result.isConfirmed) {
 
-                let amount = result.value;
-                let customer_id = $('#customer_id').val();
-                let gift_card_id = $('#gift_card_id').val();
-                let gift_card_discount = $('#gift_card_discount').val();
+    //             let amount = result.value;
+    //             let customer_id = $('#customer_id').val();
+    //             let gift_card_id = $('#gift_card_id').val();
+    //             let gift_card_discount = $('#gift_card_discount').val();
 
-                let change = totalAmount - amount;
-                if ((change) < 0) {
-                    change = change * -1;
-                } else {
-                    change = 0;
-                }
+    //             let change = totalAmount - amount;
+    //             if ((change) < 0) {
+    //                 change = change * -1;
+    //             } else {
+    //                 change = 0;
+    //             }
 
-                Swal.fire({
-                    title: "Change is : " + change.toFixed(2) +
-                        ". Do you want to proceed?",
-                    showDenyButton: true,
-                    showCancelButton: true,
-                    confirmButtonText: "Save",
-                    denyButtonText: `Don't save`,
-                    showLoaderOnConfirm: true,
-                    preConfirm: () => {
-                        return new Promise((resolve) => {
-                            $.ajax({
-                                url: cartOrderStoreUrl,
-                                type: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': $(
-                                        'meta[name="csrf-token"]'
-                                    ).attr('content')
-                                },
-                                data: {
-                                    amount: amount,
-                                    customer_id: customer_id,
-                                    gift_card_id: gift_card_id,
-                                    gift_card_discount: gift_card_discount
-                                },
-                                success: function(response) {
-                                    resolve(response);
-                                },
-                                error: function(reject) {
-                                    // Error handling code
-                                    resolve(reject);
-                                }
-                            });
-                        });
-                    }
-                }).then((result) => {
+    //             Swal.fire({
+    //                 title: "Change is : " + change.toFixed(2) +
+    //                     ". Do you want to proceed?",
+    //                 showDenyButton: true,
+    //                 showCancelButton: true,
+    //                 confirmButtonText: "Save",
+    //                 denyButtonText: `Don't save`,
+    //                 showLoaderOnConfirm: true,
+    //                 preConfirm: () => {
+    //                     return new Promise((resolve) => {
+    //                         $.ajax({
+    //                             url: cartOrderStoreUrl,
+    //                             type: 'POST',
+    //                             headers: {
+    //                                 'X-CSRF-TOKEN': $(
+    //                                     'meta[name="csrf-token"]'
+    //                                 ).attr('content')
+    //                             },
+    //                             data: {
+    //                                 amount: amount,
+    //                                 customer_id: customer_id,
+    //                                 gift_card_id: gift_card_id,
+    //                                 gift_card_discount: gift_card_discount
+    //                             },
+    //                             success: function(response) {
+    //                                 resolve(response);
+    //                             },
+    //                             error: function(reject) {
+                             
+    //                                 resolve(reject);
+    //                             }
+    //                         });
+    //                     });
+    //                 }
+    //             }).then((result) => {
                    
-                    if (result.isConfirmed && result.value) {
-                        $.toast({
-                            heading: 'Success',
-                            text: result.value.message,
-                            position: 'top-right',
-                            loaderBg: '#00c263',
-                            icon: 'success',
-                            hideAfter: 2000,
-                            stack: 6
-                        });
-                        window.location.reload();
-                    } else if (result.isDenied) {
-                        Swal.fire("Changes are not saved", "", "info");
-                    }
+    //                 if (result.isConfirmed && result.value) {
+    //                     $.toast({
+    //                         heading: 'Success',
+    //                         text: result.value.message,
+    //                         position: 'top-right',
+    //                         loaderBg: '#00c263',
+    //                         icon: 'success',
+    //                         hideAfter: 2000,
+    //                         stack: 6
+    //                     });
+    //                     window.location.reload();
+    //                 } else if (result.isDenied) {
+    //                     Swal.fire("Changes are not saved", "", "info");
+    //                 }
+    //             });
+
+
+    //         }
+    //     });
+    // });
+
+    $(document).on('click', '.submit-order', function() {
+        let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ''));
+    
+        var offcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasOrder'));
+        offcanvas.show();
+    
+        $('#offcanvasSubtotal').text('$' + parseFloat($("#subtotal-amount").val().replace(/,/g, '')).toFixed(2));
+        $('#offcanvasTotalAmount').text('$' + totalAmount.toFixed(2));
+        $('#offcanvasGiftDiscount').text('$' + parseFloat($("#gift_card_discount").val().replace(/,/g, '') || 0).toFixed(2));
+    });
+    
+    $("#submitOrderButton").on('click', function() {
+        var totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ''));
+        let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ''));
+        let customer_id = $('#customer_id').val();
+        let gift_card_id = $('#gift_card_id').val();
+        let gift_card_discount = $('#gift_card_discount').val();
+    
+        let change;
+        if (amount > totalAmount) {
+            change = amount - totalAmount; 
+        } else {
+            change = totalAmount - amount; 
+        }
+    
+        Swal.fire({
+            title: "Change is: $" + change.toFixed(2) + ". Do you want to proceed?",
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            cancelButtonText: `Don't save`,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return new Promise((resolve) => {
+                    $.ajax({
+                        url: cartOrderStoreUrl,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: {
+                            amount: amount,
+                            customer_id: customer_id,
+                            gift_card_id: gift_card_id,
+                            gift_card_discount: gift_card_discount
+                        },
+                        success: function(response) {
+                            resolve(response);
+                        },
+                        error: function(reject) {
+                            resolve(reject);
+                        }
+                    });
                 });
-
-
-                // Swal.fire({
-                //     title: `${result.value.login}'s avatar`,
-                //     imageUrl: result.value.avatar_url
-                // });
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasOrder'));
+                offcanvas.hide();
+        
+                $("#selected-product tbody").empty();
+        
+                $.toast({
+                    heading: result.value[0] || 'Success',
+                    text: result.value[1] || 'Order placed successfully!',
+                    position: 'top-right',
+                    loaderBg: '#00c263',
+                    icon: 'success',
+                    hideAfter: 3000,
+                    stack: 6
+                });
+        
+                // window.location.reload();
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire("Changes are not saved", "", "info");
             }
         });
+        
     });
+    
+
 
     $(document).on('click', '.apply-gift-card', function() {
         var customer_id = $("#customer_id").val();

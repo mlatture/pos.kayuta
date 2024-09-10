@@ -27,3 +27,45 @@
     <div class="col text-right show-total-amount">$
         {{ number_format($subtotal - $totalDiscount + $totalTax, 2) }}</div>
 </div>
+<!-- Off-canvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasOrder" aria-labelledby="offcanvasOrderLabel">
+    <div class="offcanvas-header">
+        <h5 id="offcanvasOrderLabel">Order Summary</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="row">
+            <div class="col">Sub Total:</div>
+            <div class="col text-right" id="offcanvasSubtotal"></div>
+        </div>
+        <div class="row">
+            <div class="col">Discount:</div>
+            <div class="col text-right"></div>
+        </div>
+        <div class="row">
+            <div class="col">Tax:</div>
+            <div class="col text-right"></div>
+        </div>
+        <div class="row">
+            <div class="col">Gift Card Discount:</div>
+            <div class="col text-right" id="offcanvasGiftDiscount">$ 0.00</div>
+        </div>
+        <div class="row">
+            <div class="col">Total:</div>
+            <div class="col text-right" id="offcanvasTotalAmount">
+               
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <label for="orderAmountInput">Enter Order Amount:</label>
+                <input type="text" id="orderAmountInput" class="form-control" placeholder="Enter amount">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col text-right">
+                <button type="submit" class="btn btn-primary" id="submitOrderButton">Submit Order</button>
+            </div>
+        </div>
+    </div>
+</div>
