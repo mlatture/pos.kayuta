@@ -63,25 +63,4 @@
 </div>
 
 {{--  Planner Collapse --}}
-<div class="collapse px-5" id="collapsePlanner">
-    <div class="card card-body">
-        <div class="row">
-            <div class="col">
-                <label for="siteId">Site</label>
-                <select name="siteId" id="siteSelectors" class="form-control">
-        
-                </select>
-            </div>
-              
-            <div class="col">
-                <label for="">Type</label>
-                <select id="type" name="type" class="form-control" multiple="multiple">
-                   
-                </select>
-            </div>
-                                       
-    
-        </div>
-    </div>
-   
-</div>
+@include('reservations.components.planner')

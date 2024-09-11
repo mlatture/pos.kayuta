@@ -33,12 +33,7 @@ $(document).ready(function() {
             });
         });
 
-        // $('.secondpage-modal').fadeOut(400, function(){
-        //     $('#closeModal').hide();
-        //     $('.thirdpage-modal').fadeIn(400, function(){
-                
-        //     })
-        // })
+    
     });
 
     
@@ -56,11 +51,16 @@ $(document).ready(function() {
     });
 
     function loadSites() {  
+        var selectedSiteClass = $('#siteclass option:selected').data('siteclass');
+        console.log(selectedSiteClass);
         $.ajax({
             type: "GET",
             url: "getsite",
             dataType: "json",
             cache: false,
+            data: {
+                siteclass: selectedSiteClass
+            },
             success: function(data) {
                 $("#siteSelector").empty();
                 $("#siteSelector").append('<option value="" disabled selected>Select a Site</option>');
@@ -77,6 +77,39 @@ $(document).ready(function() {
             }
         })
     }
+
+    function number_of_guests(){
+        var selectedSiteClass = $('#siteclass option:selected').data('siteclass');
+        
+        var maxGuests = 0;
+        if (selectedSiteClass === 'RV Sites') {
+            maxGuests = 6;
+        } else if (selectedSiteClass === 'Cabin') {
+            maxGuests = 5;
+        } else if (selectedSiteClass === 'Tiny Homes') {
+            maxGuests = 2;
+        } else {
+            $('#number_of_guests').empty().append('<option value="" disabled selected>No Maximum Guests </option>').prop('disabled', true);
+            return;
+        }
+
+        var guestOptions = '';
+        for (var i = 1; i <= maxGuests; i++) {
+            guestOptions += `<option value="${i}">${i}</option>`;
+        }
+    
+        var $guestDropdown = $('#number_of_guests');
+
+        $guestDropdown.empty().append(guestOptions).prop('disabled', false);
+       
+
+    }
+
+    $('#siteclass').on('change', function(){
+        loadSites();
+        number_of_guests();
+    })
+   
 
     $('#customerSelector').on('select2:select', function(e){
         var data = e.params.data;

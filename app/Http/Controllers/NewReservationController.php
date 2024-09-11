@@ -94,18 +94,30 @@ class NewReservationController extends Controller
         return response()->json($hookup);
     }
 
-    public function getSites()
+    public function getSites(Request $request)
     {
         $currentDate = now();
-        $reservedSiteIds = Reservation::where(function ($query) use ($currentDate) {
-            $query->whereBetween('cid', [$currentDate, '9999-12-31'])->orWhereBetween('cod', ['0000-01-01', $currentDate]);
-        })
-            ->pluck('siteid')
-            ->toArray();
 
-        $site = Site::whereNotIn('siteid', $reservedSiteIds)->get();
+        $reservedSiteIds = Reservation::where(function ($query) use ($currentDate) {
+            $query->whereBetween('cid', [$currentDate, '9999-12-31'])
+                ->orWhereBetween('cod', ['0000-01-01', $currentDate]);
+        })->pluck('siteid')->toArray();
+
+        $siteQuery = Site::whereNotIn('siteid', $reservedSiteIds);
+
+        if ($request->has('siteclass') && !empty($request->siteclass)) {
+            $siteclass = $request->siteclass;
+
+            $firstWord = explode(' ', trim($siteclass))[0];
+            $siteQuery->where('siteclass', 'LIKE', $firstWord . '%');
+
+        }
+
+        $site = $siteQuery->get();
+
         return response()->json($site);
     }
+
 
     public function paymentIndex(Request $request, $id)
     {
@@ -203,6 +215,7 @@ class NewReservationController extends Controller
         $cart->email = $request->email;
         $cart->base = 0;
         $cart->subtotal = $subtotal;
+        $cart->number_of_guests = $request->num_guests ?? 0;
         $cart->taxrate = $taxRate;
         $cart->totaltax = $totalTax;
         $cart->total = $total;
@@ -350,7 +363,7 @@ class NewReservationController extends Controller
             'xSoftwareName' => 'KayutaLake',
             'xAllowDuplicate' => true,
         ];
-    
+
         switch ($paymentType) {
             case 'Cash':
             case 'Other':
@@ -384,7 +397,7 @@ class NewReservationController extends Controller
 
     private function handleGiftCardPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $barcode, $amount)
     {
-       
+
 
         $giftcard = GiftCard::where('barcode', $barcode)->firstOrFail();
         $giftcard->amount -= $amount;
@@ -434,7 +447,7 @@ class NewReservationController extends Controller
         $responseContent = curl_exec($ch);
         \Log::info('Cardknox payment request', ['data' => $data]);
         \Log::info('Cardknox payment response', ['response' => $responseContent]);
-        
+
         curl_close($ch);
 
         if ($responseContent === false) {
@@ -455,7 +468,7 @@ class NewReservationController extends Controller
             $payment->save();
 
             $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
-            $this->saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request,  $uniqueTransactionId);
+            $this->saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId);
             return response()->json(['success' => true]);
         } else {
             return response()->json(['message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error')], 400);
@@ -493,13 +506,13 @@ class NewReservationController extends Controller
         $reservation->save();
     }
 
-    private function saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request,$uniqueTransactionId)
+    private function saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId)
     {
         $fullCardNumber = $request->xCardNum;
         $maskedCardNumber = substr($fullCardNumber, 0, 1) . str_repeat('*', strlen($fullCardNumber) - 1) . substr($fullCardNumber, -3);
         $cardType = $this->getCardType($fullCardNumber);
-       
-    
+
+
         \Log::info('Saving card on file', [
             'customernumber' => $customer->id,
             'cartid' => $cart_reservation->cartid,
@@ -507,10 +520,10 @@ class NewReservationController extends Controller
             'receipt' => $randomReceiptID,
             'email' => $customer->email,
             'maskedCardNumber' => $maskedCardNumber,
-            'xToken' =>  $uniqueTransactionId,
+            'xToken' => $uniqueTransactionId,
             'gateway_response' => $request->gateway_response,
         ]);
-    
+
         try {
             $cardonFiles = new CardsOnFile([
                 'customernumber' => $customer->id,
@@ -522,14 +535,14 @@ class NewReservationController extends Controller
                 'xToken' => $uniqueTransactionId,
                 'gateway_response' => json_encode($request->gateway_response),
             ]);
-    
+
             $cardonFiles->save();
         } catch (\Exception $e) {
             \Log::error('Error saving card on file', ['exception' => $e->getMessage()]);
-           
+
         }
     }
-    
+
 
     /**
      * Determine the card type based on the card number.
@@ -538,7 +551,8 @@ class NewReservationController extends Controller
      * @return string
      */
 
-    private function getCardType($cardNumber){
+    private function getCardType($cardNumber)
+    {
         $cardType = 'Unkown';
         if (preg_match('/^4[0-9]{12}(?:[0-9]{3})?$/', $cardNumber)) {
             $cardType = 'Visa';
@@ -553,7 +567,7 @@ class NewReservationController extends Controller
         } elseif (preg_match('/^35[0-9]{14}$/', $cardNumber)) {
             $cardType = 'JCB';
         }
-    
+
         return $cardType;
     }
 

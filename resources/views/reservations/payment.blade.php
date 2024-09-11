@@ -81,10 +81,7 @@
                         <th>Date</th>
                         <th>Site</th>
                         <th>Type</th>
-                        <th>Adults</th>
-                        <th>Children 5 and below</th>
-                        <th>Children 6 to 17</th>
-                        <th>Pets</th>
+                        <th>Number of Guests</th>
                         <th>Description</th>
                         <th>Total</th>
                     </tr>
@@ -95,10 +92,8 @@
                             {{ date('D, M d', strtotime($reservation->cod)) }}</td>
                         <td>{{ $reservation->siteid }}</td>
                         <td>{{ $reservation->siteclass }}</td>
-                        <td>{{ $reservation->adults ?? 0 }}</td>
-                        <td>5</td>
-                        <td>0</td>
-                        <td>{{ $reservation->pets ?? 0 }}</td>
+                        <td>{{ $reservation->number_of_guests ?? 0 }}</td>
+                       
                         @if(Request::is('admin/reservations/invoice/*'))
                             <td>{{ $cart->description }}</td>
                         @else 
@@ -108,7 +103,7 @@
                         <td>${{ number_format($reservation->subtotal, 2) }}</td>
                     </tr>
                     <tr class="total-row">
-                        <td colspan="7"></td>
+                        <td colspan="4"></td>
                         <td class="text-end">Subtotal</td>
                         <td>${{ number_format($reservation->subtotal, 2) }}</td>
                     </tr>
@@ -116,20 +111,18 @@
                         <td colspan="2"></td>
                         <td>Tax</td>
                         <td></td>
-                        <td></td>
-                        <td colspan="3">Sales Tax (8.75%)</td>
+                        <td>Sales Tax (8.75%)</td>
                         <td>$ {{$reservation->taxrate}}</td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="2"></td>
                         <td>Tax</td>
                         <td></td>
-                        <td></td>
-                        <td colspan="3">Total Tax</td>
+                        <td >Total Tax</td>
                         <td>${{ number_format($reservation->totaltax, 2) }}</td>
                     </tr>
                     <tr class="total-row">
-                        <td colspan="7"></td>
+                        <td colspan="4"></td>
                         <td class="text-end">Total Payments</td>
                         <td>${{ number_format($reservation->total, 2) }}</td>
                     </tr>
@@ -137,7 +130,7 @@
                     @if (Request::is('admin/reservations/invoice/*'))
                         @php    $balance = $reservation->total - $payment->payment; @endphp
                         <tr class="total-row">
-                            <td colspan="7"></td>
+                            <td colspan="4"></td>
                             <td class="text-end">Balance </td>
                             <td>${{ number_format($balance, 2) }}</td>
                         </tr>

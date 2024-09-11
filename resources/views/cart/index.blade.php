@@ -104,32 +104,32 @@
                                     $totalTax = 0;
                                 @endphp
                                 @foreach ($cart as $key => $cartItem)
-                                    @php
-                                        $productPrice = $cartItem->price * $cartItem->pivot->quantity;
-                                        $subtotal += $productPrice;
-                                        $totalDiscount += $cartItem->pivot->discount ?? 0;
-                                        $totalTax += $cartItem->pivot->tax ?? 0;
-                                    @endphp
-                                    <tr>
-                                        <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
-                                        <td>
-                                            <input type="text" class="form-control form-control-sm qty product-quantity"
-                                                data-id="{{ $cartItem->id }}" value="{{ $cartItem->pivot->quantity ?? 0 }}">
-                                            <button class="btn btn-danger btn-sm product-delete"
-                                                data-id="{{ $cartItem->id }}">
-                                                <i class="fas fa-trash" aria-hidden="true"></i>
-                                            </button>
-                                        </td>
-                                        <td class="text-right">$
-                                            {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
-                                        </td>
-                                        <td class="text-right">$
-                                            {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
-                                        </td>
-                                        <td class="text-right">$
-                                            {{ $productPrice ? number_format($productPrice, 2) : 0 }}
-                                        </td>
-                                    </tr>
+                                                                @php
+                                                                    $productPrice = $cartItem->price * $cartItem->pivot->quantity;
+                                                                    $subtotal += $productPrice;
+                                                                    $totalDiscount += $cartItem->pivot->discount ?? 0;
+                                                                    $totalTax += $cartItem->pivot->tax ?? 0;
+                                                                @endphp
+                                                                <tr>
+                                                                    <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
+                                                                    <td>
+                                                                        <input type="text" class="form-control form-control-sm qty product-quantity"
+                                                                            data-id="{{ $cartItem->id }}" value="{{ $cartItem->pivot->quantity ?? 0 }}">
+                                                                        <button class="btn btn-danger btn-sm product-delete"
+                                                                            data-id="{{ $cartItem->id }}">
+                                                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                    <td class="text-right">$
+                                                                        {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
+                                                                    </td>
+                                                                    <td class="text-right">$
+                                                                        {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
+                                                                    </td>
+                                                                    <td class="text-right">$
+                                                                        {{ $productPrice ? number_format($productPrice, 2) : 0 }}
+                                                                    </td>
+                                                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -146,9 +146,8 @@
                         </button>
                     </div>
                     <div class="col">
-                        <button type="button"
-                            class="btn btn-success btn-block submit-order">Submit</button>
-                        </div>
+                        <button type="button" class="btn btn-success btn-block submit-order">Submit</button>
+                    </div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-6">
