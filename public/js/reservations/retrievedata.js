@@ -28,99 +28,57 @@ $(document).ready(function () {
         fetchReservations(page, limit, siteId, tier);
     });
     
-    // Site filter change event
     $("#siteSelectors").change(function() {
         let selectedSiteId = $(this).val() || '';
         let selectedType = $("#type").val() || []; 
         fetchReservations(1, 10, selectedSiteId, selectedType);
     });
     
-    // Type filter change event
     $("#type").change(function() {
         let selectedType = $(this).val() || []; 
         let selectedSiteId = $("#siteSelectors").val() || ''; 
         fetchReservations(1, 10, selectedSiteId, selectedType);
     });
     
+ 
+    $('input[name="dates"]').daterangepicker({
+        opens: 'left',
+        autoApply: true,
+    }, function (start, end, label) {
+        let startDate = start.format('YYYY-MM-DD');
+        let endDate = end.format('YYYY-MM-DD'); 
+        
+        if(startDate === '0000-01-01') startDate = '';
+        if(endDate === '0000-01-01') endDate = '';
+      
+        let selectedType = $("#typeSelectors").val() || []; 
+        let selectedSiteId = $("#siteSelectors").val() || ''; 
+        
+        fetchReservations(1, 10, selectedSiteId, selectedType, startDate, endDate);
+    });
     
-    // Fetch Reservations Data
-    let etag = '';
-    function fetchReservations(page = 1, limit = 10, siteId = '', tier = []) {
+    let allReservations = [];
+   
+    
+    function fetchReservations(page = 1, limit = 10, siteId = '', tier = [], startDate = '', endDate = '') {
         $.ajax({
             type: "GET",
             url: "reservepeople",
-            data: { page: page, limit: limit, siteId: siteId, tier: tier },
+            data: { 
+                page: page, 
+                limit: limit, 
+                siteId: siteId, 
+                tier: tier,
+                start_date: startDate,
+                end_date: endDate
+            },
             dataType: "json",
             cache: false,
-          
             success: function (data) {
-               
-                let tableBody = $('#reservationTable tbody');
-                tableBody.empty();
-    
-                let now = new Date();
-    
-                $.each(data.data, function (index, item) {
-                    let cidDate = new Date(item.cid);
-                    let codDate = new Date(item.cod);
-    
-                    let cid = cidDate.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-    
-                    let cod = codDate.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-    
-                    let dateStatus = '';
-                    let statusClass = '';
-    
-                    if (cidDate.toDateString() === now.toDateString()) {
-                        dateStatus = 'Arrival';
-                        statusClass = 'bg-success';
-                    } else if (codDate.toDateString() === now.toDateString()) {
-                        dateStatus = 'Departure';
-                        statusClass = 'bg-danger';
-                    } else if (cidDate <= now && codDate >= now) {
-                        dateStatus = 'Occupied';
-                        statusClass = 'bg-info';
-                    } else if (cidDate > now) {
-                        dateStatus = 'Pending';
-                        statusClass = 'bg-warning text-white';
-                    } else if (codDate < now) {
-                        dateStatus = 'Completed';
-                        statusClass = 'bg-primary';
-                    }
-    
-                    tableBody.append(`
-                        <tr
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
-                            title="Arrival: ${cid}\nDeparture: ${cod}\nSite: ${item.siteid} - ${item.siteclass}\nAddress: ${item.address} \nPhone: ${item.phone}\nCust#: ${item.customernumber}">
-                            <td>${item.fname} ${item.lname}</td>
-                            <td>${item.siteid}</td>
-                            <td>${item.siteclass}</td>
-                        
-                            <td>
-                                <span class="${statusClass} badge rounded-pill p-2" style="font-size: 12px;">
-                                    ${dateStatus}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn btn-info" type="button" id="viewInvoice" data-id="${item.cartid}">
-                                    <i class="fa-solid fa-eye"></i>
-                                </div>
-                            </td>
-                        </tr>
-                    `);
-                });
-    
-            
-    
+                allReservations = data.data; 
+                
+                displayReservations(allReservations); 
+                
                 let paginationLinks = '';
                 if (data.prev_page_url) {
                     paginationLinks += `<a href="javascript:void(0)" data-page="${data.current_page - 1}" data-siteid="${siteId}" data-tier="${tier ? tier.join(',') : ''}">Previous</a> `;
@@ -136,9 +94,138 @@ $(document).ready(function () {
             }
         });
     }
-    
-    
 
+   
+    function displayReservations(reservations) {
+        let tableBody = $('#reservationTable tbody');
+        tableBody.empty();
+    
+        let now = new Date();
+    
+        $.each(reservations, function (index, item) {
+            let cidDate = new Date(item.cid);
+            let codDate = new Date(item.cod);
+    
+            let cid = cidDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+    
+            let cod = codDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+    
+            let dateStatus = '';
+            let statusClass = '';
+    
+            if (cidDate.toDateString() === now.toDateString()) {
+                dateStatus = 'Arrival';
+                statusClass = 'bg-success';
+            } else if (codDate.toDateString() === now.toDateString()) {
+                dateStatus = 'Departure';
+                statusClass = 'bg-danger';
+            } else if (cidDate <= now && codDate >= now) {
+                dateStatus = 'Occupied';
+                statusClass = 'bg-info';
+            } else if (cidDate > now) {
+                dateStatus = 'Pending';
+                statusClass = 'bg-warning text-white';
+            } else if (codDate < now) {
+                dateStatus = 'Completed';
+                statusClass = 'bg-primary';
+            }
+    
+            tableBody.append(`
+                <tr
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
+                    title="Arrival: ${cid}\nDeparture: ${cod}\nSite: ${item.siteid} - ${item.siteclass}\nAddress: ${item.address} \nPhone: ${item.phone}\nCust#: ${item.customernumber}"
+                    class="reservation-row" data-status="${dateStatus}">
+                    <td>${item.fname} ${item.lname}</td>
+                    <td>${item.siteid}</td>
+                    <td>${item.siteclass}</td>
+                    <td>
+                        <span class="${statusClass} badge rounded-pill p-2" style="font-size: 12px;">
+                            ${dateStatus}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="btn btn-info" type="button" id="viewInvoice" data-id="${item.cartid}">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+    
+    $('#searchInput').on('input', function(){
+        let searchTerm = $(this).val();
+        let currentStatus = $('.reservation-row:visible').data('status') || 'All';
+        filterBySearch(searchTerm, currentStatus);
+    })
+
+    $('.btn-arrival').on('click', function() {
+        filterReservations('Arrival');
+    });
+    
+    $('.btn-departure').on('click', function() {
+        filterReservations('Departure');
+    });
+    
+    $('.btn-occupied').on('click', function() {
+        filterReservations('Occupied');
+    });
+    
+    $('.btn-pending').on('click', function() {
+        filterReservations('Pending');
+    });
+    
+    $('.btn-completed').on('click', function() {
+        filterReservations('Completed');
+    });
+    
+    $('.btn-all').on('click', function() {
+        filterReservations('All');
+    });
+    
+    function filterReservations(status) {
+        if (status === 'All') {
+            $('.reservation-row').show();
+        } else {
+            $('.reservation-row').each(function() {
+                let rowStatus = $(this).data('status');
+                if (rowStatus === status) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+
+            
+      
+    }
+
+    function filterBySearch(searchTerm) {
+        $('.reservation-row').each(function() {
+            let fullName = $(this).find('td').first().text().toLowerCase();
+            let searchTermLower = searchTerm.toLowerCase();
+
+            if(fullName.includes(searchTermLower)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+
+    
+    
+    
 // Fetch NotReserve Data
     function fetchNotReserve(page = 1, limit = 10) {
         $.ajax({

@@ -38,28 +38,43 @@ class NewReservationController extends Controller
     {
         $limit = $request->input('limit', 10);
         $siteId = $request->input('siteId');
-        $type = $request->input('tier');
+        $types = $request->input('tier', []);
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+    
         $paymentCartIds = Payment::pluck('cartid')->toArray();
-
+    
+      
         $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
             ->whereIn('reservations.cartid', $paymentCartIds)
             ->select('reservations.*', 'customers.phone', 'customers.address')
-            ->orderBy('reservations.id', 'DESC');
-
-        if (!empty($siteId)) {
-            $reservationsQuery->where('siteid', $siteId);
+            ->orderByDesc('reservations.id');
+    
+        if ($siteId) {
+            $reservationsQuery->where('reservations.siteid', $siteId);
         }
-
-        if (!empty($type)) {
-            $reservationsQuery->whereIn('siteclass', $type);
+    
+        if (!empty($types)) {
+            $reservationsQuery->whereIn('reservations.siteclass', $types);
         }
-
+    
+        if ($startDate && $endDate) {
+            $reservationsQuery->where(function($query) use ($startDate, $endDate) {
+                $query->whereDate('reservations.cid', '>=', $startDate)
+                      ->whereDate('reservations.cod', '<=', $endDate);
+            });
+        } elseif ($startDate) {
+            $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
+        } elseif ($endDate) {
+            $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
+        }
+    
+        
         $reservations = $reservationsQuery->paginate($limit);
-
-
-
+    
         return response()->json($reservations);
     }
+    
 
 
 

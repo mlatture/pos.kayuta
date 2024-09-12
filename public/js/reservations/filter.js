@@ -2,6 +2,8 @@ $(document).ready(function(){
     $("#collapsePlanner").on('shown.bs.collapse', function () {
         loadSites();
         loadSiteClasses();
+       
+
     });
     function loadSites() {  
         $.ajax({
@@ -67,5 +69,12 @@ $(document).ready(function(){
     
 
 
-    
+    // $('input[name="dates"]').on('apply.daterangepicker', function(ev, picker){
+        
+    //     let startDate = picker.startDate.format('YYYY-MM-DD');
+    //     let endDate = picker.endDate.format('YYYY-MM-DD');
+
+    //     fetchReservations(1,10,'', [], startDate, endDate);
+        
+    // })
 })

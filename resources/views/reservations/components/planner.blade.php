@@ -23,16 +23,18 @@
         <div class="row">
             <div class="col">
                 <label for="">Search</label>
-                <input type="search" class="form-control">
-            </div>
+                <input type="search" class="form-control" id="searchInput" placeholder="Search by first name or last name">
+                </div>
             <div class="col">
                 <label for="">Filter Buttons</label>
 
                 <div class="form-control" style="border: none">
-
-                    <button class="btn btn-success">Arrivals</button>
-                    <button class="btn btn-danger">Departures</button>
-                    <button class="btn btn-primary">Occupied</button>
+                    <button class="btn btn-success btn-arrival">Arrivals</button>
+                    <button class="btn btn-danger btn-departure">Departures</button>
+                    <button class="btn btn-info btn-occupied">Occupied</button>
+                    <button class="btn btn-warning btn-pending">Pending</button>
+                    <button class="btn btn-primary btn-completed">Completed</button>
+                    <button class="btn btn-secondary btn-all">All</button>
                 </div>
             </div>
         </div>
@@ -41,9 +43,6 @@
 </div>
 
 <script>
-   $(document).ready(function () {
-        $('input[name="dates"]').daterangepicker();
-    });
 
 
 </script>
