@@ -17,6 +17,7 @@ use App\Http\Controllers\NewReservationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\TaxTypeController;
+use App\Http\Controllers\ProcessController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,6 +49,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::resource('orders', OrderController::class);
     Route::get('orders-generate-invoice/{id}', [OrderController::class, 'generateInvoice'])->name('orders.generate.invoice');
+    Route::get('orders-to-return', [OrderController::class, 'ordersToBeReturn'])->name('orders.to.be.return');
+    Route::post('orders/process-refund', [ProcessController::class, 'processRefund'])->name('orders.process.refund');
     Route::post('orders-submit', [OrderController::class, 'store'])->name('orders.store');
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');

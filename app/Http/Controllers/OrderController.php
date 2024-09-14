@@ -9,7 +9,8 @@ use App\Models\Reservation;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\OrderItem;
+use App\Models\Product;
 class OrderController extends Controller
 {
     private $object;
@@ -23,9 +24,9 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $orders = Order::query();
-        if(auth()->user()->organization_id){
-            $orders->where('organization_id',auth()->user()->organization_id);
-        }
+        // if(auth()->user()->organization_id){
+        //     $orders->where('organization_id',auth()->user()->organization_id);
+        // }
         if ($request->start_date) {
             $orders = $orders->where('created_at', '>=', $request->start_date);
         }
@@ -44,6 +45,15 @@ class OrderController extends Controller
         return view('orders.index', compact('orders', 'total', 'receivedAmount'));
     }
 
+    public function ordersToBeReturn(Request $request)
+    {
+         $order = Order::findOrFail($request->order_id);
+         $orderItems = $order->orderItems()->with('product')->get();
+        
+         return response()->json($orderItems);
+    }
+
+   
 
     public function store(OrderStoreRequest $request)
     {
@@ -115,4 +125,6 @@ class OrderController extends Controller
                 ->with('error', $exception->getMessage());
         }
     }
+
+    
 }

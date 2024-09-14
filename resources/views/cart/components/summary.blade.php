@@ -1,4 +1,4 @@
-<div class="card p-3" id="card-summary">
+<div class="card p-3" id="card-summary" hidden>
     <div class="card-body">
         <div class="row">
             <div class="col">Sub Total:</div>
@@ -34,8 +34,8 @@
 </div>
 <!-- Off-canvas -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasOrder" aria-labelledby="offcanvasOrderLabel">
-    <div class="offcanvas-header">
-        <div class="sidebar-title">
+    <div class="offcanvas-header border-bottom">
+        <div class="header-title">
             <h3 class="weight-600 font-16">
                 Order Summary
             </h3>

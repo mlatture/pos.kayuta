@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\OrderItem;
 class Order extends Model
 {
     protected $guarded = [];
@@ -11,6 +11,11 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class)->with(['product']);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     public function payments()
