@@ -3,6 +3,7 @@
         <div class="order-product product-section">
             <div class="row product-list" id="product-list">
                 @foreach ($products as $product)
+                    @if($product->quantity > 0)
                     <div class="col-md-3" style="cursor: pointer">
                         <div class="card product-item" data-barcode="{{ $product->barcode }}"
                             data-id="{{ $product->id }}" data-bs-toggle="tooltip" data-bs-placement="top"
@@ -32,6 +33,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 @endforeach
             </div>
         </div>

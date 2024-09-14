@@ -34,8 +34,7 @@ class GiftCard extends Model
         return self::where($where)
             ->when(count($filters) > 0, function ($query) use ($filters) {
                 $query->when(!empty($filters['date']), function ($query) use ($filters) {
-                    $query->where('start_date', '<', $filters['date'])
-                        ->where('expire_date', '>', $filters['date']);
+                    $query->where('expire_date', '>', $filters['date']);
                 });
             })->first();
     }

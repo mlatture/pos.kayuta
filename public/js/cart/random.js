@@ -226,10 +226,15 @@ $(document).ready(function() {
                 
                 let html = '';
     
-                if (products.length > 0) {
+                if (products.length > 0 ) {
                     html += '<div class="row">';
             
                     $.each(products, function(key, val) {
+                        if(val.quantity <= 0){
+                            return true;
+                        } else {
+                            
+                        }
                         let truncatedName = val.name.length > 10 ? val.name.substring(0, 10) + '...' : val.name;
             
                         let imagePath = `/storage/products/${val.image}`;
@@ -511,16 +516,22 @@ $(document).ready(function() {
     //         }
     //     });
     // });
-
+  
+    
     $(document).on('click', '.submit-order', function() {
+       
+        
         let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ''));
     
         var offcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasOrder'));
         offcanvas.show();
     
-        $('#offcanvasSubtotal').text('$' + parseFloat($("#subtotal-amount").val().replace(/,/g, '')).toFixed(2));
-        $('#offcanvasTotalAmount').text('$' + totalAmount.toFixed(2));
-        $('#offcanvasGiftDiscount').text('$' + parseFloat($("#gift_card_discount").val().replace(/,/g, '') || 0).toFixed(2));
+        $('#offcanvasSubtotal').text( parseFloat($("#subtotal-amount").val().replace(/,/g, '')).toFixed(2));
+        $('#offcanvasTotalAmount').text( totalAmount.toFixed(2));
+        $('#offcanvasGiftDiscount').text( parseFloat($("#gift_card_discount").val().replace(/,/g, '') || 0).toFixed(2));
+        $('#offcanvasTax').text(parseFloat($("#tax-amount").val().replace(/,/g, '') || 0).toFixed(2));
+        $('#customer_name').text(customer_name);
+      
     });
     
     $("#submitOrderButton").on('click', function() {
@@ -536,7 +547,7 @@ $(document).ready(function() {
         } else {
             change = totalAmount - amount; 
         }
-    
+
         Swal.fire({
             title: "Change is: $" + change.toFixed(2) + ". Do you want to proceed?",
             showCancelButton: true,
@@ -572,6 +583,7 @@ $(document).ready(function() {
                 offcanvas.hide();
         
                 $("#selected-product tbody").empty();
+                $("#card-summary").empty();
         
                 $.toast({
                     heading: result.value[0] || 'Success',
@@ -632,7 +644,7 @@ $(document).ready(function() {
 
                     if (!response.ok) {
                         const responseJson = await response.json()
-                        console.log(responseJson);
+                        // console.log(responseJson);
                         return Swal.showValidationMessage(`${responseJson.message}`);
                     }
                     return response.json();
@@ -648,7 +660,6 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed && result.value) {
                 const response = result.value;
-                console.log(response);
                 $('#gift_card_discount').val(response.response.data.gift_card_discount);
                 $('#gift_card_id').val(response.response.data.gift_card.id);
                 $('.show-gift-discount').text('$ ' + response.response.data

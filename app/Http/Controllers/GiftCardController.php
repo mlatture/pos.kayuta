@@ -192,7 +192,7 @@ class GiftCardController extends Controller
 
             if (!$giftCard || ($giftCard->user_email != $customer->email)) {
                 return response()->json(['message' => 'Gift Card is not applicable!'], 400);
-                // return $this->object->respondBadRequest(['error' => 'Gift Card is not applicable!']);
+               
             }
 
 
