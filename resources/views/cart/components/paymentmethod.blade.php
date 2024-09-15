@@ -22,10 +22,14 @@
             <label for="orderAmountInput" id="orderLabel">Enter Order Amount:</label>
             <input type="text" id="orderAmountInput" class="form-control" placeholder="Enter amount">
         </div>
-        <div class="col">
+
+    </div>
+
+    <div class="row mt-3">
+        <div class="col" id="expire" hidden>
             <label for="" id="orderLabel">Enter Expiration Date:</label>
             <input type="text" id="cardExpiry" class="form-control" placeholder="MM/YY" maxlength="5">
-        </div>>
+        </div>
 
     </div>
 

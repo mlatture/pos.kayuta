@@ -55,9 +55,9 @@
 
         .table-container {
             max-height: 300px;
-          
+
             overflow-y: auto;
-           
+
         }
 
         .table {
@@ -75,11 +75,11 @@
         .table thead th {
             position: sticky;
             top: 0;
-           
+
             background-color: #f8f9fa;
-         
+
             z-index: 1;
-         
+
         }
     </style>
 @endpush
@@ -137,33 +137,33 @@
                                         $totalTax = 0;
                                     @endphp
                                     @foreach ($cart as $key => $cartItem)
-                                                                        @php
-                                                                            $productPrice = $cartItem->price * $cartItem->pivot->quantity;
-                                                                            $subtotal += $productPrice;
-                                                                            $totalDiscount += $cartItem->pivot->discount ?? 0;
-                                                                            $totalTax += $cartItem->pivot->tax ?? 0;
-                                                                        @endphp
-                                                                        <tr>
-                                                                            <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
-                                                                            <td>
-                                                                                <input type="text" class="form-control form-control-sm qty product-quantity"
-                                                                                    data-id="{{ $cartItem->id }}"
-                                                                                    value="{{ $cartItem->pivot->quantity ?? 0 }}">
-                                                                                <button class="btn btn-danger btn-sm product-delete"
-                                                                                    data-id="{{ $cartItem->id }}">
-                                                                                    <i class="fas fa-trash" aria-hidden="true"></i>
-                                                                                </button>
-                                                                            </td>
-                                                                            <td class="text-right" id="discount">$
-                                                                                {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
-                                                                            </td>
-                                                                            <td class="text-right">$
-                                                                                {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
-                                                                            </td>
-                                                                            <td class="text-right">$
-                                                                                {{ $productPrice ? number_format($productPrice, 2) : 0 }}
-                                                                            </td>
-                                                                        </tr>
+                                        @php
+                                            $productPrice = $cartItem->price * $cartItem->pivot->quantity;
+                                            $subtotal += $productPrice;
+                                            $totalDiscount += $cartItem->pivot->discount ?? 0;
+                                            $totalTax += $cartItem->pivot->tax ?? 0;
+                                        @endphp
+                                        <tr>
+                                            <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm qty product-quantity"
+                                                    data-id="{{ $cartItem->id }}"
+                                                    value="{{ $cartItem->pivot->quantity ?? 0 }}">
+                                                <button class="btn btn-danger btn-sm product-delete"
+                                                    data-id="{{ $cartItem->id }}">
+                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                </button>
+                                            </td>
+                                            <td class="text-right" id="discount">$
+                                                {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
+                                            </td>
+                                            <td class="text-right">$
+                                                {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
+                                            </td>
+                                            <td class="text-right">$
+                                                {{ $productPrice ? number_format($productPrice, 2) : 0 }}
+                                            </td>
+                                        </tr>
                                     @endforeach
                                 </tbody>
                             </table>
@@ -177,11 +177,11 @@
                     <div class="col">
                         <button type="button" class="btn btn-danger btn-block cart-empty">Cancel</button>
                     </div>
-                    <div class="col">
+                    <!-- <div class="col">
                         <button type="button" class="btn btn-success btn-block apply-gift-card">Apply
                             Gift Card
                         </button>
-                    </div>
+                    </div> -->
                     <div class="col">
                         <button type="button" class="btn btn-info btn-block submit-order text-light">Review
                             Order</button>

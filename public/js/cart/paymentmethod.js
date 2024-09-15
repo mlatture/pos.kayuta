@@ -5,12 +5,15 @@ $(document).ready(function () {
         if ($(this).val() === "GiftCard") {
             label.text("Enter Gift Card Number: ");
             input.attr("placeholder", "Enter Gift Card Number");
+            $("#expire").attr('hidden', true);
         } else if ($(this).val() === "CreditCard") {
             label.text("Enter Card Number: ");
             input.attr("placeholder", "Enter Card Number");
+            $("#expire").attr('hidden', false);
         } else {
             label.text("Enter Order Amount: ");
             input.attr("placeholder", "Enter amount");
+            $("#expire").attr('hidden', true);
         }
 
         $(".btn-payment").removeClass("active");
