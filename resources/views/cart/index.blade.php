@@ -52,6 +52,35 @@
             font-size: 10px;
             text-align: center;
         }
+
+        .table-container {
+            max-height: 300px;
+          
+            overflow-y: auto;
+           
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+           
+            background-color: #f8f9fa;
+         
+            z-index: 1;
+         
+        }
     </style>
 @endpush
 
@@ -75,7 +104,9 @@
                             <option value="0" data-name="Walk-in Customer">Walk-in Customer</option>
                             <option value="add_new_user">Add New User</option>
                             @foreach ($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->f_name . ' ' . $customer->l_name }}">{{ $customer->f_name . ' ' . $customer->l_name }}
+                                <option value="{{ $customer->id }}"
+                                    data-name="{{ $customer->f_name . ' ' . $customer->l_name }}">
+                                    {{ $customer->f_name . ' ' . $customer->l_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -87,55 +118,59 @@
                 </div>
                 <div class="user-cart">
                     <div class="card">
-                    <h3 class="m-2">Current Order</h3>
-                        <table class="table table-striped" id="selected-product">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th class="text-right">Discount</th>
-                                    <th class="text-right">Tax</th>
-                                    <th class="text-right">Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $subtotal = 0;
-                                    $totalDiscount = 0;
-                                    $totalTax = 0;
-                                @endphp
-                                @foreach ($cart as $key => $cartItem)
-                                    @php
-                                        $productPrice = $cartItem->price * $cartItem->pivot->quantity;
-                                        $subtotal += $productPrice;
-                                        $totalDiscount += $cartItem->pivot->discount ?? 0;
-                                        $totalTax += $cartItem->pivot->tax ?? 0;
-                                    @endphp
+                        <h3 class="m-2">Current Order</h3>
+                        <div class="table-container">
+                            <table class="table table-bordered">
+                                <thead>
                                     <tr>
-                                        <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
-                                        <td>
-                                            <input type="text" class="form-control form-control-sm qty product-quantity"
-                                                data-id="{{ $cartItem->id }}" value="{{ $cartItem->pivot->quantity ?? 0 }}">
-                                            <button class="btn btn-danger btn-sm product-delete"
-                                                data-id="{{ $cartItem->id }}">
-                                                <i class="fas fa-trash" aria-hidden="true"></i>
-                                            </button>
-                                        </td>
-                                        <td class="text-right" id="discount">$
-                                            {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
-                                        </td>
-                                        <td class="text-right">$
-                                            {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
-                                        </td>
-                                        <td class="text-right">$
-                                            {{ $productPrice ? number_format($productPrice, 2) : 0 }}
-                                        </td>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th class="text-right">Discount</th>
+                                        <th class="text-right">Tax</th>
+                                        <th class="text-right">Total</th>
                                     </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $subtotal = 0;
+                                        $totalDiscount = 0;
+                                        $totalTax = 0;
+                                    @endphp
+                                    @foreach ($cart as $key => $cartItem)
+                                                                        @php
+                                                                            $productPrice = $cartItem->price * $cartItem->pivot->quantity;
+                                                                            $subtotal += $productPrice;
+                                                                            $totalDiscount += $cartItem->pivot->discount ?? 0;
+                                                                            $totalTax += $cartItem->pivot->tax ?? 0;
+                                                                        @endphp
+                                                                        <tr>
+                                                                            <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
+                                                                            <td>
+                                                                                <input type="text" class="form-control form-control-sm qty product-quantity"
+                                                                                    data-id="{{ $cartItem->id }}"
+                                                                                    value="{{ $cartItem->pivot->quantity ?? 0 }}">
+                                                                                <button class="btn btn-danger btn-sm product-delete"
+                                                                                    data-id="{{ $cartItem->id }}">
+                                                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                            <td class="text-right" id="discount">$
+                                                                                {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
+                                                                            </td>
+                                                                            <td class="text-right">$
+                                                                                {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
+                                                                            </td>
+                                                                            <td class="text-right">$
+                                                                                {{ $productPrice ? number_format($productPrice, 2) : 0 }}
+                                                                            </td>
+                                                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
                     </div>
-                 
+
                 </div>
                 @include('cart.components.summary')
                 <div class="row">
@@ -148,7 +183,8 @@
                         </button>
                     </div>
                     <div class="col">
-                        <button type="button" class="btn btn-info btn-block submit-order text-light">Review Order</button>
+                        <button type="button" class="btn btn-info btn-block submit-order text-light">Review
+                            Order</button>
                     </div>
                 </div>
             </div>
@@ -200,6 +236,7 @@
         var giftCard = "{{ route('gift-cards.apply') }}"
         var processGiftCard = "{{ route('orders.process.gift.card') }}";
         var updateGiftCardBalance = "{{ route('orders.process.gift.card.balance') }}";
+        var processCreditCard = "{{ route('orders.process.credit.card') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {

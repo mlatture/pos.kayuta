@@ -460,8 +460,7 @@ class NewReservationController extends Controller
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
 
         $responseContent = curl_exec($ch);
-        \Log::info('Cardknox payment request', ['data' => $data]);
-        \Log::info('Cardknox payment response', ['response' => $responseContent]);
+      
 
         curl_close($ch);
 

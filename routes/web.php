@@ -53,6 +53,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-refund', [ProcessController::class, 'processRefund'])->name('orders.process.refund');
     Route::post('orders/process-gift-card', [ProcessController::class, 'processGiftCard'])->name('orders.process.gift.card');
     Route::post('orders/process-gift-card-balance', [ProcessController::class, 'updateGiftCardBalance'])->name('orders.process.gift.card.balance');
+    Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
+
     Route::post('orders-submit', [OrderController::class, 'store'])->name('orders.store');
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');

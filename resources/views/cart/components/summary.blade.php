@@ -89,55 +89,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 mb-3">
-            <div class="btn-group btn-group-sm btn-block btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-outline-dark btn-payment active ">
-                    <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCash" value="Cash"
-                        autocomplete="off" checked />
-                    Cash
-                </label>
-                <label class="btn btn-outline-dark btn-payment ">
-                    <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodGiftCard"
-                        value="GiftCard" autocomplete="off" />
-                    Gift Card
-                </label>
-                <label class="btn btn-outline-dark btn-payment ">
-                    <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
-                        value="CreditCard" autocomplete="off" />
-                    Credit Card
-                </label>
-            </div>
-
-            <div class="row mt-3">
-                <div class="col">
-                    <label for="orderAmountInput" id="orderLabel">Enter Order Amount:</label>
-                    <input type="text" id="orderAmountInput" class="form-control" placeholder="Enter amount">
-                </div>
-            </div>
-
-            <div class="row mt-3">
-                <div class="col">
-                    <button type="submit" class="btn btn-success" id="submitOrderButton" style="width: 100%">Submit
-                        Order</button>
-                </div>
-            </div>
-        </div>
+        @include('cart.components.paymentmethod')
     </div>
 </div>
 
-<script>
-    $('.paymentMethod').on('click', function () {
-        let label = $('#orderLabel');
-        let input = $('#orderAmountInput');
-        if ($(this).val() === 'GiftCard') {
-            label.text('Enter Gift Card Number: ');
-            input.attr('placeholder', 'Enter Gift Card Number');
-        } else {
-            label.text('Enter Order Amount: ');
-            input.attr('placeholder', 'Enter amount');
-        }
-
-        $('.btn-payment').removeClass('active');
-        $(this).closest('label').addClass('active');
-    })
-</script>
