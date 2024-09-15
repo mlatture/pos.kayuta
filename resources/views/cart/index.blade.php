@@ -121,7 +121,7 @@
                                                 <i class="fas fa-trash" aria-hidden="true"></i>
                                             </button>
                                         </td>
-                                        <td class="text-right">$
+                                        <td class="text-right" id="discount">$
                                             {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
                                         </td>
                                         <td class="text-right">$
@@ -198,6 +198,8 @@
         var cartAllCategoryUrl = "{{ route('category.all') }}"
         var cartOrderStoreUrl = "{{ route('orders.store') }}"
         var giftCard = "{{ route('gift-cards.apply') }}"
+        var processGiftCard = "{{ route('orders.process.gift.card') }}";
+        var updateGiftCardBalance = "{{ route('orders.process.gift.card.balance') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {

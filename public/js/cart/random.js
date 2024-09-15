@@ -1,13 +1,12 @@
-$(document).ready(function() {
+$(document).ready(function () {
     // $(".select2").select2();
     $("#customer_id").select2();
 
-    $("#customer_id").on('change', function(e) {
-        if (e.target.value === 'add_new_user') {
+    $("#customer_id").on("change", function (e) {
+        if (e.target.value === "add_new_user") {
             addUserModal.show();
         }
     });
-
 
     // $('.select2').selectize({
     //     sortField: 'text'
@@ -15,24 +14,22 @@ $(document).ready(function() {
 
     var isFocused = false;
     var isSelectFocused = false;
-    $(document).on('focusin', 'input, textarea', function() {
+    $(document).on("focusin", "input, textarea", function () {
         isFocused = true;
-        console.log('focused');
     });
-    $(document).on('focusout', 'input, textarea', function() {
+    $(document).on("focusout", "input, textarea", function () {
         isFocused = false;
-        console.log('unfocused');
     });
 
-    $(".select2").on('select2:open', function(e) {
+    $(".select2").on("select2:open", function (e) {
         isSelectFocused = true;
     });
-    $(".select2").on('select2:close', function(e) {
+    $(".select2").on("select2:close", function (e) {
         isSelectFocused = false;
     });
 
     var storeCartTimeout = null;
-    $(window).keypress(function(event) {
+    $(window).keypress(function (event) {
         if (!isFocused && !isSelectFocused) {
             if (storeCartTimeout) {
                 clearTimeout(storeCartTimeout);
@@ -43,206 +40,211 @@ $(document).ready(function() {
             var code = event.which || event.keyCode;
             var character = String.fromCharCode(code);
             barcode += character;
-            var currentValue = $('#searchterm').val();
+            var currentValue = $("#searchterm").val();
             if (currentValue == null) {
-                currentValue = '';
+                currentValue = "";
             }
-            $('#searchterm').val(currentValue + character);
-            storeCartTimeout = setTimeout(function() {
+            $("#searchterm").val(currentValue + character);
+            storeCartTimeout = setTimeout(function () {
                 storeCart(currentValue + character);
-            }, 500)
+            }, 500);
         }
     });
 
-    $(document).on('click', '.product-item', function() {
-        var barcode = $(this).data('barcode');
-        var productId = $(this).data('id');
+    $(document).on("click", ".product-item", function () {
+        var barcode = $(this).data("barcode");
+        var productId = $(this).data("id");
         storeCart(barcode, productId);
     });
 
-  
-
-    $(document).on('click', '.product-delete', function() {
-        var productId = $(this).data('id');
+    $(document).on("click", ".product-delete", function () {
+        var productId = $(this).data("id");
 
         $.ajax({
             url: cartDeleteUrl,
-            type: 'DELETE',
+            type: "DELETE",
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             data: {
                 product_id: productId,
             },
-            success: function(response) {
+            success: function (response) {
                 $.toast({
-                    heading: 'Success',
+                    heading: "Success",
                     text: response.message,
-                    position: 'top-right',
+                    position: "top-right",
                     // bgColor: '#FF1356',
-                    loaderBg: '#00c263',
-                    icon: 'success',
+                    loaderBg: "#00c263",
+                    icon: "success",
                     hideAfter: 2000,
-                    stack: 6
+                    stack: 6,
                 });
                 window.location.reload();
             },
-            error: function(reject) {
+            error: function (reject) {
                 if (reject.status === 422) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
                 if (reject.status === 401) {
                     var errors = $.parseJSON(reject.responseText);
                     $.toast({
-                        heading: 'Error',
+                        heading: "Error",
                         text: errors.message,
-                        position: 'top-right',
+                        position: "top-right",
                         // bgColor: '#FF1356',
-                        loaderBg: '#a94442',
-                        icon: 'error',
+                        loaderBg: "#a94442",
+                        icon: "error",
                         hideAfter: 4000,
-                        stack: 6
+                        stack: 6,
                     });
                 }
 
                 if (reject.status === 400) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
-            }
+            },
         });
     });
 
-    $(document).on('click', '.cart-empty', function() {
+    $(document).on("click", ".cart-empty", function () {
         $.ajax({
             url: cartEmptyUrl,
-            type: 'DELETE',
+            type: "DELETE",
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             data: {},
-            success: function(response) {
+            success: function (response) {
                 $.toast({
-                    heading: 'Success',
+                    heading: "Success",
                     text: response.message,
-                    position: 'top-right',
+                    position: "top-right",
                     // bgColor: '#FF1356',
-                    loaderBg: '#00c263',
-                    icon: 'success',
+                    loaderBg: "#00c263",
+                    icon: "success",
                     hideAfter: 2000,
-                    stack: 6
+                    stack: 6,
                 });
                 window.location.reload();
             },
-            error: function(reject) {
+            error: function (reject) {
                 if (reject.status === 422) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
                 if (reject.status === 401) {
                     var errors = $.parseJSON(reject.responseText);
                     $.toast({
-                        heading: 'Error',
+                        heading: "Error",
                         text: errors.message,
-                        position: 'top-right',
+                        position: "top-right",
                         // bgColor: '#FF1356',
-                        loaderBg: '#a94442',
-                        icon: 'error',
+                        loaderBg: "#a94442",
+                        icon: "error",
                         hideAfter: 4000,
-                        stack: 6
+                        stack: 6,
                     });
                 }
 
                 if (reject.status === 400) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
-            }
+            },
         });
     });
 
-    $(document).on('click', '.category-item', function(e) {
-        e.preventDefault(); 
-        var category_id = $(this).data('id');
+    $(document).on("click", ".category-item", function (e) {
+        e.preventDefault();
+        var category_id = $(this).data("id");
         console.log(category_id);
-    
+
         $.ajax({
             url: cartCategoryUrl,
-            type: 'GET',
+            type: "GET",
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             data: {
                 category_id: category_id,
             },
-            success: function(response) {
-    
-                let products = response.data;  
-                
-                let html = '';
-    
-                if (products.length > 0 ) {
+            success: function (response) {
+                let products = response.data;
+
+                let html = "";
+
+                if (products.length > 0) {
                     html += '<div class="row">';
-            
-                    $.each(products, function(key, val) {
-                        if(val.quantity <= 0){
+
+                    $.each(products, function (key, val) {
+                        if (val.quantity <= 0) {
                             return true;
                         } else {
-                            
                         }
-                        let truncatedName = val.name.length > 10 ? val.name.substring(0, 10) + '...' : val.name;
-            
+                        let truncatedName =
+                            val.name.length > 10
+                                ? val.name.substring(0, 10) + "..."
+                                : val.name;
+
                         let imagePath = `/storage/products/${val.image}`;
-                        let fallbackImageUrl = '/images/product-thumbnail.jpg'; 
-                        let imageUrl = imagePath; 
-            
+                        let fallbackImageUrl = "/images/product-thumbnail.jpg";
+                        let imageUrl = imagePath;
+
                         html += `<div class="col-md-3">
-                            <div class="card product-item" data-barcode="${val.barcode}" data-id="${val.id}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="Product Name: ${val.name}">
+                            <div class="card product-item" data-barcode="${
+                                val.barcode
+                            }" data-id="${
+                            val.id
+                        }" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="Product Name: ${
+                            val.name
+                        }">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                     ${val.quantity < 0 ? 0 : val.quantity}
                                 </span>
@@ -255,9 +257,9 @@ $(document).ready(function() {
                             </div>
                         </div>`;
                     });
-            
-                    html += '</div>';
-            
+
+                    html += "</div>";
+
                     $(".category-section").html(html);
                 } else {
                     html = `<div class="col-md-6">
@@ -267,108 +269,121 @@ $(document).ready(function() {
                             </div>`;
                     $(".category-section").html(html);
                 }
-            
-                $('[data-bs-toggle="tooltip"]').tooltip(); 
+
+                $('[data-bs-toggle="tooltip"]').tooltip();
             },
-            
-            error: function(reject) {
+
+            error: function (reject) {
                 if (reject.status === 422) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            position: "top-right",
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
                 if (reject.status === 401) {
                     var errors = $.parseJSON(reject.responseText);
                     $.toast({
-                        heading: 'Error',
+                        heading: "Error",
                         text: errors.message,
-                        position: 'top-right',
-                        loaderBg: '#a94442',
-                        icon: 'error',
+                        position: "top-right",
+                        loaderBg: "#a94442",
+                        icon: "error",
                         hideAfter: 4000,
-                        stack: 6
+                        stack: 6,
                     });
                 }
-    
+
                 if (reject.status === 400) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            position: "top-right",
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
-            }
+            },
         });
     });
-    
 
-    $('#search-product').on('input', function() {
+    $("#search-product").on("input", function () {
         let searchTerm = $(this).val();
-   
+
         $.ajax({
-            url: cartCategoryUrl, 
-            type: 'GET',
+            url: cartCategoryUrl,
+            type: "GET",
             data: { search: searchTerm },
-            success: function(response) {
-                console.log('Response:', response); 
-                let productsHtml = '';
-                $.each(response.data, function(index, product) {
-                 
+            success: function (response) {
+                console.log("Response:", response);
+                let productsHtml = "";
+                $.each(response.data, function (index, product) {
                     let imagePath = `/storage/products/${product.image}`;
-                    let fallbackImageUrl = '/images/product-thumbnail.jpg'; 
-                    let imageUrl = imagePath; 
-                    
+                    let fallbackImageUrl = "/images/product-thumbnail.jpg";
+                    let imageUrl = imagePath;
+
                     productsHtml += `
                         <div class="col-md-3" style="cursor: pointer">
-                            <div class="card product-item" data-barcode="${product.barcode}"
-                                data-id="${product.id}" data-bs-toggle="tooltip" data-bs-placement="top"
-                                data-bs-html="true" title="Product Name: ${product.name}">
+                            <div class="card product-item" data-barcode="${
+                                product.barcode
+                            }"
+                                data-id="${
+                                    product.id
+                                }" data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-html="true" title="Product Name: ${
+                                    product.name
+                                }">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    ${product.quantity < 0 ? 0 : product.quantity}
+                                    ${
+                                        product.quantity < 0
+                                            ? 0
+                                            : product.quantity
+                                    }
                                 </span>
                                 <img src="${imageUrl}" class="rounded mx-auto d-block img-fluid" alt="Product Image" onError="this.onerror=null; this.src='${fallbackImageUrl}';">
                                 <div class="card-body">
                                     <div class="btn-products-container">
-                                        <p class="card-text t">${product.name.substring(0, 10)}</p>
+                                        <p class="card-text t">${product.name.substring(
+                                            0,
+                                            10
+                                        )}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>`;
                 });
-                $('#product-list').html(productsHtml);
+                $("#product-list").html(productsHtml);
             },
-            error: function(xhr) {
-                console.error('Failed to fetch products:', xhr);
-            }
+            error: function (xhr) {
+                console.error("Failed to fetch products:", xhr);
+            },
         });
     });
-    
-    $(document).on('click', '#catgories-tab', function() {
+
+    $(document).on("click", "#catgories-tab", function () {
         $.ajax({
             url: cartAllCategoryUrl,
-            type: 'GET',
-            success: function(response) {
+            type: "GET",
+            success: function (response) {
                 let categories = response.response.data;
                 if (categories.length > 0) {
-                    var html = '';
-                    $.each(categories, function(key, val) {
-                        html += `<div class="item category-item" data-id="${val.id}}}"><img
+                    var html = "";
+                    $.each(categories, function (key, val) {
+                        html += `<div class="item category-item" data-id="${
+                            val.id
+                        }}}"><img
                                     src="{{ asset('images/product-thumbnail.jpg') }}"
                                     class="rounded mx-auto d-block" alt="Product Image">
                                 <h5>${limitText(val.name, 10)}</h5>
@@ -377,52 +392,52 @@ $(document).ready(function() {
                     $(".category-section").html(html);
                 }
             },
-            error: function(reject) {
+            error: function (reject) {
                 if (reject.status === 422) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
                 if (reject.status === 401) {
                     var errors = $.parseJSON(reject.responseText);
                     $.toast({
-                        heading: 'Error',
+                        heading: "Error",
                         text: errors.message,
-                        position: 'top-right',
+                        position: "top-right",
                         // bgColor: '#FF1356',
-                        loaderBg: '#a94442',
-                        icon: 'error',
+                        loaderBg: "#a94442",
+                        icon: "error",
                         hideAfter: 4000,
-                        stack: 6
+                        stack: 6,
                     });
                 }
 
                 if (reject.status === 400) {
                     var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function(key, val) {
+                    $.each(errors.errors, function (key, val) {
                         $.toast({
-                            heading: 'Error',
+                            heading: "Error",
                             text: val,
-                            position: 'top-right',
+                            position: "top-right",
                             // bgColor: '#FF1356',
-                            loaderBg: '#a94442',
-                            icon: 'error',
+                            loaderBg: "#a94442",
+                            icon: "error",
                             hideAfter: 4000,
-                            stack: 6
+                            stack: 6,
                         });
                     });
                 }
-            }
+            },
         });
     });
 
@@ -443,7 +458,7 @@ $(document).ready(function() {
     //                 return "Please Enter Amount!";
     //             }
     //         },
-          
+
     //         allowOutsideClick: () => !Swal.isLoading()
     //     }).then((result) => {
     //         if (result.isConfirmed) {
@@ -488,14 +503,14 @@ $(document).ready(function() {
     //                                 resolve(response);
     //                             },
     //                             error: function(reject) {
-                             
+
     //                                 resolve(reject);
     //                             }
     //                         });
     //                     });
     //                 }
     //             }).then((result) => {
-                   
+
     //                 if (result.isConfirmed && result.value) {
     //                     $.toast({
     //                         heading: 'Success',
@@ -512,44 +527,131 @@ $(document).ready(function() {
     //                 }
     //             });
 
-
     //         }
     //     });
     // });
-  
-    
-    $(document).on('click', '.submit-order', function() {
-       
-        
-        let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ''));
-    
-        var offcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasOrder'));
-        offcanvas.show();
-    
-        $('#offcanvasSubtotal').text( parseFloat($("#subtotal-amount").val().replace(/,/g, '')).toFixed(2));
-        $('#offcanvasTotalAmount').text( totalAmount.toFixed(2));
-        $('#offcanvasGiftDiscount').text( parseFloat($("#gift_card_discount").val().replace(/,/g, '') || 0).toFixed(2));
-        $('#offcanvasTax').text(parseFloat($("#tax-amount").val().replace(/,/g, '') || 0).toFixed(2));
-        $('#customer_name').text(customer_name);
-      
-    });
-    
-    $("#submitOrderButton").on('click', function() {
-        var totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ''));
-        let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ''));
-        let customer_id = $('#customer_id').val();
-        let gift_card_id = $('#gift_card_id').val();
-        let gift_card_discount = $('#gift_card_discount').val();
-    
-        let change;
-        if (amount > totalAmount) {
-            change = amount - totalAmount; 
-        } else {
-            change = totalAmount - amount; 
-        }
 
+    $(document).on("click", ".submit-order", function () {
+        let totalAmount = parseFloat(
+            $("#total-amount").val().replace(/,/g, "")
+        );
+        let totalDiscount = parseFloat(
+            $("#total-discount")
+                .text()
+                .replace(/[^0-9.-]+/g, "")
+        );
+        var offcanvas = new bootstrap.Offcanvas(
+            document.getElementById("offcanvasOrder")
+        );
+        offcanvas.show();
+
+        console.log(totalAmount, totalDiscount);
+        $("#offcanvasSubtotal").text(
+            parseFloat($("#subtotal-amount").val().replace(/,/g, "")).toFixed(2)
+        );
+        $("#offcanvasTotalAmount").text(totalAmount.toFixed(2));
+        $("#offcanvasDiscount").text(totalDiscount.toFixed(2));
+        $("#offcanvasTax").text(
+            parseFloat(
+                $("#tax-amount")
+                    .text()
+                    .replace(/[^0-9.-]+/g, "")
+            ).toFixed(2)
+        );
+    });
+
+    $("#submitOrderButton").on("click", function () {
+        let totalAmount = parseFloat(
+            $("#total-amount").val().replace(/,/g, "")
+        );
+        let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ""));
+        let customer_id = $("#customer_id").val();
+        let paymentMethod = $('input[name="payment_method"]:checked').val();
+
+        let change = 0;
+
+        if (paymentMethod !== "GiftCard") {
+            if (amount > totalAmount) {
+                change = amount - totalAmount;
+            }
+            proceedWithOrder(customer_id, amount, change);
+        } else {
+            let giftCardNumber = $("#orderAmountInput").val();
+
+            $.ajax({
+                url: processGiftCard,
+                type: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content"
+                    ),
+                },
+                data: {
+                    gift_card_number: giftCardNumber,
+                },
+                success: function (response) {
+                    let giftCardAmount = response.amount;
+
+                    if (giftCardAmount >= totalAmount) {
+                        let remainingBalance = giftCardAmount - totalAmount;
+
+                        $.ajax({
+                            url: updateGiftCardBalance,
+                            type: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": $(
+                                    'meta[name="csrf-token"]'
+                                ).attr("content"),
+                            },
+                            data: {
+                                gift_card_number: giftCardNumber,
+                                remaining_balance: remainingBalance,
+                            },
+                            success: function () {
+                                
+                                proceedWithOrder(customer_id, totalAmount, 0);
+                            },
+                            error: function () {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: "Failed to update the gift card balance.",
+                                    icon: "error",
+                                    confirmButtonText: "OK",
+                                });
+                            },
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "Gift card Balance is insufficient",
+                            text:
+                                "The gift card balance is $" +
+                                giftCardAmount.toFixed(2) +
+                                ". It must cover the total amount.",
+                            icon: "warning",
+                            confirmButtonText: "OK",
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Failed to process the gift card.",
+                        icon: "error",
+                        confirmButtonText: "OK",
+                    });
+                },
+            });
+        }
+    });
+
+    function proceedWithOrder(customer_id, order_amount, change) {
         Swal.fire({
-            title: "Change is: $" + change.toFixed(2) + ". Do you want to proceed?",
+            title:
+                change > 0
+                    ? "Change is: $" +
+                      change.toFixed(2) +
+                      ". Do you want to proceed?"
+                    : "Do you want to proceed?",
             showCancelButton: true,
             confirmButtonText: "Save",
             cancelButtonText: `Don't save`,
@@ -558,61 +660,58 @@ $(document).ready(function() {
                 return new Promise((resolve) => {
                     $.ajax({
                         url: cartOrderStoreUrl,
-                        type: 'POST',
+                        type: "POST",
                         headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"
+                            ),
                         },
                         data: {
-                            amount: amount,
+                            amount: order_amount,
                             customer_id: customer_id,
-                            gift_card_id: gift_card_id,
-                            gift_card_discount: gift_card_discount
                         },
-                        success: function(response) {
+                        success: function (response) {
                             resolve(response);
                         },
-                        error: function(reject) {
+                        error: function (reject) {
                             resolve(reject);
-                        }
+                        },
                     });
                 });
-            }
+            },
         }).then((result) => {
             if (result.isConfirmed && result.value) {
-                var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasOrder'));
+                var offcanvas = bootstrap.Offcanvas.getInstance(
+                    document.getElementById("offcanvasOrder")
+                );
                 offcanvas.hide();
-        
+
                 $("#selected-product tbody").empty();
                 $("#card-summary").empty();
-        
+
                 $.toast({
-                    heading: result.value[0] || 'Success',
-                    text: result.value[1] || 'Order placed successfully!',
-                    position: 'top-right',
-                    loaderBg: '#00c263',
-                    icon: 'success',
+                    heading: result.value[0] || "Success",
+                    text: result.value[1] || "Order placed successfully!",
+                    position: "top-right",
+                    loaderBg: "#00c263",
+                    icon: "success",
                     hideAfter: 3000,
-                    stack: 6
+                    stack: 6,
                 });
-        
-                // window.location.reload();
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
             }
         });
-        
-    });
-    
+    }
 
-
-    $(document).on('click', '.apply-gift-card', function() {
+    $(document).on("click", ".apply-gift-card", function () {
         var customer_id = $("#customer_id").val();
 
         Swal.fire({
             title: "Enter Gift Card",
             input: "text",
             inputAttributes: {
-                autocapitalize: "off"
+                autocapitalize: "off",
             },
             showCancelButton: true,
             confirmButtonText: "Submit",
@@ -628,62 +727,64 @@ $(document).ready(function() {
 
                     const requestBody = {
                         customer_id: customer_id,
-                        code: code
+                        code: code,
                     };
 
                     const response = await fetch(apiUrl, {
-                        method: 'POST',
+                        method: "POST",
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': $(
-                                'meta[name="csrf-token"]'
-                            ).attr('content')
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"
+                            ),
                         },
                         body: JSON.stringify(requestBody),
                     });
 
                     if (!response.ok) {
-                        const responseJson = await response.json()
+                        const responseJson = await response.json();
                         // console.log(responseJson);
-                        return Swal.showValidationMessage(`${responseJson.message}`);
+                        return Swal.showValidationMessage(
+                            `${responseJson.message}`
+                        );
                     }
                     return response.json();
-
                 } catch (error) {
                     Swal.showValidationMessage(`
                         Request failed: ${error}
                     `);
                 }
-       
             },
-            allowOutsideClick: () => !Swal.isLoading()
+            allowOutsideClick: () => !Swal.isLoading(),
         }).then((result) => {
             if (result.isConfirmed && result.value) {
                 const response = result.value;
-                $('#gift_card_discount').val(response.response.data.gift_card_discount);
-                $('#gift_card_id').val(response.response.data.gift_card.id);
-                $('.show-gift-discount').text('$ ' + response.response.data
-                    .gift_card_discount);
-                var totalamount = $('#subtotal-amount').val() - response.response.data
-                    .gift_card_discount;
-                $('#total-amount').val(totalamount.toFixed(2));
-                $('.show-total-amount').text('$ ' + totalamount.toFixed(2));
+                $("#gift_card_discount").val(
+                    response.response.data.gift_card_discount
+                );
+                $("#gift_card_id").val(response.response.data.gift_card.id);
+                $(".show-gift-discount").text(
+                    "$ " + response.response.data.gift_card_discount
+                );
+                var totalamount =
+                    $("#subtotal-amount").val() -
+                    response.response.data.gift_card_discount;
+                $("#total-amount").val(totalamount.toFixed(2));
+                $(".show-total-amount").text("$ " + totalamount.toFixed(2));
 
                 console.log(result);
                 $.toast({
-                    heading: 'Success',
+                    heading: "Success",
                     text: result.value.message,
-                    position: 'top-right',
-                    loaderBg: '#00c263',
-                    icon: 'success',
+                    position: "top-right",
+                    loaderBg: "#00c263",
+                    icon: "success",
                     hideAfter: 2000,
-                    stack: 6
+                    stack: 6,
                 });
-
             } else if (result.isDenied) {
                 Swal.fire("Changes are not saved", "", "info");
             }
         });
     });
-
 });

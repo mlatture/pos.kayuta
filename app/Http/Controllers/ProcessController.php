@@ -6,8 +6,31 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\GiftCard;
 class ProcessController extends Controller
 {
+
+    public function updateGiftCardBalance(Request $request)
+    {
+        $giftCard = GiftCard::where('barcode', $request->gift_card_number)->first();
+        if (!$giftCard) {
+            return response()->json(['success' => false, 'message' => 'Gift card not found']);
+        } else {
+            $giftCard->amount = $request->remaining_balance;
+            $giftCard->save();
+            return response()->json(['success' => true]);
+        }
+    }
+    public function processGiftCard(Request $request)
+    {
+        $giftCard = GiftCard::where('barcode', $request->gift_card_number)->first();
+        if (!$giftCard) {
+            return response()->json(['success' => false, 'message' => 'Gift card not found']);
+        } else {
+         
+            return response()->json(['amount' => $giftCard->amount], 200);
+        }
+    }
     public function processRefund(Request $request)
     {
         $orderId = $request->order_id;
