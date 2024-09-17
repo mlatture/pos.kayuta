@@ -8,6 +8,8 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\GiftCard;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProcessController extends Controller
 {
@@ -31,7 +33,7 @@ class ProcessController extends Controller
 
         curl_close($ch);
 
-    
+
         parse_str($responseContent, $responseArray);
 
         if ($responseArray) {
@@ -62,6 +64,7 @@ class ProcessController extends Controller
         $response = $this->makeCurlRequest($cardknoxUrl, $payload);
 
         if (isset($response['xResult']) && $response['xResult'] == 'A') {
+            // $this->saveTransaction($response);
             return response()->json([
                 'message' => 'Payment Approved',
                 'transaction_data' => $response,
@@ -71,7 +74,7 @@ class ProcessController extends Controller
             return response()->json([
                 'message' => 'Payment Declined with error: ' . $errorMessage,
                 'error' => $errorMessage,
-              
+
             ], 400);
         }
     }
@@ -99,29 +102,127 @@ class ProcessController extends Controller
             return response()->json(['amount' => $giftCard->amount], 200);
         }
     }
+
+
     public function processRefund(Request $request)
     {
         $orderId = $request->order_id;
         $items = $request->items;
+        $paymentMethod = $request->payment_method;
+        $paymentAccNumber = $request->payment_acc_number;
+        $totalAmount = $request->total_amount;
+
+
+        DB::beginTransaction();
 
         try {
             foreach ($items as $item) {
+                Log::info('Deleting order item', [
+                    'order_id' => $orderId,
+                    'product_id' => $item['product_id'],
+                ]);
                 OrderItem::where('order_id', $orderId)
                     ->where('product_id', $item['product_id'])
                     ->delete();
             }
 
-            foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
-                if ($product) {
-                    $product->quantity += $item['quantity'];
-                    $product->save();
+            if ($paymentMethod === 'GiftCard') {
+                $totalRefundAmount = 0;
+
+
+
+                foreach ($items as $item) {
+                    $product = Product::find($item['product_id']);
+                    $giftCard = GiftCard::where('barcode', $paymentAccNumber)->first();
+
+                    if ($product && $giftCard) {
+                        $totalRefundAmount += $item['price'];
+
+                        $product->quantity += $item['quantity'];
+                        $product->save();
+                    } else {
+                        Log::warning('Product or gift card not found', [
+                            'product_id' => $item['product_id'],
+                            'gift_card_number' => $paymentAccNumber,
+                        ]);
+                    }
+                }
+
+                if ($giftCard) {
+                    $giftCard->amount += $totalRefundAmount;
+                    $giftCard->save();
+                } else {
+                    Log::warning('Gift card not found for updating amount', [
+                        'gift_card_number' => $paymentAccNumber,
+                    ]);
+                }
+            } elseif ($paymentMethod === 'CreditCard') {
+                $originalTransactionRefNum = $this->getOriginalTransactionRefNum($orderId);
+
+                $refundResponse = $this->processCreditCardRefund($totalAmount, $paymentAccNumber, $originalTransactionRefNum);
+
+                if ($refundResponse['success']) {
+                    Log::info('Credit card refund successful', [
+                        'transaction_data' => $refundResponse['transaction_data']
+                    ]);
+                } else {
+                    Log::error('Credit card refund failed', [
+                        'error' => $refundResponse['error']
+                    ]);
+                    return response()->json(['success' => false, 'error' => $refundResponse['error']]);
                 }
             }
 
+            DB::commit();
             return response()->json(['success' => true]);
         } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Refund processing failed', [
+                'error' => $e->getMessage(),
+            ]);
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
         }
     }
+
+
+    private function processCreditCardRefund($totalAmount, $paymentAccNumber, $refNum)
+    {
+        $cardknoxUrl = 'https://x1.cardknox.com/gateway';
+        $cardknoxApiKey = config('services.cardknox.api_key');
+
+        $payload = [
+            'xKey' => $cardknoxApiKey,
+            'xCommand' => 'cc:refund',
+            'xVersion' => '4.5.5',
+            'xSoftwareName' => 'Kayutalake',
+            'xSoftwareVersion' => '1.0',
+            'xAmount' => $totalAmount,
+            'xCardNum' => $paymentAccNumber,
+            'xExp' => '0831',
+            'xAllowDuplicate' => true,
+            'xRefNum' => $refNum,
+        ];
+
+        $response = $this->makeCurlRequest($cardknoxUrl, $payload);
+        if (isset($response['xResult']) && $response['xResult'] == 'A') {
+            return [
+                'success' => true,
+                'transaction_data' => $response
+            ];
+        } else {
+            $errorMsg = $response['xError'] ?? 'Unknown error';
+            return [
+                'success' => false,
+                'error' => $errorMsg,
+            ];
+        }
+    }
+
+    private function getOriginalTransactionRefNum($orderId)
+    {
+      
+        return DB::table('orders')->where('id', $orderId)->value('admin_id');
+    }
+
+
 }

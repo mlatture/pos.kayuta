@@ -53,7 +53,7 @@ $(document).ready(function () {
             if (amount > totalAmount) {
                 change = amount - totalAmount;
             }
-            proceedWithOrder(customer_id, amount, change);
+            proceedWithOrder(customer_id, amount, change, paymentMethod);
         } else if(paymentMethod === "GiftCard"){
             let giftCardNumber = $("#orderAmountInput").val();
 
@@ -87,7 +87,7 @@ $(document).ready(function () {
                                 remaining_balance: remainingBalance,
                             },
                             success: function () {
-                                proceedWithOrder(customer_id, totalAmount, 0);
+                                proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, giftCardNumber);
                             },
                             error: function () {
                                 Swal.fire({
@@ -129,6 +129,8 @@ $(document).ready(function () {
               
                 amount: totalAmount,
             }
+
+            let cardNum = $("#orderAmountInput").val();
             $.ajax({
                 url: processCreditCard,
                 type: 'POST',
@@ -144,7 +146,7 @@ $(document).ready(function () {
                             icon: "success",
                             confirmButtonText: "OK",
                         });
-                        proceedWithOrder(customer_id, totalAmount, 0);
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum);
                     } else if (response.message === "Payment Declined") {
                         Swal.fire({
                             title: "Error",
@@ -181,7 +183,7 @@ $(document).ready(function () {
         }
     });
 
-    function proceedWithOrder(customer_id, order_amount, change) {
+    function proceedWithOrder(customer_id, order_amount, change, paymentMethod, number) {
         Swal.fire({
             title:
                 change > 0
@@ -206,6 +208,8 @@ $(document).ready(function () {
                         data: {
                             amount: order_amount,
                             customer_id: customer_id,
+                            payment_method: paymentMethod,
+                            acc_number: number
                         },
                         success: function (response) {
                             resolve(response);
@@ -235,6 +239,10 @@ $(document).ready(function () {
                     hideAfter: 3000,
                     stack: 6,
                 });
+
+                setTimeout(function () {
+                    window.location.reload();
+                }, 3000);
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
             }

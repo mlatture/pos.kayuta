@@ -40,31 +40,37 @@
                     <th>Received</th>
                     <th>Status</th>
                     <th>Remain.</th>
+                    <th>Payment Method</th>
                     <th>Created At</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($orders as $order)
+
                     <tr>
+
                         <td>{{$order->id}}</td>
                         <td>{{$order->getCustomerName()}}</td>
                         <td>{{ config('settings.currency_symbol') }} {{$order->formattedTotal()}}</td>
                         <td>{{ config('settings.currency_symbol') }} {{$order->formattedReceivedAmount()}}</td>
                         <td>
-                            @if($order->receivedAmount() == 0)
+                            @if(number_format($order->receivedAmount(), 2) == 0)
                                 <span class="badge badge-danger">Not Paid</span>
-                            @elseif($order->receivedAmount() < $order->total())
+                            @elseif(number_format($order->receivedAmount(), 2) < number_format($order->total(), 2))
                                 <span class="badge badge-warning">Partial</span>
-                            @elseif($order->receivedAmount() == $order->total())
+                            @elseif(number_format($order->receivedAmount(), 2) == number_format($order->total(), 2))
                                 <span class="badge badge-success">Paid</span>
-                            @elseif($order->receivedAmount() > $order->total())
+                            @elseif(number_format($order->receivedAmount(), 2) > number_format($order->total(), 2))
                                 <span class="badge badge-info">Change</span>
                             @endif
                         </td>
                         <td>{{config('settings.currency_symbol')}}
                             {{number_format($order->total() - $order->receivedAmount(), 2)}}
                         </td>
+                        @foreach($order->payments as $payment)
+                            <td class="paymentMethod" data-payment_acc_num="{{$payment->payment_acc_number}}" data-paymentmethod="{{$payment->payment_method}}">{{$payment->payment_method}}</td>
+                        @endforeach
                         <td>{{$order->created_at}}</td>
                         <td>
                             <a href="{!! route('orders.generate.invoice', $order->id) !!}" class="label label-info"
@@ -79,7 +85,8 @@
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot><!-- Log on to codeastro.com for more projects -->
+
+            <tfoot>
                 <tr>
                     <th></th>
                     <th></th>
@@ -102,6 +109,10 @@
 
         $('.returnOrder').on('click', function () {
             var id = $(this).data('id');
+
+            var paymentMethod = $(this).closest('tr').find('.paymentMethod').data('paymentmethod');
+            var paymentAcc = $(this).closest('tr').find('.paymentMethod').data('payment_acc_num');
+
 
             $.ajax({
                 url: "{{ route('orders.to.be.return') }}",
@@ -156,14 +167,17 @@
                         data: {
                             _token: '{{ csrf_token() }}',
                             order_id: id,
-                            items: selectedItems
+                            items: selectedItems,
+                            payment_method: paymentMethod,
+                            payment_acc_number: paymentAcc || null,
+                            
                         },
                         success: function (response) {
-                          
+
                             toastr.success('Refund processed successfully.');
                             $('#returnModal').modal('hide');
                             setTimeout(function () {
-                           
+
                                 window.location.reload();
                             }, 2000);
                         },
