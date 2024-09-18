@@ -84,7 +84,8 @@ class OrderController extends Controller
                 'amount' => $request->amount,
                 'admin_id' => $request->user()->id,
                 'payment_method' => $request->payment_method,
-                'payment_acc_number' => $request->acc_number
+                'payment_acc_number' => $request->acc_number,
+                'x_ref_num' => $request->x_ref_num
             ]);
 
             $order = Order::orderFindById($order->id);

@@ -10,6 +10,9 @@ $(document).ready(function () {
             label.text("Enter Card Number: ");
             input.attr("placeholder", "Enter Card Number");
             $("#expire").attr('hidden', false);
+
+
+           
         } else {
             label.text("Enter Order Amount: ");
             input.attr("placeholder", "Enter amount");
@@ -43,6 +46,7 @@ $(document).ready(function () {
         let totalAmount = parseFloat(
             $("#total-amount").val().replace(/,/g, "")
         );
+
         let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ""));
         let customer_id = $("#customer_id").val();
         let paymentMethod = $('input[name="payment_method"]:checked').val();
@@ -53,7 +57,7 @@ $(document).ready(function () {
             if (amount > totalAmount) {
                 change = amount - totalAmount;
             }
-            proceedWithOrder(customer_id, amount, change, paymentMethod);
+            proceedWithOrder(customer_id, amount, change, paymentMethod, 0, 0);
         } else if(paymentMethod === "GiftCard"){
             let giftCardNumber = $("#orderAmountInput").val();
 
@@ -122,15 +126,17 @@ $(document).ready(function () {
         }else if(paymentMethod === "CreditCard"){
             let expiry = $("#cardExpiry").val();
             let formattedExp = expiry.replace("/", ""); 
-
+            let x_ref_num = $("#x_ref_num").val();
             let cardDetails = {
                 ccnum: $("#orderAmountInput").val(),
                 exp: formattedExp,
-              
                 amount: totalAmount,
+            
             }
 
+
             let cardNum = $("#orderAmountInput").val();
+           
             $.ajax({
                 url: processCreditCard,
                 type: 'POST',
@@ -146,7 +152,8 @@ $(document).ready(function () {
                             icon: "success",
                             confirmButtonText: "OK",
                         });
-                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum);
+                        
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum, response.transaction_data.xRefNum);
                     } else if (response.message === "Payment Declined") {
                         Swal.fire({
                             title: "Error",
@@ -183,14 +190,14 @@ $(document).ready(function () {
         }
     });
 
-    function proceedWithOrder(customer_id, order_amount, change, paymentMethod, number) {
+    function proceedWithOrder(customer_id, order_amount, change, paymentMethod, number, x_ref_num) {
         Swal.fire({
             title:
                 change > 0
                     ? "Change is: $" +
                       change.toFixed(2) +
                       ". Do you want to proceed?"
-                    : "Card successfully processed!",
+                    : "Successfully processed!",
             showCancelButton: true,
             confirmButtonText: "Save",
             cancelButtonText: `Don't save`,
@@ -209,7 +216,8 @@ $(document).ready(function () {
                             amount: order_amount,
                             customer_id: customer_id,
                             payment_method: paymentMethod,
-                            acc_number: number
+                            acc_number: number,
+                            x_ref_num: x_ref_num
                         },
                         success: function (response) {
                             resolve(response);

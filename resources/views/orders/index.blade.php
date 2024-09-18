@@ -160,6 +160,9 @@
 
 
             $('#returnModal .btn-danger').on('click', function () {
+                var totalAmountText = $("#totalAmount").text();
+                var amount = totalAmountText.replace('Total Amount to Refund: $', '');
+                var numericAmount = parseFloat(amount);
                 if (selectedItems.length > 0) {
                     $.ajax({
                         url: "{{ route('orders.process.refund') }}",
@@ -170,6 +173,7 @@
                             items: selectedItems,
                             payment_method: paymentMethod,
                             payment_acc_number: paymentAcc || null,
+                            total_amount: numericAmount,
                             
                         },
                         success: function (response) {
