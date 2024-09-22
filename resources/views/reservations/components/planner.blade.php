@@ -1,4 +1,4 @@
-<div class="collapse px-5" id="collapsePlanner">
+<div class="collapse  px-5 " id="collapsePlanner">
     <div class="card card-body">
         <div class="row">
             <div class="col">

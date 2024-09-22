@@ -262,38 +262,90 @@ class NewReservationController extends Controller
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+        if (config('app.debug')) {
+            curl_setopt($ch, CURLOPT_VERBOSE, true);
+        }
+    
         $responseContent = curl_exec($ch);
-
+        $httpStatusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);  
+    
         if (curl_errno($ch)) {
             $error = curl_error($ch);
             curl_close($ch);
-            return ['error' => 'Curl error: ' . $error];
+            return [
+                'success' => false,
+                'error' => 'Curl error: ' . $error,
+                'status_code' => $httpStatusCode
+            ];
         }
-
+    
         curl_close($ch);
-
+    
         if ($responseContent) {
             $responseArray = json_decode($responseContent, true);
             if (json_last_error() === JSON_ERROR_NONE) {
-                return $responseArray;
+                return [
+                    'success' => true,
+                    'data' => $responseArray,
+                    'status_code' => $httpStatusCode
+                ];
             } else {
-                return ['error' => 'Invalid JSON response: ' . $responseContent];
+                return [
+                    'success' => false,
+                    'error' => 'Invalid JSON response',
+                    'raw_response' => $responseContent,
+                    'status_code' => $httpStatusCode
+                ];
             }
         } else {
-            return ['error' => 'No response from the server.'];
+            return [
+                'success' => false,
+                'error' => 'No response from the server',
+                'status_code' => $httpStatusCode
+            ];
         }
     }
+    
 
-    public function postTerminalPayment(Request $request, $id)
+    public function processPayment(Request $request, $id){
+        $url = 'https://localemv.com:8887';
+        $data = $this->postTerminalPayment($request);
+        // $store = $this->store($id);
+    
+        try {
+            $response = $this->makeCurlRequest($url, $data);
+            
+        } catch(\Exception $e){
+            return response()->json([
+                'success' => false, 'message' => $e->getMessage()
+            ]);
+        }
+    
+        if ($response['success'] && $response['data']['xStatus'] === 'Success') {
+            return response()->json([
+                'success' => true,
+                'transactionId' => $response['data']['xTID'] ?? null,
+                'message' => $response['data']['xStatus'] ?? 'Transaction Completed'
+            ]);
+        }
+    
+        return response()->json([
+            'success' => false,
+            'message' => $response['data']['xMessage'] ?? 'Failed to process the transaction'
+        ]);
+    }
+    
+
+
+    public function postTerminalPayment($request)
     {
-        $cart_reservation = CartReservation::findOrFail($id);
         $amount = $request->input('amount');
         $apiKey = config('services.cardknox.api_key');
 
+       
         $data = [
             'xKey' => $apiKey,
             'xAmount' => $amount,
@@ -314,49 +366,12 @@ class NewReservationController extends Controller
 
         ];
 
-        $url = 'https://x2.cardknox.com/gateway';
-        // $url = 'https://localemv.com:8887';
-        $responseArray = $this->makeCurlRequest($url, $data);
+        return $data;
 
-        if (isset($responseArray['error'])) {
-            return response()->json(['success' => false, 'message' => $responseArray['error']]);
-        }
-
-        if (isset($responseArray['xStatus']) && $responseArray['xStatus'] == 'Success') {
-            return response()->json(['success' => true, 'transactionId' => $responseArray['xTransactionId']]);
-        } else {
-            return response()->json(['success' => false, 'message' => $responseArray['xMessage'] ?? 'Transaction failed']);
-        }
+    
     }
 
 
-    public function checkPaymentStatus($id)
-    {
-        $transactionId = '123';
-
-        $data = [
-            'xKey' => config('services.cardknox.api_key'),
-            'xCommand' => 'cc:get',
-            'xTransactionId' => $transactionId,
-            'xVersion' => '4.5.5',
-            'xSoftwareName' => 'Kayutalake',
-            'xSoftwareVersion' => '1.0',
-
-        ];
-
-        $url = 'https://x2.cardknox.com/gateway';
-        $response = $this->makeCurlRequest($url, $data);
-
-        if (isset($response['error'])) {
-            return response()->json(['paymentStatus' => 'Error', 'message' => 'Curl error: ' . $response['error']]);
-        }
-
-        if (isset($response['xStatus']) && $response['xStatus'] == 'Approved') {
-            return response()->json(['paymentStatus' => 'Success']);
-        } else {
-            return response()->json(['paymentStatus' => 'Pending']);
-        }
-    }
 
 
     public function storePayment(Request $request, $id)

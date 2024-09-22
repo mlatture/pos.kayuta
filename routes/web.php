@@ -79,7 +79,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/getnotreserve', [NewReservationController::class, 'noCart']);
     Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
-    Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'postTerminalPayment']);
+    Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'processPayment']);
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);

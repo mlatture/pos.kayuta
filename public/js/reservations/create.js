@@ -131,8 +131,9 @@ function sendPaymentRequest() {
             success: function(response) {
                 hideLoader();
                 if (response.success) {
-                    listenForCardTap(reservationId);  
+                    console.log(response);
                 } else {
+                    console.log(response);
                     toastr.error(response.message || 'Terminal payment failed');
                 }
             },
@@ -171,39 +172,6 @@ function sendPaymentRequest() {
             }
         });
     }
-}
-
-function listenForCardTap(reservationId) {
-    var intervalTime = 3000; 
-    var timeoutTime = 60000; 
-    var elapsed = 0; 
-
-    var interval = setInterval(function() {
-        elapsed += intervalTime; 
-
-        $.ajax({
-            url: '/admin/reservations/payment/' + reservationId + '/checkPaymentStatus',
-            type: 'GET',
-            success: function(response) {
-                if (response.paymentStatus === 'Success') {
-                    clearInterval(interval);  
-                    toastr.success('Terminal payment successful! Redirecting...');
-                    setTimeout(function() {
-                        window.location.href = "/admin/reservations";
-                    }, 1000);
-                }
-            },
-            error: function(xhr) {
-                clearInterval(interval);
-                toastr.error('Error checking terminal payment status');
-            }
-        });
-
-        if (elapsed >= timeoutTime) {
-            clearInterval(interval);
-            toastr.error('Terminal payment failed or timeout reached');
-        }
-    }, intervalTime);  
 }
 
 
