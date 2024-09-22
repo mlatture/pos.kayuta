@@ -357,7 +357,7 @@ class NewReservationController extends Controller
             'xDeviceTimeOut' => '60',
             'xEnableDeviceSwipe' => '1',
             'xEnableAmountConfirmationPrompt' => '1',
-            'xResponseFormat' => 'JSON',
+            'xResponseFormat' => 'KVP',
             'xExitFormIfApproved' => '1',
             'xCommand' => 'cc:encrypt',
             'xVersion' => '4.5.5',
