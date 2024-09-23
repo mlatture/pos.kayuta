@@ -122,8 +122,9 @@ class ProductController extends Controller
             $filename = basename($image_path);
         }
     
+        $quantity = $request->quantity === '*' ? -1 : $request->quantity;
+
         $product = Product::create([
-            'organization_id' => auth()->user()->organization_id,
             'category_id'   =>  $request->category_id ?? 0,
             'tax_type_id'   =>  $request->tax_type_id ?? 0,
             'name'          =>  $request->name,
@@ -131,11 +132,9 @@ class ProductController extends Controller
             'image'         =>  $filename,
             'barcode'       =>  $request->barcode,
             'price'         =>  $request->price,
-            'quantity'      =>  $request->quantity,
+            'quantity'      =>  $quantity,
             'discount_type' =>  $request->discount_type ?? '',
             'discount'      =>  $request->discount ?? 0,
-            // 'tax_type'      =>  $request->tax_type ?? '',
-            // 'tax'           =>  $request->tax ?? 0,
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
         ]);
@@ -200,8 +199,7 @@ class ProductController extends Controller
         $product->discount_type =   $request->discount_type;
         $product->discount      =   $request->discount;
         $product->product_vendor_id = $request->product_vendor_id ?? null;
-        // $product->tax_type      =   $request->tax_type;
-        // $product->tax           =   $request->tax;
+     
 
         if ($request->hasFile('image')) {
             if ($product->image) {
