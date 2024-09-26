@@ -110,7 +110,7 @@ $(document).ready(function () {
                 $("#paginationLinks").html(paginationLinks);
             },
             error: function (xhr, status, error) {
-                console.error("Error fetching reservations: ", error);
+           
             },
         });
     }
@@ -285,7 +285,7 @@ $(document).ready(function () {
                 $("#paginationLinks1").html(paginationLinks1);
             },
             error: function (xhr, status, error) {
-                console.error("Error fetching not reserved: ", error);
+               
             },
         });
     }

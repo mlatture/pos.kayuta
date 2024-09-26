@@ -132,6 +132,7 @@ function sendPaymentRequest() {
                 hideLoader();
                 if (response.success) {
                     console.log(response);
+                   toastr.success(response)
                 } else {
                     console.log(response);
                     toastr.error(response.message || 'Terminal payment failed');

@@ -133,7 +133,7 @@ $(document).ready(function () {
                 amount: totalAmount,
             
             }
-
+            
 
             let cardNum = $("#orderAmountInput").val();
            

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class NewReservationController extends Controller
 {
-    public function index()
+    public function index($id)
     {
         return view('reservations.index');
     }
@@ -41,40 +41,40 @@ class NewReservationController extends Controller
         $types = $request->input('tier', []);
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-    
+
         $paymentCartIds = Payment::pluck('cartid')->toArray();
-    
-      
+
+
         $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
             ->whereIn('reservations.cartid', $paymentCartIds)
             ->select('reservations.*', 'customers.phone', 'customers.address')
             ->orderByDesc('reservations.id');
-    
+
         if ($siteId) {
             $reservationsQuery->where('reservations.siteid', $siteId);
         }
-    
+
         if (!empty($types)) {
             $reservationsQuery->whereIn('reservations.siteclass', $types);
         }
-    
+
         if ($startDate && $endDate) {
-            $reservationsQuery->where(function($query) use ($startDate, $endDate) {
+            $reservationsQuery->where(function ($query) use ($startDate, $endDate) {
                 $query->whereDate('reservations.cid', '>=', $startDate)
-                      ->whereDate('reservations.cod', '<=', $endDate);
+                    ->whereDate('reservations.cod', '<=', $endDate);
             });
         } elseif ($startDate) {
             $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
         } elseif ($endDate) {
             $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
         }
-    
-        
+
+
         $reservations = $reservationsQuery->paginate($limit);
-    
+
         return response()->json($reservations);
     }
-    
+
 
 
 
@@ -259,85 +259,60 @@ class NewReservationController extends Controller
 
     public function makeCurlRequest($url, $data)
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
-        if (config('app.debug')) {
-            curl_setopt($ch, CURLOPT_VERBOSE, true);
-        }
-    
-        $responseContent = curl_exec($ch);
-        $httpStatusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);  
-    
-        if (curl_errno($ch)) {
-            $error = curl_error($ch);
-            curl_close($ch);
-            return [
-                'success' => false,
-                'error' => 'Curl error: ' . $error,
-                'status_code' => $httpStatusCode
-            ];
-        }
-    
-        curl_close($ch);
-    
-        if ($responseContent) {
-            $responseArray = json_decode($responseContent, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                return [
-                    'success' => true,
-                    'data' => $responseArray,
-                    'status_code' => $httpStatusCode
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'error' => 'Invalid JSON response',
-                    'raw_response' => $responseContent,
-                    'status_code' => $httpStatusCode
-                ];
-            }
-        } else {
-            return [
-                'success' => false,
-                'error' => 'No response from the server',
-                'status_code' => $httpStatusCode
-            ];
-        }
-    }
-    
+        $curl = curl_init();
 
-    public function processPayment(Request $request, $id){
-        $url = 'https://localemv.com:8887';
-        $data = $this->postTerminalPayment($request);
-        // $store = $this->store($id);
-    
-        try {
-            $response = $this->makeCurlRequest($url, $data);
-            
-        } catch(\Exception $e){
-            return response()->json([
-                'success' => false, 'message' => $e->getMessage()
-            ]);
-        }
-    
-        if ($response['success'] && $response['data']['xStatus'] === 'Success') {
-            return response()->json([
-                'success' => true,
-                'transactionId' => $response['data']['xTID'] ?? null,
-                'message' => $response['data']['xStatus'] ?? 'Transaction Completed'
-            ]);
-        }
-    
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://localemv.com:8887',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xAmount=1',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        echo $response;
+    }
+
+
+    public function processPayment(Request $request, $id)
+    {
+
+        $curl = curl_init();
+       
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://localemv.com:8887',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xInvoice=2222&xAmount='. urlencode($request->amount),
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
         return response()->json([
-            'success' => false,
-            'message' => $response['data']['xMessage'] ?? 'Failed to process the transaction'
+          'success' =>  $response
         ]);
     }
-    
+
+
+
 
 
     public function postTerminalPayment($request)
@@ -345,7 +320,7 @@ class NewReservationController extends Controller
         $amount = $request->input('amount');
         $apiKey = config('services.cardknox.api_key');
 
-       
+
         $data = [
             'xKey' => $apiKey,
             'xAmount' => $amount,
@@ -368,7 +343,7 @@ class NewReservationController extends Controller
 
         return $data;
 
-    
+
     }
 
 
@@ -475,7 +450,7 @@ class NewReservationController extends Controller
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
 
         $responseContent = curl_exec($ch);
-      
+
 
         curl_close($ch);
 
