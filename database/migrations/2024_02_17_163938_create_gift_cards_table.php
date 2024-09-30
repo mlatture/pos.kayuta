@@ -4,16 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('gift_cards', function (Blueprint $table) {
+        Schema::create('gift_cards', static function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
             $table->string('user_email')->nullable();
@@ -26,6 +25,7 @@ return new class extends Migration
             $table->double('max_discount')->default(0);
             $table->integer('limit')->nullable();
             $table->boolean('status')->default(0);
+            $table->integer('organization_id')->nullable();
             $table->timestamps();
         });
     }
@@ -35,7 +35,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('gift_cards');
     }

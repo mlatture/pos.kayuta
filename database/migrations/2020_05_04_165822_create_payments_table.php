@@ -2,26 +2,31 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('payments', static function (Blueprint $table) {
             $table->id();
             $table->decimal('amount', 8, 4);
-            $table->foreignId('order_id');
-            $table->foreignId('user_id');
+            $table->integer('organization_id')->nullable();
+            $table->string('cartid', 255)->nullable();
+            $table->integer('receipt')->default(0);
+            $table->string('method', 255)->nullable();
+            $table->string('customernumber', 255)->nullable();
+            $table->string('email', 255)->nullable();
+            $table->float('payment')->default(0);
+            $table->foreignId('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->dateTime('createdate')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamps();
-
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -30,7 +35,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('payments');
     }

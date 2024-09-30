@@ -40,37 +40,31 @@
                     <th>Received</th>
                     <th>Status</th>
                     <th>Remain.</th>
-                    <th>Payment Method</th>
                     <th>Created At</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($orders as $order)
-
                     <tr>
-
                         <td>{{$order->id}}</td>
                         <td>{{$order->getCustomerName()}}</td>
                         <td>{{ config('settings.currency_symbol') }} {{$order->formattedTotal()}}</td>
                         <td>{{ config('settings.currency_symbol') }} {{$order->formattedReceivedAmount()}}</td>
                         <td>
-                            @if(number_format($order->receivedAmount(), 2) == 0)
+                            @if($order->receivedAmount() == 0)
                                 <span class="badge badge-danger">Not Paid</span>
-                            @elseif(number_format($order->receivedAmount(), 2) < number_format($order->total(), 2))
+                            @elseif($order->receivedAmount() < $order->total())
                                 <span class="badge badge-warning">Partial</span>
-                            @elseif(number_format($order->receivedAmount(), 2) == number_format($order->total(), 2))
+                            @elseif($order->receivedAmount() == $order->total())
                                 <span class="badge badge-success">Paid</span>
-                            @elseif(number_format($order->receivedAmount(), 2) > number_format($order->total(), 2))
+                            @elseif($order->receivedAmount() > $order->total())
                                 <span class="badge badge-info">Change</span>
                             @endif
                         </td>
                         <td>{{config('settings.currency_symbol')}}
                             {{number_format($order->total() - $order->receivedAmount(), 2)}}
                         </td>
-                        @foreach($order->payments as $payment)
-                            <td class="paymentMethod" data-payment_acc_num="{{$payment->payment_acc_number}}" data-paymentmethod="{{$payment->payment_method}}">{{$payment->payment_method}}</td>
-                        @endforeach
                         <td>{{$order->created_at}}</td>
                         <td>
                             <a href="{!! route('orders.generate.invoice', $order->id) !!}" class="label label-info"
@@ -85,8 +79,7 @@
                     </tr>
                 @endforeach
             </tbody>
-
-            <tfoot>
+            <tfoot><!-- Log on to codeastro.com for more projects -->
                 <tr>
                     <th></th>
                     <th></th>
@@ -109,10 +102,6 @@
 
         $('.returnOrder').on('click', function () {
             var id = $(this).data('id');
-
-            var paymentMethod = $(this).closest('tr').find('.paymentMethod').data('paymentmethod');
-            var paymentAcc = $(this).closest('tr').find('.paymentMethod').data('payment_acc_num');
-
 
             $.ajax({
                 url: "{{ route('orders.to.be.return') }}",
@@ -160,9 +149,6 @@
 
 
             $('#returnModal .btn-danger').on('click', function () {
-                var totalAmountText = $("#totalAmount").text();
-                var amount = totalAmountText.replace('Total Amount to Refund: $', '');
-                var numericAmount = parseFloat(amount);
                 if (selectedItems.length > 0) {
                     $.ajax({
                         url: "{{ route('orders.process.refund') }}",
@@ -170,11 +156,7 @@
                         data: {
                             _token: '{{ csrf_token() }}',
                             order_id: id,
-                            items: selectedItems,
-                            payment_method: paymentMethod,
-                            payment_acc_number: paymentAcc || null,
-                            total_amount: numericAmount,
-                            
+                            items: selectedItems
                         },
                         success: function (response) {
 

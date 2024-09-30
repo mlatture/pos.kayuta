@@ -11,9 +11,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        Schema::table('pos_payments', static function (Blueprint $table) {
                 $table->string('payment_method')->nullable();
                 $table->string('payment_acc_number')->nullable();
         });
@@ -24,9 +24,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        Schema::table('pos_payments', static function (Blueprint $table) {
             $table->dropColumn('payment_method');
             $table->dropColumn('payment_acc_number');
 

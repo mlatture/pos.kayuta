@@ -11,9 +11,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
+        Schema::create('customers', static function (Blueprint $table) {
             $table->id();
             $table->string('first_name', 20);
             $table->string('last_name', 20);
@@ -21,10 +21,12 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->string('avatar')->nullable();
-            $table->foreignId('user_id');
+            $table->integer('organization_id')->nullable();
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            //$table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->index('user_id', 'customers_user_id_foreign');
         });
     }
 
@@ -33,7 +35,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('customers');
     }

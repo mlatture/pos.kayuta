@@ -11,14 +11,22 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('orders', static function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->nullable();
-            $table->foreignId('user_id');
+
+            $table->unsignedInteger('organization_id')->nullable();
+            $table->unsignedBigInteger('admin_id')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
 
+            // Indexes
+            $table->index('customer_id');
+            $table->index('user_id');
+
+            // Foreign keys
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
@@ -29,7 +37,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('orders');
     }

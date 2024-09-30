@@ -11,9 +11,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        Schema::table('pos_payments', static function (Blueprint $table) {
             $table->string('x_ref_num')->nullable();
         });
     }
@@ -23,9 +23,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        Schema::table('pos_payments', static function (Blueprint $table) {
             $table->dropColumn('x_ref_num');
 
         });

@@ -13,6 +13,7 @@ use App\Model\Review;
 use App\Model\Seller;
 use App\Model\ShippingMethod;
 use App\Model\User;
+use App\Models\DictionaryTable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,14 @@ use Illuminate\Support\Facades\Storage;
 
 class Helpers
 {
+    public static function getDictionaryFields($table, $desc = false) {
+        $dictionaryQuery = DictionaryTable::where(['table_name' => $table, 'viewable' => true]);
+        if($desc) {
+            return $dictionaryQuery->pluck('description', 'field_name')->toArray();
+        }
+        return $dictionaryQuery->pluck('display_name', 'field_name')->toArray();
+    }
+
     public static function status($id)
     {
         if ($id == 1) {
@@ -37,7 +46,7 @@ class Helpers
         if (!Storage::disk('public')->exists('liability')) {
             Storage::disk('public')->makeDirectory('liability');
         }
-        
+
         return 'storage/liability/';
     }
 
@@ -78,7 +87,7 @@ class Helpers
         $result = DB::select(DB::raw("SELECT $fieldname FROM $tablename"));
         $recordString = '';
         $selected = '';
-        // Loop through each record in the result set 
+        // Loop through each record in the result set
         $selecteditem = str_replace(" ", "_", $selecteditem);
 
         foreach ($result as $row) {
@@ -90,7 +99,7 @@ class Helpers
             }
             $recordString .= "<option value='" . $value . "' " . $selected . ">" . $row[$fieldname] . "</option>";
         }
-        // Remove last comma and space from recordString 
+        // Remove last comma and space from recordString
         return $recordString;
     }
 
@@ -98,16 +107,16 @@ class Helpers
     {
 
         $result = DB::select('select siteclass from site_classes where :fieldname = true', ['fieldname' => $fieldname]);
-        // Initialize an empty string to store all results from a single field 
+        // Initialize an empty string to store all results from a single field
         $recordString = '';
         $selected = '';
-        // Loop through each record in the result set 
+        // Loop through each record in the result set
 
         foreach ($result as $row) {
             $value = str_replace(" ", "_", $row['siteclass']);
             $recordString .= " " . $value;
         }
-        // Remove last comma and space from recordString 
+        // Remove last comma and space from recordString
         return $recordString;
     }
 
@@ -122,9 +131,9 @@ class Helpers
 
     public static function dateDifferenceOfTwoDates($startDate, $endDate)
     {
-        $renewDate      =   date_create($endDate);
-        $currentDate    =   date_create($startDate);
-        $difference     =   date_diff($renewDate, $currentDate);
+        $renewDate = date_create($endDate);
+        $currentDate = date_create($startDate);
+        $difference = date_diff($renewDate, $currentDate);
 
         return $difference;
     }
@@ -169,8 +178,8 @@ class Helpers
             $style = "style='background-color: #66FF66; '";
         }
 
-        $days =  explode(",", $availability);
-        $html = "<tr><td><a href='" . route('front.site-details', ['id' => $siteid]) . "'>" . $siteid .  "</a></td>";
+        $days = explode(",", $availability);
+        $html = "<tr><td><a href='" . route('front.site-details', ['id' => $siteid]) . "'>" . $siteid . "</a></td>";
         $colspan = 1;
         $tmpcid = $cid;
         $currday = $cid;

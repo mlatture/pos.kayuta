@@ -4,16 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('cart_reservations', function (Blueprint $table) {
+        Schema::table('cart_reservations', static function (Blueprint $table) {
             $table->integer('number_of_guests')->nullable();
         });
     }
@@ -23,10 +22,10 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('cart_reservations', function (Blueprint $table) {
-            //
+        Schema::table('cart_reservations', static function (Blueprint $table) {
+            $table->dropColumn('number_of_guests');
         });
     }
 };

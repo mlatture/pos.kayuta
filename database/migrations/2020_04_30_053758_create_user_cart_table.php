@@ -11,9 +11,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('admin_cart', function (Blueprint $table) {
+        Schema::create('admin_cart', static function (Blueprint $table) {
             $table->id();
             $table->foreignId('admin_id');
             $table->foreignId('product_id');
@@ -29,7 +29,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('admin_cart');
     }
