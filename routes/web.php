@@ -21,7 +21,7 @@ use App\Http\Controllers\ProcessController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CalendarReservationController;
-
+use App\Http\Controllers\PayBalanceController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -54,6 +54,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-gift-card', [ProcessController::class, 'processGiftCard'])->name('orders.process.gift.card');
     Route::post('orders/process-gift-card-balance', [ProcessController::class, 'updateGiftCardBalance'])->name('orders.process.gift.card.balance');
     Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
+    Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
     Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
 
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
@@ -83,7 +84,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
-    Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
+
+    
+    Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');

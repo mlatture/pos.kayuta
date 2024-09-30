@@ -37,21 +37,25 @@ $(document).ready(function () {
             case "Cash":
             case "Other":
                 $("#cash").show();
+                $("#checkDetails").attr('hidden', true);
+
                 break;
             case "Check":
-                $("#creditcard-manual").show();
-                $("#xCardNum").attr("placeholder", "Account Number");
-                $("#xExpGroup").hide();
+                $("#checkDetails").attr('hidden', false);
+
                 break;
             case "Manual":
                 $("#creditcard-manual").show();
                 $("#xCardNum").attr("placeholder", "Card Number");
+                $("#checkDetails").attr('hidden', true);
                 break;
             case "Terminal":
                 $("#creditcard-terminal").show();
+                $("#checkDetails").attr('hidden', true);
                 break;
             case "Gift Card":
                 $("#gift-card").show();
+                $("#checkDetails").attr('hidden', true);
                 break;
             default:
                 console.log("Unexpected payment type");

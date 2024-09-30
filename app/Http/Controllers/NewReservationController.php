@@ -285,9 +285,11 @@ class NewReservationController extends Controller
 
     public function processPayment(Request $request, $id)
     {
+        $invoiceRandom = random_int(100000, 999999);
+        $apiKey = config('services.cardknox.api_key');
 
         $curl = curl_init();
-       
+        
         curl_setopt_array($curl, array(
             CURLOPT_URL => 'https://localemv.com:8887',
             CURLOPT_RETURNTRANSFER => true,
@@ -297,55 +299,35 @@ class NewReservationController extends Controller
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => 'xCommand=cc%3Aencrypt&xInvoice=2222&xAmount='. urlencode($request->amount),
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xInvoice=IN.' . 
+            urlencode($invoiceRandom) . '&xAmount=' . 
+            urlencode($request->amount) . '&xKey=' . urlencode($apiKey),
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/x-www-form-urlencoded'
             ),
+            CURLOPT_SSL_VERIFYPEER => false, 
+            CURLOPT_SSL_VERIFYHOST => false,
         ));
-
+    
         $response = curl_exec($curl);
-
+    
+        if ($response === false) {
+            return response()->json([
+                'error' => curl_error($curl)
+            ], 500); 
+        }
+    
         curl_close($curl);
+    
         return response()->json([
-          'success' =>  $response
+            'success' => $response
         ]);
     }
+    
 
 
 
-
-
-    public function postTerminalPayment($request)
-    {
-        $amount = $request->input('amount');
-        $apiKey = config('services.cardknox.api_key');
-
-
-        $data = [
-            'xKey' => $apiKey,
-            'xAmount' => $amount,
-            'xDeviceName' => 'BBPOS',
-            'xDeviceComPort' => 'COM9',
-            'xDeviceBaud' => '115200',
-            'xDeviceParity' => 'None',
-            'xDeviceDataBits' => '8',
-            'xDeviceTimeOut' => '60',
-            'xEnableDeviceSwipe' => '1',
-            'xEnableAmountConfirmationPrompt' => '1',
-            'xResponseFormat' => 'KVP',
-            'xExitFormIfApproved' => '1',
-            'xCommand' => 'cc:encrypt',
-            'xVersion' => '4.5.5',
-            'xSoftwareName' => 'Kayutalake',
-            'xSoftwareVersion' => '1.0',
-
-        ];
-
-        return $data;
-
-
-    }
-
+    
 
 
 
@@ -367,6 +349,7 @@ class NewReservationController extends Controller
             'xSoftwareVersion' => '1.0',
             'xSoftwareName' => 'KayutaLake',
             'xAllowDuplicate' => true,
+         
         ];
 
         switch ($paymentType) {
@@ -376,13 +359,14 @@ class NewReservationController extends Controller
                 break;
 
             case 'Check':
-                $data['xCommand'] = 'check:Sale';
-                $data['xAccount'] = $request->input('xCheckNum');
+                $data['xCommand'] = 'check:sale';
+                $data['xAccount'] = $request->input('xAccount');
+                $data['xRouting'] = $request->input('xRouting');
+                $data['xName'] = $request->input('xName');
                 return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
 
             case 'Manual':
-            case 'Terminal':
-                $data['xCommand'] = 'cc:Sale';
+                $data['xCommand'] = 'cc:sale';
                 $data['xCardNum'] = $request->input('xCardNum');
                 $data['xExp'] = str_replace('/', '', $request->input('xExp'));
                 return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
@@ -467,12 +451,15 @@ class NewReservationController extends Controller
                 'method' => $paymentType,
                 'customernumber' => $cart_reservation->customernumber,
                 'email' => $cart_reservation->email,
-                'payment' => $cart_reservation->total,
+                'payment' => $request->xAmount,
             ]);
             $payment->save();
 
             $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
-            $this->saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId);
+            if($paymentType === 'Manual'){
+                $this->saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId);
+
+            }
             return response()->json(['success' => true]);
         } else {
             return response()->json(['message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error')], 400);
@@ -577,56 +564,5 @@ class NewReservationController extends Controller
 
 
 
-    public function payBalance(Request $request, $cartid)
-    {
-        $apiKey = config('services.cardknox.api_key');
-        $cardNumber = $request->input('xCardNum');
-        $xExp = str_replace('/', '', $request->xExp);
-
-        $data = [
-            'xKey' => $apiKey,
-            'xVersion' => '4.5.5',
-            'xCommand' => 'cc:Sale',
-            'xAmount' => $request->xBalance,
-            'xCardNum' => $cardNumber,
-            'xExp' => $xExp,
-            'xSoftwareVersion' => '1.0',
-            'xSoftwareName' => 'KayutaLake',
-        ];
-
-        $payment = Payment::where('cartid', $cartid)->firstOrFail();
-        if ($request->paymentType === 'Cash' || $request->paymentType === 'Other') {
-            $payment->payment += $request->xCash;
-            $payment->save();
-            return response()->json(['success' => true]);
-        } elseif ($request->paymentType === 'Manual') {
-            $ch = curl_init('https://x1.cardknox.com/gateway');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
-
-            $responseContent = curl_exec($ch);
-            curl_close($ch);
-
-            if ($responseContent === false) {
-                return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
-            }
-
-            parse_str($responseContent, $responseArray);
-
-            if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
-                $payment->payment += $request->xBalance;
-                $payment->save();
-                return response()->json(['success' => true, 'Payment Process' => $responseArray]);
-            } else {
-                Log::error('Payment failed', ['response' => $responseArray]);
-                return response()->json(
-                    [
-                        'message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unexpected error occurred.'),
-                    ],
-                    400,
-                );
-            }
-        }
-    }
+   
 }

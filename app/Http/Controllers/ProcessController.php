@@ -43,6 +43,53 @@ class ProcessController extends Controller
         }
     }
 
+    public function processTerminal(Request $request)
+    {
+        $invoiceRandom = random_int(100000, 999999);
+        $apiKey = config('services.cardknox.api_key');
+    
+        $curl = curl_init();
+        
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://localemv.com:8887',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Aencrypt&xInvoice=IN.' . 
+            urlencode($invoiceRandom) . '&xAmount=' . 
+            urlencode($request->amount) . '&xKey=' . urlencode($apiKey),
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+            CURLOPT_SSL_VERIFYPEER => false, 
+            CURLOPT_SSL_VERIFYHOST => false,
+        ));
+    
+        $response = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE); 
+        $curlError = curl_error($curl); 
+        
+        curl_close($curl);
+    
+        Log::info('Cardknox Response:', ['response' => $response, 'status_code' => $httpCode]);
+    
+        if ($response === false || $httpCode !== 200) {
+            return response()->json([
+                'error' => $curlError ?: 'Failed to communicate with Cardknox',
+                'response' => $response,
+                'status_code' => $httpCode
+            ], 500);
+        }
+    
+        return response()->json([
+            'success' => $response
+        ]);
+    }
+    
 
     public function processCreditCard(Request $request)
     {

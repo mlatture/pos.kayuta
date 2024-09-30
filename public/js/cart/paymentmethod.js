@@ -6,17 +6,25 @@ $(document).ready(function () {
             label.text("Enter Gift Card Number: ");
             input.attr("placeholder", "Enter Gift Card Number");
             $("#expire").attr('hidden', true);
+            input.attr("readonly", false);
+
         } else if ($(this).val() === "CreditCard") {
             label.text("Enter Card Number: ");
             input.attr("placeholder", "Enter Card Number");
             $("#expire").attr('hidden', false);
+            input.attr("readonly", false);
 
 
-           
+        } else if($(this).val() === 'Terminal'){
+            label.hide();
+            input.attr("placeholder", "Start Terminal Transaction");
+            input.attr("readonly", true);
         } else {
             label.text("Enter Order Amount: ");
             input.attr("placeholder", "Enter amount");
             $("#expire").attr('hidden', true);
+            input.attr("readonly", false);
+
         }
 
         $(".btn-payment").removeClass("active");
@@ -144,6 +152,62 @@ $(document).ready(function () {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 data: cardDetails,
+                success: function (response) {
+                    if (response.message === "Payment Approved") {
+                        Swal.fire({
+                            title: "Success",
+                            text: response.message,
+                            icon: "success",
+                            confirmButtonText: "OK",
+                        });
+                        
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum, response.transaction_data.xRefNum);
+                    } else if (response.message === "Payment Declined") {
+                        Swal.fire({
+                            title: "Error",
+                            text: response.error || response.message,
+                            icon: "error",
+                            confirmButtonText: "OK",
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "Error",
+                            text: "Unexpected response from server.",
+                            icon: "error",
+                            confirmButtonText: "OK",
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    let response;
+                    try {
+                        response = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        response = { message: "An unknown error occurred" };
+                    }
+                    
+                    Swal.fire({
+                        title: "Error",
+                        text: response.message || "Failed to process the request.",
+                        icon: "error",
+                        confirmButtonText: "OK",
+                    });
+                }
+            });
+            
+        }else if(paymentMethod === "Terminal"){
+           
+
+           
+            $.ajax({
+                url: processTerminal,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    amount: totalAmount,
+                },
                 success: function (response) {
                     if (response.message === "Payment Approved") {
                         Swal.fire({

@@ -13,7 +13,12 @@
         <label class="btn btn-outline-dark btn-payment ">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
                 value="CreditCard" autocomplete="off" />
-            Credit Card
+            Credit Card 
+        </label>
+        <label class="btn btn-outline-dark btn-payment">
+            <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
+                value="Terminal" autocomplete="off" />
+            Terminal  
         </label>
     </div>
 
