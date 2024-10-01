@@ -286,8 +286,13 @@ class NewReservationController extends Controller
     public function processPayment(Request $request, $id)
     {
         $invoiceRandom = random_int(100000, 999999);
+        $cart_reservation = CartReservation::findOrFail($id);
+        $customer = Customer::find($cart_reservation->customernumber);
+        $randomReceiptID = rand(1000, 9999);
+        $paymentType = $request->paymentType;
+    
         $apiKey = config('services.cardknox.api_key');
-
+    
         $curl = curl_init();
         
         curl_setopt_array($curl, array(
@@ -301,7 +306,7 @@ class NewReservationController extends Controller
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xInvoice=IN.' . 
             urlencode($invoiceRandom) . '&xAmount=' . 
-            urlencode($request->amount) . '&xKey=' . urlencode($apiKey),
+            urlencode($request->xAmount) . '&xKey=' . urlencode($apiKey),
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/x-www-form-urlencoded'
             ),
@@ -319,10 +324,26 @@ class NewReservationController extends Controller
     
         curl_close($curl);
     
+    
+        $payment = new Payment([
+            'cartid' => $request->cartid,
+            'receipt' => $randomReceiptID,
+            'method' => $paymentType,
+            'customernumber' => $cart_reservation->customernumber,
+            'email' => $cart_reservation->email,
+            'payment' => $request->xAmount,
+        ]);
+        $payment->save();
+
+        $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+        
         return response()->json([
-            'success' => $response
+            'success' => $response,
+            'message' => 'Payment processed and reservation saved successfully.'
         ]);
     }
+    
+    
     
 
 
