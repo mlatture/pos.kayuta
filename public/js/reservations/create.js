@@ -157,23 +157,24 @@ function sendPaymentBalanceRequest() {
 
     if (paymentType === "Terminal") {
         $.ajax({
-            url:
-                "/admin/reservations/payment/" +
-                cartId +
-                "/postTerminalPayment",
+            url: "/admin/reservations/invoice/" + cartId + "/payBalanceCredit",
+
             type: "POST",
-            data: {
-                amount: amount,
-                paymentType: "Terminal",
-            },
+            data: formDataPayment,
+            contentType: false,
+            processData: false,
+            cache: false,
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             success: function (response) {
                 hideLoader();
                 if (response.success) {
-                    console.log(response);
-                    toastr.success(response);
+                    toastr.options.timeOut = 3000;
+                    toastr.success("Payment added successfully");
+                    setTimeout(function () {
+                        window.location.href = "/admin/reservations";
+                    }, 1000);
                 } else {
                     console.log(response);
                     toastr.error(response.message || "Terminal payment failed");

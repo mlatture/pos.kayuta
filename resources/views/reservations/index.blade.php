@@ -145,6 +145,8 @@
                                     <th>Name</th>
                                     <th>Site</th>
                                     <th>Type</th>
+                                    <th>Site Lock</th>
+                                    <th>Balance</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>

@@ -87,6 +87,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
+    Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
