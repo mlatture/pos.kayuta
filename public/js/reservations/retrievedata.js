@@ -176,7 +176,7 @@ $(document).ready(function () {
                 balanceClass = "bg-success text-white";
             } else {
                 balance = '$' + parseFloat(balances).toFixed(2); 
-                balanceClass = "bg-info text-white";
+                balanceClass = "bg-danger text-white";
             }
             
 
