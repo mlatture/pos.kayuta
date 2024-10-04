@@ -59,7 +59,7 @@ class ProcessController extends Controller
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => 'xCommand=cc%3Aencrypt&xInvoice=IN.' . 
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xInvoice=IN.' . 
             urlencode($invoiceRandom) . '&xAmount=' . 
             urlencode($request->amount) . '&xKey=' . urlencode($apiKey),
             CURLOPT_HTTPHEADER => array(
@@ -70,24 +70,23 @@ class ProcessController extends Controller
         ));
     
         $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE); 
-        $curlError = curl_error($curl); 
+      
+        if ($response === false) {
+            return response()->json([
+                'error' => curl_error($curl)
+            ], 500); 
+        }
         
         curl_close($curl);
     
-        Log::info('Cardknox Response:', ['response' => $response, 'status_code' => $httpCode]);
+      
     
-        if ($response === false || $httpCode !== 200) {
-            return response()->json([
-                'error' => $curlError ?: 'Failed to communicate with Cardknox',
-                'response' => $response,
-                'status_code' => $httpCode
-            ], 500);
-        }
-    
+      
         return response()->json([
-            'success' => $response
+            'success' => $response,
+            'message' => "Payment Approved"
         ]);
+
     }
     
 

@@ -217,7 +217,7 @@ $(document).ready(function () {
                             confirmButtonText: "OK",
                         });
                         
-                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum, response.transaction_data.xRefNum);
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, response.success.xMaskedCardNumber, response.success.xRefNum);
                     } else if (response.message === "Payment Declined") {
                         Swal.fire({
                             title: "Error",
@@ -232,6 +232,7 @@ $(document).ready(function () {
                             icon: "error",
                             confirmButtonText: "OK",
                         });
+                        console.log(response.success);
                     }
                 },
                 error: function (xhr, status, error) {

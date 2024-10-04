@@ -46,8 +46,9 @@ class NewReservationController extends Controller
 
 
         $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
+            ->join('payments', 'reservations.cartid', '=', 'payments.cartid')
             ->whereIn('reservations.cartid', $paymentCartIds)
-            ->select('reservations.*', 'customers.phone', 'customers.address')
+            ->select('reservations.*', 'customers.phone', 'customers.address', 'payments.payment')
             ->orderByDesc('reservations.id');
 
         if ($siteId) {
