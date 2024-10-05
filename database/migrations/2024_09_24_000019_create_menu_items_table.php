@@ -13,14 +13,33 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('menu_items', static function (Blueprint $table) {
-            $table->id();
-            $table->string('title', 255);
-            $table->string('url', 255);
-            $table->string('target', 255);
-            $table->integer('order')->default(0);
-            $table->timestamps();
-        });
+        $tableName = 'menu_items';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'title')) {
+                    $table->string('title', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'url')) {
+                    $table->string('url', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'target')) {
+                    $table->string('target', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'order')) {
+                    $table->integer('order')->default(0);
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('title', 255)->nullable();
+                $table->string('url', 255)->nullable();
+                $table->string('target', 255)->nullable();
+                $table->integer('order')->default(0);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

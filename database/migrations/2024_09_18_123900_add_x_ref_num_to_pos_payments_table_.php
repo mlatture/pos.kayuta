@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -13,9 +12,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pos_payments', static function (Blueprint $table) {
-            $table->string('x_ref_num')->nullable();
-        });
+        $tableName = 'pos_payments';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'x_ref_num')) {
+                    $table->string('x_ref_num')->nullable();
+                }
+            });
+        } else {
+            Schema::table($tableName, static function (Blueprint $table) {
+                $table->string('x_ref_num')->nullable();
+            });
+        }
     }
 
     /**

@@ -12,12 +12,34 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('business_settings', function (Blueprint $table) {
-            $table->id();
-            $table->string('type', 50);
-            $table->longText('value');
-            $table->timestamps(); // This adds created_at and updated_at columns
-        });
+        $tableName = 'business_settings';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'id')) {
+                    $table->id();
+                }
+                if (!Schema::hasColumn($tableName, 'type')) {
+                    $table->string('type', 50)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'value')) {
+                    $table->longText('value')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+                if (!Schema::hasColumn($tableName, 'updated_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('type', 50)->nullable();
+                $table->longText('value')->nullable();
+                $table->timestamps(); // This adds created_at and updated_at columns
+            });
+        }
     }
 
     /**

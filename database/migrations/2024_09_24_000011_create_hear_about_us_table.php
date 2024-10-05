@@ -12,13 +12,29 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('hear_about_us', static function (Blueprint $table) {
-            $table->id();
-            $table->string('comment', 100)->nullable();
-            $table->tinyInteger('status')->default(1);
-            $table->unsignedBigInteger('userid')->nullable();
-            $table->timestamps();
-        });
+        $tableName = 'hear_about_us';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'comment')) {
+                    $table->string('comment', 100)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'status')) {
+                    $table->tinyInteger('status')->default(1);
+                }
+                if (!Schema::hasColumn($tableName, 'userid')) {
+                    $table->unsignedBigInteger('userid')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('comment', 100)->nullable();
+                $table->tinyInteger('status')->default(1);
+                $table->unsignedBigInteger('userid')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

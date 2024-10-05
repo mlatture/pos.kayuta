@@ -12,13 +12,29 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('campground_maps', function (Blueprint $table) {
-            $table->id(); // Auto-incrementing ID
-            $table->string('image', 255)->nullable();
-            $table->string('pdf', 255)->nullable();
-            $table->boolean('status')->default(false);
-            $table->timestamps(); // This adds created_at and updated_at columns
-        });
+        $tableName = 'campground_maps';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'image')) {
+                    $table->string('image', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'pdf')) {
+                    $table->string('pdf', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'status')) {
+                    $table->boolean('status')->default(false);
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id(); // Auto-incrementing ID
+                $table->string('image', 255)->nullable();
+                $table->string('pdf', 255)->nullable();
+                $table->boolean('status')->default(false);
+                $table->timestamps(); // This adds created_at and updated_at columns
+            });
+        }
     }
 
     /**

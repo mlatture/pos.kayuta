@@ -13,9 +13,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', static function (Blueprint $table) {
-            $table->integer('quantity')->after('price')->default('1');
-        });
+        $tableName = 'products';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, static function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'quantity')) {
+                    $table->integer('quantity')->after('price')->default(1);
+                }
+            });
+        }
+        else {
+            Schema::table('products', static function (Blueprint $table) {
+                $table->integer('quantity')->after('price')->default('1');
+            });
+        }
     }
 
     /**

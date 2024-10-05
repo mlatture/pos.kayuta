@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class SitesTableSeeder extends Seeder
 {
@@ -15,14 +15,19 @@ class SitesTableSeeder extends Seeder
      */
     public function run()
     {
-        $sql = File::get(database_path('seeders/sql/sites.sql'));
 
-        $queries = array_filter(array_map('trim', explode(';', $sql)));
+        $path = database_path('seeders/sql/sites.sql');
+        $sql = File::get($path);
 
-        foreach ($queries as $query) {
-            if (!empty($query)) {
-                DB::statement($query);
-            }
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
         }
     }
 }

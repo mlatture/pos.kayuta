@@ -12,14 +12,38 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('payment_bills', static function (Blueprint $table) {
-            $table->id();
-            $table->string('method', 255);
-            $table->string('site', 255);
-            $table->string('payment', 255);
-            $table->unsignedBigInteger('customer_id');
-            $table->timestamps();
-        });
+        $tableName = 'payment_bills';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'id')) {
+                    $table->id();
+                }
+                if (!Schema::hasColumn($tableName, 'method')) {
+                    $table->string('method', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'site')) {
+                    $table->string('site', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'payment')) {
+                    $table->string('payment', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'customer_id')) {
+                    $table->unsignedBigInteger('customer_id');
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('method', 255)->nullable();
+                $table->string('site', 255)->nullable();
+                $table->string('payment', 255)->nullable();
+                $table->unsignedBigInteger('customer_id');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

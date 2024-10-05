@@ -12,14 +12,38 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('pos_payments', static function (Blueprint $table) {
-            $table->id();
-            $table->integer('organization_id')->nullable();
-            $table->double('amount')->default(0);
-            $table->bigInteger('order_id');
-            $table->bigInteger('admin_id');
-            $table->timestamps();
-        });
+        $tableName = 'pos_payments';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'id')) {
+                    $table->id();
+                }
+                if (!Schema::hasColumn($tableName, 'organization_id')) {
+                    $table->integer('organization_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'amount')) {
+                    $table->double('amount')->default(0);
+                }
+                if (!Schema::hasColumn($tableName, 'order_id')) {
+                    $table->bigInteger('order_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'admin_id')) {
+                    $table->bigInteger('admin_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->integer('organization_id')->nullable();
+                $table->double('amount')->default(0);
+                $table->bigInteger('order_id')->nullable();
+                $table->bigInteger('admin_id')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

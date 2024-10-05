@@ -12,12 +12,25 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('camping_seasons', function (Blueprint $table) {
-            $table->id(); // Auto-incrementing ID
-            $table->timestamp('opening_day')->nullable();
-            $table->timestamp('closing_day')->nullable();
-            $table->timestamps(); // This adds created_at and updated_at columns
-        });
+        $tableName = 'camping_seasons';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'opening_day')) {
+                    $table->timestamp('opening_day')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'closing_day')) {
+                    $table->timestamp('closing_day')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id(); // Auto-incrementing ID
+                $table->timestamp('opening_day')->nullable();
+                $table->timestamp('closing_day')->nullable();
+                $table->timestamps(); // This adds created_at and updated_at columns
+            });
+        }
     }
 
     /**

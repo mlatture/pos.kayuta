@@ -13,13 +13,31 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tax_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('title')->nullable();
-            $table->string('tax_type')->nullable()->comment('percentage, fixed_amount');
-            $table->double('tax')->default(0);
-            $table->timestamps();
-        });
+        $tableName = 'tax_types';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'title')) {
+                    $table->string('title')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'tax_type')) {
+                    $table->string('tax_type')->nullable()->comment('percentage, fixed_amount');
+                }
+                if (!Schema::hasColumn($tableName, 'tax')) {
+                    $table->double('tax')->default(0);
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('title')->nullable();
+                $table->string('tax_type')->nullable()->comment('percentage, fixed_amount');
+                $table->double('tax')->default(0);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

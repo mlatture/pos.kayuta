@@ -12,14 +12,24 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('oauth_personal_access_clients', static function (Blueprint $table) {
-            $table->id();
-            $table->unsignedInteger('client_id');
-            $table->timestamps();
+        $tableName = 'oauth_personal_access_clients';
 
-            // Index for client_id
-            $table->index('client_id', 'oauth_personal_access_clients_client_id_index');
-        });
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'client_id')) {
+                    $table->unsignedInteger('client_id')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->unsignedInteger('client_id')->nullable();
+                $table->timestamps();
+
+                // Index for client_id
+                $table->index('client_id', 'oauth_personal_access_clients_client_id_index');
+            });
+        }
     }
 
     /**

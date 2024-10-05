@@ -12,12 +12,25 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('news_letters', static function (Blueprint $table) {
-            $table->id();
-            $table->string('email', 255)->nullable();
-            $table->tinyInteger('status')->default(1);
-            $table->timestamps();
-        });
+        $tableName = 'news_letters';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'email')) {
+                    $table->string('email', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'status')) {
+                    $table->tinyInteger('status')->default(1);
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('email', 255)->nullable();
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

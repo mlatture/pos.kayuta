@@ -13,13 +13,39 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('search_functions', static function (Blueprint $table) {
-            $table->id();
-            $table->string('key', 150)->nullable();
-            $table->string('url', 250)->nullable();
-            $table->string('visible_for', 191)->default('admin');
-            $table->timestamps();
-        });
+        $tableName = 'search_functions';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'key')) {
+                    $table->string('key', 150)->nullable();
+                }
+
+                if (!Schema::hasColumn($tableName, 'url')) {
+                    $table->string('url', 250)->nullable();
+                }
+
+                if (!Schema::hasColumn($tableName, 'visible_for')) {
+                    $table->string('visible_for', 191)->default('admin');
+                }
+
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+
+                if (!Schema::hasColumn($tableName, 'updated_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('key', 150)->nullable();
+                $table->string('url', 250)->nullable();
+                $table->string('visible_for', 191)->default('admin');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

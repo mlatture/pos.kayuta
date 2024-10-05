@@ -13,21 +13,52 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('oauth_clients', static function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->string('name', 191);
-            $table->string('secret', 100);
-            $table->text('redirect');
-            $table->tinyInteger('personal_access_client');
-            $table->tinyInteger('password_client');
-            $table->tinyInteger('revoked');
-            $table->string('provider', 191)->nullable();
-            $table->timestamps();
+        $tableName = 'oauth_clients';
 
-            // Index for user_id
-            $table->index('user_id', 'oauth_clients_user_id_index');
-        });
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'user_id')) {
+                    $table->unsignedBigInteger('user_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'name')) {
+                    $table->string('name', 191)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'secret')) {
+                    $table->string('secret', 100)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'redirect')) {
+                    $table->text('redirect')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'personal_access_client')) {
+                    $table->tinyInteger('personal_access_client')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'password_client')) {
+                    $table->tinyInteger('password_client')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'revoked')) {
+                    $table->tinyInteger('revoked')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'provider')) {
+                    $table->string('provider', 191)->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->string('name', 191)->nullable();
+                $table->string('secret', 100)->nullable();
+                $table->text('redirect')->nullable();
+                $table->tinyInteger('personal_access_client')->nullable();
+                $table->tinyInteger('password_client')->nullable();
+                $table->tinyInteger('revoked')->nullable();
+                $table->string('provider', 191)->nullable();
+                $table->timestamps();
+
+                // Index for user_id
+                $table->index('user_id', 'oauth_clients_user_id_index');
+            });
+        }
     }
 
     /**

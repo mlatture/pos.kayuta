@@ -13,15 +13,37 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('currencies', static function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 191);
-            $table->string('symbol', 191);
-            $table->string('code', 191);
-            $table->string('exchange_rate', 191);
-            $table->boolean('status')->default(0);
-            $table->timestamps();
-        });
+        $tableName = 'currencies';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'name')) {
+                    $table->string('name', 191)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'symbol')) {
+                    $table->string('symbol', 191)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'code')) {
+                    $table->string('code', 191)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'exchange_rate')) {
+                    $table->string('exchange_rate', 191)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'status')) {
+                    $table->boolean('status')->default(0);
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('name', 191)->nullable();
+                $table->string('symbol', 191)->nullable();
+                $table->string('code', 191)->nullable();
+                $table->string('exchange_rate', 191)->nullable();
+                $table->boolean('status')->default(0);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -13,14 +13,35 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('whitelist_tables', static function (Blueprint $table) {
-            $table->id();
-            $table->string('table_name')->unique();
-            $table->integer('read_permission_level')->nullable();
-            $table->integer('update_permission_level')->nullable();
-            $table->integer('delete_permission_level')->nullable();
-            $table->timestamps();
-        });
+        $tableName = 'whitelist_tables';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'table_name')) {
+                    $table->string('table_name')->unique();
+                }
+                if (!Schema::hasColumn($tableName, 'read_permission_level')) {
+                    $table->integer('read_permission_level')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'update_permission_level')) {
+                    $table->integer('update_permission_level')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'delete_permission_level')) {
+                    $table->integer('delete_permission_level')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('table_name')->unique();
+                $table->integer('read_permission_level')->nullable();
+                $table->integer('update_permission_level')->nullable();
+                $table->integer('delete_permission_level')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -12,12 +12,25 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('electric', static function (Blueprint $table) {
-            $table->id();
-            $table->string('kwhno', 255)->nullable();
-            $table->string('siteid', 255)->nullable();
-            $table->timestamps();
-        });
+        $tableName = 'electric';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'kwhno')) {
+                    $table->string('kwhno', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'siteid')) {
+                    $table->string('siteid', 255)->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('kwhno', 255)->nullable();
+                $table->string('siteid', 255)->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

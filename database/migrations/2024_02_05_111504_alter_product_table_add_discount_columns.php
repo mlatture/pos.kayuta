@@ -12,11 +12,28 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('products', static function (Blueprint $table) {
-            $table->string('type')->after('quantity')->nullable();
-            $table->string('discount_type')->after('type')->comment('percentage, fixed')->nullable();
-            $table->double('discount')->after('discount_type')->default(0);
-        });
+        $tableName = 'products';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'type')) {
+                    $table->string('type')->after('quantity')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'discount_type')) {
+                    $table->string('discount_type')->after('type')->comment('percentage, fixed')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'discount')) {
+                    $table->double('discount')->after('discount_type')->default(0);
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('type')->after('quantity')->nullable();
+                $table->string('discount_type')->nullable()->comment('percentage, fixed');
+                $table->double('discount')->after('discount_type')->default(0);
+            });
+        }
+
     }
 
     /**

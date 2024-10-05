@@ -12,12 +12,30 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('unit_rate', static function (Blueprint $table) {
-            $table->id();
-            $table->double('rate', 8, 2);
-            $table->timestamps();
-            $table->unsignedBigInteger('user_id');
-        });
+        $tableName = 'unit_rate';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'id')) {
+                    $table->id();
+                }
+                if (!Schema::hasColumn($tableName, 'rate')) {
+                    $table->double('rate', 8, 2)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'user_id')) {
+                    $table->unsignedBigInteger('user_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->double('rate', 8, 2)->nullable();
+                $table->timestamps();
+                $table->unsignedBigInteger('user_id')->nullable();
+            });
+        }
     }
 
     /**

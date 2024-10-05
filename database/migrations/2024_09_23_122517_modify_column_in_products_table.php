@@ -13,20 +13,31 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('products', function (Blueprint $table) {
-                $table->string('quantity')->change();
-        });
+        $tableName = 'products';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'quantity')) {
+                    $table->string('quantity')->change()->nullable();
+                }
+            });
+        } else {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->string('quantity')->change()->nullable();
+            });
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::table('products', function (Blueprint $table) {
+        /**
+         * Reverse the migrations.
+         *
+         * @return void
+         */
+        public
+        function down()
+        {
+            Schema::table('products', function (Blueprint $table) {
                 $table->integer('quantity')->change();
-        });
-    }
-};
+            });
+        }
+    };

@@ -12,11 +12,27 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key', 255)->primary();
-            $table->string('owner', 255);
-            $table->integer('expiration');
-        });
+        $tableName = 'cache_locks';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'key')) {
+                    $table->string('key', 255)->primary();
+                }
+                if (!Schema::hasColumn($tableName, 'owner')) {
+                    $table->string('owner', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'expiration')) {
+                    $table->integer('expiration')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->string('key', 255)->primary();
+                $table->string('owner', 255)->nullable();
+                $table->integer('expiration')->nullable();
+            });
+        }
     }
 
     /**

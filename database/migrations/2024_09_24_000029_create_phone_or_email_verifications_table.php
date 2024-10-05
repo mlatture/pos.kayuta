@@ -12,12 +12,34 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('phone_or_email_verifications', static function (Blueprint $table) {
-            $table->id();
-            $table->string('phone_or_email', 191)->nullable();
-            $table->string('token', 191)->nullable();
-            $table->timestamps();
-        });
+        $tableName = 'phone_or_email_verifications';
+
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'phone_or_email')) {
+                    $table->string('phone_or_email', 191)->nullable();
+                }
+
+                if (!Schema::hasColumn($tableName, 'token')) {
+                    $table->string('token', 191)->nullable();
+                }
+
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamps();
+                }
+
+                if (!Schema::hasColumn($tableName, 'updated_at')) {
+                    $table->timestamps();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('phone_or_email', 191)->nullable();
+                $table->string('token', 191)->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
