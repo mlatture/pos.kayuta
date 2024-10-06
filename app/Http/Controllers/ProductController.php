@@ -130,13 +130,14 @@ class ProductController extends Controller
             'name'          =>  $request->name,
             'description'   =>  $request->description,
             'image'         =>  $filename,
-            'barcode'       =>  $request->barcode,
+            'barcode'       =>  'Product-'.$request->barcode,
             'price'         =>  $request->price,
             'quantity'      =>  $quantity,
             'discount_type' =>  $request->discount_type ?? '',
             'discount'      =>  $request->discount ?? 0,
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
+            'cost'          => $request->cost,
         ]);
     
         if (!$product) {
