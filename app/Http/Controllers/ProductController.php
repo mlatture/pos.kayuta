@@ -130,7 +130,7 @@ class ProductController extends Controller
             'name'          =>  $request->name,
             'description'   =>  $request->description,
             'image'         =>  $filename,
-            'barcode'       =>  'Product-'.$request->barcode,
+            'barcode'       =>  $request->barcode,
             'price'         =>  $request->price,
             'quantity'      =>  $quantity,
             'discount_type' =>  $request->discount_type ?? '',
