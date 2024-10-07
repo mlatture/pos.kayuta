@@ -18,23 +18,21 @@ class CampsitePicsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/campsite_pics.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
+        }
 
-            // Check if the SQL contains a valid INSERT statement
-            if (preg_match('/INSERT INTO `campsite_pics` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                // Check if there are actual values in the insert statement
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Campsite Pics data seeded from campsite_pics.sql');
-                } else {
-                    $this->command->info('No data to insert into campsite_pics table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in campsite_pics.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
         }
     }
 }

@@ -1,3 +1,31 @@
 -- Inserting into dictionary_tables table
-INSERT INTO `dictionary_tables` (`id`, `table_name`, `field_name`, `display_name`, `description`, `order`, `viewable`, `validation`, `visibility`, `created_at`, `updated_at`) VALUES
-;
+INSERT INTO `dictionary_tables` (`created_at`, `description`, `display_name`, `field_name`, `id`, `order`, `table_name`, `updated_at`, `validation`, `viewable`, `visibility`) VALUES
+('2024-10-07 09:27:30', 'Name of the product', 'Product Name', 'name', '1', '0', 'products', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'Price of the product', 'Product Price', 'price', '2', '0', 'products', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'Number of items in stock', 'Stock Quantity', 'quantity', '3', '0', 'products', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'Name of the category', 'Category Name', 'name', '4', '0', 'categories', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'First Name of the customer', 'Customer First Name', 'first_name', '5', '0', 'customers', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'Last Name of the customer', 'Customer Last Name', 'last_name', '6', '0', 'customers', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 09:27:30', 'Customer email', 'Email Address', 'email', '7', '0', 'customers', '2024-10-07 09:27:30', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Name of the product', 'Product Name', 'name', '8', '0', 'products', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Price of the product', 'Product Price', 'price', '9', '0', 'products', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Number of items in stock', 'Stock Quantity', 'quantity', '10', '0', 'products', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Name of the category', 'Category Name', 'name', '11', '0', 'categories', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'First Name of the customer', 'Customer First Name', 'first_name', '12', '0', 'customers', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Last Name of the customer', 'Customer Last Name', 'last_name', '13', '0', 'customers', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:03:21', 'Customer email', 'Email Address', 'email', '14', '0', 'customers', '2024-10-07 10:03:21', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Name of the product', 'Product Name', 'name', '15', '0', 'products', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Price of the product', 'Product Price', 'price', '16', '0', 'products', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Number of items in stock', 'Stock Quantity', 'quantity', '17', '0', 'products', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Name of the category', 'Category Name', 'name', '18', '0', 'categories', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'First Name of the customer', 'Customer First Name', 'first_name', '19', '0', 'customers', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Last Name of the customer', 'Customer Last Name', 'last_name', '20', '0', 'customers', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:04:28', 'Customer email', 'Email Address', 'email', '21', '0', 'customers', '2024-10-07 10:04:28', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Name of the product', 'Product Name', 'name', '22', '0', 'products', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Price of the product', 'Product Price', 'price', '23', '0', 'products', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Number of items in stock', 'Stock Quantity', 'quantity', '24', '0', 'products', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Name of the category', 'Category Name', 'name', '25', '0', 'categories', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'First Name of the customer', 'Customer First Name', 'first_name', '26', '0', 'customers', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Last Name of the customer', 'Customer Last Name', 'last_name', '27', '0', 'customers', '2024-10-07 10:07:34', 'not_required', '1', 'all'),
+('2024-10-07 10:07:34', 'Customer email', 'Email Address', 'email', '28', '0', 'customers', '2024-10-07 10:07:34', 'not_required', '1', 'all');
+

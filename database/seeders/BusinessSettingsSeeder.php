@@ -16,21 +16,12 @@ class BusinessSettingsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/business_settings.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `business_settings` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Business Settings data seeded from business_settings.sql');
-                } else {
-                    $this->command->info('No data to insert into business_settings table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in business_settings.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
         }
+
+        $sql = File::get($path);
+        DB::unprepared($sql);
     }
 }

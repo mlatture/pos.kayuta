@@ -20,10 +20,12 @@ return new class extends Migration
                     $table->id();
                 }
                 if (!Schema::hasColumn($tableName, 'admin_id')) {
-                    $table->foreignId('admin_id')->nullable();
+                    //$table->foreignId('admin_id')->nullable();
+                    $table->unsignedBigInteger('admin_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'product_id')) {
-                    $table->foreignId('product_id')->nullable();
+                    //$table->foreignId('product_id')->nullable();
+                    $table->unsignedBigInteger('product_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'quantity')) {
                     $table->unsignedInteger('quantity')->nullable();
@@ -32,8 +34,10 @@ return new class extends Migration
         } else {
             Schema::create($tableName, function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('admin_id')->nullable()->constrained('admins')->onDelete('cascade');
-                $table->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
+                $table->unsignedBigInteger('admin_id')->nullable();
+                $table->unsignedBigInteger('product_id')->nullable();
+                //$table->foreignId('admin_id')->nullable()->constrained('admins')->onDelete('cascade');
+                //$table->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
                 $table->unsignedInteger('quantity')->nullable();
             });
         }

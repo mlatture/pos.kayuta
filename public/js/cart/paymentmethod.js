@@ -6,14 +6,25 @@ $(document).ready(function () {
             label.text("Enter Gift Card Number: ");
             input.attr("placeholder", "Enter Gift Card Number");
             $("#expire").attr('hidden', true);
+            input.attr("readonly", false);
+
         } else if ($(this).val() === "CreditCard") {
             label.text("Enter Card Number: ");
             input.attr("placeholder", "Enter Card Number");
             $("#expire").attr('hidden', false);
+            input.attr("readonly", false);
+
+
+        } else if($(this).val() === 'Terminal'){
+            label.hide();
+            input.attr("placeholder", "Start Terminal Transaction");
+            input.attr("readonly", true);
         } else {
             label.text("Enter Order Amount: ");
             input.attr("placeholder", "Enter amount");
             $("#expire").attr('hidden', true);
+            input.attr("readonly", false);
+
         }
 
         $(".btn-payment").removeClass("active");
@@ -43,6 +54,7 @@ $(document).ready(function () {
         let totalAmount = parseFloat(
             $("#total-amount").val().replace(/,/g, "")
         );
+
         let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ""));
         let customer_id = $("#customer_id").val();
         let paymentMethod = $('input[name="payment_method"]:checked').val();
@@ -53,7 +65,7 @@ $(document).ready(function () {
             if (amount > totalAmount) {
                 change = amount - totalAmount;
             }
-            proceedWithOrder(customer_id, amount, change);
+            proceedWithOrder(customer_id, amount, change, paymentMethod, 0, 0);
         } else if(paymentMethod === "GiftCard"){
             let giftCardNumber = $("#orderAmountInput").val();
 
@@ -87,7 +99,7 @@ $(document).ready(function () {
                                 remaining_balance: remainingBalance,
                             },
                             success: function () {
-                                proceedWithOrder(customer_id, totalAmount, 0);
+                                proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, giftCardNumber);
                             },
                             error: function () {
                                 Swal.fire({
@@ -122,13 +134,17 @@ $(document).ready(function () {
         }else if(paymentMethod === "CreditCard"){
             let expiry = $("#cardExpiry").val();
             let formattedExp = expiry.replace("/", ""); 
-
+            let x_ref_num = $("#x_ref_num").val();
             let cardDetails = {
                 ccnum: $("#orderAmountInput").val(),
                 exp: formattedExp,
-              
                 amount: totalAmount,
+            
             }
+            
+
+            let cardNum = $("#orderAmountInput").val();
+           
             $.ajax({
                 url: processCreditCard,
                 type: 'POST',
@@ -144,7 +160,8 @@ $(document).ready(function () {
                             icon: "success",
                             confirmButtonText: "OK",
                         });
-                        proceedWithOrder(customer_id, totalAmount, 0);
+                        
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum, response.transaction_data.xRefNum);
                     } else if (response.message === "Payment Declined") {
                         Swal.fire({
                             title: "Error",
@@ -178,17 +195,74 @@ $(document).ready(function () {
                 }
             });
             
+        }else if(paymentMethod === "Terminal"){
+           
+
+           
+            $.ajax({
+                url: processTerminal,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    amount: totalAmount,
+                },
+                success: function (response) {
+                    if (response.message === "Payment Approved") {
+                        Swal.fire({
+                            title: "Success",
+                            text: response.message,
+                            icon: "success",
+                            confirmButtonText: "OK",
+                        });
+                        
+                        proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, response.success.xMaskedCardNumber, response.success.xRefNum);
+                    } else if (response.message === "Payment Declined") {
+                        Swal.fire({
+                            title: "Error",
+                            text: response.error || response.message,
+                            icon: "error",
+                            confirmButtonText: "OK",
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "Error",
+                            text: "Unexpected response from server.",
+                            icon: "error",
+                            confirmButtonText: "OK",
+                        });
+                        console.log(response.success);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    let response;
+                    try {
+                        response = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        response = { message: "An unknown error occurred" };
+                    }
+                    
+                    Swal.fire({
+                        title: "Error",
+                        text: response.message || "Failed to process the request.",
+                        icon: "error",
+                        confirmButtonText: "OK",
+                    });
+                }
+            });
+            
         }
     });
 
-    function proceedWithOrder(customer_id, order_amount, change) {
+    function proceedWithOrder(customer_id, order_amount, change, paymentMethod, number, x_ref_num) {
         Swal.fire({
             title:
                 change > 0
                     ? "Change is: $" +
                       change.toFixed(2) +
                       ". Do you want to proceed?"
-                    : "Card successfully processed!",
+                    : "Successfully processed!",
             showCancelButton: true,
             confirmButtonText: "Save",
             cancelButtonText: `Don't save`,
@@ -206,6 +280,9 @@ $(document).ready(function () {
                         data: {
                             amount: order_amount,
                             customer_id: customer_id,
+                            payment_method: paymentMethod,
+                            acc_number: number,
+                            x_ref_num: x_ref_num
                         },
                         success: function (response) {
                             resolve(response);
@@ -235,6 +312,10 @@ $(document).ready(function () {
                     hideAfter: 3000,
                     stack: 6,
                 });
+
+                setTimeout(function () {
+                    window.location.reload();
+                }, 3000);
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
             }

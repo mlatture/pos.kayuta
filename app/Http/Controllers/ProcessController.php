@@ -8,7 +8,9 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\GiftCard;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\PosPayment;
 class ProcessController extends Controller
 {
 
@@ -31,7 +33,7 @@ class ProcessController extends Controller
 
         curl_close($ch);
 
-    
+
         parse_str($responseContent, $responseArray);
 
         if ($responseArray) {
@@ -41,6 +43,52 @@ class ProcessController extends Controller
         }
     }
 
+    public function processTerminal(Request $request)
+    {
+        $invoiceRandom = random_int(100000, 999999);
+        $apiKey = config('services.cardknox.api_key');
+    
+        $curl = curl_init();
+        
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://localemv.com:8887',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xInvoice=IN.' . 
+            urlencode($invoiceRandom) . '&xAmount=' . 
+            urlencode($request->amount) . '&xKey=' . urlencode($apiKey),
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+            CURLOPT_SSL_VERIFYPEER => false, 
+            CURLOPT_SSL_VERIFYHOST => false,
+        ));
+    
+        $response = curl_exec($curl);
+      
+        if ($response === false) {
+            return response()->json([
+                'error' => curl_error($curl)
+            ], 500); 
+        }
+        
+        curl_close($curl);
+    
+      
+    
+      
+        return response()->json([
+            'success' => $response,
+            'message' => "Payment Approved"
+        ]);
+
+    }
+    
 
     public function processCreditCard(Request $request)
     {
@@ -56,12 +104,14 @@ class ProcessController extends Controller
             'xAmount' => $request->amount,
             'xCardNum' => $request->ccnum,
             'xExp' => $request->exp,
+            // 'xRefNum' => $request->x_ref_num,
             'xAllowDuplicate' => 'TRUE',
         ];
 
         $response = $this->makeCurlRequest($cardknoxUrl, $payload);
 
         if (isset($response['xResult']) && $response['xResult'] == 'A') {
+          
             return response()->json([
                 'message' => 'Payment Approved',
                 'transaction_data' => $response,
@@ -71,7 +121,7 @@ class ProcessController extends Controller
             return response()->json([
                 'message' => 'Payment Declined with error: ' . $errorMessage,
                 'error' => $errorMessage,
-              
+
             ], 400);
         }
     }
@@ -99,29 +149,111 @@ class ProcessController extends Controller
             return response()->json(['amount' => $giftCard->amount], 200);
         }
     }
+
+
     public function processRefund(Request $request)
     {
         $orderId = $request->order_id;
         $items = $request->items;
+        $paymentMethod = $request->payment_method;
+        $paymentAccNumber = $request->payment_acc_number;
+
+        $totalAmount = $request->total_amount;
+
+
+        DB::beginTransaction();
 
         try {
             foreach ($items as $item) {
+             
                 OrderItem::where('order_id', $orderId)
                     ->where('product_id', $item['product_id'])
                     ->delete();
             }
 
-            foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
-                if ($product) {
-                    $product->quantity += $item['quantity'];
-                    $product->save();
+            if ($paymentMethod === 'GiftCard') {
+                $totalRefundAmount = 0;
+
+
+
+                foreach ($items as $item) {
+                    $product = Product::find($item['product_id']);
+                    $giftCard = GiftCard::where('barcode', $paymentAccNumber)->first();
+
+                    if ($product && $giftCard) {
+                        $totalRefundAmount += $item['price'];
+
+                        $product->quantity += $item['quantity'];
+                        $product->save();
+                    } else {
+                       
+                    }
+                }
+
+                if ($giftCard) {
+                    $giftCard->amount += $totalRefundAmount;
+                    $giftCard->save();
+                } else {
+                  
+                }
+            } elseif ($paymentMethod === 'CreditCard') {
+                $refnum = PosPayment::where('order_id', $orderId)->first();
+          
+                $refundResponse = $this->processCreditCardRefund($totalAmount, $paymentAccNumber, $refnum->x_ref_num,);
+
+                if ($refundResponse['success']) {
+                   
+                } else {
+                  
+                    return response()->json(['success' => false, 'error' => $refundResponse['error']]);
                 }
             }
 
+            DB::commit();
             return response()->json(['success' => true]);
         } catch (Exception $e) {
+            DB::rollBack();
+           
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
         }
     }
+
+
+    private function processCreditCardRefund($totalAmount, $paymentAccNumber, $refNum)
+    {
+        $cardknoxUrl = 'https://x1.cardknox.com/gateway';
+        $cardknoxApiKey = config('services.cardknox.api_key');
+        $payload = [
+            'xKey' => $cardknoxApiKey,
+            'xCommand' => 'cc:refund',
+            'xVersion' => '4.5.5',
+            'xSoftwareName' => 'Kayutalake',
+            'xSoftwareVersion' => '1.0',
+            'xAmount' => $totalAmount,
+            'xCardNum' => $paymentAccNumber,
+            'xAllowDuplicate' => true,
+            'xRefNum' => $refNum,
+        ];
+
+  
+
+        $response = $this->makeCurlRequest($cardknoxUrl, $payload);
+        if (isset($response['xResult']) && $response['xResult'] == 'A') {
+          
+            return [
+                'success' => true,
+                'transaction_data' => $response,
+             
+            ];
+        } else {
+            $errorMsg = $response['xError'] ?? 'Unknown error';
+            return [
+                'success' => false,
+                'error' => $errorMsg,
+            ];
+        }
+    }
+
+   
+
 }

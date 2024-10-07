@@ -16,6 +16,9 @@ return new class extends Migration
         $tableName = 'tax_types';
         if (Schema::hasTable($tableName)) {
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'organization_id')) {
+                    $table->integer('organization_id')->nullable();
+                }
                 if (!Schema::hasColumn($tableName, 'title')) {
                     $table->string('title')->nullable();
                 }
@@ -32,6 +35,7 @@ return new class extends Migration
         } else {
             Schema::create($tableName, function (Blueprint $table) {
                 $table->id();
+                $table->integer('organization_id')->nullable();
                 $table->string('title')->nullable();
                 $table->string('tax_type')->nullable()->comment('percentage, fixed_amount');
                 $table->double('tax')->default(0);

@@ -15,7 +15,7 @@ return new class extends Migration
     {
         $tableName = 'whitelist_tables';
         if (Schema::hasTable($tableName)) {
-            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+            Schema::table($tableName, static function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'table_name')) {
                     $table->string('table_name')->unique();
                 }
@@ -33,7 +33,7 @@ return new class extends Migration
                 }
             });
         } else {
-            Schema::create($tableName, function (Blueprint $table) {
+            Schema::create($tableName, static function (Blueprint $table) {
                 $table->id();
                 $table->string('table_name')->unique();
                 $table->integer('read_permission_level')->nullable();

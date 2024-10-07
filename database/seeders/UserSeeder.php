@@ -18,31 +18,21 @@ class UserSeeder extends Seeder
     {
         $path = database_path('seeders/sql/users.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `users` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Users data seeded from users.sql');
-                } else {
-                    $this->command->info('No data to insert into users table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in users.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
         }
 
-//        User::updateOrCreate([
-//            'email' => 'admin@mail.com'
-//        ], [
-//            'name' => 'Admin CA',
-//            'f_name' => 'Admin',
-//            'l_name' => 'CA',
-//            'email'=>'admin@mail.com',
-//            'password' => bcrypt('password')
-//        ]);
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
+        }
     }
 }

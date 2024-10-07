@@ -44,10 +44,12 @@ return new class extends Migration {
                     $table->float('payment')->default(0);
                 }
                 if (!Schema::hasColumn($tableName, 'order_id')) {
-                    $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                    //$table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                    $table->unsignedBigInteger('order_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'user_id')) {
-                    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                    //$table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                    $table->unsignedBigInteger('users_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'createdate')) {
                     $table->dateTime('createdate')->default(DB::raw('CURRENT_TIMESTAMP'));
@@ -67,8 +69,10 @@ return new class extends Migration {
                 $table->string('customernumber', 255)->nullable();
                 $table->string('email', 255)->nullable();
                 $table->float('payment')->default(0);
-                $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                $table->unsignedBigInteger('order_id')->nullable();
+                $table->unsignedBigInteger('user_id')->nullable();
+                //$table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                //$table->foreignId('user_id')->constrained('users')->onDelete('cascade');
                 $table->dateTime('createdate')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->timestamps();
             });

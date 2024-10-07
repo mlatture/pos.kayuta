@@ -32,7 +32,6 @@ Auth::routes();
 
 Route::prefix('admin')->middleware('auth')->group(function () {
 
-//    Route::post('users', [\App\Http\Controllers\UserController::class, 'store'])->name('users.store');
 
     Route::post('users',[\App\Http\Controllers\UserController::class,'store'])->name('users.store');
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -93,6 +92,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
 
 
+    Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
+    Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
+
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
     Route::resource('tax-types', TaxTypeController::class);
@@ -130,7 +132,7 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
         });
     });
 
-    Route::get('reservations/calendar/{id}', [CalendarReservationController::class, 'index']);
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
 
 });

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
@@ -13,25 +14,29 @@ class WhitelistTablesSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
-        $path = database_path('seeders/sql/whitelist_tables.sql');
+        try {
+            $path = database_path('seeders/sql/whitelist_tables.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `whitelist_tables` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Whitelist Tables data seeded from whitelist_tables.sql');
-                } else {
-                    $this->command->info('No data to insert into whitelist_tables table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in whitelist_tables.sql. Skipping...');
+            if (!File::exists($path)) {
+                $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+                return;
             }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+
+            $sql = File::get($path);
+            $insertStatements = '';
+            preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+            if (!empty($matches[0])) {
+                $insertStatements = implode("\n", $matches[0]);
+            }
+
+            if (!empty($insertStatements)) {
+                DB::unprepared($insertStatements);
+            }
+        } catch (QueryException $e) {
+            logger($e->getMessage());
         }
     }
 }

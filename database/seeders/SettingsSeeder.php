@@ -18,34 +18,21 @@ class SettingsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/settings.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `settings` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Settings data seeded from settings.sql');
-                } else {
-                    $this->command->info('No data to insert into settings table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in settings.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
         }
 
-//        $data = [
-//            ['key' => 'app_name', 'value' => 'Laravel-POS'],
-//            ['key' => 'currency_symbol', 'value' => '$'],
-//        ];
-//
-//        foreach ($data as $value) {
-//            Setting::updateOrCreate([
-//                'key' => $value['key']
-//            ], [
-//                'value' => $value['value']
-//            ]);
-//        }
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
+        }
     }
 }

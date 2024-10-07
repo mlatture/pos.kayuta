@@ -17,52 +17,21 @@ class OrganizationsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/organizations.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `organizations` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Organizations data seeded from organizations.sql');
-                } else {
-                    $this->command->info('No data to insert into organizations table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in organizations.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
         }
 
-//        $data = [
-//            [
-//                'id' => 1,
-//                'name' => 'sds',
-//                'address_1' => 'kjsfdjsj',
-//                'address_2' => 'sjfksjfs',
-//                'city' => 'jadjad',
-//                'state' => 'wrwrw',
-//                'zip' => '34342',
-//                'country' => 'USA',
-//                'status' => 'Active',
-//                'created_at' => '2024-05-04 10:59:43',
-//                'updated_at' => '2024-05-04 10:59:43',
-//            ],
-//            [
-//                'id' => 2,
-//                'name' => 'kill',
-//                'address_1' => 'bill',
-//                'address_2' => 'hill',
-//                'city' => 'New York',
-//                'state' => 'Alaska',
-//                'zip' => '10001',
-//                'country' => 'USA',
-//                'status' => 'Active',
-//                'created_at' => '2024-05-05 02:31:21',
-//                'updated_at' => '2024-05-05 02:31:21',
-//            ],
-//        ];
-//
-//        DB::table('organizations')->insert($data);
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
+        }
     }
 }

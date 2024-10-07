@@ -28,10 +28,12 @@ return new class extends Migration {
                     $table->unsignedInteger('organization_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'order_id')) {
-                    $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                    //$table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                    $table->unsignedBigInteger('order_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'product_id')) {
-                    $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+                    //$table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+                    $table->unsignedBigInteger('product_id')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'created_at')) {
                     $table->timestamps();
@@ -46,8 +48,10 @@ return new class extends Migration {
                 $table->decimal('price', 14, 4)->nullable();
                 $table->integer('quantity')->default(1);
                 $table->unsignedInteger('organization_id')->nullable();
-                $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-                $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+                $table->unsignedBigInteger('order_id')->nullable();
+                $table->unsignedBigInteger('product_id')->nullable();
+                //$table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                //$table->foreignId('product_id')->constrained('products')->onDelete('cascade');
                 $table->timestamps();
             });
         }

@@ -80,8 +80,8 @@ return new class extends Migration {
                     $table->string('hear_about_us', 255)->nullable();
                 }
 
-                if (!Schema::hasColumn($tableName, 'reference')) {
-                    $table->string('reference', 255)->nullable();
+                if (!Schema::hasColumn($tableName, 'refrence')) {
+                    $table->string('refrence', 255)->nullable();
                 }
 
                 if (!Schema::hasColumn($tableName, 'created_at')) {
@@ -111,7 +111,7 @@ return new class extends Migration {
                 $table->boolean('camped_before')->default(0);
                 $table->string('last_visit', 255)->nullable();
                 $table->string('hear_about_us', 255)->nullable();
-                $table->string('reference', 255)->nullable();
+                $table->string('refrence', 255)->nullable();
                 $table->timestamps();
             });
         }

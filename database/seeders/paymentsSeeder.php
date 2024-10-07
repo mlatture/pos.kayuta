@@ -18,21 +18,21 @@ class paymentsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/payments.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
+        }
 
-            if (preg_match('/INSERT INTO `payments` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Payments data seeded from payments.sql');
-                } else {
-                    $this->command->info('No data to insert into payments table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in payments.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
         }
     }
 }

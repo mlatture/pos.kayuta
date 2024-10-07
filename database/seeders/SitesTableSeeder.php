@@ -15,10 +15,14 @@ class SitesTableSeeder extends Seeder
      */
     public function run()
     {
-
         $path = database_path('seeders/sql/sites.sql');
-        $sql = File::get($path);
 
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
+        }
+
+        $sql = File::get($path);
         $insertStatements = '';
         preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 

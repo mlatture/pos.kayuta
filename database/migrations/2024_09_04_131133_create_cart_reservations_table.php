@@ -33,6 +33,9 @@ return new class extends Migration {
                 if (!Schema::hasColumn($tableName, 'siteid')) {
                     $table->string('siteid', 20)->nullable();
                 }
+                if (!Schema::hasColumn($tableName, 'hookups')) {
+                    $table->string('hookups', 20)->nullable();
+                }
                 if (!Schema::hasColumn($tableName, 'base')) {
                     $table->float('base')->comment('Base nightly rate before adjustments')->nullable();
                 }
@@ -97,6 +100,7 @@ return new class extends Migration {
                 $table->dateTime('cid')->nullable();
                 $table->dateTime('cod')->nullable();
                 $table->string('customernumber', 50)->nullable();
+                $table->string('hookups')->nullable();
                 $table->string('cartid', 20)->nullable();
                 $table->string('siteid', 20)->nullable();
                 $table->float('base')->comment('Base nightly rate before adjustments')->nullable();

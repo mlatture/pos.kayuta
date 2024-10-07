@@ -18,21 +18,12 @@ class CartReservationsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/cart_reservations.sql');
 
-        if (File::exists($path)) {
-            $sql = File::get($path);
-
-            if (preg_match('/INSERT INTO `cart_reservations` .* VALUES\s*\(([^)]+)\);/', $sql, $matches)) {
-                if (trim($matches[1]) !== '') {
-                    DB::unprepared($sql);
-                    $this->command->info('Cart Reservations data seeded from cart_reservations.sql');
-                } else {
-                    $this->command->info('No data to insert into cart_reservations table. Skipping...');
-                }
-            } else {
-                $this->command->info('No INSERT statement found in cart_reservations.sql. Skipping...');
-            }
-        } else {
-            $this->command->error('SQL file not found at ' . $path);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
         }
+
+        $sql = File::get($path);
+        DB::unprepared($sql);
     }
 }
