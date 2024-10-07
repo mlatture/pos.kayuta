@@ -163,14 +163,14 @@
             <div class="form-row mb-3">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="fromDate">Check In Date</label>
+                  <label for="fromDate">{{ $dictionaryFields['cid'] ?? 'Check In Date' }}</label>
                   <input type="text" class="form-control" id="fromDate" name="fromDate"
                     placeholder="Select Check In Date" readonly>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="toDate">Check Out Date</label>
+                  <label for="toDate">{{ $dictionaryFields['cod'] ?? 'Check Out Date' }}</label>
                   <input type="text" class="form-control" id="toDate" name="toDate" placeholder="Select Check Out Date"
                     readonly>
                 </div>
@@ -191,7 +191,7 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="siteclass">Site Type</label>
+                  <label for="siteclass">{{ $dictionaryFields['rigtype'] ?? 'Site Type' }}</label>
                   <select id="siteclass" class="form-control">
                     <!-- Options will be loaded dynamically -->
                   </select>
@@ -202,14 +202,14 @@
             <div class="form-row mb-3" id="forRv">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="riglength">Rig Length</label>
+                  <label for="riglength">{{ $dictionaryFields['riglength'] ?? 'Rig Length' }}</label>
                   <input type="number" class="form-control" id="riglength" name="riglength"
                     placeholder="Enter Rig Length">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="hookup">Hookup</label>
+                  <label for="hookup">{{ $dictionaryFields['hookup'] ?? 'Hookup' }}</label>
                   <select id="hookup" class="form-control">
                   </select>
                   <input type="hidden" name="hookup" id="hookups">
@@ -219,11 +219,11 @@
           </div>
 
           <div class="secondpage-modal" style="display: none;">
-            
+
             <div class="form-row ">
             <div class="col-md-6">
               <div class="form-group">
-                <label for="number_of_guests">Number of Guests</label>
+                <label for="number_of_guests">{{ $dictionaryFields['num_guests'] ?? 'Number of Guests' }}</label>
                 <select id="number_of_guests" class="form-control" name="num_guests">
 
                 </select>
@@ -231,7 +231,7 @@
             </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="siteId">Site</label>
+                  <label for="siteId">{{ $dictionaryFields['siteid'] ?? 'Site' }}</label>
                   <select name="siteId" id="siteSelector" class="form-control">
 
                   </select>
@@ -239,7 +239,7 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="siteLock">Site Lock ($20)</label>
+                  <label for="siteLock">{{ $dictionaryFields['sitelock'] ?? 'Site Lock' }} ($20)</label>
                   <div class="custom-checkbox-container">
                     <div class="checkbox-wrapper-55">
                       <label class="rocker rocker-small">

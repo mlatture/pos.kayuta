@@ -237,7 +237,6 @@
         var processGiftCard = "{{ route('orders.process.gift.card') }}";
         var updateGiftCardBalance = "{{ route('orders.process.gift.card.balance') }}";
         var processCreditCard = "{{ route('orders.process.credit.card') }}";
-        var processTerminal = "{{ route('orders.process.terminal') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {
