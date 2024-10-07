@@ -28,6 +28,11 @@ class GenerateSqlDump extends Command
             $columns = Schema::getColumnListing($tableName);
             $data = DB::table($tableName)->get();
 
+            if ($data->isEmpty()) {
+                $this->info("Table '$tableName' is empty. Skipping...");
+                continue;
+            }
+
             $sql = "-- Inserting into $tableName table\n";
             $sql .= "INSERT INTO `$tableName` (`" . implode('`, `', $columns) . "`) VALUES\n";
 

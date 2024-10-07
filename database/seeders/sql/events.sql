@@ -1,6 +1,6 @@
 -- Inserting into events table
-INSERT INTO `events` (`id`, `eventname`, `eventstart`, `eventend`, `minimumstay`, `bookingmessage`, `description`, `embeddedvideo`, `extracharge`, `extranightlycharge`, `poster`, `previewdescription`, `eventcode`, `headergraphic`, `lastmodified`, `created_at`, `updated_at`) VALUES
-('5', 'Motherâ€™s Day Weekend 2024!', '2024-05-10', '2024-05-12', '1', NULL, '<p>Mother&rsquo;s Day Weekend!</p>
+INSERT INTO `events` (`bookingmessage`, `created_at`, `description`, `embeddedvideo`, `eventcode`, `eventend`, `eventname`, `eventstart`, `extracharge`, `extranightlycharge`, `headergraphic`, `id`, `lastmodified`, `minimumstay`, `poster`, `previewdescription`, `updated_at`) VALUES
+(NULL, '2023-11-05 19:17:29', '<p>Mother&rsquo;s Day Weekend!</p>
 
 <p>Paying tribute to Mothers!</p>
 
@@ -10,11 +10,11 @@ INSERT INTO `events` (`id`, `eventname`, `eventstart`, `eventend`, `minimumstay`
 
 <p>10:30 AM Craft: Make a Mother&rsquo;s Day flowerpot and greeting card. In The PlayHouse</p>
 
-<p>â€‹<strong>Sunday, May 12</strong></p>
+<p>​<strong>Sunday, May 12</strong></p>
 
-<p>9-10:30 AM Mother&rsquo;s Day Pancake Breakfast (while supplies last). In The PlayHouse</p>', NULL, NULL, NULL, '2024-01-24-65b1ea4f8207f.png', NULL, 'MOTHER', NULL, '2024-01-25 09:59:27', '2023-11-05 19:17:29', '2024-01-25 04:59:27'),
-('7', 'Fourth of July', '2024-07-04', '2024-07-07', '3', 'Three night minimum stay required', NULL, NULL, NULL, NULL, '2024-01-18-65a9b74a5bfbe.png', NULL, NULL, NULL, '2024-01-24 07:54:20', '2023-12-19 10:55:10', '2024-01-24 02:54:20'),
-('8', 'Rest and Relax Weekend!', '2024-05-18', '2024-05-18', NULL, NULL, '<p>Rest and Relax Weekend!</p>
+<p>9-10:30 AM Mother&rsquo;s Day Pancake Breakfast (while supplies last). In The PlayHouse</p>', NULL, 'MOTHER', '2024-05-12', 'Mother’s Day Weekend 2024!', '2024-05-10', NULL, NULL, NULL, '5', '2024-01-25 09:59:27', '1', '2024-01-24-65b1ea4f8207f.png', NULL, '2024-01-25 04:59:27'),
+('Three night minimum stay required', '2023-12-19 10:55:10', NULL, NULL, NULL, '2024-07-07', 'Fourth of July', '2024-07-04', NULL, NULL, NULL, '7', '2024-01-24 07:54:20', '3', '2024-01-18-65a9b74a5bfbe.png', NULL, '2024-01-24 02:54:20'),
+(NULL, '2024-01-24 02:57:38', '<p>Rest and Relax Weekend!</p>
 
 <p>Saturday, May 18</p>
 
@@ -22,20 +22,20 @@ INSERT INTO `events` (`id`, `eventname`, `eventstart`, `eventend`, `minimumstay`
 
 <p>4:00 PM Hay Wagon Ride! Loading and unloading in the grass next to the swimming pool</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-01-23-65b07ca2d5e57.png', NULL, NULL, NULL, '2024-01-24 07:57:38', '2024-01-24 02:57:38', '2024-01-24 02:57:38'),
-('9', 'Memorial Day Weekend!', '2024-05-24', '2024-05-26', NULL, NULL, '<p>Memorial Day Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-05-18', 'Rest and Relax Weekend!', '2024-05-18', NULL, NULL, NULL, '8', '2024-01-24 07:57:38', NULL, '2024-01-23-65b07ca2d5e57.png', NULL, '2024-01-24 02:57:38'),
+(NULL, '2024-01-24 03:02:03', '<p>Memorial Day Weekend!</p>
 
 <p>Sunflower Seed Spitting Contest, $6, $8, and $10 camp store gift cards and candy will be awarded!</p>
 
-<p>â€‹Honoring the men and women who died while serving in the U.S. military. The Memorial Day parade will line up in front of the swimming pool.&nbsp; Line up with your bikes, golf carts, or just walk along! Bring your bikes and golf carts down early to decorate them for the parade!</p>
+<p>​Honoring the men and women who died while serving in the U.S. military. The Memorial Day parade will line up in front of the swimming pool.&nbsp; Line up with your bikes, golf carts, or just walk along! Bring your bikes and golf carts down early to decorate them for the parade!</p>
 
 <p>&nbsp;</p>
 
-<p>â€‹Friday, May 24</p>
+<p>​Friday, May 24</p>
 
 <p>9:00 PM Glow Stick Hay Wagon Ride! &ndash; Bring something that glows or blinks! Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, May 25</p>
 
@@ -55,7 +55,7 @@ INSERT INTO `events` (`id`, `eventname`, `eventstart`, `eventend`, `minimumstay`
 
 <p>&nbsp;</p>
 
-<p>â€‹Sunday, May 26</p>
+<p>​Sunday, May 26</p>
 
 <p>10:00 AM Decorate your bike or golf cart and get ready for the parade.&nbsp;In front of the swimming pool</p>
 
@@ -73,12 +73,12 @@ INSERT INTO `events` (`id`, `eventname`, `eventstart`, `eventend`, `minimumstay`
 
 <p>&nbsp;</p>
 
-<p>â€‹Archery and Laser Tag are offered at other dates and times by special request.â€‹</p>
+<p>​Archery and Laser Tag are offered at other dates and times by special request.​</p>
 
 <p>Every day: Loud radios, loud talking, or other noises are not permitted during the day.</p>
 
-<p>Quiet hours begin at 10:00 PM &ndash; no radios or loud talking.</p>', NULL, NULL, NULL, '2024-01-23-65b07dab3a54b.png', NULL, NULL, NULL, '2024-01-24 08:02:03', '2024-01-24 03:02:03', '2024-01-24 03:02:03'),
-('10', 'Tin Can Tourist Rally Weekend!', '2024-05-31', '2024-06-01', NULL, NULL, '<p>Tin Can Tourist Rally Weekend!<br />
+<p>Quiet hours begin at 10:00 PM &ndash; no radios or loud talking.</p>', NULL, NULL, '2024-05-26', 'Memorial Day Weekend!', '2024-05-24', NULL, NULL, NULL, '9', '2024-01-24 08:02:03', NULL, '2024-01-23-65b07dab3a54b.png', NULL, '2024-01-24 03:02:03'),
+(NULL, '2024-01-25 05:16:58', '<p>Tin Can Tourist Rally Weekend!<br />
 See various totally awesome, totally vintage campers!</p>
 
 <p>Friday, May 31</p>
@@ -105,8 +105,8 @@ See various totally awesome, totally vintage campers!</p>
 
 <p>Archery and Laser Tag are offered at other dates and times by special request.&nbsp;</p>
 
-<p>See less</p>', NULL, NULL, NULL, '2024-01-25-65b1eecab543d.png', NULL, NULL, NULL, '2024-01-25 10:16:58', '2024-01-25 05:16:58', '2024-01-25 05:16:58'),
-('11', 'Fatherâ€™s Day Weekend!', '2024-06-14', '2024-06-16', NULL, NULL, '<p>Father&rsquo;s Day Weekend!<br />
+<p>See less</p>', NULL, NULL, '2024-06-01', 'Tin Can Tourist Rally Weekend!', '2024-05-31', NULL, NULL, NULL, '10', '2024-01-25 10:16:58', NULL, '2024-01-25-65b1eecab543d.png', NULL, '2024-01-25 05:16:58'),
+(NULL, '2024-01-25 05:19:48', '<p>Father&rsquo;s Day Weekend!<br />
 Paying tribute to Fathers!</p>
 
 <p>Friday, June 14</p>
@@ -137,17 +137,17 @@ Paying tribute to Fathers!</p>
 
 <p>&nbsp;</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-01-25-65b1ef74c83b7.png', NULL, NULL, NULL, '2024-01-25 10:19:48', '2024-01-25 05:19:48', '2024-01-25 05:19:48'),
-('12', 'Slime Weekend!', '2024-06-21', '2024-01-22', NULL, NULL, '<p>Slime Weekend!<br />
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-06-16', 'Father’s Day Weekend!', '2024-06-14', NULL, NULL, NULL, '11', '2024-01-25 10:19:48', NULL, '2024-01-25-65b1ef74c83b7.png', NULL, '2024-01-25 05:19:48'),
+(NULL, '2024-01-25 05:24:51', '<p>Slime Weekend!<br />
 It&#39;s an experience in texture! Have fun making your own ectoplasm slime and cloud dough.</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Friday, June 21</p>
 
 <p>9:00 PM Glow Stick Hay Wagon Ride! &ndash; Bring something that glows or blinks! Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, June 22</p>
 
@@ -166,8 +166,8 @@ It&#39;s an experience in texture! Have fun making your own ectoplasm slime and 
 <p>9:00 PM Glow Stick Hay Wagon Ride! &ndash; Bring something that glows or blinks! Loading and unloading in the grass next to the swimming pool</p>
 
 <p><br />
-Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-01-25-65b1f0a3ac211.png', NULL, NULL, NULL, '2024-01-25 10:24:51', '2024-01-25 05:24:51', '2024-01-25 05:24:51'),
-('13', 'Cardboard Boat Races At The Redneck Yacht Club', '2024-07-12', '2024-07-13', NULL, NULL, '<p>Cardboard Boat Races At The Redneck Yacht Club<br />
+Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-01-22', 'Slime Weekend!', '2024-06-21', NULL, NULL, NULL, '12', '2024-01-25 10:24:51', NULL, '2024-01-25-65b1f0a3ac211.png', NULL, '2024-01-25 05:24:51'),
+(NULL, '2024-03-02 11:05:58', '<p>Cardboard Boat Races At The Redneck Yacht Club<br />
 Ship Ahoy!<br />
 Build a cardboard boat - supplies are provided. Or bring your cardboard boat from home. Kids must be accompanied by an adult. Then race your boat for fame, glory, and prizes!<br />
 Kid and adult leagues.</p>
@@ -182,7 +182,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>9:00 PM Glow Stick Hay Wagon Ride! &ndash; Bring something that glows or blinks! Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, July 13</p>
 
@@ -206,8 +206,8 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp;</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-02-65e30816ee6d4.png', NULL, NULL, NULL, '2024-03-06 02:04:05', '2024-03-02 11:05:58', '2024-03-05 21:04:05'),
-('14', 'Race Weekend!  Kids\' Pedal Kart races are on!', '2024-07-26', '2024-07-27', NULL, NULL, '<p>Race Weekend! Kids&#39; Pedal Kart races are on!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-07-13', 'Cardboard Boat Races At The Redneck Yacht Club', '2024-07-12', NULL, NULL, NULL, '13', '2024-03-06 02:04:05', NULL, '2024-03-02-65e30816ee6d4.png', NULL, '2024-03-05 21:04:05'),
+(NULL, '2024-03-05 20:39:52', '<p>Race Weekend! Kids&#39; Pedal Kart races are on!</p>
 
 <p>Race around the block in our pedal karts for prizes and candy! There is no charge for this event.</p>
 
@@ -237,7 +237,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, July 27</p>
 
@@ -291,12 +291,12 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp;</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f049caba5eb.png', NULL, NULL, NULL, '2024-03-12 17:25:46', '2024-03-05 20:39:52', '2024-03-12 13:25:46'),
-('15', 'Murder Mystery Weekend!', '2024-08-09', '2024-08-10', NULL, NULL, '<p>Murder Mystery Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-07-27', 'Race Weekend!  Kids\' Pedal Kart races are on!', '2024-07-26', NULL, NULL, NULL, '14', '2024-03-12 17:25:46', NULL, '2024-03-12-65f049caba5eb.png', NULL, '2024-03-12 13:25:46'),
+(NULL, '2024-03-12 13:27:13', '<p>Murder Mystery Weekend!</p>
 
 <p>Enjoy light snacks and a who-done-it!</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Friday, August 9</p>
 
@@ -304,7 +304,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, August 10</p>
 
@@ -336,10 +336,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>7:00 PM Bingo! - In The PlayHouse</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04a21701e3.png', NULL, NULL, NULL, '2024-03-12 17:27:13', '2024-03-12 13:27:13', '2024-03-12 13:27:13'),
-('16', 'Christmas In July Weekend!', '2024-07-19', '2024-07-20', NULL, NULL, '<p>Christmas In July Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-08-10', 'Murder Mystery Weekend!', '2024-08-09', NULL, NULL, NULL, '15', '2024-03-12 17:27:13', NULL, '2024-03-12-65f04a21701e3.png', NULL, '2024-03-12 13:27:13'),
+(NULL, '2024-03-12 13:29:49', '<p>Christmas In July Weekend!</p>
 
 <p>Santa Visits Children</p>
 
@@ -363,7 +363,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>Winners will be posted on the bulletin board on the camp store on Sunday morning.&nbsp; Gift card prizes may be picked up at the store on Sunday.</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Friday, July 19</p>
 
@@ -371,7 +371,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, July 20</p>
 
@@ -405,10 +405,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04abdd0003.png', NULL, NULL, NULL, '2024-03-12 17:29:49', '2024-03-12 13:29:49', '2024-03-12 13:29:49'),
-('17', 'Sloppy Weekend!!', '2024-08-02', '2024-03-03', NULL, NULL, '<p>Sloppy Weekend!!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-07-20', 'Christmas In July Weekend!', '2024-07-19', NULL, NULL, NULL, '16', '2024-03-12 17:29:49', NULL, '2024-03-12-65f04abdd0003.png', NULL, '2024-03-12 13:29:49'),
+(NULL, '2024-03-12 13:30:56', '<p>Sloppy Weekend!!</p>
 
 <p>And</p>
 
@@ -444,7 +444,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, August 3</p>
 
@@ -490,10 +490,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04b00d77c0.png', NULL, NULL, NULL, '2024-03-12 17:30:56', '2024-03-12 13:30:56', '2024-03-12 13:30:56'),
-('18', 'Going to Woodsmen\'s Field Days? Stay with us!', '2024-08-16', '2024-08-17', NULL, NULL, '<p>Going to Woodsmen&#39;s Field Days? Stay with us!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-03-03', 'Sloppy Weekend!!', '2024-08-02', NULL, NULL, NULL, '17', '2024-03-12 17:30:56', NULL, '2024-03-12-65f04b00d77c0.png', NULL, '2024-03-12 13:30:56'),
+(NULL, '2024-03-12 13:32:17', '<p>Going to Woodsmen&#39;s Field Days? Stay with us!</p>
 
 <p>Woodsmen&#39;s Field Days is at the Boonville Oneida County Fairgrounds on Schuler Street in Boonville.</p>
 
@@ -509,7 +509,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, August 17</p>
 
@@ -549,10 +549,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04b5112d80.png', NULL, NULL, NULL, '2024-03-12 17:32:17', '2024-03-12 13:32:17', '2024-03-12 13:32:17'),
-('19', 'Halloween in August Weekend!!', '2024-08-23', '2024-08-24', NULL, NULL, '<p>Halloween in August Weekend!!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-08-17', 'Going to Woodsmen\'s Field Days? Stay with us!', '2024-08-16', NULL, NULL, NULL, '18', '2024-03-12 17:32:17', NULL, '2024-03-12-65f04b5112d80.png', NULL, '2024-03-12 13:32:17'),
+(NULL, '2024-03-12 13:33:18', '<p>Halloween in August Weekend!!</p>
 
 <p>Halloween Party - Trick or Treat &ndash; Haunted Hay Ride</p>
 
@@ -562,7 +562,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>Dress for the Halloween party.&nbsp; Then prepare yourself for the horror of trick or treat. Then suffer through The Nature Trail To Hell.</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Bring lots of candy and prepare to hand it out to the&nbsp;Trick or Treat&nbsp;children! Roughly 100 kids!</p>
 
@@ -590,7 +590,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>Winners will be posted on the bulletin board on the camp store on Sunday morning.&nbsp; Prizes may be picked up at the store on Sunday.</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Friday, August 23</p>
 
@@ -600,7 +600,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, August 24</p>
 
@@ -638,10 +638,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>8:30-10 PM Halloween Site Decorating Contest judging (Prizes will be awarded)</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04b8e74631.png', NULL, NULL, NULL, '2024-03-12 17:33:18', '2024-03-12 13:33:18', '2024-03-12 13:33:18'),
-('20', 'Labor Day Weekend!', '2024-08-30', '2024-09-01', NULL, NULL, '<p>Labor Day Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-08-24', 'Halloween in August Weekend!!', '2024-08-23', NULL, NULL, NULL, '19', '2024-03-12 17:33:18', NULL, '2024-03-12-65f04b8e74631.png', NULL, '2024-03-12 13:33:18'),
+(NULL, '2024-03-12 13:34:09', '<p>Labor Day Weekend!</p>
 
 <p>and</p>
 
@@ -663,7 +663,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, August 31</p>
 
@@ -707,7 +707,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Sunday, September 1</p>
 
@@ -743,7 +743,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Archery and Laser Tag are offered at other dates and times by special request.</p>
 
@@ -753,8 +753,8 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>Loud radios, talking or other noises are not permitted during the day.</p>
 
-<p>Quiet hours begin at 10:00 PM &ndash; no radios or loud talking.</p>', NULL, NULL, NULL, '2024-03-12-65f04bc105e6a.png', NULL, NULL, NULL, '2024-03-12 17:34:09', '2024-03-12 13:34:09', '2024-03-12 13:34:09'),
-('21', 'Heroes Weekend!', '2024-09-07', '2024-09-07', NULL, NULL, '<p>Heroes Weekend!</p>
+<p>Quiet hours begin at 10:00 PM &ndash; no radios or loud talking.</p>', NULL, NULL, '2024-09-01', 'Labor Day Weekend!', '2024-08-30', NULL, NULL, NULL, '20', '2024-03-12 17:34:09', NULL, '2024-03-12-65f04bc105e6a.png', NULL, '2024-03-12 13:34:09'),
+(NULL, '2024-03-12 13:34:58', '<p>Heroes Weekend!</p>
 
 <p>We will honor our Armed Forces, Veterans, Firefighters, and Police Departments, all Emergency/Volunteer Personnel, Teachers, and Medical Professionals (Licensed Doctors, Nurses, and Dentists, etc.).</p>
 
@@ -768,7 +768,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>Limit one site per Hero family.</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, September 7</p>
 
@@ -808,10 +808,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04bf25f683.png', NULL, NULL, NULL, '2024-03-12 17:34:58', '2024-03-12 13:34:58', '2024-03-12 13:34:58'),
-('22', 'Hawaiian Luau Potluck!', '2024-09-14', '2024-09-14', NULL, NULL, '<p>Hawaiian Luau Potluck!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-09-07', 'Heroes Weekend!', '2024-09-07', NULL, NULL, NULL, '21', '2024-03-12 17:34:58', NULL, '2024-03-12-65f04bf25f683.png', NULL, '2024-03-12 13:34:58'),
+(NULL, '2024-03-12 13:35:18', '<p>Hawaiian Luau Potluck!</p>
 
 <p>Put on your favorite Hawaiian shirt and bring your favorite dish to share with everyone. Grab a grass skirt and a Hawaiian lei on your way into the PlayHouse.</p>
 
@@ -821,7 +821,7 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>$6, $8, and $10 camp store gift cards and candy will be awarded!</p>
 
-<p>â€‹</p>
+<p>​</p>
 
 <p>Saturday, September 14</p>
 
@@ -863,10 +863,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04c9b6f3a0.png', NULL, NULL, NULL, '2024-03-12 17:37:47', '2024-03-12 13:35:18', '2024-03-12 13:37:47'),
-('23', 'Customer Appreciation Weekend!', '2024-09-21', '2024-09-21', NULL, NULL, '<p>Customer Appreciation Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-09-14', 'Hawaiian Luau Potluck!', '2024-09-14', NULL, NULL, NULL, '22', '2024-03-12 17:37:47', NULL, '2024-03-12-65f04c9b6f3a0.png', NULL, '2024-03-12 13:37:47'),
+(NULL, '2024-03-12 13:39:05', '<p>Customer Appreciation Weekend!</p>
 
 <p>Free hotdogs for lunch on Saturday!&nbsp; While supplies last.</p>
 
@@ -904,10 +904,10 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Loading and unloading in the grass next to the swimming pool</p>
 
-<p>â€‹</p>
+<p>​</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04ce9957f2.png', NULL, NULL, NULL, '2024-03-12 17:39:05', '2024-03-12 13:39:05', '2024-03-12 13:39:05'),
-('24', 'Thanksgiving Weekend!', '2024-09-28', '2024-09-28', NULL, NULL, '<p>Thanksgiving!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-09-21', 'Customer Appreciation Weekend!', '2024-09-21', NULL, NULL, NULL, '23', '2024-03-12 17:39:05', NULL, '2024-03-12-65f04ce9957f2.png', NULL, '2024-03-12 13:39:05'),
+(NULL, '2024-03-12 13:42:39', '<p>Thanksgiving!</p>
 
 <p>Turkey and Gravy will be provided!</p>
 
@@ -945,8 +945,8 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp;</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04dbff1174.png', NULL, NULL, NULL, '2024-03-12 17:42:39', '2024-03-12 13:42:39', '2024-03-12 13:42:39'),
-('25', 'Columbus Day Weekend!', '2024-10-12', '2024-10-12', NULL, NULL, '<p>Columbus Day Weekend!</p>
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-09-28', 'Thanksgiving Weekend!', '2024-09-28', NULL, NULL, NULL, '24', '2024-03-12 17:42:39', NULL, '2024-03-12-65f04dbff1174.png', NULL, '2024-03-12 13:42:39'),
+(NULL, '2024-03-12 13:46:40', '<p>Columbus Day Weekend!</p>
 
 <p>Have a little fun!</p>
 
@@ -974,5 +974,5 @@ Most Dramatic Sinking (turn sinking into a show) - $20 Visa gift card</p>
 
 <p>&nbsp;</p>
 
-<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, NULL, '2024-03-12-65f04eb0de3cb.png', NULL, NULL, NULL, '2024-03-12 17:46:40', '2024-03-12 13:46:40', '2024-03-12 13:46:40');
+<p>Archery and Laser Tag are offered at other dates and times by special request.</p>', NULL, NULL, '2024-10-12', 'Columbus Day Weekend!', '2024-10-12', NULL, NULL, NULL, '25', '2024-03-12 17:46:40', NULL, '2024-03-12-65f04eb0de3cb.png', NULL, '2024-03-12 13:46:40');
 

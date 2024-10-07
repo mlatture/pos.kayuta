@@ -1,8 +1,8 @@
 -- Inserting into site_classes table
-INSERT INTO `site_classes` (`id`, `siteclass`, `showriglength`, `showhookup`, `showrigtype`, `tax`, `orderby`, `created_at`, `updated_at`) VALUES
-('1', 'RV Sites', '1', '1', '0', '', '1', NULL, NULL),
-('2', 'Boat Slips', '0', '0', '0', '', '6', NULL, NULL),
-('9', 'Cabin', '0', '0', '0', 'Cabin_Tax', '4', NULL, NULL),
-('11', 'Tent Sites', '0', '0', '0', '', '2', NULL, NULL),
-('25', 'Jet Ski Slips', '0', '0', '0', '', '20', NULL, NULL);
+INSERT INTO `site_classes` (`created_at`, `id`, `orderby`, `showhookup`, `showriglength`, `showrigtype`, `siteclass`, `tax`, `updated_at`) VALUES
+(NULL, '1', '1', '1', '1', '0', 'RV Sites', '', NULL),
+(NULL, '2', '6', '0', '0', '0', 'Boat Slips', '', NULL),
+(NULL, '9', '4', '0', '0', '0', 'Cabin', 'Cabin_Tax', NULL),
+(NULL, '11', '2', '0', '0', '0', 'Tent Sites', '', NULL),
+(NULL, '25', '20', '0', '0', '0', 'Jet Ski Slips', '', NULL);
 

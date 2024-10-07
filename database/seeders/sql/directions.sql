@@ -1,6 +1,6 @@
 -- Inserting into directions table
-INSERT INTO `directions` (`id`, `title`, `description`, `latitude`, `longitude`, `pdf`, `status`, `created_at`, `updated_at`) VALUES
-('1', 'Directions', '<h3>GPS Notes:</h3>
+INSERT INTO `directions` (`created_at`, `description`, `id`, `latitude`, `longitude`, `pdf`, `status`, `title`, `updated_at`) VALUES
+('2023-09-28 10:06:43', '<h3>GPS Notes:</h3>
 
 <p>When coming down O&#39;Brien Rd, ignore your GPS if it tells you to turn right on Kayuta Terrace. This is a dead end with NO campground access and no means to turn around. Keep going straight for another 500&#39; to Campground Road and make a right turn there. You will see our campground sign on the corner.<br />
 Also, when coming down Bardwell Mills Road, ignore your GPS if it tells you to turn right onto Lake Julia Road/Ebert Road. Instead, turn left. Go 1.4 miles and then turn right onto Campground Road.<br />
@@ -49,5 +49,5 @@ Immediately turn left onto Bardwell Mills Road and go .7 of a mile.<br />
 Turn left onto Lake Julia Road/Ebert Road (which changes name to O Brien Road) and go 1.4 miles.<br />
 Turn right onto Campground Road (Do NOT turn onto Kayuta Terrace).<br />
 Turn Right at the stop sign to go to the office.<br />
-RVs, campers, and trailers should stop at the &ldquo;Stop Here&rdquo; sign for check-in.</p>', '43.40955', '-75.186758', '2023-09-28-65155327a23ac.pdf', '1', '2023-09-28 10:06:43', '2023-09-28 10:19:19');
+RVs, campers, and trailers should stop at the &ldquo;Stop Here&rdquo; sign for check-in.</p>', '1', '43.40955', '-75.186758', '2023-09-28-65155327a23ac.pdf', '1', 'Directions', '2023-09-28 10:19:19');
 

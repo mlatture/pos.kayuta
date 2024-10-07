@@ -1,8 +1,8 @@
 -- Inserting into site_hookups table
-INSERT INTO `site_hookups` (`id`, `sitehookup`, `orderby`, `created_at`, `updated_at`) VALUES
-('1', 'WE30A', '1', NULL, NULL),
-('2', 'WSE30A', '2', NULL, NULL),
-('3', 'WSE50A', '3', NULL, NULL),
-('4', 'WE50A', '4', NULL, NULL),
-('5', 'No Hookup', '100', NULL, NULL);
+INSERT INTO `site_hookups` (`created_at`, `id`, `orderby`, `sitehookup`, `updated_at`) VALUES
+(NULL, '1', '1', 'WE30A', NULL),
+(NULL, '2', '2', 'WSE30A', NULL),
+(NULL, '3', '3', 'WSE50A', NULL),
+(NULL, '4', '4', 'WE50A', NULL),
+(NULL, '5', '100', 'No Hookup', NULL);
 

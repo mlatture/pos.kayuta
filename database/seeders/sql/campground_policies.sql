@@ -1,6 +1,6 @@
 -- Inserting into campground_policies table
-INSERT INTO `campground_policies` (`id`, `title`, `description`, `pdf`, `status`, `created_at`, `updated_at`) VALUES
-('1', 'Campground Policies/Rules', '<p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
+INSERT INTO `campground_policies` (`created_at`, `description`, `id`, `pdf`, `status`, `title`, `updated_at`) VALUES
+('2023-09-28 22:10:40', '<p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
 <p>OF KAYUTA LAKE&#39;S CAMPGROUND POLICIES/RULES.</p>
 
@@ -663,5 +663,5 @@ INSERT INTO `campground_policies` (`id`, `title`, `description`, `pdf`, `status`
 
 <p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
-<p>OF KAYUTA LAKE&#39;S POLICIES, TERMS, AND CONDITIONS.</p>', '2023-09-28-6515f9e073547.docx', '1', '2023-09-28 22:10:40', '2023-09-28 22:10:40');
+<p>OF KAYUTA LAKE&#39;S POLICIES, TERMS, AND CONDITIONS.</p>', '1', '2023-09-28-6515f9e073547.docx', '1', 'Campground Policies/Rules', '2023-09-28 22:10:40');
 

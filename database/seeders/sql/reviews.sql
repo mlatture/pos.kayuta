@@ -1,4 +1,4 @@
 -- Inserting into reviews table
-INSERT INTO `reviews` (`id`, `product_id`, `customer_id`, `delivery_man_id`, `order_id`, `comment`, `attachment`, `rating`, `status`, `is_saved`, `created_at`, `updated_at`, `type`) VALUES
-('1', '56', '0', NULL, NULL, NULL, '[]', '5', '1', '0', '2023-05-17 07:56:48', '2023-05-17 07:56:48', 'product');
+INSERT INTO `reviews` (`attachment`, `comment`, `created_at`, `customer_id`, `delivery_man_id`, `id`, `is_saved`, `order_id`, `product_id`, `rating`, `status`, `type`, `updated_at`) VALUES
+('[]', NULL, '2023-05-17 07:56:48', '0', NULL, '1', '0', NULL, '56', '5', '1', 'product', '2023-05-17 07:56:48');
 
