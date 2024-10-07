@@ -141,6 +141,7 @@ class ProductController extends Controller
             // 'tax'           =>  $request->tax ?? 0,
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
+            'cost'          => $request->cost,
         ]);
 
         if (!$product) {

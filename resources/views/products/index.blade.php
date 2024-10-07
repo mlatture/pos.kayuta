@@ -46,6 +46,26 @@
                                         <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
                                         <td>{{ $product->quantity }}</td>
                                         <td>
+                                    @foreach ($products as $k => $product)
+                                        @php
+                                            $imagePath = 'storage/products/' . $product->image;
+                                            $fallbackImageUrl = 'images/product-thumbnail.jpg';
+                                            $imageUrl = file_exists(public_path($imagePath))
+                                                ? asset($imagePath)
+                                                : asset($fallbackImageUrl);
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $product->id }}</td>
+                                            <td>{{ Str::limit($product->name, 20) }}</td>
+                                            <td>
+                                                <img class="product-img img-thumbnail"
+                                                    src="{{ $imageUrl }}" width="60px" height="60px" alt="">
+                                            </td>
+                                            <td>{{ $product->barcode }}</td>
+                                            <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
+                                            <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
+                                            <td>{{ $product->quantity }}</td>
+                                            <td>
                                                 <span
                                                     class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">{{ $product->status ? 'Active' : 'Inactive' }}</span>
                                         </td>
