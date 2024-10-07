@@ -13,8 +13,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+//        orders schemaa//
         $tableName = 'orders';
+
         if (Schema::hasTable($tableName)) {
+
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'id')) {
                     $table->id();

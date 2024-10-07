@@ -14,11 +14,14 @@ return new class extends Migration
     public function up(): void
     {
         $tableName = 'users';
+//        user schema
         if (Schema::hasTable($tableName)) {
+
             Schema::table($tableName, static function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'organization_id')) {
                     $table->integer('organization_id')->nullable();
                 }
+
                 if (!Schema::hasColumn($tableName, 'name')) {
                     $table->string('name', 80)->nullable();
                 }

@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+//        sites schemaa
         $tableName = 'sites';
 
         if (!Schema::hasTable($tableName)) {
+
             Schema::create($tableName, function (Blueprint $table) {
+
                 $table->id();
                 $table->unsignedBigInteger('organization_id')->nullable();
                 $table->string('siteid')->nullable();

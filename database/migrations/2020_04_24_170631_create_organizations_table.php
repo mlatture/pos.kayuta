@@ -8,7 +8,10 @@ return new class extends Migration {
     public function up(): void
     {
         $tableName = 'organizations';
+
+//        organizations schemaa
         if (Schema::hasTable($tableName)) {
+
             Schema::table($tableName, static function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'id')) {
                     $table->id();
