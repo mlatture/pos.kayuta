@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
                 $table->string('quantity')->change();
+                $table->float('cost');
         });
     }
 
@@ -27,6 +28,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
                 $table->integer('quantity')->change();
+                $table->dropColumn('organization_id');
         });
     }
 };
