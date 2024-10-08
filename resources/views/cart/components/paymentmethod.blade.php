@@ -15,11 +15,11 @@
                 value="CreditCard" autocomplete="off" />
             Credit Card 
         </label>
-        <label class="btn btn-outline-dark btn-payment">
+        {{-- <label class="btn btn-outline-dark btn-payment">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
                 value="Terminal" autocomplete="off" />
             Terminal  
-        </label>
+        </label> --}}
     </div>
 
     <div class="row mt-3">
@@ -42,8 +42,14 @@
 
     <div class="row mt-3">
         <div class="col">
-            <button type="submit" class="btn btn-success" id="submitOrderButton" style="width: 100%">Submit
-                Order</button>
+            <button type="submit" class="btn btn-success" id="submitOrderButton" style="width: 100%">Process</button>
+        </div>
+       
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <button type="submit" class="btn btn-success" id="updateOrderButton" style="width: 100%" hidden>Process</button>
         </div>
     </div>
 </div>

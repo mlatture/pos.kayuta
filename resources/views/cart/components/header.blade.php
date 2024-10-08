@@ -8,7 +8,7 @@
                  aria-expanded="false">
                 Station: {{ ucfirst(auth()->user()->name) }}
             </button>
-            <button class="btn btn-dark text-white cart-empty" type="button">
+            <button class="btn btn-dark text-white new-sale" id="new-sale" type="button">
                 <i class="fa-solid fa-cart-arrow-down "></i> New Sale
             </button>
             <div class="dropdown">
