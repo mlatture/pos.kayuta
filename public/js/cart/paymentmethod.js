@@ -3,19 +3,19 @@ $(document).ready(function () {
         let label = $("#orderLabel");
         let input = $("#orderAmountInput");
         if ($(this).val() === "GiftCard") {
-            label.text("Enter Gift Card Number: ");
-            input.attr("placeholder", "Enter Gift Card Number");
+            $("#gift-card-section").removeAttr("hidden");
+            label.show().text("Enter Order Amount: ");
+            $("#giftcardno").removeAttr("readonly").focus();
+            input.attr("placeholder", "Enter amount").removeAttr("readonly");
             $("#expire").attr("hidden", true);
-            input.attr("readonly", false);
         } else if ($(this).val() === "CreditCard") {
-            label.hide();
-            input.attr("placeholder", "Start Terminal Transaction");
-            input.attr("readonly", true);
+            $("#gift-card-section").attr("hidden", true);
+            label.show().text("Enter Order Amount: ");
+            input.attr("placeholder", "Enter amount").removeAttr("readonly");
         } else {
-            label.text("Enter Order Amount: ");
-            input.attr("placeholder", "Enter amount");
-            $("#expire").attr("hidden", true);
-            input.attr("readonly", false);
+            label.show().text("Enter Order Amount: ");
+            input.attr("placeholder", "Enter amount").removeAttr("readonly");
+            $("#gift-card-section").attr("hidden", true);
         }
 
         $(".btn-payment").removeClass("active");
@@ -38,258 +38,53 @@ $(document).ready(function () {
         e.target.value = input;
     });
 
+    var offcanvasOrder = new bootstrap.Offcanvas(
+        document.getElementById("offcanvasOrder"),
+        {
+            backdrop: false,
+            keyboard: false,
+        }
+    );
     $("#submitOrderButton").on("click", function () {
-        let totalAmount = parseFloat(
-            $("#total-amount").val().replace(/,/g, "")
-        );
-
+        processPayment();
+    });
+    
+    $("#updateOrderButton").on("click", function (e) {
+        e.preventDefault();
+        processPayment(true); 
+    });
+    
+    function processPayment(isPartial = false) {
+        let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ""));
         let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ""));
-
         let customer_id = $("#customer_id").val();
         let paymentMethod = $('input[name="payment_method"]:checked').val();
-
+    
+      
+        let orderId = $("#order_id").val();
+    
         let change = 0;
-
         if (paymentMethod === "Cash") {
             if (amount > totalAmount) {
                 change = amount - totalAmount;
             }
-            proceedWithOrder(
-                customer_id,
-                amount,
-                change,
-                paymentMethod,
-                0,
-                0,
-                totalAmount
-            );
+            handlePayment(customer_id, amount, change, paymentMethod, 0, 0, totalAmount, isPartial, orderId);
         } else if (paymentMethod === "GiftCard") {
-            let giftCardNumber = $("#orderAmountInput").val();
-
-            $.ajax({
-                url: processGiftCard,
-                type: "POST",
-                headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                        "content"
-                    ),
-                },
-                data: {
-                    gift_card_number: giftCardNumber,
-                },
-                success: function (response) {
-                    let giftCardAmount = response.amount;
-
-                    if (giftCardAmount >= totalAmount) {
-                        let remainingBalance = giftCardAmount - totalAmount;
-
-                        $.ajax({
-                            url: updateGiftCardBalance,
-                            type: "POST",
-                            headers: {
-                                "X-CSRF-TOKEN": $(
-                                    'meta[name="csrf-token"]'
-                                ).attr("content"),
-                            },
-                            data: {
-                                gift_card_number: giftCardNumber,
-                                remaining_balance: remainingBalance,
-                            },
-                            success: function () {
-                                proceedWithOrder(
-                                    customer_id,
-                                    amount,
-                                    change,
-                                    paymentMethod,
-                                    0,
-                                    0,
-                                    totalAmount,
-                                    giftCardNumber
-                                );
-
-                                // proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, giftCardNumber);
-                            },
-                            error: function () {
-                                Swal.fire({
-                                    title: "Error",
-                                    text: "Failed to update the gift card balance.",
-                                    icon: "error",
-                                    confirmButtonText: "OK",
-                                });
-                            },
-                        });
-                    } else {
-                        Swal.fire({
-                            title: "Gift card Balance is insufficient",
-                            text:
-                                "The gift card balance is $" +
-                                giftCardAmount.toFixed(2) +
-                                ". It must cover the total amount.",
-                            icon: "warning",
-                            confirmButtonText: "OK",
-                        });
-                    }
-                },
-                error: function () {
-                    Swal.fire({
-                        title: "Error",
-                        text: "Failed to process the gift card.",
-                        icon: "error",
-                        confirmButtonText: "OK",
-                    });
-                },
-            });
-            // }else if(paymentMethod === "CreditCard"){
-            //     let expiry = $("#cardExpiry").val();
-            //     let formattedExp = expiry.replace("/", "");
-            //     let x_ref_num = $("#x_ref_num").val();
-            //     let cardDetails = {
-            //         ccnum: $("#orderAmountInput").val(),
-            //         exp: formattedExp,
-            //         amount: totalAmount,
-
-            //     }
-
-            //     let cardNum = $("#orderAmountInput").val();
-
-            //     $.ajax({
-            //         url: processCreditCard,
-            //         type: 'POST',
-            //         headers: {
-            //             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            //         },
-            //         data: cardDetails,
-            //         success: function (response) {
-            //             if (response.message === "Payment Approved") {
-            //                 Swal.fire({
-            //                     title: "Success",
-            //                     text: response.message,
-            //                     icon: "success",
-            //                     confirmButtonText: "OK",
-            //                 });
-
-            //                 proceedWithOrder(customer_id, totalAmount, 0, paymentMethod, cardNum, response.transaction_data.xRefNum);
-            //             } else if (response.message === "Payment Declined") {
-            //                 Swal.fire({
-            //                     title: "Error",
-            //                     text: response.error || response.message,
-            //                     icon: "error",
-            //                     confirmButtonText: "OK",
-            //                 });
-            //             } else {
-            //                 Swal.fire({
-            //                     title: "Error",
-            //                     text: "Unexpected response from server.",
-            //                     icon: "error",
-            //                     confirmButtonText: "OK",
-            //                 });
-            //             }
-            //         },
-            //         error: function (xhr, status, error) {
-            //             let response;
-            //             try {
-            //                 response = JSON.parse(xhr.responseText);
-            //             } catch (e) {
-            //                 response = { message: "An unknown error occurred" };
-            //             }
-
-            //             Swal.fire({
-            //                 title: "Error",
-            //                 text: response.message || "Failed to process the request.",
-            //                 icon: "error",
-            //                 confirmButtonText: "OK",
-            //             });
-            //         }
-            //     });
+            let giftCardNumber = $("#giftcardno").val();
+            processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId);
         } else if (paymentMethod === "CreditCard") {
-            $.ajax({
-                url: processTerminal,
-                type: "POST",
-                headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                        "content"
-                    ),
-                },
-                data: {
-                    amount: totalAmount,
-                },
-                success: function (response) {
-                    if (response.message === "Payment Approved") {
-                        Swal.fire({
-                            title: "Success",
-                            text: response.message,
-                            icon: "success",
-                            confirmButtonText: "OK",
-                        });
-
-                        proceedWithOrder(
-                            customer_id,
-                            totalAmount,
-                            0,
-                            paymentMethod,
-                            response.success.xMaskedCardNumber,
-                            response.success.xRefNum
-                        );
-                    } else if (response.message === "Payment Declined") {
-                        Swal.fire({
-                            title: "Error",
-                            text: response.error || response.message,
-                            icon: "error",
-                            confirmButtonText: "OK",
-                        });
-                    } else {
-                        Swal.fire({
-                            title: "Error",
-                            text: "Unexpected response from server.",
-                            icon: "error",
-                            confirmButtonText: "OK",
-                        });
-                        console.log(response.success);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    let response;
-                    try {
-                        response = JSON.parse(xhr.responseText);
-                    } catch (e) {
-                        response = { message: "An unknown error occurred" };
-                    }
-
-                    Swal.fire({
-                        title: "Error",
-                        text:
-                            response.message ||
-                            "Failed to process the request.",
-                        icon: "error",
-                        confirmButtonText: "OK",
-                    });
-                },
-            });
+            processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId);
         }
-    });
-
-    var offcanvasOrder = new bootstrap.Offcanvas(document.getElementById('offcanvasOrder'), {
-        backdrop: false, 
-        keyboard: false   
-    });
+    }
     
-
-    function proceedWithOrder(
-        customer_id,
-        order_amount,
-        change,
-        paymentMethod,
-        number,
-        x_ref_num,
-        totalAmount
-    ) {
+    function handlePayment(customer_id, amount, change, paymentMethod, number, x_ref_num, totalAmount, isPartial, orderId) {
+        let remainingBalance = parseFloat($("#remainingBalance").text()) || totalAmount;
+    
+        let firstRemainingBalance = remainingBalance - amount;
+        $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
+    
         Swal.fire({
-            title:
-                change >= 0
-                    ? "Change is: $" +
-                      change.toFixed(2) +
-                      ". Do you want to proceed?"
-                    : "Successfully processed!",
+            title: change >= 0 ? `Change is: $${change.toFixed(2)}. Do you want to proceed?` : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(2)}`,
             showCancelButton: true,
             confirmButtonText: "Save",
             cancelButtonText: `Don't save`,
@@ -297,24 +92,39 @@ $(document).ready(function () {
             preConfirm: () => {
                 return new Promise((resolve) => {
                     $.ajax({
-                        url: cartOrderStoreUrl,
+                        url: isPartial ? cartOrderUpdateUrl : cartOrderStoreUrl, 
                         type: "POST",
                         headers: {
-                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                                "content"
-                            ),
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
                         },
                         data: {
-                            amount: order_amount,
+                            order_id: orderId, 
+                            amount: amount,
                             customer_id: customer_id,
                             payment_method: paymentMethod,
                             acc_number: number,
                             x_ref_num: x_ref_num,
                         },
                         success: function (response) {
-                         
                             resolve(response);
-
+                                      
+                            if (!isPartial) { 
+                               
+                                orderId = response.order_id;  
+                                $("#order_id").val(orderId); 
+                                $("#orderAmountInput").val('');
+                                $("#giftcardno").val('');
+                                $('input[name="payment_method"]:checked').prop('checked', false);
+                            } else {
+                                $("#orderAmountInput").val('');
+                                $("#giftcardno").val('');
+                                $('input[name="payment_method"]:checked').prop('checked', false);
+                                orderId = response.OrderItem.order_id;  
+                                $("#order_id").val(orderId);  
+                            }
+                    
+                          
+                            console.log(response) 
                         },
                         error: function (reject) {
                             resolve(reject);
@@ -323,98 +133,128 @@ $(document).ready(function () {
                 });
             },
         }).then((result) => {
-          
             if (result.isConfirmed && result.value) {
-                var offcanvas = bootstrap.Offcanvas.getInstance(
-                    document.getElementById("offcanvasOrder"), {
-                        backdrop: false,
-                    }
-                );
-
-                if (order_amount >= totalAmount) {
-                    offcanvas.hide();
-
-                    $("#selected-product tbody").empty();
-                    $("#card-summary").empty();
-
-                    $.toast({
-                        heading: result.value[0] || "Success",
-                        text: result.value[1] || "Order placed successfully!",
-                        position: "top-right",
-                        loaderBg: "#00c263",
-                        icon: "success",
-                        hideAfter: 3000,
-                        stack: 6,
-                    });
-
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 3000);
-                } else {
-                    $.toast({
-                        heading: result.value[0] || "Success",
-                        text:
-                            result.value[1] ||
-                            "Partial Payment only",
-                        position: "top-right",
-                        loaderBg: "#00c263",
-                        icon: "success",
-                        hideAfter: 3000,
-                        stack: 6,
-                    });
-
-                    
-                    let orderId = result.value.order_id;
-
-                    $('#submitOrderButton').hide();
-                    $('#updateOrderButton').attr('hidden', false);
-                    $('#offcanvasOrder').on('hide.bs.offcanvas', function (e) {
-                        e.preventDefault(); 
-                    });
-
-                    $('#updateOrderButton').on('click', function (e) {
-                        e.preventDefault();
-
-                        $.ajax({
-                            url: cartOrderUpdateUrl,
-                            type: "POST",
-                            headers: {
-                                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                                    "content"
-                                ),
-                            },
-                            data: {
-                                order_id: orderId,
-                                amount: order_amount,
-                                payment_method: paymentMethod
-                            },
-                            success: function (response) {
-                                console.log(response);
-                                $.toast({
-                                    heading: result.value[0] || "Success",
-                                    text: result.value[1] || "Order updated successfully!",
-                                    position: "top-right",
-                                    loaderBg: "#00c263",
-                                    icon: "success",
-                                    hideAfter: 3000,
-                                    stack: 6,
-                                });
-
-                                window.location.reload();
-                            },
-
-                        });
-                
-                    
-
-                    });
-                }
-
-
+                let response = result.value;
+           
+                finalizeOrder(amount, totalAmount, response, firstRemainingBalance);
+    
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
             }
         });
     }
-});
+    
+    function processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId) {
+        $.ajax({
+            url: processGiftCard,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: { gift_card_number: giftCardNumber },
+            success: function (response) {
+                let giftCardAmount = response.amount;
+                if (giftCardAmount >= amount) {
+                    let remainingBalance = giftCardAmount - amount;
+                    $.ajax({
+                        url: updateGiftCardBalance,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                        },
+                        data: { gift_card_number: giftCardNumber, remaining_balance: remainingBalance },
+                        success: function () {
+                            handlePayment(customer_id, amount, 0, "GiftCard", 0, 0, totalAmount, isPartial, orderId);
+                        },
+                        error: function () {
+                            Swal.fire("Error", "Failed to update the gift card balance.", "error");
+                        },
+                    });
+                } else {
+                    Swal.fire("Gift card Balance is insufficient", `The gift card balance is $${giftCardAmount.toFixed(2)}.`, "warning");
+                }
+            },
+            error: function () {
+                Swal.fire("Error", "Failed to process the gift card.", "error");
+            },
+        });
+    }
+    
+    function processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId) {
+        $.ajax({
+            url: processTerminal,
+            type: "POST",
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: { amount: amount },
+            success: function (response) {
+                if (response.message === "Payment Approved") {
+                    // Swal.fire("Success", response.message, "success");
+                    handlePayment(customer_id, amount, 0, "CreditCard", response.success.xMaskedCardNumber, response.success.xRefNum, totalAmount, isPartial, orderId);
+                } else {
+                    Swal.fire("Error", response.error || response.message, "error");
+                }
+            },
+            error: function (xhr) {
+                Swal.fire("Error", "Failed to process the request.", "error");
+            },
+        });
+    }
+    
+    function finalizeOrder(order_amount, totalAmount, response, firstRemainingBalance) {
+       
+        var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasOrder"), { backdrop: false });
+        $('#offcanvasOrder').on('hide.bs.offcanvas', function (e) {
+            e.preventDefault(); 
+        });
 
+        $("#submitOrderButton").hide();
+        $("#updateOrderButton").attr("hidden", false);
+    
+        if (order_amount >= totalAmount || response.totalpayAmount.amount >= response.OrderItem.price) {
+         
+            offcanvas.hide();
+            $("#selected-product tbody").empty();
+            $("#card-summary").empty();
+            $.toast({
+                heading: response[0] || "Success",
+                text: response[1] || "Order placed successfully!",
+                position: "top-right",
+                loaderBg: "#00c263",
+                icon: "success",
+                hideAfter: 3000,
+                stack: 6,
+            });
+
+            setTimeout(function () {
+                clearInputFields(true);
+                window.location.reload();
+            }, 3000);
+        } else {
+            $.toast({
+                heading: response[0] || "Success",
+                text: `Partial Payment only. Remaining balance: $${firstRemainingBalance.toFixed(2)}`,
+                position: "top-right",
+                loaderBg: "#00c263",
+                icon: "success",
+                hideAfter: 3000,
+                stack: 6,
+            });
+            $("#submitOrderButton").hide();
+            $("#updateOrderButton").attr("hidden", false);
+        }
+    }
+    
+    function clearInputFields(isFullPayment = false) {
+        $("#orderAmountInput").val('');
+        $("#giftcardno").val('');
+        $('input[name="payment_method"]:checked').prop('checked', false);
+    
+       
+    }
+    
+    
+    
+    
+});

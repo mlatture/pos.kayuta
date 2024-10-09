@@ -118,7 +118,7 @@ class OrderController extends Controller
     {
         
         $order = PosPayment::where('order_id', $request->order_id)->first();
-    
+        $orderItem = OrderItem::where('order_id', $order->order_id)->first();
         if (!$order) {
             return response()->json([
                 'error' => 'Order not found',
@@ -137,7 +137,10 @@ class OrderController extends Controller
     
         $order->save();
     
-        return response()->json($order);
+        return response()->json([
+            'totalpayAmount' => $order,
+            'OrderItem' => $orderItem
+        ], 200);
     }
     
     

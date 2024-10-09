@@ -87,7 +87,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-12 border-top">
+                    <input type="hidden" id="order_id" name="order_id" value="{{ old('order_id', $order_id ?? '') }}">
+
+                    {{-- <div class="col-sm-12 border-top">
                         <div class="row pt-2">
                             <div class="col-6">
                                 <p><b>Change</b></p>
@@ -97,7 +99,7 @@
                                 <p class="float-right" id="offcanvasChange"></p>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
@@ -105,21 +107,6 @@
     </div>
 </div>
 <script>
-$('#orderAmountInput').on('input', function(){
-    var totalAmount = parseFloat($('#offcanvasTotalAmount').text().trim()) || 0;
-    var currentAmount = parseFloat($(this).val().trim()) || 0;
 
-    var change = currentAmount - totalAmount;
-
-    if (currentAmount >= totalAmount) {
-      
-        $('#offcanvasChange').text(change.toFixed(2));
-        $('#remainingBalance').text('0.00'); 
-    } else {
-        var remainingBalance = totalAmount - currentAmount;
-        $('#offcanvasChange').text('0.00'); 
-        $('#remainingBalance').text(remainingBalance.toFixed(2)); 
-    }
-});
 </script>
 
