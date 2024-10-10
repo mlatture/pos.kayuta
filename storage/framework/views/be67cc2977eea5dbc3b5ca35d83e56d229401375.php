@@ -108,3 +108,4 @@
         });
     }
 </script>
+<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/paymentmethod.blade.php ENDPATH**/ ?>

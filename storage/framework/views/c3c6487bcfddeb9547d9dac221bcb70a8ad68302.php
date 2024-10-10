@@ -1,10 +1,10 @@
-@extends('layouts.admin')
 
-@section('title', 'Reservation List')
-@section('content-header', 'Reservation List')
 
-@section('content')
-@include('reservations.components.header')
+<?php $__env->startSection('title', 'Reservation List'); ?>
+<?php $__env->startSection('content-header', 'Reservation List'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php echo $__env->make('reservations.components.header', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <style>
     body {
@@ -121,7 +121,7 @@
                         </div>
                         <!-- <div>
                             <a href="#" class="text-white text-decoration-none">
-                                <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
+                                <img src="<?php echo e(asset('images/help-ico.svg')); ?>" alt="" class="me-2" />
                                 Help
                             </a>
                         </div> -->
@@ -198,13 +198,16 @@
         </div>
     </div>
 </div>
-@extends('reservations.modals.modals')
-@extends('reservations.modals.reservations-modal')
-@endsection
 
-@push('js')
+
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('js'); ?>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('reservations.modals.reservations-modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('reservations.modals.modals', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/reservations/index.blade.php ENDPATH**/ ?>

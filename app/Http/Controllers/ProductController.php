@@ -13,6 +13,7 @@ use App\Models\TaxType;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -117,9 +118,17 @@ class ProductController extends Controller
         $filename = '';
     
         if ($request->hasFile('image')) {
-           
-            $image_path = $request->file('image')->store('products', 'public');
-            $filename = basename($image_path);
+            
+            $image = $request->file('image');
+            $destinationPath = public_path('images/products');
+
+            if(!File::exists($destinationPath)){
+                File::makeDirectory($destinationPath, 0775, true);
+            }
+
+            $filename = time(). '-' . $image->getClientOriginalName();
+            $image->move($destinationPath, $filename);
+            
         }
     
         $quantity = $request->quantity === '*' ? -1 : $request->quantity;
@@ -137,6 +146,7 @@ class ProductController extends Controller
             'discount'      =>  $request->discount ?? 0,
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
+            'cost'          => $request->cost,
         ]);
     
         if (!$product) {

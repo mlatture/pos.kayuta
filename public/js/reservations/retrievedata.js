@@ -124,7 +124,7 @@ $(document).ready(function () {
         $.each(reservations, function (index, item) {
             let cidDate = new Date(item.cid);
             let codDate = new Date(item.cod);
-
+         
             let cid = cidDate.toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
@@ -157,7 +157,31 @@ $(document).ready(function () {
                 statusClass = "bg-primary";
             }
 
+            let siteLock = item.sitelock;
+            let sitelockClass;  
+            
+            if (siteLock === '20') {
+                siteLock = "Yes";
+                sitelockClass = "bg-info text-white";
+            } else {
+                siteLock = "No";
+                sitelockClass = "bg-danger text-white";
+            }
+            
+
+            let balances = parseFloat(item.total) - parseFloat(item.payment);
+            let balanceClass;
+            if (balances <= 0) {
+                balance = "Paid";
+                balanceClass = "bg-success text-white";
+            } else {
+                balance = '$' + parseFloat(balances).toFixed(2); 
+                balanceClass = "bg-danger text-white";
+            }
+            
+
             tableBody.append(`
+            
                 <tr
                     data-bs-toggle="tooltip" 
                     data-bs-placement="top" 
@@ -166,6 +190,17 @@ $(document).ready(function () {
                     <td>${item.fname} ${item.lname}</td>
                     <td>${item.siteid}</td>
                     <td>${item.siteclass}</td>
+                    <td> 
+                        <span class="${ sitelockClass } badge rounded-pill p-2" style="font-size: 12px;">
+                                ${  siteLock }
+                            </span>
+                    
+                    </td>
+                    <td>
+                       <span class="${balanceClass} badge rounded-pill p-2" style="font-size: 12px;">
+                            ${balance}
+                        </span>
+                    </td>
                     <td>
                         <span class="${statusClass} badge rounded-pill p-2" style="font-size: 12px;">
                             ${dateStatus}

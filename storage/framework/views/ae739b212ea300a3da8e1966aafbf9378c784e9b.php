@@ -1,9 +1,9 @@
-@extends('layouts.admin')
 
-@section('title', 'Open POS')
 
-@push('css')
-    <link href="{!! asset('plugins/toast-master/css/jquery.toast.css') !!}" rel="stylesheet">
+<?php $__env->startSection('title', 'Open POS'); ?>
+
+<?php $__env->startPush('css'); ?>
+    <link href="<?php echo asset('plugins/toast-master/css/jquery.toast.css'); ?>" rel="stylesheet">
     <style>
         .nav-tabs .nav-link.active {
             background-color: #EFC368;
@@ -82,12 +82,12 @@
 
         }
     </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
-{{-- <div id="cart"></div> --}}
+<?php $__env->startSection('content'); ?>
+
 <section class="content">
-    @include('cart.components.header')
+    <?php echo $__env->make('cart.components.header', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     <div id="cart">
         <div class="row">
             <div class="col-md-6 col-lg-6">
@@ -103,19 +103,19 @@
                         <select class="form-control select2" name="customer_id" id="customer_id">
                             <option value="0" data-name="Walk-in Customer">Walk-in Customer</option>
                             <option value="add_new_user">Add New User</option>
-                            @foreach ($customers as $customer)
-                                <option value="{{ $customer->id }}"
-                                    data-name="{{ $customer->f_name . ' ' . $customer->l_name }}">
-                                    {{ $customer->f_name . ' ' . $customer->l_name }}
+                            <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($customer->id); ?>"
+                                    data-name="<?php echo e($customer->f_name . ' ' . $customer->l_name); ?>">
+                                    <?php echo e($customer->f_name . ' ' . $customer->l_name); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                    
-                    {{-- <div class="col"> --}}
-                        {{-- <button type="button" class="btn w-100 btn-primary" data-bs-toggle="modal" --}} {{--
-                            data-bs-target="#addUserModal">Add User</button> --}}
-                        {{-- </div> --}}
+                    
+                         
+                        
                 </div>
                 <div class="user-cart">
                     <div class="card">
@@ -132,40 +132,43 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
+                                    <?php
                                         $subtotal = 0;
                                         $totalDiscount = 0;
                                         $totalTax = 0;
-                                    @endphp
-                                    @foreach ($cart as $key => $cartItem)
-                                        @php
+                                    ?>
+                                    <?php $__currentLoopData = $cart; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $cartItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $productPrice = $cartItem->price * $cartItem->pivot->quantity;
                                             $subtotal += $productPrice;
                                             $totalDiscount += $cartItem->pivot->discount ?? 0;
                                             $totalTax += $cartItem->pivot->tax ?? 0;
-                                        @endphp
+                                        ?>
                                         <tr>
-                                            <td>{{ Str::limit($cartItem->name, 15) ?? '' }}</td>
+                                            <td><?php echo e(Str::limit($cartItem->name, 15) ?? ''); ?></td>
                                             <td>
                                                 <input type="text" class="form-control form-control-sm qty product-quantity"
-                                                    data-id="{{ $cartItem->id }}"
-                                                    value="{{ $cartItem->pivot->quantity ?? 0 }}">
+                                                    data-id="<?php echo e($cartItem->id); ?>"
+                                                    value="<?php echo e($cartItem->pivot->quantity ?? 0); ?>">
                                                 <button class="btn btn-danger btn-sm product-delete"
-                                                    data-id="{{ $cartItem->id }}">
+                                                    data-id="<?php echo e($cartItem->id); ?>">
                                                     <i class="fas fa-trash" aria-hidden="true"></i>
                                                 </button>
                                             </td>
                                             <td class="text-right" id="discount">$
-                                                {{ $cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0 }}
+                                                <?php echo e($cartItem->pivot->discount ? number_format($cartItem->pivot->discount, 2) : 0); ?>
+
                                             </td>
                                             <td class="text-right">$
-                                                {{ $cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0 }}
+                                                <?php echo e($cartItem->pivot->tax ? number_format($cartItem->pivot->tax, 2) : 0); ?>
+
                                             </td>
                                             <td class="text-right">$
-                                                {{ $productPrice ? number_format($productPrice, 2) : 0 }}
+                                                <?php echo e($productPrice ? number_format($productPrice, 2) : 0); ?>
+
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                             </table>
                         </div>
@@ -173,7 +176,7 @@
                     </div>
 
                 </div>
-                @include('cart.components.summary')
+                <?php echo $__env->make('cart.components.summary', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                 <div class="row">
                     <div class="col">
                         <button type="button" class="btn btn-danger btn-block cart-empty">Cancel</button>
@@ -201,15 +204,12 @@
                                 type="button" role="tab" aria-controls="catgories"
                                 aria-selected="false">Categories</button>
                         </li>
-                        {{-- <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent"
-                                type="button" role="tab" aria-controls="recent" aria-selected="false">Recent</button>
-                        </li> --}}
+                        
                         <div class="mb-2 mx-2"><input type="text" id="search-product" class="form-control"
                                 placeholder="Search Product...">
                         </div>
                     </ul>
-                    @include('cart.tabpanel')
+                    <?php echo $__env->make('cart.tabpanel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
                 </div>
             </div>
@@ -218,27 +218,27 @@
     </div>
 </section>
 
-{{-- user add modal starts here --}}
-@include('cart.modals.user-add-modal')
-@endsection
 
-@push('js')
-    <script src="{!! asset('plugins/toast-master/js/jquery.toast.js') !!}"></script>
+<?php echo $__env->make('cart.modals.user-add-modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('js'); ?>
+    <script src="<?php echo asset('plugins/toast-master/js/jquery.toast.js'); ?>"></script>
 
     <script>
-        var cartStoreUrl = "{{ route('cart.store') }}";
-        var cartChangeUrl = "{{ route('cart.changeQty') }}"
-        var cartDeleteUrl = "{{ route('cart.delete') }}"
-        var cartEmptyUrl = "{{ route('cart.empty') }}"
-        var cartCategoryUrl = "{{ route('category.products') }}";
-        var cartAllCategoryUrl = "{{ route('category.all') }}"
-        var cartOrderStoreUrl = "{{ route('orders.store') }}"
-        var giftCard = "{{ route('gift-cards.apply') }}"
-        var processGiftCard = "{{ route('orders.process.gift.card') }}";
-        var updateGiftCardBalance = "{{ route('orders.process.gift.card.balance') }}";
-        var processCreditCard = "{{ route('orders.process.credit.card') }}";
-        var processTerminal = "{{ route('orders.process.terminal') }}";
-        var cartOrderUpdateUrl = "{{ route('orders.update')}}"
+        var cartStoreUrl = "<?php echo e(route('cart.store')); ?>";
+        var cartChangeUrl = "<?php echo e(route('cart.changeQty')); ?>"
+        var cartDeleteUrl = "<?php echo e(route('cart.delete')); ?>"
+        var cartEmptyUrl = "<?php echo e(route('cart.empty')); ?>"
+        var cartCategoryUrl = "<?php echo e(route('category.products')); ?>";
+        var cartAllCategoryUrl = "<?php echo e(route('category.all')); ?>"
+        var cartOrderStoreUrl = "<?php echo e(route('orders.store')); ?>"
+        var giftCard = "<?php echo e(route('gift-cards.apply')); ?>"
+        var processGiftCard = "<?php echo e(route('orders.process.gift.card')); ?>";
+        var updateGiftCardBalance = "<?php echo e(route('orders.process.gift.card.balance')); ?>";
+        var processCreditCard = "<?php echo e(route('orders.process.credit.card')); ?>";
+        var processTerminal = "<?php echo e(route('orders.process.terminal')); ?>";
+        var cartOrderUpdateUrl = "<?php echo e(route('orders.update')); ?>"
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {
@@ -250,7 +250,7 @@
 
         $('#pending_customer').on('change', function() {
             $.ajax({
-                url: "{{ route('cart.partialpayment')}}",
+                url: "<?php echo e(route('cart.partialpayment')); ?>",
                 type: "GET",
                 dataType: "json",
              
@@ -261,4 +261,5 @@
         })
 
     </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/index.blade.php ENDPATH**/ ?>

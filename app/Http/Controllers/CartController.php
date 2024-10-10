@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Exception;
@@ -215,4 +216,35 @@ class CartController extends Controller
         }
         return $this->object->respondBadRequest(['error' => 'Cart is already empty']);
     }
+
+
+    public function showPartialPaymentCustomer()
+    {
+       
+        $customers = Customer::all();
+    
+        $payments = [];
+    
+      
+        foreach ($customers as $customer) {
+        
+            $orders = Order::where('user_id', $customer->id)->get();
+    
+        
+            foreach ($orders as $order) {
+                $orderPayments = PosPayment::where('order_id', $order->id)->get();
+    
+               
+                foreach ($orderPayments as $payment) {
+                    $payments[] = $payment;
+                }
+            }
+        }
+    
+     
+        return response()->json([
+            'success' => $payments,
+        ]);
+    }
+    
 }

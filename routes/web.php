@@ -56,6 +56,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
     Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
     Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
 
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
@@ -66,7 +67,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/remove-cart/{bookingId}/{cartId}', [ReservationController::class, 'removeCart'])->name('reservations.remove-cart');
     Route::post('reservations/apply-coupon', [ReservationController::class, 'applyCoupon'])->name('reservations.apply-coupon');
     Route::post('reservations/do-checkout/{bookingId}', [ReservationController::class, 'doCheckout'])->name('reservations.do-checkout');
-
+    
     Route::get('/reservations', [NewReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
     Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
@@ -87,6 +88,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
+    Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
 
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
@@ -106,9 +108,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
+    Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
 
-
-    Route::get('reservations/calendar/{id}', [CalendarReservationController::class, 'index']);
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
 
 });
