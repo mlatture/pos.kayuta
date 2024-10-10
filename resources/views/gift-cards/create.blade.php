@@ -10,7 +10,7 @@
 
             <form id="giftCardForm" method="POST" enctype="multipart/form-data">
                 @csrf
-                {{-- 
+                {{--
                 <div class="form-group">
                     <label for="title">Title</label>
                     <input type="text" name="title" class="form-control @error('title') is-invalid @enderror"
@@ -26,10 +26,15 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label for="user_barcode">User Email</label>
+                            <label for="user_barcode">{{ $dictionaryFields['user_email'] ?? 'User Email' }}</label>
                             <input type="email" name="user_email"
                                 class="form-control @error('user_email') is-invalid @enderror" id="user_email"
                                 placeholder="User Email" value="{{ old('user_email') }}">
+                            @if(!empty($dictionaryFieldsDesc['user_email']))
+                                <small class="form-text text-muted"><span
+                                        class="fas fa-info-circle"></span> {{ $dictionaryFieldsDesc['user_email'] }}
+                                </small>
+                            @endif
                             @error('user_email')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -41,9 +46,14 @@
                     <div class="col">
 
                         <div class="form-group">
-                            <label for="barcode">Barcode</label>
+                            <label for="barcode">{{ $dictionaryFields['barcode'] ?? 'Barcode' }}</label>
                             <input type="text" name="barcode" class="form-control @error('barcode') is-invalid @enderror"
                                 id="barcode" placeholder="Barcode" value="{{ old('barcode') }}" maxlength="20">
+                            @if(!empty($dictionaryFieldsDesc['barcode']))
+                                <small class="form-text text-muted"><span
+                                        class="fas fa-info-circle"></span> {{ $dictionaryFieldsDesc['barcode'] }}
+                                </small>
+                            @endif
                             @error('barcode')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -80,10 +90,15 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label for="amount">Amount</label>
+                            <label for="amount">{{ $dictionaryFields['amount'] ?? 'Amount' }}</label>
                             <input type="number" name="amount" class="form-control @error('amount') is-invalid @enderror"
                                 id="amount" placeholder="Amount" value="{{ old('amount') }}">
-                            @error('discount')
+                            @if(!empty($dictionaryFieldsDesc['amount']))
+                                <small class="form-text text-muted"><span
+                                        class="fas fa-info-circle"></span> {{ $dictionaryFieldsDesc['amount'] }}
+                                </small>
+                            @endif
+                            @error('amount')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
@@ -93,10 +108,15 @@
                     <div class="col">
 
                         <div class="form-group">
-                            <label for="expire_date">Expire Date</label>
+                            <label for="expire_date">{{ $dictionaryFields['expire_date'] ?? 'Expire Date' }}</label>
                             <input type="date" name="expire_date"
                                 class="form-control @error('expire_date') is-invalid @enderror" id="expire_date"
                                 placeholder="Expire Date" value="{{ old('expire_date') }}">
+                            @if(!empty($dictionaryFieldsDesc['expire_date']))
+                                <small class="form-text text-muted"><span
+                                        class="fas fa-info-circle"></span> {{ $dictionaryFieldsDesc['expire_date'] }}
+                                </small>
+                            @endif
                             @error('expire_date')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -142,7 +162,7 @@
                         </span>
                     @enderror
                 </div> --}}
-                {{-- 
+                {{--
                 <div class="form-group">
                     <label for="limit">Limit</label>
                     <input type="number" name="limit" class="form-control @error('limit') is-invalid @enderror"
@@ -155,11 +175,16 @@
                 </div> --}}
 
                 <div class="form-group">
-                    <label for="status">Status</label>
+                    <label for="status">{{ $dictionaryFields['status'] ?? 'Status' }}</label>
                     <select name="status" class="form-control @error('status') is-invalid @enderror" id="status">
                         <option value="1" {{ old('status') === 1 ? 'selected' : '' }}>Active</option>
                         <option value="0" {{ old('status') === 0 ? 'selected' : '' }}>Inactive</option>
                     </select>
+                    @if(!empty($dictionaryFieldsDesc['status']))
+                        <small class="form-text text-muted"><span
+                                class="fas fa-info-circle"></span> {{ $dictionaryFieldsDesc['status'] }}
+                        </small>
+                    @endif
                     @error('status')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -200,7 +225,7 @@
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error('Error:', textStatus, errorThrown);
-                      
+
                     }
                 })
             });

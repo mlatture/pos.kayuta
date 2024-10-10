@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CPU\Helpers;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use App\Http\Resources\ProductResource;
@@ -50,45 +51,45 @@ class ProductController extends Controller
         if (request()->wantsJson()) {
             return ProductResource::collection($products);
         }
-        return view('products.index')->with('products', $products);
+        return view('products.index')->with('products', $products)->with('dictionaryFields', Helpers::getDictionaryFields('products'));
     }
 
     public function categoryProducts(Request $request)
     {
         try {
             $products = Product::query();
-    
+
             if (auth()->user()->organization_id) {
                 $products->where('organization_id', auth()->user()->organization_id);
             }
-    
+
             if ($request->search) {
                 $searchTerm = strtolower($request->search);
-               
-    
+
+
                 $products->where(function ($query) use ($searchTerm) {
                     $query->whereRaw('LOWER(name) LIKE ?', ['%' . $searchTerm . '%'])
                           ->orWhereRaw('LOWER(barcode) LIKE ?', ['%' . $searchTerm . '%']);
                 });
             }
-    
+
             if ($request->category_id) {
                 $products->where('category_id', $request->category_id);
             }
-    
+
             $products = $products->latest()->get();
-            
-            
-    
+
+
+
             return response()->json(['data' => $products], 200);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
-    
-    
 
-    
+
+
+
 
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\View\View
@@ -106,7 +107,9 @@ class ProductController extends Controller
         $categories =   $categoriesQuery->get();
         $taxTypes   =   $taxTypesQuery->get();
         $productVendors   =   $productVendorsQuery->get();
-        return view('products.create', compact('categories', 'taxTypes','productVendors'));
+        return view('products.create', compact('categories', 'taxTypes','productVendors'))
+            ->with('dictionaryFields', Helpers::getDictionaryFields('products'))
+            ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('products', true));
     }
 
     /**
@@ -116,8 +119,9 @@ class ProductController extends Controller
     public function store(ProductStoreRequest $request)
     {
         $filename = '';
-    
+
         if ($request->hasFile('image')) {
+
             
             $image = $request->file('image');
             $destinationPath = public_path('images/products');
@@ -130,10 +134,9 @@ class ProductController extends Controller
             $image->move($destinationPath, $filename);
             
         }
-    
-        $quantity = $request->quantity === '*' ? -1 : $request->quantity;
 
         $product = Product::create([
+            'organization_id' => auth()->user()->organization_id,
             'category_id'   =>  $request->category_id ?? 0,
             'tax_type_id'   =>  $request->tax_type_id ?? 0,
             'name'          =>  $request->name,
@@ -141,20 +144,22 @@ class ProductController extends Controller
             'image'         =>  $filename,
             'barcode'       =>  $request->barcode,
             'price'         =>  $request->price,
-            'quantity'      =>  $quantity,
+            'quantity'      =>  $request->quantity,
             'discount_type' =>  $request->discount_type ?? '',
             'discount'      =>  $request->discount ?? 0,
+            // 'tax_type'      =>  $request->tax_type ?? '',
+            // 'tax'           =>  $request->tax ?? 0,
             'status'        =>  $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
             'cost'          => $request->cost,
         ]);
-    
+
         if (!$product) {
             return redirect()->back()->with('error', 'Sorry, Something went wrong while creating product.');
         }
         return redirect()->route('products.index')->with('success', 'Success, New product has been added successfully!');
     }
-    
+
 
 
     /**
@@ -184,7 +189,9 @@ class ProductController extends Controller
             $categories =   $categoriesQuery->get();
             $taxTypes   =   $taxTypesQuery->get();
             $productVendors   =   $productVendorsQuery->get();
-            return view('products.edit', compact('product', 'categories', 'taxTypes','productVendors'));
+            return view('products.edit', compact('product', 'categories', 'taxTypes','productVendors'))
+                ->with('dictionaryFields', Helpers::getDictionaryFields('products'))
+                ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('products', true));
         }
         abort(403);
     }
@@ -209,7 +216,8 @@ class ProductController extends Controller
         $product->discount_type =   $request->discount_type;
         $product->discount      =   $request->discount;
         $product->product_vendor_id = $request->product_vendor_id ?? null;
-     
+        // $product->tax_type      =   $request->tax_type;
+        // $product->tax           =   $request->tax;
 
         if ($request->hasFile('image')) {
             if ($product->image) {

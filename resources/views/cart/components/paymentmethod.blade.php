@@ -14,7 +14,11 @@
         <label class="btn btn-outline-secondary btn-payment flex-fill">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
                 value="CreditCard" autocomplete="off" />
+
             <i class="bi bi-credit-card"></i> Credit Card
+
+            Credit Card
+
         </label>
     </div>
 

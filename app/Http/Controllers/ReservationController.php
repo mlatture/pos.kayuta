@@ -102,7 +102,8 @@ class ReservationController extends Controller
         // })->sum();
         $allReservations = Reservation::orderBy('id','desc')->get();
         $allCurrentSites = Site::orderBy('id','desc')->get();
-        return view('reservations.index', compact('sites', 'calendar', 'allSites', 'allReservations', 'allCurrentSites'));
+        return view('reservations.index', compact('sites', 'calendar', 'allSites', 'allReservations', 'allCurrentSites'))
+            ->with('dictionaryFields', Helpers::getDictionaryFields('reservations'));
     }
 
     public function create(){
@@ -110,7 +111,9 @@ class ReservationController extends Controller
         $data['sites'] = Site::get();
         $data['classes'] = SiteClass::get();
         $data['hookups'] = SiteHookup::get();
-        return view('reservations.create',$data);
+        return view('reservations.create',$data)
+            ->with('dictionaryFields', Helpers::getDictionaryFields('reservations'))
+            ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('reservations', true));
     }
 
     public function store(Request $request){

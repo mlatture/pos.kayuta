@@ -88,40 +88,36 @@
             </li>
         @endif
 
-        @hasPermission(config('constants.role_modules.pos_management.value'))
-        <li class="nav-item">
-            <a href="{{ route('cart.index') }}" class="nav-link {{ activeSegment('cart') }}">
-                <div class="d-flex align-items-center">
-                    <i class="fa-solid fa-store me-2"></i>
-                    <span class="ms-2">POS</span>
-                </div>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                <i class="fa-solid fa-cash-register"></i>
+                <span class="ms-2">POS</span>
             </a>
+            <ul class="dropdown-menu">
+                @hasPermission(config('constants.role_modules.pos_management.value'))
+                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('cart.index') }}">
+                        <i class="fa-solid fa-store me-2"></i>
+                        <span class="">Order Items</span>
+                    </a></li>
+                @endHasPermission
+
+
+                @hasPermission(config('constants.role_modules.reservation_management.value'))
+
+                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('reservations.index') }}">
+                        <i class="nav-icon fas fa-calendar-alt me-2"></i>
+                        <span>Reservations</span>
+                    </a></li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.list_gift_cards.value'))
+
+                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('gift-cards.index') }}">
+                        <i class="nav-icon fas fa-gift me-2"></i>
+                        <span class="ms-2">Gift Cards</span>
+                    </a></li>
+                @endHasPermission
+            </ul>
         </li>
-
-        @endHasPermission
-
-        @hasPermission(config('constants.role_modules.reservation_management.value'))
-        <li class="nav-item">
-            <a href="{{ route('reservations.index') }}" class="nav-link {{ activeSegment('reservations') }}">
-                <div class="d-flex align-items-center">
-                    <i class="nav-icon fas fa-calendar-alt me-2"></i>
-                    <span>Reservations</span>
-                </div>
-            </a>
-        </li>
-        @endHasPermission
-
-        @hasPermission(config('constants.role_modules.list_gift_cards.value'))
-        <li class="nav-item">
-            <a href="{{ route('gift-cards.index') }}" class="nav-link {{ activeSegment('gift-cards') }}">
-                <div class="d-flex align-items-center">
-                    <i class="nav-icon fas fa-gift me-2"></i>
-                    <span>Gift Cards</span>
-                </div>
-            </a>
-        </li>
-
-        @endHasPermission
 
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
@@ -157,7 +153,7 @@
         </li>
 
 
-        <!-- @if (auth()->user()->hasPermission('organization_management'))
+        @if (auth()->user()->hasPermission('organization_management'))
             <li class="nav-item">
                 <a href="{{ route('organizations.index') }}" class="nav-link {{ activeSegment('organization') }}">
                     <div class="d-flex align-items-center">
@@ -166,12 +162,12 @@
                     </div>
                 </a>
             </li>
-        @endif
- -->
+    @endif
 
 
 
-        <!-- Reports Dropdown -->
+
+    <!-- Reports Dropdown -->
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
                 <i class="nav-icon fas fa-chart-pie"></i>
@@ -233,6 +229,12 @@
                 <li><a class="dropdown-item" href="{{ route('sites.index') }}">
                         <i class="nav-icon fas fa-globe"></i>
                         <span>Sites</span>
+                    </a></li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.list_sites_management.value'))
+                <li><a class="dropdown-item" href="{{ route('admin.whitelist') }}">
+                        <i class="nav-icon fas fa-briefcase"></i>
+                        <span>Whitelist</span>
                     </a></li>
                 @endHasPermission
 

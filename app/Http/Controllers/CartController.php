@@ -17,9 +17,9 @@ class CartController extends Controller
 
     public function __construct()
     {
-        $this->object = new BaseController();
-        $this->middleware(function ($request, $next) {
-            if (auth()->user()->hasPermission('pos_management')) {
+        $this->object   =   new BaseController();
+        $this->middleware(function($request, $next){
+            if(auth()->user()->hasPermission('pos_management')) {
                 return $next($request);
             }
             abort(403);
@@ -35,16 +35,16 @@ class CartController extends Controller
         }
         $cart = $request->user()->cart()->get();
         $customersQuery = User::query();
-        $productsQuery = Product::where('status', '=', 1)->where('quantity', '!=', 0);
+        $productsQuery = Product::where('status','=',1)->where('quantity','!=',0);
         $categoriesQuery = Category::query();
-        if (auth()->user()->organization_id) {
-            $customersQuery->where('organization_id', auth()->user()->organization_id);
-            $productsQuery->where('organization_id', auth()->user()->organization_id);
-            $categoriesQuery->where('organization_id', auth()->user()->organization_id);
+        if(auth()->user()->organization_id){
+            $customersQuery->where('organization_id',auth()->user()->organization_id);
+            $productsQuery->where('organization_id',auth()->user()->organization_id);
+            $categoriesQuery->where('organization_id',auth()->user()->organization_id);
         }
-        $customers = $customersQuery->get();
-        $products = $productsQuery->get();
-        $categories = $categoriesQuery->get();
+        $customers  =   $customersQuery->get();
+        $products   =   $productsQuery->get();
+        $categories =   $categoriesQuery->get();
         return view('cart.index', compact('customers', 'cart', 'products', 'categories'));
     }
 
@@ -52,94 +52,78 @@ class CartController extends Controller
     {
         try {
             DB::beginTransaction();
-    
+
             $request->validate([
                 'barcode' => 'nullable|exists:products,barcode',
                 'product_id' => 'nullable|exists:products,id',
             ]);
-    
             $barcode = $request->barcode;
             $productId = $request->product_id;
-    
-            if (!$barcode && !$productId) {
+
+            if(!$barcode and !$productId) {
                 return $this->object->respondBadRequest(['error' => "Bar code or Product ID is Required!"]);
             }
-    
-            if ($barcode) {
+
+            if($barcode) {
                 $product = Product::with(['taxType'])->where('barcode', $barcode)->first();
                 $cart = $request->user()->cart()->where('barcode', $barcode)->first();
-            } else if ($productId) {
+            }
+            else if($productId) {
                 $product = Product::with(['taxType'])->where('id', $productId)->first();
                 $cart = $request->user()->cart()->where('products.id', $productId)->first();
             }
-    
             if ($cart) {
-                // Check if the product has limited stock (non-negative) and if the cart quantity exceeds available stock
-                if ($product->quantity >= 0 && $product->quantity <= $cart->pivot->quantity) {
+                // check product quantity
+                if ($product->quantity <= $cart->pivot->quantity) {
                     return $this->object->respondBadRequest(['error' => 'Product available only: ' . $product->quantity]);
                 }
-    
-                // Handle discount
                 if ($product->discount_type == 'fixed_amount') {
-                    $cart->pivot->discount += $product->discount;
+                    $cart->pivot->discount  +=   $product->discount;
                 } else if ($product->discount_type == 'percentage') {
-                    $cart->pivot->discount += ($product->price * $product->discount) / 100;
+                    $cart->pivot->discount  +=   ($product->price * $product->discount) / 100;
                 }
-    
-                // Handle tax
+
                 if ($product->taxType) {
                     if ($product->taxType->tax_type == 'fixed_amount') {
-                        $cart->pivot->tax += $product->taxType->tax;
+                        $cart->pivot->tax  +=   $product->taxType->tax;
                     } else if ($product->taxType->tax_type == 'percentage') {
-                        $cart->pivot->tax += ($product->price * $product->taxType->tax) / 100;
+                        $cart->pivot->tax  +=   ($product->price * $product->taxType->tax) / 100;
                     }
                 }
-    
-                // Update quantity in cart
-                $cart->pivot->quantity += 1;
+                // update only quantity
+                $cart->pivot->quantity = $cart->pivot->quantity + 1;
                 $cart->pivot->save();
             } else {
-                // Check if product is out of stock (ignore negative quantities for unlimited stock)
-                if ($product->quantity >= 0 && $product->quantity < 1) {
+                if ($product->quantity < 1) {
                     return $this->object->respondBadRequest(['error' => 'Product out of stock']);
                 }
-    
-                // Handle discount
-                $discount = 0;
+                $discount   =   0;
                 if ($product->discount_type == 'fixed_amount') {
-                    $discount = $product->discount;
+                    $discount  =   $product->discount;
                 } else if ($product->discount_type == 'percentage') {
-                    $discount = ($product->price * $product->discount) / 100;
+                    $discount  =   ($product->price * $product->discount) / 100;
                 }
-    
-                // Handle tax
-                $tax = 0;
+
+                $tax    =   0;
                 if ($product->taxType) {
                     if ($product->taxType->tax_type == 'fixed_amount') {
-                        $tax = $product->taxType->tax;
+                        $tax  =   $product->taxType->tax;
                     } else if ($product->taxType->tax_type == 'percentage') {
-                        $tax = ($product->price * $product->taxType->tax) / 100;
+                        $tax  =   ($product->price * $product->taxType->tax) / 100;
                     }
                 }
-    
-                // Add to cart (no stock limit if quantity is negative)
-                $request->user()->cart()->attach($product->id, [
-                    'quantity' => 1,
-                    'discount' => $discount,
-                    'tax' => $tax
-                ]);
+
+                $request->user()->cart()->attach($product->id, ['quantity' => 1, 'discount' => $discount, 'tax' => $tax]);
             }
-    
+
             DB::commit();
-    
+
             return $this->object->respond(['cart' => $request->user()->cart()->get()], [], true, 'Product added!');
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);
         }
     }
-    
-
 
     public function changeQty(Request $request)
     {
@@ -153,29 +137,29 @@ class CartController extends Controller
             $cart = $request->user()->cart()->where('products.id', $request->product_id)->first();
 
             if ($cart) {
-                $product = Product::where('id', $request->product_id)->first();
+                $product =  Product::where('id', $request->product_id)->first();
                 if ($product->quantity < $request->quantity) {
                     return $this->object->respondBadRequest(['error' => 'Product available only: ' . $product->quantity]);
                 }
 
-                $discount = 0;
+                $discount   =   0;
                 if ($product->discount_type == 'fixed_amount') {
-                    $discount = $product->discount;
+                    $discount  =   $product->discount;
                 } else if ($product->discount_type == 'percentage') {
-                    $discount = ($product->price * $product->discount) / 100;
+                    $discount  =   ($product->price * $product->discount) / 100;
                 }
 
-                $tax = 0;
+                $tax    =   0;
                 if ($product->taxType) {
                     if ($product->taxType->tax_type == 'fixed_amount') {
-                        $tax = $product->taxType->tax;
+                        $tax  =   $product->taxType->tax;
                     } else if ($product->taxType->tax_type == 'percentage') {
-                        $tax = ($product->price * $product->taxType->tax) / 100;
+                        $tax  =   ($product->price * $product->taxType->tax) / 100;
                     }
                 }
 
-                $cart->pivot->discount = $discount * $request->quantity;
-                $cart->pivot->tax = $tax * $request->quantity;
+                $cart->pivot->discount  =   $discount   * $request->quantity;
+                $cart->pivot->tax       =   $tax   * $request->quantity;
 
                 $cart->pivot->quantity = $request->quantity;
                 $cart->pivot->save();
