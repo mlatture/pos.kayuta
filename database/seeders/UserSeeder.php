@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
@@ -14,13 +16,23 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        User::updateOrCreate([
-            'email' => 'admin@mail.com'
-        ], [
-            'first_name' => 'Admin',
-            'last_name' => 'CA',
-            'email'=>'admin@mail.com',
-            'password' => bcrypt('codeastro.com')
-        ]);
+        $path = database_path('seeders/sql/users.sql');
+
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
+        }
+
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
+        }
     }
 }

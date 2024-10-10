@@ -19,31 +19,49 @@
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
-                                width="100%">
+                                   width="100%">
                                 <thead>
-                                    <tr><!-- Log on to codeastro.com for more projects -->
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Image</th>
-                                        <th>Barcode</th>
-                                        <th>Item Cost</th>
-                                        <th>Item Price</th>
-                                        <th>Quantity</th>
-                                        <th>Status</th>
-                                        <th>Created At</th>
-                                        <th>Updated At</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr><!-- Log on to codeastro.com for more projects -->
+                                    <th>ID</th>
+                                    <th>{{ $dictionaryFields['name'] ?? 'Name' }}</th>
+                                    <th>{{ $dictionaryFields['image'] ?? 'Image' }}</th>
+                                    <th>{{ $dictionaryFields['barcode'] ?? 'Barcode' }}</th>
+                                    <th>{{ $dictionaryFields['price'] ?? 'Price' }}</th>
+                                    <th>{{ $dictionaryFields['quantity'] ?? 'Quantity' }}</th>
+                                    <th>{{ $dictionaryFields['status'] ?? 'Status' }}</th>
+                                    <th>{{ $dictionaryFields['created_at'] ?? 'Created At' }}</th>
+                                    <th>{{ $dictionaryFields['updated_at'] ?? 'Updated At' }}</th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
+                                @foreach ($products as $k => $product)
+                                    <tr>
+                                        <td>{{ $product->id }}</td>
+                                        <td>{{ Str::limit($product->name, 20) }}</td>
+                                        <td><img class="product-img img-thumbnail"
+                                                 src="{{ asset(Storage::url($product->image)) }}" width="60px"
+                                                 height="60px" alt=""></td>
+                                        <td>{{ $product->barcode }}</td>
+                                        <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
+                                        <td>{{ $product->quantity }}</td>
+                                        <td>
                                     @foreach ($products as $k => $product)
                                         @php
+
                                             $imagePath = 'products/' . $product->image;
                                             $fallbackImageUrl = asset('images/product-thumbnail.jpg');
 
                                             $imageUrl = Storage::disk('public')->exists($imagePath)
                                                 ? Storage::url($imagePath)
                                                 : $fallbackImageUrl;
+
+
+                                            $imagePath = 'storage/products/' . $product->image;
+                                            $fallbackImageUrl = 'images/product-thumbnail.jpg';
+                                            $imageUrl = file_exists(public_path($imagePath))
+                                                ? asset($imagePath)
+                                                : asset($fallbackImageUrl);
 
                                         @endphp
 
@@ -61,6 +79,7 @@
                                             <td>{{ $product->quantity }}</td>
                                             <td>
                                                 <span
+
                                                     class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
@@ -80,6 +99,25 @@
                                             </td>
                                         </tr>
                                     @endforeach
+
+                                                    class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">{{ $product->status ? 'Active' : 'Inactive' }}</span>
+                                        </td>
+                                        <td>{{ $product->created_at }}</td>
+                                        <td>{{ $product->updated_at }}</td>
+                                        <td>
+                                            @hasPermission(config('constants.role_modules.edit_products.value'))
+                                            <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
+                                                    class="fas fa-edit"></i></a>
+                                            @endHasPermission
+                                            @hasPermission(config('constants.role_modules.delete_products.value'))
+                                            <button class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('products.destroy', $product) }}"><i
+                                                    class="fas fa-trash"></i></button>
+                                            @endHasPermission
+                                        </td>
+                                    </tr>
+                                @endforeach
+
                                 </tbody>
 
                             </table>
@@ -95,7 +133,7 @@
 @section('js')
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.table').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
@@ -103,7 +141,7 @@
                 ]
             });
 
-            $(document).on('click', '.btn-delete', function() {
+            $(document).on('click', '.btn-delete', function () {
                 $this = $(this);
                 const swalWithBootstrapButtons = Swal.mixin({
                     customClass: {
@@ -126,8 +164,8 @@
                         $.post($this.data('url'), {
                             _method: 'DELETE',
                             _token: '{{ csrf_token() }}'
-                        }, function(res) {
-                            $this.closest('tr').fadeOut(500, function() {
+                        }, function (res) {
+                            $this.closest('tr').fadeOut(500, function () {
                                 $(this).remove();
                             })
                         })

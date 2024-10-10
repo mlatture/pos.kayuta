@@ -24,9 +24,10 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $orders = Order::with(['payments']);
-        // dd($orders); die();
-       
+        $orders = Order::query();
+        // if(auth()->user()->organization_id){
+        //     $orders->where('organization_id',auth()->user()->organization_id);
+        // }
         if ($request->start_date) {
             $orders = $orders->where('created_at', '>=', $request->start_date);
         }
@@ -69,6 +70,7 @@ class OrderController extends Controller
 
             $cart = $request->user()->cart()->get();
             foreach ($cart as $item) {
+                // $price = $item->price + $item->pivot->tax - $item->pivot->discount;
                 $order->items()->create([
                     'price' => ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount,
                     'quantity' => $item->pivot->quantity,
@@ -96,19 +98,26 @@ class OrderController extends Controller
             $order->payments()->create([
                 'amount' => $request->amount,
                 'admin_id' => $request->user()->id,
+
                 'payment_method' => $request->payment_method,
                 'payment_acc_number' => $request->acc_number,
                 'x_ref_num' => $request->x_ref_num,
                 'payment_status' => $status,
+
             ]);
 
             $order = Order::orderFindById($order->id);
 
-            dispatch(new SendOrderReceiptJob($order));
+            // dispatch(new SendOrderReceiptJob($order));
 
             DB::commit();
 
+
             return response()->json(['success', 'Order Placed Successfully!', "order_id" => $order->id]);
+
+            return response()->json(['success', 'Order Placed Successfully!']);
+            // return back()->with('success', 'Order Placed Successfully!');
+
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);

@@ -543,18 +543,6 @@ $(document).ready(function () {
         var offcanvas = new bootstrap.Offcanvas(
             document.getElementById("offcanvasOrder")
         );
-        if (totalAmount <= 0) {
-            $.toast({
-                heading: "Error",
-                text: "Please add some items to cart!",
-                position: "top-right",
-                loaderBg: "#FF1356",
-                icon: "error",
-                hideAfter: 4000,
-                stack: 6,
-            });
-            return;
-        }
         offcanvas.show();
 
         $("#offcanvasSubtotal").text(
@@ -572,87 +560,87 @@ $(document).ready(function () {
     });
 
 
-    // $(document).on("click", ".apply-gift-card", function () {
-    //     var customer_id = $("#customer_id").val();
+    $(document).on("click", ".apply-gift-card", function () {
+        var customer_id = $("#customer_id").val();
 
-    //     Swal.fire({
-    //         title: "Enter Gift Card",
-    //         input: "text",
-    //         inputAttributes: {
-    //             autocapitalize: "off",
-    //         },
-    //         showCancelButton: true,
-    //         confirmButtonText: "Submit",
-    //         showLoaderOnConfirm: true,
-    //         inputValidator: (value) => {
-    //             if (!value) {
-    //                 return "Please Enter Gift Card!";
-    //             }
-    //         },
-    //         preConfirm: async (code) => {
-    //             try {
-    //                 const apiUrl = giftCard;
+        Swal.fire({
+            title: "Enter Gift Card",
+            input: "text",
+            inputAttributes: {
+                autocapitalize: "off",
+            },
+            showCancelButton: true,
+            confirmButtonText: "Submit",
+            showLoaderOnConfirm: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return "Please Enter Gift Card!";
+                }
+            },
+            preConfirm: async (code) => {
+                try {
+                    const apiUrl = giftCard;
 
-    //                 const requestBody = {
-    //                     customer_id: customer_id,
-    //                     code: code,
-    //                 };
+                    const requestBody = {
+                        customer_id: customer_id,
+                        code: code,
+                    };
 
-    //                 const response = await fetch(apiUrl, {
-    //                     method: "POST",
-    //                     headers: {
-    //                         "Content-Type": "application/json",
-    //                         "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-    //                             "content"
-    //                         ),
-    //                     },
-    //                     body: JSON.stringify(requestBody),
-    //                 });
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"
+                            ),
+                        },
+                        body: JSON.stringify(requestBody),
+                    });
 
-    //                 if (!response.ok) {
-    //                     const responseJson = await response.json();
-    //                     // console.log(responseJson);
-    //                     return Swal.showValidationMessage(
-    //                         `${responseJson.message}`
-    //                     );
-    //                 }
-    //                 return response.json();
-    //             } catch (error) {
-    //                 Swal.showValidationMessage(`
-    //                     Request failed: ${error}
-    //                 `);
-    //             }
-    //         },
-    //         allowOutsideClick: () => !Swal.isLoading(),
-    //     }).then((result) => {
-    //         if (result.isConfirmed && result.value) {
-    //             const response = result.value;
-    //             $("#gift_card_discount").val(
-    //                 response.response.data.gift_card_discount
-    //             );
-    //             $("#gift_card_id").val(response.response.data.gift_card.id);
-    //             $(".show-gift-discount").text(
-    //                 "$ " + response.response.data.gift_card_discount
-    //             );
-    //             var totalamount =
-    //                 $("#subtotal-amount").val() -
-    //                 response.response.data.gift_card_discount;
-    //             $("#total-amount").val(totalamount.toFixed(2));
-    //             $(".show-total-amount").text("$ " + totalamount.toFixed(2));
+                    if (!response.ok) {
+                        const responseJson = await response.json();
+                        // console.log(responseJson);
+                        return Swal.showValidationMessage(
+                            `${responseJson.message}`
+                        );
+                    }
+                    return response.json();
+                } catch (error) {
+                    Swal.showValidationMessage(`
+                        Request failed: ${error}
+                    `);
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading(),
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const response = result.value;
+                $("#gift_card_discount").val(
+                    response.response.data.gift_card_discount
+                );
+                $("#gift_card_id").val(response.response.data.gift_card.id);
+                $(".show-gift-discount").text(
+                    "$ " + response.response.data.gift_card_discount
+                );
+                var totalamount =
+                    $("#subtotal-amount").val() -
+                    response.response.data.gift_card_discount;
+                $("#total-amount").val(totalamount.toFixed(2));
+                $(".show-total-amount").text("$ " + totalamount.toFixed(2));
 
-    //             console.log(result);
-    //             $.toast({
-    //                 heading: "Success",
-    //                 text: result.value.message,
-    //                 position: "top-right",
-    //                 loaderBg: "#00c263",
-    //                 icon: "success",
-    //                 hideAfter: 2000,
-    //                 stack: 6,
-    //             });
-    //         } else if (result.isDenied) {
-    //             Swal.fire("Changes are not saved", "", "info");
-    //         }
-    //     });
-    // });
+                console.log(result);
+                $.toast({
+                    heading: "Success",
+                    text: result.value.message,
+                    position: "top-right",
+                    loaderBg: "#00c263",
+                    icon: "success",
+                    hideAfter: 2000,
+                    stack: 6,
+                });
+            } else if (result.isDenied) {
+                Swal.fire("Changes are not saved", "", "info");
+            }
+        });
+    });
 });
