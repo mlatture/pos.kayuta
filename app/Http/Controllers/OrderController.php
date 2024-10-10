@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\PosPayment;
 class OrderController extends Controller
 {
     private $object;
@@ -60,7 +61,6 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $order = Order::create([
-                'organization_id' => auth()->user()->organization_id,
                 'user_id' => $request->customer_id ?? 0,
                 'gift_card_id' => $request->gift_card_id ?? 0,
                 'admin_id' => $request->user()->id,
@@ -82,9 +82,28 @@ class OrderController extends Controller
                 $item->save();
             }
             $request->user()->cart()->detach();
+
+            $status = '';
+            $amount = $request->amount;
+            if($amount == 0){
+                $status = 'Not Paid';  
+            }else if($amount < ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
+                $status = 'Partial';
+            }else if($amount == ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
+                $status = 'Paid';
+            } else if($amount > ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
+                $status = 'Change';
+            }
+        
             $order->payments()->create([
                 'amount' => $request->amount,
                 'admin_id' => $request->user()->id,
+
+                'payment_method' => $request->payment_method,
+                'payment_acc_number' => $request->acc_number,
+                'x_ref_num' => $request->x_ref_num,
+                'payment_status' => $status,
+
             ]);
 
             $order = Order::orderFindById($order->id);
@@ -93,14 +112,47 @@ class OrderController extends Controller
 
             DB::commit();
 
+
+            return response()->json(['success', 'Order Placed Successfully!', "order_id" => $order->id]);
+
             return response()->json(['success', 'Order Placed Successfully!']);
             // return back()->with('success', 'Order Placed Successfully!');
+
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);
         }
     }
-
+    public function update(Request $request)
+    {
+        
+        $order = PosPayment::where('order_id', $request->order_id)->first();
+        $orderItem = OrderItem::where('order_id', $order->order_id)->first();
+        if (!$order) {
+            return response()->json([
+                'error' => 'Order not found',
+                'message' => "No PosPayment record found for order_id: " . $request->order_id
+            ], 404);
+        }
+    
+       
+        $amount = floatval(preg_replace('/[^\d.]/', '', $request->amount));
+    
+        $order->amount += $amount;
+    
+        $order->payment_method = $order->payment_method
+            ? $order->payment_method . ',' . $request->payment_method
+            : $request->payment_method;
+    
+        $order->save();
+    
+        return response()->json([
+            'totalpayAmount' => $order,
+            'OrderItem' => $orderItem
+        ], 200);
+    }
+    
+    
     public function generateInvoice($id)
     {
         try {

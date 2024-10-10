@@ -545,7 +545,6 @@ $(document).ready(function () {
         );
         offcanvas.show();
 
-        console.log(totalAmount, totalDiscount);
         $("#offcanvasSubtotal").text(
             parseFloat($("#subtotal-amount").val().replace(/,/g, "")).toFixed(2)
         );

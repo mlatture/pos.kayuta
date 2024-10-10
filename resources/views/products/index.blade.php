@@ -4,7 +4,7 @@
 @section('content-header', 'Product Management')
 @section('content-actions')
     @hasPermission(config('constants.role_modules.create_products.value'))
-    <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
+        <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
     @endHasPermission
 @endsection
 @section('css')
@@ -48,25 +48,58 @@
                                         <td>
                                     @foreach ($products as $k => $product)
                                         @php
+
+                                            $imagePath = 'products/' . $product->image;
+                                            $fallbackImageUrl = asset('images/product-thumbnail.jpg');
+
+                                            $imageUrl = Storage::disk('public')->exists($imagePath)
+                                                ? Storage::url($imagePath)
+                                                : $fallbackImageUrl;
+
+
                                             $imagePath = 'storage/products/' . $product->image;
                                             $fallbackImageUrl = 'images/product-thumbnail.jpg';
                                             $imageUrl = file_exists(public_path($imagePath))
                                                 ? asset($imagePath)
                                                 : asset($fallbackImageUrl);
+
                                         @endphp
+
                                         <tr>
                                             <td>{{ $product->id }}</td>
                                             <td>{{ Str::limit($product->name, 20) }}</td>
                                             <td>
-                                                <img class="product-img img-thumbnail"
-                                                    src="{{ $imageUrl }}" width="60px" height="60px" alt="">
+                                                <img class="product-img img-thumbnail" src="{{ $imageUrl }}"
+                                                    width="60px" height="60px" alt="">
                                             </td>
+
                                             <td>{{ $product->barcode }}</td>
                                             <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
                                             <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
                                             <td>{{ $product->quantity }}</td>
                                             <td>
                                                 <span
+
+                                                    class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">
+                                                    {{ $product->status ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $product->created_at }}</td>
+                                            <td>{{ $product->updated_at }}</td>
+                                            <td>
+                                                @hasPermission(config('constants.role_modules.edit_products.value'))
+                                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
+                                                            class="fas fa-edit"></i></a>
+                                                @endHasPermission
+                                                @hasPermission(config('constants.role_modules.delete_products.value'))
+                                                    <button class="btn btn-danger btn-delete"
+                                                        data-url="{{ route('products.destroy', $product) }}"><i
+                                                            class="fas fa-trash"></i></button>
+                                                @endHasPermission
+                                            </td>
+                                        </tr>
+                                    @endforeach
+
                                                     class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">{{ $product->status ? 'Active' : 'Inactive' }}</span>
                                         </td>
                                         <td>{{ $product->created_at }}</td>
@@ -84,7 +117,9 @@
                                         </td>
                                     </tr>
                                 @endforeach
+
                                 </tbody>
+
                             </table>
                         </div>
                     </div>

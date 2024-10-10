@@ -6,7 +6,8 @@
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
             <button class="btn btn-dark  text-white" type="button" 
                  aria-expanded="false">
-                Station: {{ ucfirst(auth()->user()->name) }}
+                Station: <?php echo e(ucfirst(auth()->user()->name)); ?>
+
             </button>
             <button class="btn btn-dark text-white new-sale" id="new-sale" type="button">
                 <i class="fa-solid fa-cart-arrow-down "></i> New Sale
@@ -19,12 +20,12 @@
                 <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
                     <li>
 
-                        @hasPermission(config('constants.role_modules.orders.value'))
-                        <a class="dropdown-item" href="{{ route('orders.index') }}">
+                        <?php if(auth()->user()->hasPermission(config('constants.role_modules.orders.value'))): ?>
+                        <a class="dropdown-item" href="<?php echo e(route('orders.index')); ?>">
                             <i class="fa-solid fa-up-right-from-square"></i>
                             Process Return
                         </a>
-                        @endHasPermission
+                        <?php endif; ?>
                     </li>
                     <li>
                         <a class="dropdown-item" href="#">
@@ -45,15 +46,16 @@
             <button class="btn btn-dark text-white">
                 <i class="fa-solid fa-bars-progress"></i> In Progress
             </button>
-            @hasPermission(config('constants.role_modules.orders.value'))
-            <a href="{{ route('orders.index') }}" class="btn btn-dark text-white">
+            <?php if(auth()->user()->hasPermission(config('constants.role_modules.orders.value'))): ?>
+            <a href="<?php echo e(route('orders.index')); ?>" class="btn btn-dark text-white">
                 <i class="nav-icon fas fa-box me-2"></i> History
             </a>
-            @endHasPermission
+            <?php endif; ?>
             <a href="#" class="btn btn-dark text-white">
-                <img src="{{ asset('images/help-ico.svg') }}" alt="Help Icon" class="me-2" />
+                <img src="<?php echo e(asset('images/help-ico.svg')); ?>" alt="Help Icon" class="me-2" />
                 Help
             </a>
         </div>
     </div>
 </header>
+<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/header.blade.php ENDPATH**/ ?>

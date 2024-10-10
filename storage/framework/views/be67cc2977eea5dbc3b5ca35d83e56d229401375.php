@@ -14,11 +14,7 @@
         <label class="btn btn-outline-secondary btn-payment flex-fill">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
                 value="CreditCard" autocomplete="off" />
-
             <i class="bi bi-credit-card"></i> Credit Card
-
-            Credit Card
-
         </label>
     </div>
 
@@ -112,3 +108,4 @@
         });
     }
 </script>
+<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/paymentmethod.blade.php ENDPATH**/ ?>

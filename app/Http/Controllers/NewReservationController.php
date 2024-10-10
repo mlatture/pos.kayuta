@@ -258,30 +258,7 @@ class NewReservationController extends Controller
     }
 
 
-    // public function makeCurlRequest($url, $data)
-    // {
-    //     $curl = curl_init();
-
-    //     curl_setopt_array($curl, array(
-    //         CURLOPT_URL => 'https://localemv.com:8887',
-    //         CURLOPT_RETURNTRANSFER => true,
-    //         CURLOPT_ENCODING => '',
-    //         CURLOPT_MAXREDIRS => 10,
-    //         CURLOPT_TIMEOUT => 0,
-    //         CURLOPT_FOLLOWLOCATION => true,
-    //         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    //         CURLOPT_CUSTOMREQUEST => 'POST',
-    //         CURLOPT_POSTFIELDS => 'xCommand=cc%3Asale&xAmount=1',
-    //         CURLOPT_HTTPHEADER => array(
-    //             'Content-Type: application/x-www-form-urlencoded'
-    //         ),
-    //     ));
-
-    //     $response = curl_exec($curl);
-
-    //     curl_close($curl);
-    //     echo $response;
-    // }
+  
 
 
     public function processPayment(Request $request, $id)
