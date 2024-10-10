@@ -1,17 +1,17 @@
-@extends('layouts.admin')
 
-@section('title', 'Product Management')
-@section('content-header', 'Product Management')
-@section('content-actions')
-    @hasPermission(config('constants.role_modules.create_products.value'))
-        <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
-    @endHasPermission
-@endsection
-@section('css')
-    <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
+
+<?php $__env->startSection('title', 'Product Management'); ?>
+<?php $__env->startSection('content-header', 'Product Management'); ?>
+<?php $__env->startSection('content-actions'); ?>
+    <?php if(auth()->user()->hasPermission(config('constants.role_modules.create_products.value'))): ?>
+        <a href="<?php echo e(route('products.create')); ?>" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
+    <?php endif; ?>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('css'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('plugins/sweetalert2/sweetalert2.min.css')); ?>">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
-@endsection
-@section('content')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('content'); ?>
     <div class="row animated fadeInUp">
         <div class="col-12">
             <div class="card">
@@ -36,8 +36,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($products as $k => $product)
-                                        @php
+                                    <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $imagePath = 'products/' . $product->image;
                                             $fallbackImageUrl = asset('images/product-thumbnail.jpg');
 
@@ -45,55 +45,56 @@
                                                 ? Storage::url($imagePath)
                                                 : $fallbackImageUrl;
 
-                                        @endphp
+                                        ?>
 
                                         <tr>
-                                            <td>{{ $product->id }}</td>
-                                            <td>{{ Str::limit($product->name, 20) }}</td>
+                                            <td><?php echo e($product->id); ?></td>
+                                            <td><?php echo e(Str::limit($product->name, 20)); ?></td>
                                             <td>
-                                                <img class="product-img img-thumbnail" src="{{ $imageUrl }}"
+                                                <img class="product-img img-thumbnail" src="<?php echo e($imageUrl); ?>"
                                                     width="60px" height="60px" alt="">
                                             </td>
 
-                                            <td>{{ $product->barcode }}</td>
-                                            <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
-                                            <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
-                                            <td>{{ $product->quantity }}</td>
+                                            <td><?php echo e($product->barcode); ?></td>
+                                            <td><?php echo e(config('settings.currency_symbol')); ?><?php echo e($product->cost); ?></td>
+                                            <td><?php echo e(config('settings.currency_symbol')); ?><?php echo e($product->price); ?></td>
+                                            <td><?php echo e($product->quantity); ?></td>
                                             <td>
                                                 <span
-                                                    class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">
-                                                    {{ $product->status ? 'Active' : 'Inactive' }}
+                                                    class="right badge badge-<?php echo e($product->status ? 'success' : 'danger'); ?>">
+                                                    <?php echo e($product->status ? 'Active' : 'Inactive'); ?>
+
                                                 </span>
                                             </td>
-                                            <td>{{ $product->created_at }}</td>
-                                            <td>{{ $product->updated_at }}</td>
+                                            <td><?php echo e($product->created_at); ?></td>
+                                            <td><?php echo e($product->updated_at); ?></td>
                                             <td>
-                                                @hasPermission(config('constants.role_modules.edit_products.value'))
-                                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
+                                                <?php if(auth()->user()->hasPermission(config('constants.role_modules.edit_products.value'))): ?>
+                                                    <a href="<?php echo e(route('products.edit', $product)); ?>" class="btn btn-primary"><i
                                                             class="fas fa-edit"></i></a>
-                                                @endHasPermission
-                                                @hasPermission(config('constants.role_modules.delete_products.value'))
+                                                <?php endif; ?>
+                                                <?php if(auth()->user()->hasPermission(config('constants.role_modules.delete_products.value'))): ?>
                                                     <button class="btn btn-danger btn-delete"
-                                                        data-url="{{ route('products.destroy', $product) }}"><i
+                                                        data-url="<?php echo e(route('products.destroy', $product)); ?>"><i
                                                             class="fas fa-trash"></i></button>
-                                                @endHasPermission
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
 
                             </table>
                         </div>
                     </div>
-                    {{-- {{ $customers->render() }} --}}
+                    
                 </div>
             </div>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('js')
-    <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+<?php $__env->startSection('js'); ?>
+    <script src="<?php echo e(asset('plugins/sweetalert2/sweetalert2.min.js')); ?>"></script>
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
@@ -125,7 +126,7 @@
                     if (result.value) {
                         $.post($this.data('url'), {
                             _method: 'DELETE',
-                            _token: '{{ csrf_token() }}'
+                            _token: '<?php echo e(csrf_token()); ?>'
                         }, function(res) {
                             $this.closest('tr').fadeOut(500, function() {
                                 $(this).remove();
@@ -136,4 +137,6 @@
             })
         })
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/products/index.blade.php ENDPATH**/ ?>
