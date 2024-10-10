@@ -37,22 +37,24 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($products as $k => $product)
+                                        
                                         @php
-                                            $imagePath = 'products/' . $product->image;
+                                            $imagePath = 'images/products/' . $product->image;
                                             $fallbackImageUrl = asset('images/product-thumbnail.jpg');
 
-                                            $imageUrl = Storage::disk('public')->exists($imagePath)
-                                                ? Storage::url($imagePath)
-                                                : $fallbackImageUrl;
-
+                                            if (!empty($product->image) && file_exists(public_path($imagePath))) {
+                                                $imageUrl = asset($imagePath);
+                                            } else {
+                                                $imageUrl = $fallbackImageUrl;
+                                            }
                                         @endphp
-
                                         <tr>
                                             <td>{{ $product->id }}</td>
                                             <td>{{ Str::limit($product->name, 20) }}</td>
+
                                             <td>
                                                 <img class="product-img img-thumbnail" src="{{ $imageUrl }}"
-                                                    width="60px" height="60px" alt="">
+                                                    width="60px" height="60px" alt="{{ $product->name }}">
                                             </td>
 
                                             <td>{{ $product->barcode }}</td>
