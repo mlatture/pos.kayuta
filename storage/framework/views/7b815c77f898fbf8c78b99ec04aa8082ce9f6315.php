@@ -4,11 +4,19 @@
             Point Of Sale
         </a>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            <button class="btn btn-dark  text-white" type="button" 
-                 aria-expanded="false">
-                Station: <?php echo e(ucfirst(auth()->user()->name)); ?>
+            <div class="dropdown">
+                <button class="btn btn-dark text-white dropdown-toggle" type="button" id="registerDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Station: <?php echo e(session('current_register_name', 'Select Register')); ?>
 
-            </button>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="registerDropdown">
+                    <?php $__currentLoopData = $registers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $register): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <a class="dropdown-item" href="#" onclick="setRegister(<?php echo e($register->id); ?>, '<?php echo e($register->name); ?>')"><?php echo e($register->name); ?></a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    
+                </div>
+            </div>
+            
             <button class="btn btn-dark text-white new-sale" id="new-sale" type="button">
                 <i class="fa-solid fa-cart-arrow-down "></i> New Sale
             </button>
@@ -58,4 +66,23 @@
         </div>
     </div>
 </header>
-<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/header.blade.php ENDPATH**/ ?>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function setRegister(registerId, registerName) {
+      
+        $.ajax({
+            url: '<?php echo e(route("registers.set")); ?>',
+            method: 'POST',
+            data: {
+                _token: '<?php echo e(csrf_token()); ?>',
+                register_id: registerId,
+                register_name: registerName
+            },
+            success: function() {
+               
+                $('#registerDropdown').text('Station: ' + registerName);
+            }
+        });
+    }
+</script><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/header.blade.php ENDPATH**/ ?>

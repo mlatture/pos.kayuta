@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
+use App\Http\Controllers\StationRegisterController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -109,6 +110,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
+    Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
 
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');

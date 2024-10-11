@@ -4,10 +4,21 @@
             Point Of Sale
         </a>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            <button class="btn btn-dark  text-white" type="button" 
-                 aria-expanded="false">
-                Station: {{ ucfirst(auth()->user()->name) }}
-            </button>
+            <div class="dropdown">
+                <button class="btn btn-dark text-white dropdown-toggle" type="button" id="registerDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Station: {{ session('current_register_name', 'Select Register') }}
+                </button>
+                <div class="dropdown-menu" aria-labelledby="registerDropdown">
+                    @foreach($registers as $register)
+                        <a class="dropdown-item" href="#" onclick="setRegister({{ $register->id }}, '{{ $register->name }}')">{{ $register->name }}</a>
+                    @endforeach
+                    {{-- @if(\App\CPU\Helpers::module_permission_check('pos_admin'))
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ route("registers.create") }}">Add new Register</a>
+                    @endif --}}
+                </div>
+            </div>
+            
             <button class="btn btn-dark text-white new-sale" id="new-sale" type="button">
                 <i class="fa-solid fa-cart-arrow-down "></i> New Sale
             </button>
@@ -57,3 +68,23 @@
         </div>
     </div>
 </header>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function setRegister(registerId, registerName) {
+      
+        $.ajax({
+            url: '{{ route("registers.set") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                register_id: registerId,
+                register_name: registerName
+            },
+            success: function() {
+               
+                $('#registerDropdown').text('Station: ' + registerName);
+            }
+        });
+    }
+</script>

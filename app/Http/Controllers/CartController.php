@@ -10,7 +10,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\StationRegisters;
 class CartController extends Controller
 {
     private $object;
@@ -28,6 +28,8 @@ class CartController extends Controller
 
     public function index(Request $request)
     {
+        $registers = StationRegisters::all();
+       
         if ($request->wantsJson()) {
             return response(
                 $request->user()->cart()->get()
@@ -45,7 +47,7 @@ class CartController extends Controller
         $customers = $customersQuery->get();
         $products = $productsQuery->get();
         $categories = $categoriesQuery->get();
-        return view('cart.index', compact('customers', 'cart', 'products', 'categories'));
+        return view('cart.index', compact('customers', 'cart', 'products', 'categories', 'registers'));
     }
 
     public function store(Request $request)
