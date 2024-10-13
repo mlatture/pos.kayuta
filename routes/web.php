@@ -21,7 +21,6 @@ use App\Http\Controllers\TaxTypeController;
 use App\Http\Controllers\ProcessController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
 use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
 Route::get('/', function () {
@@ -44,12 +43,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
     Route::resource('customers', CustomerController::class);
-    Route::group(['middleware' => 'master_admin'], function () {
+    Route::group(['middleware' => 'master_admin'],function(){
         Route::resource('organizations', OrganizationController::class)->except(['show']);
         Route::resource('admin-roles', AdminRoleController::class)->except(['show']);
-        Route::resource('admins', AdminController::class)->except(['show']);
+        Route::resource('admins',AdminController::class)->except(['show']);
     });
-
     Route::resource('orders', OrderController::class);
     Route::get('orders-generate-invoice/{id}', [OrderController::class, 'generateInvoice'])->name('orders.generate.invoice');
     Route::get('orders-to-return', [OrderController::class, 'ordersToBeReturn'])->name('orders.to.be.return');
@@ -57,10 +55,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-gift-card', [ProcessController::class, 'processGiftCard'])->name('orders.process.gift.card');
     Route::post('orders/process-gift-card-balance', [ProcessController::class, 'updateGiftCardBalance'])->name('orders.process.gift.card.balance');
     Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
-
-    Route::post('orders-submit', [OrderController::class, 'store'])->name('orders.store');
     Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
-//    Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
 
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
@@ -113,6 +110,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
+    Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
 
 });
 
@@ -132,6 +130,7 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
         });
     });
 
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
 

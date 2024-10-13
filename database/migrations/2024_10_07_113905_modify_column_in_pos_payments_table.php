@@ -13,9 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('products', function (Blueprint $table) {
-                $table->string('quantity')->change();
-                $table->float('cost');
+        Schema::table('pos_payments', function (Blueprint $table) {
+            $table->string('payment_status')->nullable();
         });
     }
 
@@ -26,9 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('products', function (Blueprint $table) {
-                $table->integer('quantity')->change();
-                $table->dropColumn('organization_id');
+        Schema::table('pos_payments', function (Blueprint $table) {
+            $table->dropColumn('organization_id');
         });
     }
 };
