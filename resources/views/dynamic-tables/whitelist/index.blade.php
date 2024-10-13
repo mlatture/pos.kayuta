@@ -46,15 +46,11 @@
                                                 </span>
                                         </td>
                                         <td>
-                                            <a title="View {{ $whitelist->table_name }} data"
-                                               href="{{ route('admin.dynamic-module-records', $whitelist->table_name) }}"
-                                               class="btn btn-primary"><i
-                                                    class="fas fa-eye"></i></a>
-                                            @if (auth()->user()->hasPermission("update_{$whitelist->table_name}"))
-                                                <a title="Create new {{ $whitelist->table_name }}"
-                                                   href="{{ route('admin.dynamic-module-create-form-data', $whitelist->table_name) }}"
+                                            @if (auth()->user()->hasPermission("read_{$whitelist->table_name}"))
+                                                <a title="View {{ $whitelist->table_name }} data"
+                                                   href="{{ route('admin.dynamic-module-records', $whitelist->table_name) }}"
                                                    class="btn btn-primary"><i
-                                                        class="fas fa-plus"></i></a>
+                                                        class="fas fa-eye"></i></a>
                                             @endif
                                             @if (auth()->user()->hasPermission("update_{$whitelist->table_name}"))
                                                 <a title="Edit {{ $whitelist->table_name }} table"

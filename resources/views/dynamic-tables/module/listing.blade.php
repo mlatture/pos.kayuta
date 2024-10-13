@@ -3,7 +3,7 @@
 @section('title', "{$formattedTable} Management")
 @section('content-header', "{$formattedTable} Management")
 @section('content-actions')
-    @if (auth()->user()->hasPermission("update_{$table}"))
+    @if (auth()->user()->hasPermission("read_{$table}"))
         <a href="{{ route('admin.dynamic-module-create-form-data', $table) }}" class="btn btn-success">
             <i class="fas fa-plus"></i> Add New {{ $formattedTable }}
         </a>
@@ -51,7 +51,7 @@
                                     <tr>
                                         <td>
                                             @if(isset($record->id))
-                                                @if (auth()->user()->hasPermission("update_{$table}"))
+                                                @if (auth()->user()->hasPermission("read_{$table}"))
                                                     <a title="Edit {{ $table }} record"
                                                        href="{{ route('admin.dynamic-module-create-form-data', [$table, $record->id]) }}"
                                                        class="btn btn-sm btn-primary"><i
