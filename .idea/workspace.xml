@@ -6,76 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b42f16a9-3dd4-4717-8404-f44599d30769" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Console/Commands/GenerateSqlDump.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Console/Commands/GenerateSqlDump.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Console/Kernel.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Console/Kernel.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Console/Kernel.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/activity_log.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/activity_log.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/admin_cart.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/admin_cart.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/admin_roles.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/admin_roles.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/admins.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/admins.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/amenities.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/amenities.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/blogs.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/blogs.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/business_settings.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/business_settings.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/campground_maps.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/campground_maps.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/campground_policies.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/campground_policies.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/camping_seasons.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/camping_seasons.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/campsite_pics.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/campsite_pics.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/cards_on_files.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/cards_on_files.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/cart_reservations.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/cart_reservations.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/categories.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/categories.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/coupons.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/coupons.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/currencies.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/currencies.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/customers.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/customers.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/dictionary_tables.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/dictionary_tables.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/directions.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/directions.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/electric.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/electric.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/events.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/events.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/gift_cards.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/gift_cards.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/hiking_and_mountain_biking_maps.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/hiking_and_mountain_biking_maps.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/infos.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/infos.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/jobs.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/jobs.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/kayuta_theme_songs.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/kayuta_theme_songs.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/kayuta_videos.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/kayuta_videos.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/liability_waivers.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/liability_waivers.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/local_area_attractions.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/local_area_attractions.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/menu_items.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/menu_items.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/migrations.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/migrations.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/news_letters.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/news_letters.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/notifications.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/notifications.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/oauth_access_tokens.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/oauth_access_tokens.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/oauth_clients.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/oauth_clients.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/oauth_personal_access_clients.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/oauth_personal_access_clients.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/order_items.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/order_items.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/orders.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/orders.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/organizations.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/organizations.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/password_resets.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/password_resets.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/payments.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/payments.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/pos_payments.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/pos_payments.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/product_vendors.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/product_vendors.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/products.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/products.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/rate_tiers.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/rate_tiers.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/readings.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/readings.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/receipts.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/receipts.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/reservations.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/reservations.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/reviews.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/reviews.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/search_functions.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/search_functions.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/seasonal_waiting_lists.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/seasonal_waiting_lists.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/seasons.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/seasons.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/site_classes.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/site_classes.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/site_hookups.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/site_hookups.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/site_rigtypes.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/site_rigtypes.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/sites.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/sites.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/social_medias.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/social_medias.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/submenu_items.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/submenu_items.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/tale_of_kayutas.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/tale_of_kayutas.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/tax_types.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/tax_types.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/theme_weekends.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/theme_weekends.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/trailer_toung_weights.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/trailer_toung_weights.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/transactions.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/transactions.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/unit_rate.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/unit_rate.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/users.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/users.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/virtual_tour_of_bears.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/virtual_tour_of_bears.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/seeders/sql/virtual_tour_of_sites.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/seeders/sql/virtual_tour_of_sites.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,6 +23,14 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -226,7 +164,12 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/Console" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../learning" />
+    <property name="nodejs_package_manager_path" value="yarn" />
+    <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -257,6 +200,12 @@
       <workItem from="1727705072395" duration="664000" />
       <workItem from="1727705781829" duration="793000" />
       <workItem from="1727706598768" duration="630000" />
+      <workItem from="1728478016714" duration="186000" />
+      <workItem from="1728478210677" duration="1266000" />
+      <workItem from="1728596788522" duration="197000" />
+      <workItem from="1728635086000" duration="991000" />
+      <workItem from="1728641892388" duration="1679000" />
+      <workItem from="1728749122541" duration="637000" />
     </task>
     <servers />
   </component>
