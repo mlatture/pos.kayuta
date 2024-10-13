@@ -5,6 +5,7 @@
 
 @section('content')
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <div class="row animated fadeInUp">
         <div class="col-12">
             <div class="card">
@@ -16,9 +17,9 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Table Name</th>
-                                    <th>Read Permission</th>
-                                    <th>Update Permission</th>
-                                    <th>Delete Permission</th>
+                                    <th>Can Read?</th>
+                                    <th>Can Update?</th>
+                                    <th>Can Delete?</th>
                                     <th>Actions</th>
                                 </tr>
                                 </thead>
@@ -27,22 +28,46 @@
                                     <tr>
                                         <td>{{ $whitelist->id }}</td>
                                         <td>{{ $whitelist->table_name }}</td>
-                                        <td>{{ $whitelist->read_permission_level === 1 ? 'Allowed' : 'No Allowed' }}</td>
-                                        <td>{{ $whitelist->update_permission_level === 1 ? 'Allowed' : 'No Allowed' }}</td>
-                                        <td>{{ $whitelist->delete_permission_level === 1 ? 'Allowed' : 'No Allowed' }}</td>
+                                        @php
+                                            $allowRead = auth()->user()->hasPermission("read_{$whitelist->table_name}");
+                                            $allowUpdate = auth()->user()->hasPermission("update_{$whitelist->table_name}");
+                                            $allowDelete = auth()->user()->hasPermission("delete_{$whitelist->table_name}");
+                                        @endphp
+                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowRead ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
+                                        <td><span class="badge {{ $allowUpdate ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowUpdate ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
+                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowDelete ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
                                         <td>
-                                            @if($whitelist->update_permission_level === 1)
-                                                <a title="View {{ $whitelist->table_name }} data" href="{{ route('admin.dynamic-module-records', $whitelist->table_name) }}"
-                                                   class="btn btn-primary"><i
-                                                        class="fas fa-eye"></i></a>
-                                                <a title="Create new {{ $whitelist->table_name }}" href="{{ route('admin.dynamic-module-create-form-data', $whitelist->table_name) }}"
+                                            <a title="View {{ $whitelist->table_name }} data"
+                                               href="{{ route('admin.dynamic-module-records', $whitelist->table_name) }}"
+                                               class="btn btn-primary"><i
+                                                    class="fas fa-eye"></i></a>
+                                            @if (auth()->user()->hasPermission("update_{$whitelist->table_name}"))
+                                                <a title="Create new {{ $whitelist->table_name }}"
+                                                   href="{{ route('admin.dynamic-module-create-form-data', $whitelist->table_name) }}"
                                                    class="btn btn-primary"><i
                                                         class="fas fa-plus"></i></a>
-                                                <a title="Edit {{ $whitelist->table_name }} table" href="{{ route('admin.edit-table', $whitelist->table_name) }}"
+                                            @endif
+                                            @if (auth()->user()->hasPermission("update_{$whitelist->table_name}"))
+                                                <a title="Edit {{ $whitelist->table_name }} table"
+                                                   href="{{ route('admin.edit-table', $whitelist->table_name) }}"
                                                    class="btn btn-primary"><i
                                                         class="fas fa-edit"></i></a>
-                                            @else
-                                                -
+                                            @endif
+                                            @if (auth()->user()->hasPermission("delete_{$whitelist->table_name}"))
+                                                <a title="Delete {{ $whitelist->table_name }} table" href="#"
+                                                   class="btn btn-danger delete-table"
+                                                   data-url="{{ route('admin.delete-table', $whitelist->table_name) }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
                                             @endif
                                         </td>
                                     </tr>
@@ -55,6 +80,7 @@
             </div>
         </div>
     </div>
+
 @endsection
 @section('js')
     <script>
@@ -64,6 +90,39 @@
                 buttons: [
                     'copy', 'csv', 'excel', 'pdf', 'print'
                 ]
+            });
+
+            $(document).on('click', '.delete-table', function (event) {
+                event.preventDefault();
+                const url = $(this).data('url');
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "All the related settings will be deleted!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'delete',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            success: function (data) {
+                                $('#deleteModal').modal('hide');
+                                toastr.success(data.message);
+                                setTimeout(() => location.reload(), 2000);
+                            },
+                            error: function (xhr) {
+                                toastr.error(xhr.responseJSON.message);
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

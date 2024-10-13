@@ -3,14 +3,18 @@
 @section('title', "{$formattedTable} Management")
 @section('content-header', "{$formattedTable} Management")
 @section('content-actions')
-    <a href="{{ route('admin.dynamic-module-create-form-data', $table) }}" class="btn btn-success">
-        <i class="fas fa-plus"></i> Add New {{ $formattedTable }}
-    </a>
+    @if (auth()->user()->hasPermission("update_{$table}"))
+        <a href="{{ route('admin.dynamic-module-create-form-data', $table) }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New {{ $formattedTable }}
+        </a>
+    @endif
 @endsection
+
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
 @endsection
+
 @section('content')
     <div class="row animated fadeInUp">
         <div class="col-12">
@@ -18,17 +22,27 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="table-responsive m-t-40 p-3">
+                            @php
+                                $fieldsArray = array_values($dictionaryFields);
+
+                                usort($fieldsArray, function ($a, $b) {
+                                    return ($a['order'] <=> $b['order']);
+                                });
+
+                                $orderedKeys = array_map(function ($field) {
+                                    return $field['field_name'];
+                                }, $fieldsArray);
+                            @endphp
+
                             <table class="table table-hover table-striped border">
                                 <thead>
                                 <tr>
                                     <th></th>
-                                    @foreach($columns as $column)
-                                        <th>
-                                            @if($column === 'id')
-                                                @continue
-                                            @endif
-                                            {{ $dictionaryFields[$column]['display_name'] ?? $column }}
-                                        </th>
+                                    @foreach($orderedKeys as $key)
+                                        @if($key === 'id')
+                                            @continue
+                                        @endif
+                                        <th>{{ $dictionaryFields[$key]['display_name'] ?? $key }}</th>
                                     @endforeach
                                 </tr>
                                 </thead>
@@ -37,18 +51,20 @@
                                     <tr>
                                         <td>
                                             @if(isset($record->id))
-                                                <a title="Edit {{ $table }} record"
-                                                   href="{{ route('admin.dynamic-module-create-form-data', [$table, $record->id]) }}"
-                                                   class="btn btn-sm btn-primary"><i
-                                                        class="fas fa-edit"></i></a>
+                                                @if (auth()->user()->hasPermission("update_{$table}"))
+                                                    <a title="Edit {{ $table }} record"
+                                                       href="{{ route('admin.dynamic-module-create-form-data', [$table, $record->id]) }}"
+                                                       class="btn btn-sm btn-primary"><i
+                                                            class="fas fa-edit"></i></a>
+                                                @endif
                                             @endif
                                         </td>
-                                        @foreach($record as $key => $rec)
+                                        @foreach($orderedKeys as $key)
+                                            @if($key === 'id')
+                                                @continue
+                                            @endif
                                             <td>
-                                                @if($key === 'id')
-                                                    @continue
-                                                @endif
-                                                {{ $rec ?? '-' }}
+                                                {{ $record->{$key} ?? '-' }}
                                             </td>
                                         @endforeach
                                     </tr>
@@ -74,14 +90,14 @@
                 ]
             });
             $(document).on('click', '.btn-delete', function () {
-                $this = $(this);
+                const $this = $(this);
                 const swalWithBootstrapButtons = Swal.mixin({
                     customClass: {
                         confirmButton: 'btn btn-success',
                         cancelButton: 'btn btn-danger'
                     },
                     buttonsStyling: false
-                })
+                });
 
                 swalWithBootstrapButtons.fire({
                     title: 'Are you sure?',
@@ -99,11 +115,11 @@
                         }, function (res) {
                             $this.closest('tr').fadeOut(500, function () {
                                 $(this).remove();
-                            })
-                        })
+                            });
+                        });
                     }
-                })
-            })
-        })
+                });
+            });
+        });
     </script>
 @endsection

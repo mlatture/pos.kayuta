@@ -17,30 +17,31 @@
                         @if($column === 'id')
                             @continue;
                         @endif
-                        <div class="col-md-6">
+                        <div class="{{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'hidden' ? 'd-none' : 'col-md-6' }}">
                             <div class="form-group">
+                                <label for="{{ $column }}" {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? 'readonly' : '' }}>
+                                    {{ isset($dictionaryFields[$column]) ? $dictionaryFields[$column]['display_name'] : $column }}
+                                    {!! isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? '<span class="text-danger">(not editable)</span>' : '' !!}
+                                </label>
+
                                 @php
                                     $datatype = \Illuminate\Support\Facades\Schema::getColumnType($table, $column);
-                                    $fieldType = $datatype;
-                                    if($fieldType === 'string') {
-                                        $fieldType = 'text';
-                                    } elseif($fieldType === 'integer') {
-                                        $fieldType = 'number';
-                                    } elseif($fieldType === 'datetime') {
-                                        $fieldType = 'datetime-local';
-                                    }
+                                    $fieldType = $datatype === 'string' ? 'text' :
+                                                 ($datatype === 'integer' ? 'number' :
+                                                 ($datatype === 'datetime' ? 'datetime-local' : $datatype));
                                 @endphp
-                                <label
-                                    for="{{ $column }}">{{ $dictionaryFields[$column]['display_name'] ?? $column }}</label>
+
                                 @if(in_array($datatype, ['text', 'longtext', 'json']))
-                                    <textarea aria-label="{{ $column }}" type="{{ $fieldType }}" name="{{ $column }}"
-                                              class="form-control @error($column) is-invalid @enderror"
-                                              id="{{ $column }}">
+                                    <textarea aria-label="{{ $column }}" type="{{ $fieldType }}" name="{{ $column }}" class="form-control @error($column) is-invalid @enderror" id="{{ $column }}"
+                                              {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? 'readonly' : '' }}
+                                        {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'hidden' ? 'disabled' : '' }}>
                                         {{ $isEdit ? $moduleData->$column : old($column) }}
                                     </textarea>
                                 @else
                                     <input aria-label="{{ $column }}" type="{{ $fieldType }}" name="{{ $column }}"
                                            class="form-control @error($column) is-invalid @enderror" id="{{ $column }}"
+                                           {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? 'readonly' : '' }}
+                                           {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'hidden' ? 'disabled' : '' }}
                                            value="{{ $isEdit ? $moduleData->$column : old($column) }}">
                                 @endif
                                 @if(!empty($dictionaryFieldsDesc[$column]))

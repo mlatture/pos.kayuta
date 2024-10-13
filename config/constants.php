@@ -194,5 +194,9 @@ return [
             'name' => 'System Settings',
             'value' => 'system_settings'
         ],
+        'whitelist_tables' => [
+            'name' => 'Whitelist Tables',
+            'value' => 'whitelist_tables'
+        ],
     ]
 ];

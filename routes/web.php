@@ -117,20 +117,19 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
+    Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
 
-    Route::middleware('check.table.permission')->group(static function () {
-        Route::controller(DynamicTableController::class)->group(static function() {
-            Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
-            Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
+    Route::controller(DynamicTableController::class)->group(static function() {
+        Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
+        Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
+        Route::delete('delete-table/{table}', 'delete_table')->name('admin.delete-table');
 
-            Route::get('dynamic-module-records/{table}', 'dynamic_module_records')->name('admin.dynamic-module-records');
-            Route::get('dynamic-module/{table}/{id?}', 'dynamic_module_create_form_data')->name('admin.dynamic-module-create-form-data');
-            Route::post('store-dynamic-module/{table}', 'dynamic_module_store_form_data')->name('admin.dynamic-module-store-form-data');
-            Route::put('update-dynamic-module/{table}/{id}', 'dynamic_module_update_form_data')->name('admin.dynamic-module-update-form-data');
-        });
+        Route::get('dynamic-module-records/{table}', 'dynamic_module_records')->name('admin.dynamic-module-records');
+        Route::get('dynamic-module/{table}/{id?}', 'dynamic_module_create_form_data')->name('admin.dynamic-module-create-form-data');
+        Route::post('store-dynamic-module/{table}', 'dynamic_module_store_form_data')->name('admin.dynamic-module-store-form-data');
+        Route::put('update-dynamic-module/{table}/{id}', 'dynamic_module_update_form_data')->name('admin.dynamic-module-update-form-data');
     });
 
-    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
 
