@@ -49,10 +49,10 @@
                         <p class="float-right" id="offcanvasSubtotal"></p>
                     </div>
 
-                    <div class="col-6">
+                    <div class="col-6" id="discount-section">
                         <p>Discount</p>
                     </div>
-                    <div class="col-6">
+                    <div class="col-6" id="discount-section1">
                         <span>$</span>
                         <p class="float-right" id="offcanvasDiscount"></p>
                     </div>

@@ -218,8 +218,9 @@
     </div>
 </section>
 
-{{-- user add modal starts here --}}
+
 @include('cart.modals.user-add-modal')
+@include('cart.modals.register-modal')
 @endsection
 
 @push('js')

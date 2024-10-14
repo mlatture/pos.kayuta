@@ -24,5 +24,17 @@ class StationRegisterController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function create()
+    {
+        $registers = StationRegisters::count();
+
+        $new = StationRegisters::create([
+            'name' => 'Register ' . ($registers + 1),
+        ]);
+        return response()->json(['success' => true, 'new_register' => $new]);
+
+    }
+
+
 
 }

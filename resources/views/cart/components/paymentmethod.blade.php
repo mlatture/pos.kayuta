@@ -40,8 +40,8 @@
     
     <div class="row mt-4">
         <div class="col">
-            <label for="orderAmountInput" id="orderLabel">Enter Order Amount:</label>
-            <input type="text" id="orderAmountInput" class="form-control shadow-sm" placeholder="Enter amount">
+            <label for="orderAmountInput" id="orderLabel">Payment Amount:</label>
+            <input type="text" id="orderAmountInput" class="form-control shadow-sm" placeholder="Payment Amount">
         </div>
     </div>
 

@@ -53,15 +53,7 @@
     </a>
 
     <ul class="navbar-nav ms-auto  d-flex flex-row">
-        <!-- Optional Offcanvas Toggle Button -->
-        {{--
-        <li class="nav-item">
-            <a class="btn btn-info" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
-                aria-controls="offcanvasExample">
-                <i class="fas fa-bars"></i>
-            </a>
-        </li>
-        --}}
+      
 
         @if (auth()->user()->hasPermission(config('constants.role_modules.dashboard.value')))
             <li class="nav-item">
@@ -157,17 +149,7 @@
         </li>
 
 
-        <!-- @if (auth()->user()->hasPermission('organization_management'))
-            <li class="nav-item">
-                <a href="{{ route('organizations.index') }}" class="nav-link {{ activeSegment('organization') }}">
-                    <div class="d-flex align-items-center">
-                        <i class="nav-icon fas fa-building"></i>
-                        <span class="ms-2">Organization</span>
-                    </div>
-                </a>
-            </li>
-        @endif
- -->
+
 
 
 

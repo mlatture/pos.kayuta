@@ -4,17 +4,17 @@ $(document).ready(function () {
         let input = $("#orderAmountInput");
         if ($(this).val() === "GiftCard") {
             $("#gift-card-section").removeAttr("hidden");
-            label.show().text("Enter Order Amount: ");
+            label.show().text("Payment Amount: ");
             $("#giftcardno").removeAttr("readonly").focus();
-            input.attr("placeholder", "Enter amount").removeAttr("readonly");
+            input.attr("placeholder", "Payment Amount").removeAttr("readonly");
             $("#expire").attr("hidden", true);
         } else if ($(this).val() === "CreditCard") {
             $("#gift-card-section").attr("hidden", true);
-            label.show().text("Enter Order Amount: ");
-            input.attr("placeholder", "Enter amount").removeAttr("readonly");
+            label.show().text("Payment Amount: ");
+            input.attr("placeholder", "Payment Amount").removeAttr("readonly");
         } else {
-            label.show().text("Enter Order Amount: ");
-            input.attr("placeholder", "Enter amount").removeAttr("readonly");
+            label.show().text("Payment Amount: ");
+            input.attr("placeholder", "Payment Amount").removeAttr("readonly");
             $("#gift-card-section").attr("hidden", true);
         }
 

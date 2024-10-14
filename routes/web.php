@@ -111,7 +111,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
-
+    Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
 
