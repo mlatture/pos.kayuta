@@ -5,6 +5,13 @@
 
 @section('content')
     <div class="card">
+        <div class="card-header">
+            <div class="card-tools">
+                <a href="{{ route('admin.dynamic-module-records', $table) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-arrow-circle-left"></i> Back
+                </a>
+            </div>
+        </div>
         <div class="card-body">
             <form method="POST"
                   action="{{ $isEdit ? route('admin.dynamic-module-update-form-data', [$table, $moduleData->id]) : route('admin.dynamic-module-store-form-data', $table) }}">
@@ -13,14 +20,22 @@
                     @method('PUT')
                 @endif
                 <div class="row">
+                    <input type="hidden" name="created_at" value="{{ now() }}">
+                    <input type="hidden" name="updated_at" value="{{ now() }}">
+                    @php
+                        usort($columns, function($a, $b) use ($dictionaryFields) {
+                                $orderA = $dictionaryFields[$a]['order'] ?? PHP_INT_MAX;
+                                $orderB = $dictionaryFields[$b]['order'] ?? PHP_INT_MAX;
+
+                                return $orderA <=> $orderB;
+                            });
+                        $columns = array_diff($columns, ['id', 'created_at', 'updated_at']);
+                    @endphp
                     @forelse($columns as $column)
-                        @if($column === 'id')
-                            @continue;
-                        @endif
                         <div class="{{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'hidden' ? 'd-none' : 'col-md-6' }}">
                             <div class="form-group">
                                 <label for="{{ $column }}" {{ isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? 'readonly' : '' }}>
-                                    {{ isset($dictionaryFields[$column]) ? $dictionaryFields[$column]['display_name'] : $column }}
+                                    {{ isset($dictionaryFields[$column]) && !empty($dictionaryFields[$column]['display_name']) ? $dictionaryFields[$column]['display_name'] : $column }}
                                     {!! isset($dictionaryFields[$column]) && $dictionaryFields[$column]['visibility'] === 'read_only' ? '<span class="text-danger">(not editable)</span>' : '' !!}
                                 </label>
 

@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Whitelist Management'); ?>
+<?php $__env->startSection('content-header', 'Whitelist Management'); ?>
 
-@section('title', 'Whitelist Management')
-@section('content-header', 'Whitelist Management')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -30,50 +28,53 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                @foreach ($whitelists as $key => $whitelist)
+                                <?php $__currentLoopData = $whitelists; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $whitelist): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr>
-                                        <td>{{ $whitelist->id }}</td>
-                                        <td>{{ $whitelist->table_name }}</td>
-                                        @php
+                                        <td><?php echo e($whitelist->id); ?></td>
+                                        <td><?php echo e($whitelist->table_name); ?></td>
+                                        <?php
                                             $allowRead = auth()->user()->hasPermission("read_{$whitelist->table_name}");
                                             $allowUpdate = auth()->user()->hasPermission("update_{$whitelist->table_name}");
                                             $allowDelete = auth()->user()->hasPermission("delete_{$whitelist->table_name}");
-                                        @endphp
-                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowRead ? 'Yes' : 'No' }}
+                                        ?>
+                                        <td><span class="badge <?php echo e($allowRead ? 'badge-success' : 'badge-danger'); ?>">
+                                                    <?php echo e($allowRead ? 'Yes' : 'No'); ?>
+
                                                 </span>
                                         </td>
-                                        <td><span class="badge {{ $allowUpdate ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowUpdate ? 'Yes' : 'No' }}
+                                        <td><span class="badge <?php echo e($allowUpdate ? 'badge-success' : 'badge-danger'); ?>">
+                                                    <?php echo e($allowUpdate ? 'Yes' : 'No'); ?>
+
                                                 </span>
                                         </td>
-                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowDelete ? 'Yes' : 'No' }}
+                                        <td><span class="badge <?php echo e($allowRead ? 'badge-success' : 'badge-danger'); ?>">
+                                                    <?php echo e($allowDelete ? 'Yes' : 'No'); ?>
+
                                                 </span>
                                         </td>
                                         <td>
-                                            @if (auth()->user()->hasPermission("read_{$whitelist->table_name}"))
-                                                <a title="View {{ $whitelist->table_name }} data"
-                                                   href="{{ route('admin.dynamic-module-records', $whitelist->table_name) }}"
+                                            <?php if(auth()->user()->hasPermission("read_{$whitelist->table_name}")): ?>
+                                                <a title="View <?php echo e($whitelist->table_name); ?> data"
+                                                   href="<?php echo e(route('admin.dynamic-module-records', $whitelist->table_name)); ?>"
                                                    class="btn btn-primary"><i
                                                         class="fas fa-eye"></i></a>
-                                            @endif
-                                            @if (auth()->user()->hasPermission("update_{$whitelist->table_name}"))
-                                                <a title="Edit {{ $whitelist->table_name }} table"
-                                                   href="{{ route('admin.edit-table', $whitelist->table_name) }}"
+                                            <?php endif; ?>
+                                            <?php if(auth()->user()->hasPermission("update_{$whitelist->table_name}")): ?>
+                                                <a title="Edit <?php echo e($whitelist->table_name); ?> table"
+                                                   href="<?php echo e(route('admin.edit-table', $whitelist->table_name)); ?>"
                                                    class="btn btn-primary"><i
                                                         class="fas fa-edit"></i></a>
-                                            @endif
-                                            @if (auth()->user()->hasPermission("delete_{$whitelist->table_name}"))
-                                                <a title="Delete {{ $whitelist->table_name }} table" href="#"
+                                            <?php endif; ?>
+                                            <?php if(auth()->user()->hasPermission("delete_{$whitelist->table_name}")): ?>
+                                                <a title="Delete <?php echo e($whitelist->table_name); ?> table" href="#"
                                                    class="btn btn-danger delete-table"
-                                                   data-url="{{ route('admin.delete-table', $whitelist->table_name) }}">
+                                                   data-url="<?php echo e(route('admin.delete-table', $whitelist->table_name)); ?>">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
-                                            @endif
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                             </table>
                         </div>
@@ -83,8 +84,8 @@
         </div>
     </div>
 
-@endsection
-@section('js')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('js'); ?>
     <script>
         $(document).ready(function () {
             $('.table').DataTable({
@@ -112,7 +113,7 @@
                             url: url,
                             type: 'delete',
                             headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                             },
                             success: function (data) {
                                 $('#deleteModal').modal('hide');
@@ -131,7 +132,7 @@
     <script>
         $(document).ready(function() {
             $('#addButton').on('click', function(e) {
-                let remainingTables = {!! $remainingTablesJson !!};
+                let remainingTables = <?php echo $remainingTablesJson; ?>;
                 let inputOptions = {};
                 for (let key in remainingTables) {
                     if (remainingTables.hasOwnProperty(key)) {
@@ -156,10 +157,10 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: '{{ route('admin.add-table') }}',
+                            url: '<?php echo e(route('admin.add-table')); ?>',
                             method: 'POST',
                             data: {
-                                _token: '{{ csrf_token() }}',
+                                _token: '<?php echo e(csrf_token()); ?>',
                                 selected_option: result.value
                             },
                             success: function(response) {
@@ -175,4 +176,6 @@
             });
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\herd\pos.kayuta\resources\views/dynamic-tables/whitelist/index.blade.php ENDPATH**/ ?>

@@ -1,12 +1,10 @@
-@extends('layouts.admin')
-
-@php
+<?php
     $formattedTable = ucfirst($table);
-@endphp
-@section('title', "Dynamic Table: {$formattedTable}")
-@section('content-header', "Dynamic Table: {$formattedTable}")
+?>
+<?php $__env->startSection('title', "Dynamic Table: {$formattedTable}"); ?>
+<?php $__env->startSection('content-header', "Dynamic Table: {$formattedTable}"); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
@@ -16,14 +14,14 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-tools">
-                        <a href="{{ route('admin.whitelist') }}"
+                        <a href="<?php echo e(route('admin.whitelist')); ?>"
                            class="btn btn-sm btn-primary"><i
                                 class="fas fa-arrow-circle-left"></i> Back to whitelist</a>
                     </div>
                 </div>
-                <form action="{{ route('admin.update-table', $table) }}" method="POST">
-                    @csrf
-                    @method('PUT')
+                <form action="<?php echo e(route('admin.update-table', $table)); ?>" method="POST">
+                    <?php echo csrf_field(); ?>
+                    <?php echo method_field('PUT'); ?>
                     <div class="card-body">
                         <div class="row">
                             <div class="table-responsive m-t-40">
@@ -41,7 +39,7 @@
                                     </tr>
                                     </thead>
                                     <tbody id="sortable">
-                                    @php
+                                    <?php
                                         $orderedArray = array_values($columns);
                                         if (!empty($dictionary)) {
                                             $order = array_flip(array_keys($dictionary));
@@ -49,73 +47,75 @@
                                             $orderedArray = array_keys($orderedArray);
                                         }
                                         $orderedArray = array_diff($orderedArray, ['id', 'created_at', 'updated_at']);
-                                    @endphp
-                                    @foreach($orderedArray as $column)
+                                    ?>
+                                    <?php $__currentLoopData = $orderedArray; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $column): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <tr>
                                             <td class="p-2"><i class="fa fa-arrows-alt"></i></td>
                                             <td class="col-md-1 text-center">
                                                 <div class="custom-control custom-switch">
                                                     <input type="checkbox" class="custom-control-input"
-                                                           id="dictionary[{{ $column }}][viewable]"
-                                                           {{ isset($dictionary[$column]) && $dictionary[$column]['viewable'] === FALSE ? '' : 'checked' }}
-                                                           name="dictionary[{{ $column }}][viewable]">
+                                                           id="dictionary[<?php echo e($column); ?>][viewable]"
+                                                           <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['viewable'] === FALSE ? '' : 'checked'); ?>
+
+                                                           name="dictionary[<?php echo e($column); ?>][viewable]">
                                                     <label class="custom-control-label"
-                                                           for="dictionary[{{ $column }}][viewable]"></label>
+                                                           for="dictionary[<?php echo e($column); ?>][viewable]"></label>
                                                 </div>
                                             </td>
                                             <td class="col-md-1 column"
-                                                data-table_name="{{ isset($dictionary[$column]['table_name']) ? $dictionary[$column]['table_name'] : '' }}">{{ $column }}</td>
+                                                data-table_name="<?php echo e(isset($dictionary[$column]['table_name']) ? $dictionary[$column]['table_name'] : ''); ?>"><?php echo e($column); ?></td>
                                             <td class="col-md-2">
                                                 <input aria-label="" type="text"
-                                                       name="dictionary[{{ $column }}][display_name]"
-                                                       value="{{ isset($dictionary[$column]) ? $dictionary[$column]['display_name'] : '' }}"
+                                                       name="dictionary[<?php echo e($column); ?>][display_name]"
+                                                       value="<?php echo e(isset($dictionary[$column]) ? $dictionary[$column]['display_name'] : ''); ?>"
                                                        class="form-control">
                                             </td>
                                             <td>
                                                 <input aria-label="" type="text"
-                                                       name="dictionary[{{ $column }}][description]"
-                                                       value="{{ isset($dictionary[$column]) ? $dictionary[$column]['description'] : '' }}"
+                                                       name="dictionary[<?php echo e($column); ?>][description]"
+                                                       value="<?php echo e(isset($dictionary[$column]) ? $dictionary[$column]['description'] : ''); ?>"
                                                        class="form-control">
                                             </td>
                                             <td class="col-md-1 text-center">
                                                 <label class="badge badge-secondary">
-                                                    {{ \Illuminate\Support\Facades\Schema::getColumnType($table, $column) }}
+                                                    <?php echo e(\Illuminate\Support\Facades\Schema::getColumnType($table, $column)); ?>
+
                                                 </label>
                                             </td>
                                             <td class="col-md-1 text-center">
-                                                <select aria-label="" name="dictionary[{{ $column }}][validation]"
+                                                <select aria-label="" name="dictionary[<?php echo e($column); ?>][validation]"
                                                         class="custom-select">
                                                     <option value="" selected>Select</option>
                                                     <option
-                                                        value="required" {{ isset($dictionary[$column]) && $dictionary[$column]['validation'] === 'required' ? 'selected' : '' }}>
+                                                        value="required" <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['validation'] === 'required' ? 'selected' : ''); ?>>
                                                         Required
                                                     </option>
                                                     <option
-                                                        value="not_required" {{ isset($dictionary[$column]) && $dictionary[$column]['validation'] === 'not_required' ? 'selected' : '' }}>
+                                                        value="not_required" <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['validation'] === 'not_required' ? 'selected' : ''); ?>>
                                                         Not Required
                                                     </option>
                                                 </select>
                                             </td>
                                             <td class="col-md-1 text-center">
-                                                <select aria-label="" name="dictionary[{{ $column }}][visibility]"
+                                                <select aria-label="" name="dictionary[<?php echo e($column); ?>][visibility]"
                                                         class="custom-select">
                                                     <option value="" selected>Select</option>
                                                     <option
-                                                        value="all" {{ isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'all' ? 'selected' : '' }}>
+                                                        value="all" <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'all' ? 'selected' : ''); ?>>
                                                         All
                                                     </option>
                                                     <option
-                                                        value="read_only" {{ isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'read_only' ? 'selected' : '' }}>
+                                                        value="read_only" <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'read_only' ? 'selected' : ''); ?>>
                                                         Read Only
                                                     </option>
                                                     <option
-                                                        value="hidden" {{ isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'hidden' ? 'selected' : '' }}>
+                                                        value="hidden" <?php echo e(isset($dictionary[$column]) && $dictionary[$column]['visibility'] === 'hidden' ? 'selected' : ''); ?>>
                                                         Hidden
                                                     </option>
                                                 </select>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -155,10 +155,10 @@
                 });
 
                 $.ajax({
-                    url: '{{ route('admin.update-column-order') }}',
+                    url: '<?php echo e(route('admin.update-column-order')); ?>',
                     method: 'POST',
                     data: {
-                        _token: '{{ csrf_token() }}',
+                        _token: '<?php echo e(csrf_token()); ?>',
                         order: order
                     },
                     success: function (response) {
@@ -171,4 +171,6 @@
             }
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\herd\pos.kayuta\resources\views/dynamic-tables/dictionary/index.blade.php ENDPATH**/ ?>

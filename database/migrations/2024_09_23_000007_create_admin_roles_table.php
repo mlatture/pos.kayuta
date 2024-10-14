@@ -23,7 +23,7 @@ return new class extends Migration {
                     $table->string('name', 30)->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'module_access')) {
-                    $table->string('module_access', 250)->nullable();
+                    $table->longText('module_access')->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'status')) {
                     $table->boolean('status')->default(1);
@@ -39,7 +39,7 @@ return new class extends Migration {
             Schema::create($tableName, function (Blueprint $table) {
                 $table->id();
                 $table->string('name', 30)->nullable();
-                $table->string('module_access', 250)->nullable();
+                $table->longText('module_access')->nullable();
                 $table->boolean('status')->default(1);
                 $table->boolean('is_pos')->default(1);
                 $table->timestamps();

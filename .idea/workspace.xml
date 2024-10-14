@@ -5,7 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b42f16a9-3dd4-4717-8404-f44599d30769" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminRoleController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminRoleController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/DictionaryController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/DictionaryController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/DynamicTableController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/DynamicTableController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/migrations/2024_09_23_000007_create_admin_roles_table.php" beforeDir="false" afterPath="$PROJECT_DIR$/database/migrations/2024_09_23_000007_create_admin_roles_table.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin-roles/create.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin-roles/create.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin-roles/edit.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin-roles/edit.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin-roles/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin-roles/index.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/create.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/create.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/edit.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/edit.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/index.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/dynamic-tables/dictionary/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/dynamic-tables/dictionary/index.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/dynamic-tables/module/form.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/dynamic-tables/module/form.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/dynamic-tables/module/listing.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/dynamic-tables/module/listing.blade.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/views/dynamic-tables/whitelist/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/dynamic-tables/whitelist/index.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/routes/web.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,7 +183,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/resources/views" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="yarn" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
@@ -207,7 +223,8 @@
       <workItem from="1728635086000" duration="991000" />
       <workItem from="1728641892388" duration="1679000" />
       <workItem from="1728749122541" duration="637000" />
-      <workItem from="1728834601977" duration="1203000" />
+      <workItem from="1728834601977" duration="1271000" />
+      <workItem from="1728921506330" duration="959000" />
     </task>
     <servers />
   </component>

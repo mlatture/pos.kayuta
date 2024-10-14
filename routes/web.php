@@ -122,6 +122,7 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
+        Route::post('add-table', 'add_table')->name('admin.add-table');
         Route::delete('delete-table/{table}', 'delete_table')->name('admin.delete-table');
 
         Route::get('dynamic-module-records/{table}', 'dynamic_module_records')->name('admin.dynamic-module-records');

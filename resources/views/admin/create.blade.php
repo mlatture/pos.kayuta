@@ -50,10 +50,10 @@
                 <div class="form-group">
                     <label for="name">Admin Name</label>
                     <input type="text" name="name"
-                        class="form-control @error('name') is-invalid @enderror" id="name"
-                        placeholder="Enter admin name"  required value="{{ old('name') }}">
+                           class="form-control @error('name') is-invalid @enderror" id="name"
+                           placeholder="Enter admin name"  required value="{{ old('name') }}">
                     @error('name')
-                        <span class="invalid-feedback" role="alert">
+                    <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror
@@ -64,9 +64,9 @@
                 <div class="form-group">
                     <label for="phone">Phone</label>
                     <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror"
-                        id="phone" placeholder="Enter your phone number" required value="{{ old('phone') }}">
+                           id="phone" placeholder="Enter your phone number" value="{{ old('phone') }}">
                     @error('phone')
-                        <span class="invalid-feedback" role="alert">
+                    <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror
@@ -75,9 +75,9 @@
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                        id="email" placeholder="Enter your email" value="{{ old('email') }}" required>
+                           id="email" placeholder="Enter your email" value="{{ old('email') }}" required>
                     @error('email')
-                        <span class="invalid-feedback" role="alert">
+                    <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror
@@ -94,15 +94,15 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="organization_id">Select Organization</label>
-                    <select id="organization_id" class="js-example-basic-single admin-select w-100 " name="organization_id" required>
-                        <option value="">Select Organization</option>
-                        @foreach($organizations as $organization)
-                            <option value="{{ $organization->id }}">{{ $organization->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                {{--                <div class="form-group">--}}
+                {{--                    <label for="organization_id">Select Organization</label>--}}
+                {{--                    <select id="organization_id" class="js-example-basic-single admin-select w-100 " name="organization_id" required>--}}
+                {{--                        <option value="">Select Organization</option>--}}
+                {{--                        @foreach($organizations as $organization)--}}
+                {{--                            <option value="{{ $organization->id }}">{{ $organization->name }}</option>--}}
+                {{--                        @endforeach--}}
+                {{--                    </select>--}}
+                {{--                </div>--}}
 
                 <div class="form-group">
                     <label for="organization">Select Admin Role</label>
@@ -119,7 +119,7 @@
                     <label for="image">Upload Image</label>
                     <input type="file" id="image" class="form-control" name="image" accept="image/*" >
                     @error('image')
-                        <span class="invalid-feedback" role="alert">
+                    <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror
@@ -128,11 +128,11 @@
                     <label for="status">Status</label>
                     <select name="status" id="status" class="form-control" required>
                         <option value="">Select Status</option>
-                        <option value="1">Active</option>
+                        <option value="1" selected>Active</option>
                         <option value="0">Inactive</option>
                     </select>
                     @error('status')
-                        <span class="invalid-feedback" role="alert">
+                    <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror

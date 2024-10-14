@@ -6,7 +6,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Models\DictionaryTable;
 
 class DictionaryController extends Controller
 {
@@ -46,4 +46,3 @@ class DictionaryController extends Controller
         return redirect()->route('dictionary.index');
     }
 }
-

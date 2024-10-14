@@ -8,7 +8,6 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\WhitelistTable;
@@ -17,14 +16,26 @@ use App\Models\DictionaryTable;
 class DynamicTableController extends Controller
 {
 
-    public function __construct(){
-        $this->middleware('admin_has_permission:'.config('constants.role_modules.whitelist_tables.value'));
+    public function __construct()
+    {
+        $this->middleware('admin_has_permission:' . config('constants.role_modules.whitelist_tables.value'));
     }
 
     public function whitelist(): Factory|View|Application
     {
+        // Fetch all whitelisted tables from the database
+        $whitelistsTables = WhitelistTable::latest()->get();
+        $whitelistTableNames = $whitelistsTables->pluck('table_name')->toArray();
+        $allTables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
+        $allTables = array_diff($allTables, ['dictionary_tables', 'whitelist_tables', 'oauth_refresh_tokens', 'oauth_access_tokens', 'oauth_auth_codes', 'oauth_clients', 'oauth_personal_access_clients']);
+        $remainingTables = array_diff($allTables, $whitelistTableNames);
+        $remainingTablesObject = [];
+        foreach ($remainingTables as $table) {
+            $remainingTablesObject[$table] = $table;
+        }
         return view('dynamic-tables.whitelist.index')
-            ->with('whitelists', WhitelistTable::latest()->get());
+            ->with('whitelists', $whitelistsTables)
+            ->with('remainingTablesJson', json_encode($remainingTablesObject));
     }
 
     public function edit_table($table): Factory|View|Application
@@ -88,7 +99,6 @@ class DynamicTableController extends Controller
             ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields($table, true))
             ->with('dictionaryFields', DictionaryTable::where('table_name', $table)->select('display_name', 'field_name', 'description', 'viewable', 'order', 'visibility')->get()->keyBy('field_name')->toArray())
             ->with('table', $table)
-            ->with('whitelistedTable', $whitelistedTable->update_permission_level)
             ->with('formattedTable', ucwords(str_replace('_', ' ', $table)));
     }
 
@@ -149,6 +159,19 @@ class DynamicTableController extends Controller
                     ->update(['order' => $columnData['order']]);
             }
             return response()->json(['message' => 'Column ordered successfully.'], 200);
+        } catch (\Exception $exception) {
+            return response()->json(['message' => $exception->getMessage()], 400);
+        }
+    }
+
+    public function add_table(): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $newTable = new WhitelistTable();
+            $newTable->table_name = request()->selected_option;
+            $newTable->save();
+
+            return response()->json(['message' => "{$newTable->table_name} table added successfully."], 200);
         } catch (\Exception $exception) {
             return response()->json(['message' => $exception->getMessage()], 400);
         }
