@@ -57,7 +57,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
     Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
     Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
-    Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
 
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
@@ -118,7 +117,9 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
     Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
+    Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
 
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
