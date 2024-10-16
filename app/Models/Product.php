@@ -10,6 +10,8 @@ class Product extends Model
 {
     protected $guarded = [];
 
+    protected $fillable = ['category_id', 'tax_type_id', 'name', 'description', 'image', 'barcode', 'price', 'quantity', 'status', 'type', 'discount_type', 'discount', 'product_vendor_id', 'cost'];
+
     public function taxType()
     {
         return $this->belongsTo(TaxType::class);

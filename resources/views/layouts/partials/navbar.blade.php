@@ -149,10 +149,6 @@
         </li>
 
 
-
-
-
-
         <!-- Reports Dropdown -->
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
@@ -166,12 +162,12 @@
                         <span>Sales Report</span>
                     </a></li>
                 @endHasPermission
-                @hasPermission(config('constants.role_modules.reservation_report.value'))
+                {{-- @hasPermission(config('constants.role_modules.reservation_report.value'))
                 <li><a class="dropdown-item" href="{{ route('reports.reservationReport') }}">
                         <i class="nav-icon fas fa-calendar-check"></i>
                         <span>Reservation Report</span>
                     </a></li>
-                @endHasPermission
+                @endHasPermission --}}
                 @hasPermission(config('constants.role_modules.gift_card_report.value'))
                 <li><a class="dropdown-item" href="{{ route('reports.giftCardReport') }}">
                         <i class="nav-icon fas fa-gift"></i>

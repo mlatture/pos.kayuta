@@ -13,14 +13,7 @@
     .checkbox-wrapper-55 .rocker {
         display: inline-block;
         position: relative;
-        /*
-      SIZE OF SWITCH
-      ==============
-      All sizes are in em - therefore
-      changing the font-size here
-      will change the size of the switch.
-      See .rocker-small below as example.
-      */
+      
         font-size: 2em;
         font-weight: bold;
         text-align: center;
