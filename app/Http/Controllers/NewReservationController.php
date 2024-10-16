@@ -15,6 +15,7 @@ use App\Models\CartReservation;
 use App\Models\GiftCard;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\DeleteCartJob;
 
 
 class NewReservationController extends Controller
@@ -157,7 +158,7 @@ class NewReservationController extends Controller
         $fromDate = Carbon::parse($request->fromDate);
         $toDate = Carbon::parse($request->toDate);
         $numberOfNights = $toDate->diffInDays($fromDate);
-
+        $currentUTC = now('UTC');
         $currentDate = Carbon::now()->format('l');
         $rvSiteClasses = ['WE30A', 'WSE30A', 'WSE50A', 'WE50A', 'NOHU'];
         $site = Site::where('siteid', $request->siteId)->first();
@@ -236,11 +237,12 @@ class NewReservationController extends Controller
         $cart->totaltax = $totalTax;
         $cart->total = $total;
         $cart->rid = 'uc';
+        $cart->holduntil = $currentUTC;
         $cart->description = "{$numberOfNights} night(s) for {$cart->siteclass} at {$request->siteId}";
 
         $cart->save();
 
-        return response()->json(['success' => true, 'total' => $total, 'subtotal' => $subtotal, 'tax' => $totalTax]);
+        return response()->json(['success' => true, 'total' => $total, 'subtotal' => $subtotal, 'tax' => $totalTax, 'id' => $cart->id]);
     }
 
     public function store(Request $request)
@@ -563,5 +565,36 @@ class NewReservationController extends Controller
 
 
 
-   
+    public function deleteCart(Request $request)
+    {
+        $cart = CartReservation::where('cartid', $request->cartId)->first();
+    
+        if ($cart) {
+           
+            $holdUntilUTC = Carbon::parse($cart->holduntil, 'UTC');
+    
+            $holdUntilPlusFiveSeconds = $holdUntilUTC->copy()->addMinutes(30);
+    
+           
+            $currentUTC = now('UTC');
+            Log::info('Current time (UTC): ' . $currentUTC->toDateTimeString());
+    
+            if ($holdUntilPlusFiveSeconds <= $currentUTC) {
+                CartReservation::where('cartid', $request->cartId)->delete();
+                Log::info('Cart deleted.');
+                return response()->json(['success' => true, 'message' => 'Cart deleted']);
+            } else {
+                Log::info('Cart not eligible for deletion.');
+                return response()->json(['success' => false, 'message' => 'Cart not eligible for deletion']);
+            }
+        }
+    
+        Log::info('No cart found with cartid: ' . $request->cartId);
+        return response()->json(['success' => false, 'message' => 'No cart found']);
+    }
+    
+    
+
+
+    
 }

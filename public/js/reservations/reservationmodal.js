@@ -28,6 +28,7 @@ $(document).ready(function () {
                 $("#backInfo").show();
                 // $('.thirdpage-modal').hide();
                 $("#nextInfo").hide();
+               
                 $("#submitReservations").show();
             });
         });
@@ -38,6 +39,7 @@ $(document).ready(function () {
             $("#backInfo").hide();
             $(".firstpage-modal").fadeIn(400, function () {
                 $("#submitReservations").hide();
+              
                 $("#nextInfo").show();
                 $("#closeModal").show();
             });

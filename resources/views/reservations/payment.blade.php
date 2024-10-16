@@ -274,21 +274,27 @@
                     <p>Waiting for card insertion...</p>
                 </div>
 
-                <input type="hidden" name="cartid" value="{{ $reservation->cartid }}">
-                <input type="hidden" name="id" value="{{ $reservation->id }}">
+                <input type="hidden" name="cartid" id="cartid" value="{{ $reservation->cartid }}">
+                <input type="hidden" name="id"  value="{{ $reservation->id }}">
 
-                <div class="form-row d-flex justify-content-end mr-1">
-                    <div class="btn btn-success"
-                        id="{{ Request::is('admin/reservations/invoice/*') ? 'payBalance' : 'payBtn' }}">
-                        <i class="fa-solid fa-money-bill-transfer"></i> Process
+                <div class="form-row d-flex justify-content-end mr-1 gap-2">
+                    @if (Request::is('admin/reservations/payment/*'))
+                        <div class="btn btn-danger" id="addToCart">
+                            <i class="fa-solid fa-cart-shopping"></i> Add To Cart
+                        </div>
+                    @endif
+                    <div class="btn btn-success" id="{{ Request::is('admin/reservations/invoice/*') ? 'payBalance' : 'payBtn' }}">
+                        <i class="fa-solid fa-money-bill-transfer"></i> Pay
                     </div>
                 </div>
+                
             </div>
 
         </form>
 
     </div>
     <script>
-        var checkGiftCart = "{{ route('check.gift-card') }}"
+        var checkGiftCart = "{{ route('check.gift-card') }}";
+        var deleteAddToCart = "{{ route('reservations.delete.add-to-cart')}}";
     </script>
 @endsection

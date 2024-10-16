@@ -56,7 +56,7 @@ $("#submitReservations").click(function () {
             $("#nextInfo").show();
             $("#closeModal").show();
             setTimeout(function () {
-                window.location.reload();
+                window.location.href = 'reservations/payment/' + response.id;
             }, 1000);
         },
         error: function (xhr) {
@@ -68,6 +68,36 @@ $("#submitReservations").click(function () {
         },
     });
 });
+
+$("#addToCart").click(function () {
+    var cartId = $("input[name='cartid']").val();
+    $.ajax({
+        url: deleteAddToCart,
+        type: "DELETE",
+        data:{
+            cartId: cartId,
+        },
+      
+        cache: false,
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        success: function (response) {
+            toastr.warning('Item will be removed after 30 minutes');
+            setTimeout(function () {
+                window.location.href = "/admin/reservations";
+            }, 1000);
+        },
+        error: function (xhr) { 
+            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                $.each(xhr.responseJSON.errors, function (key, value) {
+                    toastr.error(value[0]);
+                });
+            }
+        }
+    })
+});
+
 
 function sendPaymentRequest() {
     var formDataPayment = new FormData($("#paymentchoices")[0]);

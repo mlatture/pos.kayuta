@@ -86,7 +86,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
-
+    Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
