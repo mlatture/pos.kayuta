@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\StationRegisters;
 class CartController extends Controller
 {
     private $object;
@@ -27,6 +28,8 @@ class CartController extends Controller
 
     public function index(Request $request)
     {
+        $registers = StationRegisters::all();
+       
         if ($request->wantsJson()) {
             return response(
                 $request->user()->cart()->get()
@@ -44,7 +47,7 @@ class CartController extends Controller
         $customers = $customersQuery->get();
         $products = $productsQuery->get();
         $categories = $categoriesQuery->get();
-        return view('cart.index', compact('customers', 'cart', 'products', 'categories'));
+        return view('cart.index', compact('customers', 'cart', 'products', 'categories', 'registers'));
     }
 
     public function store(Request $request)
@@ -215,4 +218,35 @@ class CartController extends Controller
         }
         return $this->object->respondBadRequest(['error' => 'Cart is already empty']);
     }
+
+
+    public function showPartialPaymentCustomer()
+    {
+       
+        $customers = Customer::all();
+    
+        $payments = [];
+    
+      
+        foreach ($customers as $customer) {
+        
+            $orders = Order::where('user_id', $customer->id)->get();
+    
+        
+            foreach ($orders as $order) {
+                $orderPayments = PosPayment::where('order_id', $order->id)->get();
+    
+               
+                foreach ($orderPayments as $payment) {
+                    $payments[] = $payment;
+                }
+            }
+        }
+    
+     
+        return response()->json([
+            'success' => $payments,
+        ]);
+    }
+    
 }

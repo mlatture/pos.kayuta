@@ -30,18 +30,14 @@
     </div>
 </div>
 <!-- Off-canvas -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasOrder" aria-labelledby="offcanvasOrderLabel">
+<div class="offcanvas offcanvas-end" data-bs-keyboard="false" tabindex="-1" id="offcanvasOrder"  aria-labelledby="offcanvasOrderLabel">
     <div class="offcanvas-header border-bottom">
         <div class="header-title">
-            <h3 class="weight-600 font-16">
-                Order Summary
-            </h3>
-
+            <h3 class="weight-600 font-16">Order Summary</h3>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-
         <div id="orderSummaryCardTwo" class="col-12 font-14 mb-3">
             <div class="border rounded pt-3 px-3">
                 <div class="row">
@@ -50,18 +46,15 @@
                     </div>
                     <div class="col-6">
                         <span>$</span>
-                        <p class="float-right" id="offcanvasSubtotal">
-
-                        </p>
+                        <p class="float-right" id="offcanvasSubtotal"></p>
                     </div>
 
-                    <div class="col-6">
+                    <div class="col-6" id="discount-section">
                         <p>Discount</p>
                     </div>
-                    <div class="col-6">
+                    <div class="col-6" id="discount-section1">
                         <span>$</span>
-                        <p class="float-right" id="offcanvasDiscount">
-                        </p>
+                        <p class="float-right" id="offcanvasDiscount"></p>
                     </div>
 
                     <div class="col-6">
@@ -69,10 +62,8 @@
                     </div>
                     <div class="col-6">
                         <span>$</span>
-                        <p class="float-right" id="offcanvasTax">
-                        </p>
+                        <p class="float-right" id="offcanvasTax"></p>
                     </div>
-
 
                     <div class="col-sm-12 border-top">
                         <div class="row pt-2">
@@ -81,15 +72,41 @@
                             </div>
                             <div class="col-6">
                                 <span>$</span>
-                                <p class="float-right" id="offcanvasTotalAmount">
-                                </p>
+                                <p class="float-right" id="offcanvasTotalAmount"></p>
                             </div>
                         </div>
                     </div>
+                    <div class="col-sm-12 border-top">
+                        <div class="row pt-2">
+                            <div class="col-6">
+                                <p><b>Balance</b></p>
+                            </div>
+                            <div class="col-6">
+                                <span>$</span>
+                                <p class="float-right" id="remainingBalance"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="order_id" name="order_id" value="{{ old('order_id', $order_id ?? '') }}">
+
+                    {{-- <div class="col-sm-12 border-top">
+                        <div class="row pt-2">
+                            <div class="col-6">
+                                <p><b>Change</b></p>
+                            </div>
+                            <div class="col-6">
+                                <span>$</span>
+                                <p class="float-right" id="offcanvasChange"></p>
+                            </div>
+                        </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
         @include('cart.components.paymentmethod')
     </div>
 </div>
+<script>
+
+</script>
 
