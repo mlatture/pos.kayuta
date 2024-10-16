@@ -60,7 +60,7 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $order = Order::create([
-                'user_id' => $request->customer_id ?? 0,
+                'user_id' => $request->customer_id,
                 'gift_card_id' => $request->gift_card_id ?? 0,
                 'admin_id' => $request->user()->id,
                 'amount' => $request->amount,

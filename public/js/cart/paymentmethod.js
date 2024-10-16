@@ -60,7 +60,7 @@ $(document).ready(function () {
         let customer_id = $("#customer_id").val();
         let paymentMethod = $('input[name="payment_method"]:checked').val();
     
-      
+       
         let orderId = $("#order_id").val();
     
         let change = 0;
@@ -79,7 +79,6 @@ $(document).ready(function () {
     
     function handlePayment(customer_id, amount, change, paymentMethod, number, x_ref_num, totalAmount, isPartial, orderId) {
         let remainingBalance = parseFloat($("#remainingBalance").text()) || totalAmount;
-    
         let firstRemainingBalance = remainingBalance - amount;
         $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
     
@@ -100,7 +99,7 @@ $(document).ready(function () {
                         data: {
                             order_id: orderId, 
                             amount: amount,
-                            customer_id: customer_id,
+                            customer_id: customer_id ?? 0,
                             payment_method: paymentMethod,
                             acc_number: number,
                             x_ref_num: x_ref_num,
