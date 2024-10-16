@@ -96,7 +96,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('tax-types', TaxTypeController::class);
     Route::resource('gift-cards', GiftCardController::class);
     Route::get('reports/sales-report', [ReportController::class, 'salesReport'])->name('reports.salesReport');
-    Route::get('reports/reservation-report', [ReportController::class, 'reservationReport'])->name('reports.reservationReport');
+    Route::get('reports/reservation-report', [ReportController::class, 'reservationReport'])->name('reports.reservationRepojrt');
     Route::get('reports/gift-card-report', [ReportController::class, 'giftCardReport'])->name('reports.giftCardReport');
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
     Route::get('reports/payment-report', [ReportController::class, 'paymentReport'])->name('reports.paymentReport');
