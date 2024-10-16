@@ -573,13 +573,13 @@ class NewReservationController extends Controller
            
             $holdUntilUTC = Carbon::parse($cart->holduntil, 'UTC');
     
-            $holdUntilPlusFiveSeconds = $holdUntilUTC->copy()->addMinutes(30);
+            $holdUntilPlus = $holdUntilUTC->copy()->addMinutes(30);
     
            
             $currentUTC = now('UTC');
             Log::info('Current time (UTC): ' . $currentUTC->toDateTimeString());
     
-            if ($holdUntilPlusFiveSeconds <= $currentUTC) {
+            if ($holdUntilPlus <= $currentUTC) {
                 CartReservation::where('cartid', $request->cartId)->delete();
                 Log::info('Cart deleted.');
                 return response()->json(['success' => true, 'message' => 'Cart deleted']);
