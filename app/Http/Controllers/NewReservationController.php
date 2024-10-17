@@ -16,7 +16,9 @@ use App\Models\GiftCard;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\DeleteCartJob;
+use App\Events\CartDeleted;
 
+use Illuminate\Support\Facades\DB;
 
 class NewReservationController extends Controller
 {
@@ -505,7 +507,7 @@ class NewReservationController extends Controller
         $cardType = $this->getCardType($fullCardNumber);
 
 
-        \Log::info('Saving card on file', [
+        Log::info('Saving card on file', [
             'customernumber' => $customer->id,
             'cartid' => $cart_reservation->cartid,
             'method' => $cardType,
@@ -565,34 +567,28 @@ class NewReservationController extends Controller
 
 
 
+
     public function deleteCart(Request $request)
     {
-        $cart = CartReservation::where('cartid', $request->cartId)->first();
+       
+        $currentUTC = now('UTC');
     
-        if ($cart) {
-           
-            $holdUntilUTC = Carbon::parse($cart->holduntil, 'UTC');
+        $timeThreshold = $currentUTC->subMinutes(30);
     
-            $holdUntilPlus = $holdUntilUTC->copy()->addMinutes(30);
+        $carts = CartReservation::where('created_at', '<=', $timeThreshold)->get();
     
-           
-            $currentUTC = now('UTC');
-            Log::info('Current time (UTC): ' . $currentUTC->toDateTimeString());
+        foreach ($carts as $cart) {
+            $cartid = $cart->cartid;
     
-            if ($holdUntilPlus <= $currentUTC) {
-                CartReservation::where('cartid', $request->cartId)->delete();
-                Log::info('Cart deleted.');
-                return response()->json(['success' => true, 'message' => 'Cart deleted']);
-            } else {
-                Log::info('Cart not eligible for deletion.');
-                return response()->json(['success' => false, 'message' => 'Cart not eligible for deletion']);
-            }
+            CartReservation::where('cartid', $cartid)->delete();
+    
+            broadcast(new CartDeleted($cartid));
+    
+            Log::info("Cart {$cartid} has been deleted.");
         }
     
-        Log::info('No cart found with cartid: ' . $request->cartId);
-        return response()->json(['success' => false, 'message' => 'No cart found']);
+        return response()->json(['success' => true, 'message' => 'All expired carts have been deleted.']);
     }
-    
     
 
 
