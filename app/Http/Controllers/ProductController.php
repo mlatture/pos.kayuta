@@ -118,18 +118,12 @@ class ProductController extends Controller
         $filename = '';
     
         if ($request->hasFile('image')) {
-            
             $image = $request->file('image');
-            $destinationPath = public_path('images/products');
-
-            if(!File::exists($destinationPath)){
-                File::makeDirectory($destinationPath, 0775, true);
-            }
-
-            $filename = time(). '-' . $image->getClientOriginalName();
-            $image->move($destinationPath, $filename);
-            
+            $filename = $image->getClientOriginalName();
+            $image->storeAs('public/products', $filename);
         }
+        
+        
     
         $quantity = $request->quantity === '*' ? -1 : $request->quantity;
 

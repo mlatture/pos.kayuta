@@ -23,8 +23,9 @@
                                         $imageUrl = $fallbackImageUrl;
                                     }
                                 @endphp
+                                               
 
-                                <img src="{{ $imageUrl }}" class="rounded mx-auto d-block img-fluid"
+                                <img  src="{{ $product->image ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}"  class="rounded mx-auto d-block img-fluid"
                                     alt="Product Image">
 
 

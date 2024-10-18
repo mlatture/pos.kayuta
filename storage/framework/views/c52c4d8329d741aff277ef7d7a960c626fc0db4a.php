@@ -24,8 +24,9 @@
                                         $imageUrl = $fallbackImageUrl;
                                     }
                                 ?>
+                                               
 
-                                <img src="<?php echo e($imageUrl); ?>" class="rounded mx-auto d-block img-fluid"
+                                <img  src="<?php echo e($product->image ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"  class="rounded mx-auto d-block img-fluid"
                                     alt="Product Image">
 
 
