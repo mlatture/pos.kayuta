@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\PosPayment;
+
+use App\Mail\OrderInvoiceMail;
+use Illuminate\Support\Facades\Mail;
+
 class OrderController extends Controller
 {
     private $object;
@@ -168,6 +172,40 @@ class OrderController extends Controller
                 ->with('error', $exception->getMessage());
         }
     }
+
+    public function sendInvoiceEmail(Request $request)
+    {
+        $order = Order::with('orderItems')->find($request->order_id);
+    
+        if (!$order) {
+            return response()->json([
+                'message' => 'Order Not Found',
+            ], 400);
+        }
+    
+      
+        if ($order->amount >= $order->price) {
+            $orderItems = $order->orderItems;
+    
+      
+            Mail::send('emails.orderEmail', [
+                'order' => $order,
+            ], function ($message) use ($order, $request) {
+               
+                $message->to($request->email)
+                        ->subject('Your Invoice for Order #' . $request->order_id);
+            });
+    
+            return response()->json([
+                'message' => 'Invoice Email sent successfully'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Payment not completed',
+            ], 400);
+        }
+    }
+    
 
     
 }

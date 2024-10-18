@@ -101,8 +101,9 @@
 
                     <div class="col">
                         <select class="form-control select2" name="customer_id" id="customer_id">
-                            <option value="0" data-name="Walk-in Customer">Walk-in Customer</option>
                             <option value="add_new_user">Add New User</option>
+
+                            
                             <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($customer->id); ?>"
                                     data-name="<?php echo e($customer->f_name . ' ' . $customer->l_name); ?>">
@@ -110,6 +111,7 @@
 
                                 </option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
                         </select>
                     </div>
                    
@@ -240,6 +242,7 @@
         var processCreditCard = "<?php echo e(route('orders.process.credit.card')); ?>";
         var processTerminal = "<?php echo e(route('orders.process.terminal')); ?>";
         var cartOrderUpdateUrl = "<?php echo e(route('orders.update')); ?>"
+        var sentInvoiceEmail = "<?php echo e(route('orders.send.invoice')); ?>";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {

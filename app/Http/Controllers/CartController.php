@@ -39,11 +39,7 @@ class CartController extends Controller
         $customersQuery = User::query();
         $productsQuery = Product::where('status', '=', 1)->where('quantity', '!=', 0);
         $categoriesQuery = Category::query();
-        if (auth()->user()->organization_id) {
-            $customersQuery->where('organization_id', auth()->user()->organization_id);
-            $productsQuery->where('organization_id', auth()->user()->organization_id);
-            $categoriesQuery->where('organization_id', auth()->user()->organization_id);
-        }
+      
         $customers = $customersQuery->get();
         $products = $productsQuery->get();
         $categories = $categoriesQuery->get();

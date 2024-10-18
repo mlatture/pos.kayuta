@@ -1,5 +1,12 @@
 <div class="col-12 mb-3">
- 
+    <div class="row mb-4">
+        <div class="col">
+            <label for="email_invoice" id="emailLabel">Email:</label>
+            <input type="text" id="email_invoice" class="form-control shadow-sm" placeholder="Enter Email">
+            <input type="hidden" id="cust_email">
+        </div>
+    </div>
+
     <div class="btn-group btn-group-sm btn-block btn-group-toggle d-flex" data-toggle="buttons">
         <label class="btn btn-outline-secondary btn-payment flex-fill active">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCash" value="Cash"

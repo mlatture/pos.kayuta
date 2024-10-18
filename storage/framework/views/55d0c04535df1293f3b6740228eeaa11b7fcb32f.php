@@ -143,7 +143,7 @@
                 
                 <h5>Order#: <?php echo $order->id; ?></h5>
                 <p>
-                    
+                   
                     Date: <?php echo date('d-m-Y'); ?></br>
                     Time: <?php echo date('H:i', time()); ?></br>
                 </p>
@@ -156,7 +156,7 @@
                 <p>
                     Name: <?php echo !empty($order->customer->f_name) ? $order->customer->f_name : 'Walking Customer'; ?></br>
                     <?php if($order->customer): ?>
-                        
+                       
                         Email: <?php echo !empty($order->customer->email) ? $order->customer->email : 'N/A'; ?></br>
                         Phone: <?php echo !empty($order->customer->phone) ? $order->customer->phone : 'N/A'; ?></br>
                     <?php endif; ?>

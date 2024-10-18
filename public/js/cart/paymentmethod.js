@@ -54,12 +54,16 @@ $(document).ready(function () {
         processPayment(true); 
     });
     
+    $("#email_invoice").on("input", function () {
+        let cust_email = $(this).val();
+        $("#cust_email").val(cust_email);
+    })
     function processPayment(isPartial = false) {
         let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ""));
         let amount = parseFloat($("#orderAmountInput").val().replace(/,/g, ""));
         let customer_id = $("#customer_id").val();
         let paymentMethod = $('input[name="payment_method"]:checked').val();
-    
+        let customer_email = $("#cust_email").val();
        
         let orderId = $("#order_id").val();
     
@@ -68,16 +72,17 @@ $(document).ready(function () {
             if (amount > totalAmount) {
                 change = amount - totalAmount;
             }
-            handlePayment(customer_id, amount, change, paymentMethod, 0, 0, totalAmount, isPartial, orderId);
+            handlePayment(customer_id, amount, change, paymentMethod, 0, 0, totalAmount, isPartial, orderId, customer_email);
         } else if (paymentMethod === "GiftCard") {
             let giftCardNumber = $("#giftcardno").val();
-            processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId);
+            processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId, customer_email);
         } else if (paymentMethod === "CreditCard") {
-            processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId);
+            processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email);
         }
     }
     
-    function handlePayment(customer_id, amount, change, paymentMethod, number, x_ref_num, totalAmount, isPartial, orderId) {
+    function handlePayment(customer_id, amount, change, paymentMethod, number, x_ref_num, totalAmount, isPartial, orderId, customer_email) {
+
         let remainingBalance = parseFloat($("#remainingBalance").text()) || totalAmount;
         let firstRemainingBalance = remainingBalance - amount;
         $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
@@ -135,7 +140,7 @@ $(document).ready(function () {
             if (result.isConfirmed && result.value) {
                 let response = result.value;
            
-                finalizeOrder(amount, totalAmount, response, firstRemainingBalance);
+                finalizeOrder(amount, totalAmount, response, firstRemainingBalance, customer_email, orderId);
     
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
@@ -143,7 +148,7 @@ $(document).ready(function () {
         });
     }
     
-    function processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId) {
+    function processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId, customer_email) {
         $.ajax({
             url: processGiftCard,
             type: "POST",
@@ -179,7 +184,7 @@ $(document).ready(function () {
         });
     }
     
-    function processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId) {
+    function processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email) {
         $.ajax({
             url: processTerminal,
             type: "POST",
@@ -201,8 +206,8 @@ $(document).ready(function () {
         });
     }
     
-    function finalizeOrder(order_amount, totalAmount, response, firstRemainingBalance) {
-       
+    function finalizeOrder(order_amount, totalAmount, response, firstRemainingBalance, customer_email, orderId) {
+       console.log(customer_email);
         var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasOrder"), { backdrop: false });
         $('#offcanvasOrder').on('hide.bs.offcanvas', function (e) {
             e.preventDefault(); 
@@ -226,10 +231,11 @@ $(document).ready(function () {
                 stack: 6,
             });
 
-            setTimeout(function () {
-                clearInputFields(true);
-                window.location.reload();
-            }, 3000);
+            sendInvoiceEmail(customer_email,orderId)
+            // setTimeout(function () {
+            //     clearInputFields(true);
+            //     window.location.reload();
+            // }, 3000);
         } else {
             $.toast({
                 heading: response[0] || "Success",
@@ -249,11 +255,28 @@ $(document).ready(function () {
         $("#orderAmountInput").val('');
         $("#giftcardno").val('');
         $('input[name="payment_method"]:checked').prop('checked', false);
-    
-       
     }
-    
-    
-    
-    
+
+    function sendInvoiceEmail(customer_email, orderId)
+    {
+        $.ajax({
+            url: sentInvoiceEmail,
+            type: 'POST',
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: {
+                email: customer_email,
+                order_id: orderId
+            },
+            sunccess: function (response) {
+                console.log(response.message);
+            },
+            error: function (xhr) {
+                console.log(xhr);
+            }
+        })
+    }
+  
+   
 });

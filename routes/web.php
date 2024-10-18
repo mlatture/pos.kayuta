@@ -58,7 +58,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
     Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
     Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
-
+    Route::post('orders-send-email', [OrderController::class, 'sendInvoiceEmail'])->name('orders.send.invoice');
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
     Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
