@@ -4,7 +4,7 @@
 @section('content-header', 'Product Management')
 @section('content-actions')
     @hasPermission(config('constants.role_modules.create_products.value'))
-    <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
+        <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
     @endHasPermission
 @endsection
 @section('css')
@@ -26,7 +26,8 @@
                                         <th>Name</th>
                                         <th>Image</th>
                                         <th>Barcode</th>
-                                        <th>Price</th>
+                                        <th>Item Cost</th>
+                                        <th>Item Price</th>
                                         <th>Quantity</th>
                                         <th>Status</th>
                                         <th>Created At</th>
@@ -36,34 +37,47 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($products as $k => $product)
+                                        
+                                       
                                         <tr>
                                             <td>{{ $product->id }}</td>
                                             <td>{{ Str::limit($product->name, 20) }}</td>
-                                            <td><img class="product-img img-thumbnail"
-                                                    src="{{ asset(Storage::url($product->image)) }}" width="60px" height="60px" alt=""></td>
+
+                                            <td>
+                                                <img class="product-img img-thumbnail" 
+                                                src="{{ $product->image ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}" 
+                                                width="60px" height="60px" alt="{{ $product->name }}">
+                                           
+                                           
+                                            </td>
+
                                             <td>{{ $product->barcode }}</td>
+                                            <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
                                             <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
                                             <td>{{ $product->quantity }}</td>
                                             <td>
                                                 <span
-                                                    class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">{{ $product->status ? 'Active' : 'Inactive' }}</span>
+                                                    class="right badge badge-{{ $product->status ? 'success' : 'danger' }}">
+                                                    {{ $product->status ? 'Active' : 'Inactive' }}
+                                                </span>
                                             </td>
                                             <td>{{ $product->created_at }}</td>
                                             <td>{{ $product->updated_at }}</td>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_products.value'))
-                                                <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
-                                                        class="fas fa-edit"></i></a>
+                                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
+                                                            class="fas fa-edit"></i></a>
                                                 @endHasPermission
                                                 @hasPermission(config('constants.role_modules.delete_products.value'))
-                                                <button class="btn btn-danger btn-delete"
-                                                    data-url="{{ route('products.destroy', $product) }}"><i
-                                                        class="fas fa-trash"></i></button>
+                                                    <button class="btn btn-danger btn-delete"
+                                                        data-url="{{ route('products.destroy', $product) }}"><i
+                                                            class="fas fa-trash"></i></button>
                                                 @endHasPermission
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+
                             </table>
                         </div>
                     </div>

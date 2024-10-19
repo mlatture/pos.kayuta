@@ -28,6 +28,7 @@ $(document).ready(function () {
                 $("#backInfo").show();
                 // $('.thirdpage-modal').hide();
                 $("#nextInfo").hide();
+               
                 $("#submitReservations").show();
             });
         });
@@ -38,6 +39,7 @@ $(document).ready(function () {
             $("#backInfo").hide();
             $(".firstpage-modal").fadeIn(400, function () {
                 $("#submitReservations").hide();
+              
                 $("#nextInfo").show();
                 $("#closeModal").show();
             });
@@ -244,26 +246,19 @@ $(document).on("click", ".actionsbtn", function () {
 
     $("#actionsModal .modal-body").append(`
         <div class="row justify-content-center">
-            <div class="col-4">
+            <div class="col-8">
                 <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" data-id="${id}" id="action1">
                     <div class="card-body d-flex justify-content-center align-items-center">
                         <h6 class="card-title text-center">
                             <i class="fa-solid fa-calendar"></i>
-                            Reschedule
-                        </h6>
-                    </div>
-                </div>
-            </div>
-            <div class="col-4">
-                <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" id="action2">
-                    <div class="card-body d-flex justify-content-center align-items-center">
-                        <h6 class="card-title text-center">
-                            <i class="fa-solid fa-location-arrow"></i>
+                            Reschedule /
+                              <i class="fa-solid fa-location-arrow"></i>
                             Relocate
                         </h6>
                     </div>
                 </div>
             </div>
+        
             <div class="col-4">
                 <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" id="action3" data-id="${id}">
                     <div class="card-body d-flex justify-content-center align-items-center">
@@ -282,6 +277,40 @@ $(document).on("click", ".actionsbtn", function () {
 
 $(document).on("click", "#action1", function () {
     const id = $(this).data("id");
-    url = "reservations/calendar/" + id;
+    url = "reservations/relocate/" + id;
     window.location = url;
+});
+
+$('.reservationEmail').on('input', function() {
+    let email = $(this).val();
+    console.log(email);
+
+    if (email) {
+        $.ajax({
+            url: customerInfo,
+            type: 'GET',
+            data: {
+                email: email
+            },
+            success: function(data) {
+                if (data.success) {
+
+                    $("#f_name").val(data.info.fname);
+                    $("#l_name").val(data.info.lname);
+                    $("#con_num").val(data.info.con);
+                    $("#address").val(data.info.address);
+                } else {
+                    $("#f_name").val('');
+                    $("#l_name").val('');
+                    $("#con_num").val('');
+                    $("#address").val('');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("Error: ", error);
+                console.log("Status: ", status);
+                console.log("Response: ", xhr.responseText);
+            },
+        });
+    }
 });

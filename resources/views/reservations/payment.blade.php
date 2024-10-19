@@ -274,21 +274,55 @@
                     <p>Waiting for card insertion...</p>
                 </div>
 
-                <input type="hidden" name="cartid" value="{{ $reservation->cartid }}">
+                <input type="hidden" name="cartid" id="cartid" value="{{ $reservation->cartid }}">
                 <input type="hidden" name="id" value="{{ $reservation->id }}">
 
-                <div class="form-row d-flex justify-content-end mr-1">
+                <div class="form-row d-flex justify-content-end mr-1 gap-2">
+                    @if (Request::is('admin/reservations/payment/*'))
+                        <div class="btn btn-danger" id="addToCart">
+                            <i class="fa-solid fa-cart-shopping"></i> Add To Cart
+                        </div>
+                    @endif
                     <div class="btn btn-success"
                         id="{{ Request::is('admin/reservations/invoice/*') ? 'payBalance' : 'payBtn' }}">
-                        <i class="fa-solid fa-money-bill-transfer"></i> Process
+                        <i class="fa-solid fa-money-bill-transfer"></i> Pay
                     </div>
                 </div>
+
             </div>
 
         </form>
 
     </div>
+    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <script>
-        var checkGiftCart = "{{ route('check.gift-card') }}"
+        var checkGiftCart = "{{ route('check.gift-card') }}";
+        var deleteAddToCart = "{{ route('reservations.delete.add-to-cart') }}";
+
+        var pusher = new Pusher('3da072d963b1708b31a3', {
+            cluster: 'mt1',
+        });
+
+      
+        var channel = pusher.subscribe('cart-deletions');
+
+        channel.bind('pusher:subscription_succeeded', function() {
+            console.log('Successfully subscribed to cart-deletions channel!');
+        });
+
+        channel.bind('App\\Events\\CartDeleted', function(data) {
+            var cartid = data.cartid;
+            console.log('Received event: Cart with ID ' + cartid + ' has been deleted.');
+            toastr.success("Cart with ID " + cartid + " has been deleted");
+
+            setTimeout(function() {
+                window.location.href = "/admin/reservations";
+            }, 1000);
+        });
+
+      
+        pusher.connection.bind('error', function(err) {
+            console.error('Pusher error:', err);
+        });
     </script>
 @endsection

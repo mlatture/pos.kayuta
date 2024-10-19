@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 
 class Customer extends Model
 {
+
+    protected $table = 'customers';
     protected $fillable = [
         'first_name',
         'last_name',

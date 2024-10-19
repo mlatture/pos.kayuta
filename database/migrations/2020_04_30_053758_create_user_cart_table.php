@@ -13,15 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('admin_cart', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('admin_id');
-            $table->foreignId('product_id');
-            $table->unsignedInteger('quantity');
+        // Check if the table already exists to avoid trying to recreate it
+        if (!Schema::hasTable('admin_cart')) {
+            Schema::create('admin_cart', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('admin_id');
+                $table->foreignId('product_id');
+                $table->unsignedInteger('quantity');
 
-            $table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-        });
+                $table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');
+                $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            });
+        }
     }
 
     /**

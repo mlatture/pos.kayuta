@@ -17,7 +17,7 @@ function storeCart(barcode = null, productId = null) {
                 heading: 'Success',
                 text: response.message,
                 position: 'top-right',
-                // bgColor: '#FF1356',
+                // bgColor: '#FF1356',4444333322221111
                 loaderBg: '#00c263',
                 icon: 'success',
                 hideAfter: 2000,

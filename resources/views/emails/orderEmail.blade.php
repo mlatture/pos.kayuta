@@ -143,10 +143,7 @@
                 {{--            <h2>KozeShake</h2> --}}
                 <h5>Order#: {!! $order->id !!}</h5>
                 <p>
-                    {{-- Franchise Name: {!! !empty($order->franchise->name) ? $order->franchise->name : 'N/A' !!} </br>
-                    Address: {!! !empty($oder->franchise->address) ? $oder->franchise->address : 'N/A' !!}</br>
-                    Email: {!! !empty($oder->franchise->franchiseManager->email) ? $oder->franchise->franchiseManager->email : 'N/A' !!}</br>
-                    Phone: {!! !empty($order->franchise->phone_number) ? $order->franchise->phone_number : 'N/A' !!}</br> --}}
+                   
                     Date: {!! date('d-m-Y') !!}</br>
                     Time: {!! date('H:i', time()) !!}</br>
                 </p>
@@ -159,7 +156,7 @@
                 <p>
                     Name: {!! !empty($order->customer->f_name) ? $order->customer->f_name : 'Walking Customer' !!}</br>
                     @if ($order->customer)
-                        {{-- Address: {!! !empty($order->customer->address) ? $order->customer->address : 'N/A' !!}</br> --}}
+                       
                         Email: {!! !empty($order->customer->email) ? $order->customer->email : 'N/A' !!}</br>
                         Phone: {!! !empty($order->customer->phone) ? $order->customer->phone : 'N/A' !!}</br>
                     @endif
