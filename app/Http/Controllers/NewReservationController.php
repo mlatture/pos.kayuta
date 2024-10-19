@@ -165,6 +165,19 @@ class NewReservationController extends Controller
         $rvSiteClasses = ['WE30A', 'WSE30A', 'WSE50A', 'WE50A', 'NOHU'];
         $site = Site::where('siteid', $request->siteId)->first();
 
+        $customer = Customer::where('email', $request->email)->first();
+
+        if(!$customer) {
+            $customer = Customer::create([
+                'first_name' => $request->f_name,
+                'last_name' => $request->l_name,
+                'email' => $request->email,
+                'phone' => $request->con_num,
+                'address' => $request->address,
+                'user_id' => 0.
+            ]);
+        }
+    
         if (!$site) {
             return response()->json(['error' => 'Site not found'], 404);
         }
@@ -221,7 +234,7 @@ class NewReservationController extends Controller
         $total = $subtotal + $totalTax;
 
         $cart = new CartReservation();
-        $cart->customernumber = $request->customernumber;
+        $cart->customernumber = $customer->id;
         $cart->cid = $fromDate;
         $cart->cod = $toDate;
         $cart->cartid = $randomId;
@@ -591,6 +604,6 @@ class NewReservationController extends Controller
     }
     
 
-
+   
     
 }

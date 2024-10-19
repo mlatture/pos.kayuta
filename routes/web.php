@@ -72,7 +72,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/reservations', [NewReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
     Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
-
+    Route::get('get-customer-info', [CustomerController::class, 'customerInfo'])->name('customer.info');
     //Reservations
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);

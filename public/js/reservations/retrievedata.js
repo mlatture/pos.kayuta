@@ -420,7 +420,6 @@ $(document).ready(function () {
     });
 
     fetchReservations();
-    setInterval(function(){
-        fetchNotReserve();
-    }, 5000)
+    fetchNotReserve();
+    
 });

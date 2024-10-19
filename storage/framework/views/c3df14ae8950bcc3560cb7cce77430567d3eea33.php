@@ -226,18 +226,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="customerSelector">Customer</label>
-                                    <select name="customerID" id="customerSelector" class="form-control">
 
-                                    </select>
-                                </div>
-                                <input type="hidden" name="lname" id="lname">
-                                <input type="hidden" name="fname" id="fname">
-                                <input type="hidden" name="customernumber" id="custnum">
-                                <input type="hidden" name="email" id="email">
-                            </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="siteLock">Site Lock ($20)</label>
@@ -256,7 +245,53 @@
 
                             </div>
                         </div>
+
+
+                        <div class="form-row mt-2">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" class="form-control reservationEmail" id="reservationEmail"
+                                        name="email" placeholder="Enter Email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Fisrt Name</label>
+                                    <input type="text" class="form-control" id="f_name" name="f_name"
+                                        placeholder="First Name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Last Name</label>
+                                    <input type="text" class="form-control" id="l_name" name="l_name"
+                                        placeholder="Last Name">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="contact">Contact Number</label>
+                                    <input type="text" class="form-control" id="con_num" name="con_num"
+                                        placeholder="Contact Number">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="address">Address</label>
+                                    <input type="text" class="form-control" id="address" name="address"
+                                        placeholder="Address">
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+
                 </form>
             </div>
             <div class="modal-footer">
@@ -269,4 +304,9 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    var customerInfo = " <?php echo e(route('customer.info')); ?>";
+</script>
 <?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/reservations/modals/reservations-modal.blade.php ENDPATH**/ ?>
