@@ -11,12 +11,30 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        $tableName = 'pos_payments';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'payment_method')) {
+                    $table->string('payment_method')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'payment_acc_number')) {
+                    $table->string('payment_acc_number')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->integer('organization_id')->nullable();
+                $table->double('amount')->default(0);
+                $table->bigInteger('order_id')->nullable();
+                $table->bigInteger('admin_id')->nullable();
                 $table->string('payment_method')->nullable();
                 $table->string('payment_acc_number')->nullable();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -24,9 +42,9 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('pos_payments', function (Blueprint $table) {
+        Schema::table('pos_payments', static function (Blueprint $table) {
             $table->dropColumn('payment_method');
             $table->dropColumn('payment_acc_number');
 

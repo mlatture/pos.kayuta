@@ -51,7 +51,6 @@
                                                     width="60px" height="60px" alt="{{ $product->name }}">
 
 
-
                                             </td>
 
                                             <td>{{ $product->barcode }}</td>

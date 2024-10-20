@@ -11,11 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\PosPayment;
-
-use App\Mail\OrderInvoiceMail;
-use Illuminate\Support\Facades\Mail;
-
 class OrderController extends Controller
 {
     private $object;
@@ -64,7 +59,8 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $order = Order::create([
-                'user_id' => $request->customer_id,
+                'organization_id' => auth()->user()->organization_id,
+                'user_id' => $request->customer_id ?? 0,
                 'gift_card_id' => $request->gift_card_id ?? 0,
                 'admin_id' => $request->user()->id,
                 'amount' => $request->amount,

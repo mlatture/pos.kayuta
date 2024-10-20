@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class SettingsSeeder extends Seeder
 {
@@ -14,17 +16,23 @@ class SettingsSeeder extends Seeder
      */
     public function run()
     {
-        $data = [
-            ['key' => 'app_name', 'value' => 'Laravel-POS'],
-            ['key' => 'currency_symbol', 'value' => '$'],
-        ];
+        $path = database_path('seeders/sql/settings.sql');
 
-        foreach ($data as $value) {
-            Setting::updateOrCreate([
-                'key' => $value['key']
-            ], [
-                'value' => $value['value']
-            ]);
+        if (!File::exists($path)) {
+            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+            return;
+        }
+
+        $sql = File::get($path);
+        $insertStatements = '';
+        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+
+        if (!empty($matches[0])) {
+            $insertStatements = implode("\n", $matches[0]);
+        }
+
+        if (!empty($insertStatements)) {
+            DB::unprepared($insertStatements);
         }
     }
 }

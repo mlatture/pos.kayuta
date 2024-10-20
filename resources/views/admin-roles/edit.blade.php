@@ -3,7 +3,7 @@
 @section('title', 'Update Admin Role')
 @section('content-header', 'Update Admin Role')
 @section('css')
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet"/>
 @endsection
 @section('content')
     <div class="card">
@@ -24,20 +24,32 @@
                 </div>
                 <div class="form-group">
                     <label>Module Access</label>
-                    @foreach(config('constants.role_modules') as $module)
-                        @if($module['value'] != config('constants.role_modules.dashboard.value'))
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="{{ $module['value'] }}" name="module_access[]" value="{{ $module['value'] }}" {{ (in_array($module['value'],old('module_access',$adminRole->module_access))) ? "checked" : "" }} >
-                                <label class="form-check-label" for="{{ $module['value'] }}">{{ $module['name'] }}</label>
-                            </div>
-                       @endif
-                    @endforeach
+                    @php
+                        $permissions = array_merge(config('constants.role_modules'), $tablesPermissions);
+                    @endphp
+                    <div class="row">
+                        @foreach($permissions as $module)
+                            @if($module['value'] != config('constants.role_modules.dashboard.value'))
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ $module['value'] }}"
+                                               name="module_access[]"
+                                               value="{{ $module['value'] }}" {{ (in_array($module['value'],old('module_access',$adminRole->module_access))) ? "checked" : "" }} >
+                                        <label class="form-check-label"
+                                               for="{{ $module['value'] }}">{{ $module['name'] }}</label>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="status">Status</label>
                     <select name="status" id="status" class="form-control">
-                        <option {{ (old('status',$adminRole->status) == 1) ? "selected" : "" }} value="1">Active</option>
-                        <option {{ (old('status',$adminRole->status) == 0) ? "selected" : "" }} value="0">Inactive</option>
+                        <option {{ (old('status',$adminRole->status) == 1) ? "selected" : "" }} value="1">Active
+                        </option>
+                        <option {{ (old('status',$adminRole->status) == 0) ? "selected" : "" }} value="0">Inactive
+                        </option>
                     </select>
                     @error('status')
                     <span class="invalid-feedback" role="alert">
@@ -55,8 +67,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#adminRoleSelect').select2();
+        });
+        const checkboxes = document.querySelectorAll('.form-check-input');
+        let lastChecked = null;
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener('click', (event) => {
+                if (lastChecked && event.shiftKey) {
+                    const start = Array.from(checkboxes).indexOf(lastChecked);
+                    const end = Array.from(checkboxes).indexOf(checkbox);
+
+                    checkboxes.forEach((box, index) => {
+                        if (index >= Math.min(start, end) && index <= Math.max(start, end)) {
+                            box.checked = lastChecked.checked; // Match the state of the last checked box
+                        }
+                    });
+                }
+                lastChecked = checkbox;
+            });
         });
     </script>
 @endsection

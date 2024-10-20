@@ -232,10 +232,10 @@ $(document).ready(function () {
             });
 
             sendInvoiceEmail(customer_email,orderId)
-            // setTimeout(function () {
-            //     clearInputFields(true);
-            //     window.location.reload();
-            // }, 3000);
+            setTimeout(function () {
+                clearInputFields(true);
+                window.location.reload();
+            }, 3000);
         } else {
             $.toast({
                 heading: response[0] || "Success",

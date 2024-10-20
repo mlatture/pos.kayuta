@@ -452,18 +452,6 @@ $(document).ready(function () {
         var offcanvas = new bootstrap.Offcanvas(
             document.getElementById("offcanvasOrder")
         );
-        if (totalAmount <= 0) {
-            $.toast({
-                heading: "Error",
-                text: "Please add some items to cart!",
-                position: "top-right",
-                loaderBg: "#FF1356",
-                icon: "error",
-                hideAfter: 4000,
-                stack: 6,
-            });
-            return;
-        }
         offcanvas.show();
     
         $("#offcanvasSubtotal").text(

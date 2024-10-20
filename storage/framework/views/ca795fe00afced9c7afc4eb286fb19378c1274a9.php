@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 
 
 <?php $__env->startSection('title', 'Product Management'); ?>
@@ -139,3 +141,4 @@
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/products/index.blade.php ENDPATH**/ ?>
+>>>>>>> main

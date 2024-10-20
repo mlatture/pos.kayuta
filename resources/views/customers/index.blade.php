@@ -4,7 +4,7 @@
 @section('content-header', 'Customer Management')
 @section('content-actions')
     @hasPermission(config('constants.role_modules.create_customers.value'))
-        <a href="{{ route('customers.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Customer</a>
+    <a href="{{ route('customers.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Customer</a>
     @endHasPermission
 @endsection
 @section('css')
@@ -19,40 +19,40 @@
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
-                                width="100%">
+                                   width="100%">
                                 <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Contact</th>
-                                        <th>Address</th>
-                                        <th>Created At</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{{ $dictionaryFields['name'] ?? 'Name' }}</th>
+                                    <th>{{ $dictionaryFields['email'] ?? 'Email' }}</th>
+                                    <th>{{ $dictionaryFields['phone'] ?? 'Contact' }}</th>
+                                    <th>{{ $dictionaryFields['address'] ?? 'Address' }}</th>
+                                    <th>{{ $dictionaryFields['created_at'] ?? 'Created At' }}</th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($customers as $key => $customer)
-                                        <tr>
-                                            <td>{{ $key + 1 }}</td>
-                                            <td>{{ $customer->f_name }} {{ $customer->l_name }}</td>
-                                            <td>{{ $customer->email }}</td>
-                                            <td>{{ $customer->phone }}</td>
-                                            <td>{{ $customer->street_address }}</td>
-                                            <td>{{ $customer->created_at }}</td>
-                                            <td>
-                                                @hasPermission(config('constants.role_modules.edit_customers.value'))
-                                                <a href="{{ route('customers.edit', $customer) }}"
-                                                   class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                                                @endHasPermission
-                                                @hasPermission(config('constants.role_modules.delete_customers.value'))
-                                                <button class="btn btn-danger btn-delete"
-                                                        data-url="{{ route('customers.destroy', $customer) }}"><i
-                                                        class="fas fa-trash"></i></button>
-                                                @endHasPermission
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                @foreach ($customers as $key => $customer)
+                                    <tr>
+                                        <td>{{ $key + 1 }}</td>
+                                        <td>{{ $customer->f_name }} {{ $customer->l_name }}</td>
+                                        <td>{{ $customer->email }}</td>
+                                        <td>{{ $customer->phone }}</td>
+                                        <td>{{ $customer->street_address }}</td>
+                                        <td>{{ $customer->created_at }}</td>
+                                        <td>
+                                            @hasPermission(config('constants.role_modules.edit_customers.value'))
+                                            <a href="{{ route('customers.edit', $customer) }}"
+                                               class="btn btn-primary"><i class="fas fa-edit"></i></a>
+                                            @endHasPermission
+                                            @hasPermission(config('constants.role_modules.delete_customers.value'))
+                                            <button class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('customers.destroy', $customer) }}"><i
+                                                    class="fas fa-trash"></i></button>
+                                            @endHasPermission
+                                        </td>
+                                    </tr>
+                                @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -66,7 +66,7 @@
 
 @section('js')
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.table').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
@@ -74,7 +74,7 @@
                 ]
             });
 
-            $(document).on('click', '.btn-delete', function() {
+            $(document).on('click', '.btn-delete', function () {
                 $this = $(this);
                 const swalWithBootstrapButtons = Swal.mixin({
                     customClass: {
@@ -97,8 +97,8 @@
                         $.post($this.data('url'), {
                             _method: 'DELETE',
                             _token: '{{ csrf_token() }}'
-                        }, function(res) {
-                            $this.closest('tr').fadeOut(500, function() {
+                        }, function (res) {
+                            $this.closest('tr').fadeOut(500, function () {
                                 $(this).remove();
                             })
                         })
