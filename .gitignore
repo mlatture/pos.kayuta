@@ -25,4 +25,4 @@ Homestead.json
 .phpunit.result.cache
 
 storage/
-!.gitignore
+
