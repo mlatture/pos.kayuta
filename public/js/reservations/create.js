@@ -107,7 +107,7 @@ function sendPaymentRequest() {
     }
 
     if (paymentType === "Terminal") {
-        console.log("Test");
+   
         $.ajax({
             url:
                 "/admin/reservations/payment/" +

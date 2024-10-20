@@ -11,20 +11,47 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        // Check if the table already exists to avoid trying to recreate it
-        if (!Schema::hasTable('admin_cart')) {
-            Schema::create('admin_cart', function (Blueprint $table) {
+        $tableName = 'admin_cart';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'id')) {
+                    $table->id();
+                }
+                if (!Schema::hasColumn($tableName, 'admin_id')) {
+                    //$table->foreignId('admin_id')->nullable();
+                    $table->unsignedBigInteger('admin_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'product_id')) {
+                    //$table->foreignId('product_id')->nullable();
+                    $table->unsignedBigInteger('product_id')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'quantity')) {
+                    $table->unsignedInteger('quantity')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('admin_id');
-                $table->foreignId('product_id');
-                $table->unsignedInteger('quantity');
-
-                $table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');
-                $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+                $table->unsignedBigInteger('admin_id')->nullable();
+                $table->unsignedBigInteger('product_id')->nullable();
+                //$table->foreignId('admin_id')->nullable()->constrained('admins')->onDelete('cascade');
+                //$table->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
+                $table->unsignedInteger('quantity')->nullable();
             });
         }
+//        Schema::create('admin_cart', static function (Blueprint $table) {
+//            $table->id();
+//            $table->foreignId('admin_id')->nullable();
+//            $table->foreignId('product_id')->nullable();
+//            $table->unsignedInteger('quantity')->nullable();
+//            $table->unsignedBigInteger('admin_id')->nullable();
+//            $table->unsignedBigInteger('product_id')->nullable();
+//
+//            //$table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');
+//            //$table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+//        });
     }
 
     /**
@@ -32,7 +59,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('admin_cart');
     }

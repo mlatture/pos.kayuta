@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CPU\Helpers;
 use App\CPU\ImageManager;
 use App\Http\Requests\CustomerStoreRequest;
 use App\Models\Customer;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
-
     public function __construct(){
         $this->middleware('admin_has_permission:'.config('constants.role_modules.list_customers.value'))->only(['index']);
         $this->middleware('admin_has_permission:'.config('constants.role_modules.create_customers.value'))->only(['create','store']);
@@ -37,7 +37,9 @@ class CustomerController extends Controller
             );
         }
         $customers = $usersQuery->where('id', '!=', 0)->latest()->get();
-        return view('customers.index')->with('customers', $customers);
+        return view('customers.index')
+            ->with('customers', $customers)
+            ->with('dictionaryFields', Helpers::getDictionaryFields('customers'));
     }
 
     /**
@@ -47,7 +49,9 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        return view('customers.create');
+        return view('customers.create')
+            ->with('dictionaryFields', Helpers::getDictionaryFields('customers'))
+            ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('customers', true));
     }
 
     /**
@@ -109,7 +113,9 @@ class CustomerController extends Controller
     public function edit(User $customer)
     {
         if($customer->organization_id == auth()->user()->organization_id || auth()->user()->admin_role_id == 1) {
-            return view('customers.edit', compact('customer'));
+            return view('customers.edit', compact('customer'))
+                ->with('dictionaryFields', Helpers::getDictionaryFields('customers'))
+                ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('customers', true));
         }
         abort(403);
     }

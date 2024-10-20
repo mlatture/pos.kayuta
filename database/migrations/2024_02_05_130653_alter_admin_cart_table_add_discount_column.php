@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -13,9 +12,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('admin_cart', function (Blueprint $table) {
-            $table->double('discount')->default(0);
-        });
+        $tableName = 'admin_cart';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'discount')) {
+                    $table->double('discount')->default(0);
+                }
+            });
+        } else {
+            Schema::table('admin_cart', function (Blueprint $table) {
+                $table->double('discount')->default(0);
+            });
+        }
     }
 
     /**

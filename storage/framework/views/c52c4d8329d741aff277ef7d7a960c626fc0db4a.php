@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 <div class="tab-content mt-2" id="myTabContent">
     <div class="tab-pane fade show active" id="quick" role="tabpanel" aria-labelledby="quick-tab">
         <div class="order-product product-section">
@@ -71,3 +73,4 @@
     
 </div>
 <?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/tabpanel.blade.php ENDPATH**/ ?>
+>>>>>>> main

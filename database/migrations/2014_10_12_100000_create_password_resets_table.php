@@ -13,11 +13,26 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('password_resets', function (Blueprint $table) {
-            $table->string('email')->index();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
+        $tableName = 'password_resets';
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, static function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'email')) {
+                    $table->string('email')->index();
+                }
+                if (!Schema::hasColumn($tableName, 'token')) {
+                    $table->string('token');
+                }
+                if (!Schema::hasColumn($tableName, 'created_at')) {
+                    $table->timestamp('created_at')->nullable();
+                }
+            });
+        } else {
+            Schema::create($tableName, static function (Blueprint $table) {
+                $table->string('email')->index();
+                $table->string('token');
+                $table->timestamp('created_at')->nullable();
+            });
+        }
     }
 
     /**

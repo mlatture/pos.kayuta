@@ -60,9 +60,15 @@
                 <i class="fa-solid fa-bars-progress"></i> In Progress
             </button>
             <?php if(auth()->user()->hasPermission(config('constants.role_modules.orders.value'))): ?>
+<<<<<<< HEAD
+            <a href="<?php echo e(route('orders.index')); ?>" class="btn btn-dark text-white">
+                <i class="nav-icon fas fa-box me-2"></i> History
+            </a>
+=======
                 <a href="<?php echo e(route('orders.index')); ?>" class="btn btn-dark text-white">
                     <i class="nav-icon fas fa-box me-2"></i> History
                 </a>
+>>>>>>> main
             <?php endif; ?>
             <a href="#" class="btn btn-dark text-white">
                 <img src="<?php echo e(asset('images/help-ico.svg')); ?>" alt="Help Icon" class="me-2" />
@@ -71,6 +77,8 @@
         </div>
     </div>
 </header>
+<<<<<<< HEAD
+=======
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -133,4 +141,5 @@
 });
 
 </script>
+>>>>>>> main
 <?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/components/header.blade.php ENDPATH**/ ?>

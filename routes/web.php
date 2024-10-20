@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminRoleController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DynamicTableController;
 use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -82,10 +83,13 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/getnotreserve', [NewReservationController::class, 'noCart']);
     Route::post('/postinfo', [NewReservationController::class, 'storeInfo']);
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
-    Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'processPayment']);
+    Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class, 'postTerminalPayment']);
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
+    Route::post('reservations/invoice/{id}/paybalance', [NewReservationController::class, 'payBalance']);
+
+
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
@@ -103,13 +107,35 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::post('gift-cards/store', [GiftCardController::class, 'store'])->name('gift-cards.store');
     Route::post('gift-cards/apply', [GiftCardController::class, 'appltGiftCard'])->name('gift-cards.apply');
-    Route::get('check-gift-card', [GiftCardController::class,'checkGiftCard'])->name('check.gift-card');
+    Route::get('check-gift-card', [GiftCardController::class, 'checkGiftCard'])->name('check.gift-card');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
+
+});
+
+Route::prefix('admin')->middleware('auth')->group(static function () {
+
+    Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
+    Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
+    Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
+
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
+    Route::controller(DynamicTableController::class)->group(static function() {
+        Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
+        Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
+        Route::post('add-table', 'add_table')->name('admin.add-table');
+        Route::delete('delete-table/{table}', 'delete_table')->name('admin.delete-table');
+
+        Route::get('dynamic-module-records/{table}', 'dynamic_module_records')->name('admin.dynamic-module-records');
+        Route::get('dynamic-module/{table}/{id?}', 'dynamic_module_create_form_data')->name('admin.dynamic-module-create-form-data');
+        Route::post('store-dynamic-module/{table}', 'dynamic_module_store_form_data')->name('admin.dynamic-module-store-form-data');
+        Route::put('update-dynamic-module/{table}/{id}', 'dynamic_module_update_form_data')->name('admin.dynamic-module-update-form-data');
+    });
+
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CPU\Helpers;
 use App\Http\Requests\StoreGiftCardRequest;
 use App\Models\GiftCard;
 use App\Models\User;
@@ -41,7 +42,7 @@ class GiftCardController extends Controller
                 $giftCard->where('barcode', $request->barcode)->first();
             }
             $giftCards = $giftCard->latest()->paginate(10);
-            return view('gift-cards.index')->with('giftCards', $giftCards);
+            return view('gift-cards.index')->with('giftCards', $giftCards)->with('dictionaryFields', Helpers::getDictionaryFields('gift_cards'));
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -54,7 +55,9 @@ class GiftCardController extends Controller
      */
     public function create()
     {
-        return view('gift-cards.create');
+        return view('gift-cards.create')
+            ->with('dictionaryFields', Helpers::getDictionaryFields('gift_cards'))
+            ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('gift_cards', true));
     }
 
     /**
@@ -111,7 +114,9 @@ class GiftCardController extends Controller
     public function edit(GiftCard $giftCard)
     {
         if(auth()->user()->organization_id == $giftCard->organization_id || auth()->user()->admin_role_id == 1) {
-            return view('gift-cards.edit', compact('giftCard'));
+            return view('gift-cards.edit', compact('giftCard'))
+                ->with('dictionaryFields', Helpers::getDictionaryFields('gift_cards'))
+                ->with('dictionaryFieldsDesc', Helpers::getDictionaryFields('gift_cards', true));;
         }
         abort(403);
     }
@@ -192,7 +197,7 @@ class GiftCardController extends Controller
 
             if (!$giftCard || ($giftCard->user_email != $customer->email)) {
                 return response()->json(['message' => 'Gift Card is not applicable!'], 400);
-               
+
             }
 
 
