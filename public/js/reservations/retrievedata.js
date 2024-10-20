@@ -342,7 +342,7 @@ $(document).ready(function () {
     $(function () {
         var fromDate, toDate;
 
-        $("#openDatePicker").click(function () {
+        $("#openDatePicker").on('click',function () {
             var datePickerDiv = $("<div></div>").datepicker({
                 numberOfMonths: 2,
                 minDate: 0,

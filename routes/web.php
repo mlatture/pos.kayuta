@@ -13,8 +13,8 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVendorController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\NewReservationController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\TaxTypeController;
@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
 use App\Http\Controllers\StationRegisterController;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -57,24 +58,16 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders/process-gift-card-balance', [ProcessController::class, 'updateGiftCardBalance'])->name('orders.process.gift.card.balance');
     Route::post('orders/process-credit-card', [ProcessController::class, 'processCreditCard'])->name('orders.process.credit.card');
     Route::post('orders/process-terminal', [ProcessController::class, 'processTerminal'])->name('orders.process.terminal');
-    Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
-    Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
+    Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store.process');
+    Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update.process');
     Route::post('orders-send-email', [OrderController::class, 'sendInvoiceEmail'])->name('orders.send.invoice');
-    Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
-    Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
-    Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
-    Route::post('reservations/add-to-cart', [ReservationController::class, 'addToCart'])->name('reservations.add-to-cart');
-    Route::post('reservations/update-dates', [ReservationController::class, 'updateDates'])->name('reservations.updateDates');
-    Route::post('reservations/update-sites', [ReservationController::class, 'updateSites'])->name('reservations.update-sites');
-    Route::get('reservations/remove-cart/{bookingId}/{cartId}', [ReservationController::class, 'removeCart'])->name('reservations.remove-cart');
-    Route::post('reservations/apply-coupon', [ReservationController::class, 'applyCoupon'])->name('reservations.apply-coupon');
-    Route::post('reservations/do-checkout/{bookingId}', [ReservationController::class, 'doCheckout'])->name('reservations.do-checkout');
-    
+
     Route::get('/reservations', [NewReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
     Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
     Route::get('get-customer-info', [CustomerController::class, 'customerInfo'])->name('customer.info');
     //Reservations
+
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);
     Route::get('/getsiteclasses', [NewReservationController::class, 'getSiteClasses']);
@@ -105,7 +98,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
     Route::get('reports/payment-report', [ReportController::class, 'paymentReport'])->name('reports.paymentReport');
 
-    Route::post('gift-cards/store', [GiftCardController::class, 'store'])->name('gift-cards.store');
+    Route::post('gift-cards/store', [GiftCardController::class, 'store'])->name('gift-cards.store.process');
     Route::post('gift-cards/apply', [GiftCardController::class, 'appltGiftCard'])->name('gift-cards.apply');
     Route::get('check-gift-card', [GiftCardController::class, 'checkGiftCard'])->name('check.gift-card');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

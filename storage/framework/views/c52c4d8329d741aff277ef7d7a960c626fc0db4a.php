@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 <div class="tab-content mt-2" id="myTabContent">
     <div class="tab-pane fade show active" id="quick" role="tabpanel" aria-labelledby="quick-tab">
         <div class="order-product product-section">
@@ -16,20 +14,12 @@
 
 
                                 </span>
-                                <?php
-                                    $imagePath = 'images/products/' . $product->image;
-                                    $fallbackImageUrl = asset('images/product-thumbnail.jpg');
+                            
+                          
 
-                                    if (!empty($product->image) && file_exists(public_path($imagePath))) {
-                                        $imageUrl = asset($imagePath);
-                                    } else {
-                                        $imageUrl = $fallbackImageUrl;
-                                    }
-                                ?>
-                                               
+                                <img src="<?php echo e($product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"
+                                    class="rounded mx-auto d-block img-fluid" alt="Product Image">
 
-                                <img    src="<?php echo e($product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"  class="rounded mx-auto d-block img-fluid"
-                                    alt="Product Image">
 
 
 
@@ -73,4 +63,3 @@
     
 </div>
 <?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/cart/tabpanel.blade.php ENDPATH**/ ?>
->>>>>>> main

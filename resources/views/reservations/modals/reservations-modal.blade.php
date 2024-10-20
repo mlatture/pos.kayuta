@@ -147,6 +147,108 @@
 
 
 <div class="modal fade" id="dateRangeModal" tabindex="-1" role="dialog" aria-labelledby="dateRangeModalLabel"
+<<<<<<< HEAD
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="dateRangeModalLabel">Create Reservation</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <button type="button" class="btn btn-info mb-3" id="backInfo" style="display: none;">Back</button>
+        <form id="dateRangeForm">
+          <div class="firstpage-modal">
+            <div class="form-row mb-3">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="fromDate">{{ $dictionaryFields['cid'] ?? 'Check In Date' }}</label>
+                  <input type="text" class="form-control" id="fromDate" name="fromDate"
+                    placeholder="Select Check In Date" readonly>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="toDate">{{ $dictionaryFields['cod'] ?? 'Check Out Date' }}</label>
+                  <input type="text" class="form-control" id="toDate" name="toDate" placeholder="Select Check Out Date"
+                    readonly>
+                </div>
+              </div>
+            </div>
+            <div class="form-row mb-3">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="customerSelector">Customer</label>
+                  <select name="customerID" id="customerSelector" class="form-control">
+                    <!-- Options will be loaded dynamically -->
+                  </select>
+                </div>
+                <input type="hidden" name="lname" id="lname">
+                <input type="hidden" name="fname" id="fname">
+                <input type="hidden" name="customernumber" id="custnum">
+                <input type="hidden" name="email" id="email">
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="siteclass">{{ $dictionaryFields['rigtype'] ?? 'Site Type' }}</label>
+                  <select id="siteclass" class="form-control">
+                    <!-- Options will be loaded dynamically -->
+                  </select>
+                  <input type="hidden" name="siteclass" id="siteclasses">
+                </div>
+              </div>
+            </div>
+            <div class="form-row mb-3" id="forRv">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="riglength">{{ $dictionaryFields['riglength'] ?? 'Rig Length' }}</label>
+                  <input type="number" class="form-control" id="riglength" name="riglength"
+                    placeholder="Enter Rig Length">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="hookup">{{ $dictionaryFields['hookup'] ?? 'Hookup' }}</label>
+                  <select id="hookup" class="form-control">
+                  </select>
+                  <input type="hidden" name="hookup" id="hookups">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secondpage-modal" style="display: none;">
+
+            <div class="form-row ">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="number_of_guests">{{ $dictionaryFields['num_guests'] ?? 'Number of Guests' }}</label>
+                <select id="number_of_guests" class="form-control" name="num_guests">
+
+                </select>
+              </div>
+            </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="siteId">{{ $dictionaryFields['siteid'] ?? 'Site' }}</label>
+                  <select name="siteId" id="siteSelector" class="form-control">
+
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="siteLock">{{ $dictionaryFields['sitelock'] ?? 'Site Lock' }} ($20)</label>
+                  <div class="custom-checkbox-container">
+                    <div class="checkbox-wrapper-55">
+                      <label class="rocker rocker-small">
+                        <input type="checkbox" id="siteLock" name="siteLock" checked>
+                        <span class="switch-left">Yes</span>
+                        <span class="switch-right">No</span>
+                      </label>
+=======
     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -205,6 +307,7 @@
                                 </div>
                             </div>
                         </div>
+>>>>>>> main
                     </div>
 
                     <div class="secondpage-modal" style="display: none;">

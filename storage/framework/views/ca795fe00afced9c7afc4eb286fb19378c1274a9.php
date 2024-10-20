@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 
 
 <?php $__env->startSection('title', 'Product Management'); ?>
@@ -51,7 +49,6 @@
                                                 <img class="product-img img-thumbnail"
                                                     src="<?php echo e($product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"
                                                     width="60px" height="60px" alt="<?php echo e($product->name); ?>">
-
 
 
                                             </td>
@@ -141,4 +138,3 @@
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/products/index.blade.php ENDPATH**/ ?>
->>>>>>> main

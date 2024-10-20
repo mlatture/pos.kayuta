@@ -213,7 +213,7 @@
                 var formData = new FormData($('#giftCardForm')[0]);
 
                 $.ajax({
-                    url: "{{ route('gift-cards.store') }}",
+                    url: "{{ route('gift-cards.store.process') }}",
                     type: 'POST',
                     data: formData,
                     contentType: false,

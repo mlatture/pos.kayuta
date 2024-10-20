@@ -1,15 +1,14 @@
-<!-- 
-<header class="reservation__head bg-dark  py-2" >
-    
+
+<header class="reservation__head bg-dark py-2">
     <div
         class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
-        <div class="d-flex align-items-center gap-3" >
+        <div class="d-flex align-items-center gap-3">
 
             <a href="javacript:void(0)" class="text-white" data-bs-toggle="collapse" data-bs-target="#collapsePlanner"
-            aria-expanded="false" aria-controls="collapsePlanner"  style="color: #EFC368 !important"><i class="fa-solid fa-border-all"></i> Planner</a>
+            aria-expanded="false" aria-controls="collapsePlanner"> Planner</a>
             <a href="javacript:void(0)" class="text-white" data-bs-toggle="collapse" data-bs-target="#collapseExample"
-                aria-expanded="false" aria-controls="collapseExample"  style="color: #EFC368 !important"><i class="fa-solid fa-users"></i> Add Customer</a>
-            <a href="javacript:void(0)" class="text-white" id="openDatePicker"  style="color: #EFC368 !important"><i class="fa-solid fa-calendar-week"></i> Quick Add</a>
+                aria-expanded="false" aria-controls="collapseExample"> Add Customer</a>
+            <a href="javacript:void(0)" class="text-white" id="openDatePicker">Quick Add</a>
         </div>
         <div>
             <a href="#" class="text-white text-decoration-none">
@@ -18,7 +17,7 @@
             </a>
         </div>
     </div>
-</header> -->
+</header>
 
 
 <div class="collapse px-5" id="collapseExample">
@@ -59,9 +58,10 @@
         </form>
     </div>
     <div class="card card-footer">
-        <button type="button" class="btn " id="saveCustomer" style="background-color: #EFC368 !important; color: white;">Save</button>
+        <button type="button" class="btn btn-success" id="saveCustomer">Save</button>
     </div>
 </div>
 
 
-<?php echo $__env->make('reservations.components.planner', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/reservations/components/header.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('reservations.components.planner', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views/reservations/components/header.blade.php ENDPATH**/ ?>

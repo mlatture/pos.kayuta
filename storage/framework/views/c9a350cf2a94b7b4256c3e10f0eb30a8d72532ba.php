@@ -4,7 +4,7 @@
 <?php $__env->startSection('content-header', 'Customer Management'); ?>
 <?php $__env->startSection('content-actions'); ?>
     <?php if(auth()->user()->hasPermission(config('constants.role_modules.create_customers.value'))): ?>
-        <a href="<?php echo e(route('customers.create')); ?>" class="btn btn-success"><i class="fas fa-plus"></i> Add New Customer</a>
+    <a href="<?php echo e(route('customers.create')); ?>" class="btn btn-success"><i class="fas fa-plus"></i> Add New Customer</a>
     <?php endif; ?>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('css'); ?>
@@ -19,40 +19,40 @@
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
-                                width="100%">
+                                   width="100%">
                                 <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Contact</th>
-                                        <th>Address</th>
-                                        <th>Created At</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th>ID</th>
+                                    <th><?php echo e($dictionaryFields['name'] ?? 'Name'); ?></th>
+                                    <th><?php echo e($dictionaryFields['email'] ?? 'Email'); ?></th>
+                                    <th><?php echo e($dictionaryFields['phone'] ?? 'Contact'); ?></th>
+                                    <th><?php echo e($dictionaryFields['address'] ?? 'Address'); ?></th>
+                                    <th><?php echo e($dictionaryFields['created_at'] ?? 'Created At'); ?></th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr>
-                                            <td><?php echo e($key + 1); ?></td>
-                                            <td><?php echo e($customer->f_name); ?> <?php echo e($customer->l_name); ?></td>
-                                            <td><?php echo e($customer->email); ?></td>
-                                            <td><?php echo e($customer->phone); ?></td>
-                                            <td><?php echo e($customer->street_address); ?></td>
-                                            <td><?php echo e($customer->created_at); ?></td>
-                                            <td>
-                                                <?php if(auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value'))): ?>
-                                                <a href="<?php echo e(route('customers.edit', $customer)); ?>"
-                                                   class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                                                <?php endif; ?>
-                                                <?php if(auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value'))): ?>
-                                                <button class="btn btn-danger btn-delete"
-                                                        data-url="<?php echo e(route('customers.destroy', $customer)); ?>"><i
-                                                        class="fas fa-trash"></i></button>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <tr>
+                                        <td><?php echo e($key + 1); ?></td>
+                                        <td><?php echo e($customer->f_name); ?> <?php echo e($customer->l_name); ?></td>
+                                        <td><?php echo e($customer->email); ?></td>
+                                        <td><?php echo e($customer->phone); ?></td>
+                                        <td><?php echo e($customer->street_address); ?></td>
+                                        <td><?php echo e($customer->created_at); ?></td>
+                                        <td>
+                                            <?php if(auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value'))): ?>
+                                            <a href="<?php echo e(route('customers.edit', $customer)); ?>"
+                                               class="btn btn-primary"><i class="fas fa-edit"></i></a>
+                                            <?php endif; ?>
+                                            <?php if(auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value'))): ?>
+                                            <button class="btn btn-danger btn-delete"
+                                                    data-url="<?php echo e(route('customers.destroy', $customer)); ?>"><i
+                                                    class="fas fa-trash"></i></button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                             </table>
                         </div>
@@ -66,7 +66,7 @@
 
 <?php $__env->startSection('js'); ?>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.table').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
@@ -74,7 +74,7 @@
                 ]
             });
 
-            $(document).on('click', '.btn-delete', function() {
+            $(document).on('click', '.btn-delete', function () {
                 $this = $(this);
                 const swalWithBootstrapButtons = Swal.mixin({
                     customClass: {
@@ -97,8 +97,8 @@
                         $.post($this.data('url'), {
                             _method: 'DELETE',
                             _token: '<?php echo e(csrf_token()); ?>'
-                        }, function(res) {
-                            $this.closest('tr').fadeOut(500, function() {
+                        }, function (res) {
+                            $this.closest('tr').fadeOut(500, function () {
                                 $(this).remove();
                             })
                         })

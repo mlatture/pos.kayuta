@@ -235,13 +235,13 @@
         var cartEmptyUrl = "{{ route('cart.empty') }}"
         var cartCategoryUrl = "{{ route('category.products') }}";
         var cartAllCategoryUrl = "{{ route('category.all') }}"
-        var cartOrderStoreUrl = "{{ route('orders.store') }}"
+        var cartOrderStoreUrl = "{{ route('orders.store.process') }}"
         var giftCard = "{{ route('gift-cards.apply') }}"
         var processGiftCard = "{{ route('orders.process.gift.card') }}";
         var updateGiftCardBalance = "{{ route('orders.process.gift.card.balance') }}";
         var processCreditCard = "{{ route('orders.process.credit.card') }}";
         var processTerminal = "{{ route('orders.process.terminal') }}";
-        var cartOrderUpdateUrl = "{{ route('orders.update')}}"
+        var cartOrderUpdateUrl = "{{ route('orders.update.process') }}";
         var sentInvoiceEmail = "{{ route('orders.send.invoice') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
