@@ -36,20 +36,34 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+<<<<<<< HEAD
 
 
                                     <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+=======
+                                    <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        
+                                       
+>>>>>>> main
                                         <tr>
                                             <td><?php echo e($product->id); ?></td>
                                             <td><?php echo e(Str::limit($product->name, 20)); ?></td>
 
                                             <td>
+<<<<<<< HEAD
                                                 <img class="product-img img-thumbnail"
                                                     src="<?php echo e($product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"
                                                     width="60px" height="60px" alt="<?php echo e($product->name); ?>">
 
 
 
+=======
+                                                <img class="product-img img-thumbnail" 
+                                                src="<?php echo e($product->image ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>" 
+                                                width="60px" height="60px" alt="<?php echo e($product->name); ?>">
+                                           
+                                           
+>>>>>>> main
                                             </td>
 
                                             <td><?php echo e($product->barcode); ?></td>

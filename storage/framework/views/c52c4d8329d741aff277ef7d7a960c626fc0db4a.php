@@ -26,7 +26,11 @@
                                 ?>
                                                
 
+<<<<<<< HEAD
                                 <img    src="<?php echo e($product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"  class="rounded mx-auto d-block img-fluid"
+=======
+                                <img  src="<?php echo e($product->image ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg')); ?>"  class="rounded mx-auto d-block img-fluid"
+>>>>>>> main
                                     alt="Product Image">
 
 
