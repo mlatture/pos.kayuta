@@ -25,9 +25,12 @@
                                 @endphp
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
                                 <img src="{{ $product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}"
                                     class="rounded mx-auto d-block img-fluid" alt="Product Image">
 =======
+>>>>>>> main
                                 <img    src="{{ $product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}"  class="rounded mx-auto d-block img-fluid"
                                     alt="Product Image">
 >>>>>>> main
