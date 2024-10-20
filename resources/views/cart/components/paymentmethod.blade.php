@@ -1,7 +1,6 @@
 <div class="col-12 mb-3">
- 
-    <div class="btn-group btn-group-sm btn-block btn-group-toggle d-flex" data-toggle="buttons">
-        <label class="btn btn-outline-secondary btn-payment flex-fill active">
+    <div class="btn-group btn-group-sm btn-block btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-dark btn-payment active ">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCash" value="Cash"
                 autocomplete="off" checked />
             <i class="bi bi-cash"></i> Cash
@@ -37,11 +36,10 @@
         
     </div>
 
-    
-    <div class="row mt-4">
-        <div class="col">
-            <label for="orderAmountInput" id="orderLabel">Enter Order Amount:</label>
-            <input type="text" id="orderAmountInput" class="form-control shadow-sm" placeholder="Enter amount">
+    <div class="row mt-3">
+        <div class="col" id="expire" hidden>
+            <label for="" id="orderLabel">Enter Expiration Date:</label>
+            <input type="text" id="cardExpiry" class="form-control" placeholder="MM/YY" maxlength="5">
         </div>
     </div>
 

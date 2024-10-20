@@ -53,8 +53,7 @@
     </a>
 
     <ul class="navbar-nav ms-auto  d-flex flex-row">
-        <!-- Optional Offcanvas Toggle Button -->
-        
+      
 
         <?php if(auth()->user()->hasPermission(config('constants.role_modules.dashboard.value'))): ?>
             <li class="nav-item">
@@ -150,17 +149,6 @@
         </li>
 
 
-        <!-- <?php if(auth()->user()->hasPermission('organization_management')): ?>
-            <li class="nav-item">
-                <a href="<?php echo e(route('organizations.index')); ?>" class="nav-link <?php echo e(activeSegment('organization')); ?>">
-                    <div class="d-flex align-items-center">
-                        <i class="nav-icon fas fa-building"></i>
-                        <span class="ms-2">Organization</span>
-                    </div>
-                </a>
-            </li>
-        <?php endif; ?>
- -->
 
 
 

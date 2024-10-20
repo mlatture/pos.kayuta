@@ -421,4 +421,5 @@ $(document).ready(function () {
 
     fetchReservations();
     fetchNotReserve();
+    
 });

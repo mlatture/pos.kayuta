@@ -159,4 +159,27 @@ class CustomerController extends Controller
            'success' => true
        ]);
     }
+
+    public function customerInfo(Request $request)
+    {
+        $customer = Customer::where('email', $request->email)->first();
+
+        if($customer){
+            return response()->json([
+                'success' => true,
+                'info' => [
+                    'fname' => $customer->first_name,
+                    'lname' => $customer->last_name,
+                    'con' => $customer->phone,
+                    'address' => $customer->address,
+                ],
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                "message" => "No user found with this email."
+
+            ]);
+        }
+    }
 }

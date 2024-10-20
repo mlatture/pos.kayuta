@@ -8,7 +8,7 @@
                  aria-expanded="false">
                 Station: {{ ucfirst(auth()->user()->name) }}
             </button>
-            <button class="btn btn-dark text-white new-sale" id="new-sale" type="button">
+            <button class="btn btn-dark text-white cart-empty" type="button">
                 <i class="fa-solid fa-cart-arrow-down "></i> New Sale
             </button>
             <div class="dropdown">
@@ -20,10 +20,10 @@
                     <li>
 
                         @hasPermission(config('constants.role_modules.orders.value'))
-                        <a class="dropdown-item" href="{{ route('orders.index') }}">
-                            <i class="fa-solid fa-up-right-from-square"></i>
-                            Process Return
-                        </a>
+                            <a class="dropdown-item" href="{{ route('orders.index') }}">
+                                <i class="fa-solid fa-up-right-from-square"></i>
+                                Process Return
+                            </a>
                         @endHasPermission
                     </li>
                     <li>
@@ -46,9 +46,9 @@
                 <i class="fa-solid fa-bars-progress"></i> In Progress
             </button>
             @hasPermission(config('constants.role_modules.orders.value'))
-            <a href="{{ route('orders.index') }}" class="btn btn-dark text-white">
-                <i class="nav-icon fas fa-box me-2"></i> History
-            </a>
+                <a href="{{ route('orders.index') }}" class="btn btn-dark text-white">
+                    <i class="nav-icon fas fa-box me-2"></i> History
+                </a>
             @endHasPermission
             <a href="#" class="btn btn-dark text-white">
                 <img src="{{ asset('images/help-ico.svg') }}" alt="Help Icon" class="me-2" />

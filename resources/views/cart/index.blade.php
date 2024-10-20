@@ -101,14 +101,16 @@
 
                     <div class="col">
                         <select class="form-control select2" name="customer_id" id="customer_id">
-                            <option value="0" data-name="Walk-in Customer">Walk-in Customer</option>
                             <option value="add_new_user">Add New User</option>
+
+                            {{-- <option value="0" data-name="Walk-in Customer">Walk-in Customer</option> --}}
                             @foreach ($customers as $customer)
                                 <option value="{{ $customer->id }}"
                                     data-name="{{ $customer->f_name . ' ' . $customer->l_name }}">
                                     {{ $customer->f_name . ' ' . $customer->l_name }}
                                 </option>
                             @endforeach
+
                         </select>
                     </div>
                    
@@ -218,8 +220,9 @@
     </div>
 </section>
 
-{{-- user add modal starts here --}}
+
 @include('cart.modals.user-add-modal')
+@include('cart.modals.register-modal')
 @endsection
 
 @push('js')
@@ -239,6 +242,7 @@
         var processCreditCard = "{{ route('orders.process.credit.card') }}";
         var processTerminal = "{{ route('orders.process.terminal') }}";
         var cartOrderUpdateUrl = "{{ route('orders.update')}}"
+        var sentInvoiceEmail = "{{ route('orders.send.invoice') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {

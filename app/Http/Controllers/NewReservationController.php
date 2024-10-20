@@ -15,7 +15,10 @@ use App\Models\CartReservation;
 use App\Models\GiftCard;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\DeleteCartJob;
+use App\Events\CartDeleted;
 
+use Illuminate\Support\Facades\DB;
 
 class NewReservationController extends Controller
 {
@@ -157,11 +160,24 @@ class NewReservationController extends Controller
         $fromDate = Carbon::parse($request->fromDate);
         $toDate = Carbon::parse($request->toDate);
         $numberOfNights = $toDate->diffInDays($fromDate);
-
+        $currentUTC = now('UTC');
         $currentDate = Carbon::now()->format('l');
         $rvSiteClasses = ['WE30A', 'WSE30A', 'WSE50A', 'WE50A', 'NOHU'];
         $site = Site::where('siteid', $request->siteId)->first();
 
+        $customer = Customer::where('email', $request->email)->first();
+
+        if(!$customer) {
+            $customer = Customer::create([
+                'first_name' => $request->f_name,
+                'last_name' => $request->l_name,
+                'email' => $request->email,
+                'phone' => $request->con_num,
+                'address' => $request->address,
+                'user_id' => 0.
+            ]);
+        }
+    
         if (!$site) {
             return response()->json(['error' => 'Site not found'], 404);
         }
@@ -218,7 +234,7 @@ class NewReservationController extends Controller
         $total = $subtotal + $totalTax;
 
         $cart = new CartReservation();
-        $cart->customernumber = $request->customernumber;
+        $cart->customernumber = $customer->id;
         $cart->cid = $fromDate;
         $cart->cod = $toDate;
         $cart->cartid = $randomId;
@@ -236,11 +252,12 @@ class NewReservationController extends Controller
         $cart->totaltax = $totalTax;
         $cart->total = $total;
         $cart->rid = 'uc';
+        $cart->holduntil = $currentUTC;
         $cart->description = "{$numberOfNights} night(s) for {$cart->siteclass} at {$request->siteId}";
 
         $cart->save();
 
-        return response()->json(['success' => true, 'total' => $total, 'subtotal' => $subtotal, 'tax' => $totalTax]);
+        return response()->json(['success' => true, 'total' => $total, 'subtotal' => $subtotal, 'tax' => $totalTax, 'id' => $cart->id]);
     }
 
     public function store(Request $request)
@@ -503,7 +520,7 @@ class NewReservationController extends Controller
         $cardType = $this->getCardType($fullCardNumber);
 
 
-        \Log::info('Saving card on file', [
+        Log::info('Saving card on file', [
             'customernumber' => $customer->id,
             'cartid' => $cart_reservation->cartid,
             'method' => $cardType,
@@ -563,5 +580,30 @@ class NewReservationController extends Controller
 
 
 
+
+    public function deleteCart(Request $request)
+    {
+       
+        $currentUTC = now('UTC');
+    
+        $timeThreshold = $currentUTC->subMinutes(30);
+    
+        $carts = CartReservation::where('created_at', '<=', $timeThreshold)->get();
+    
+        foreach ($carts as $cart) {
+            $cartid = $cart->cartid;
+    
+            CartReservation::where('cartid', $cartid)->delete();
+    
+            broadcast(new CartDeleted($cartid));
+    
+            Log::info("Cart {$cartid} has been deleted.");
+        }
+    
+        return response()->json(['success' => true, 'message' => 'All expired carts have been deleted.']);
+    }
+    
+
    
+    
 }

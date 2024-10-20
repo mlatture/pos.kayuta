@@ -56,7 +56,7 @@ $("#submitReservations").click(function () {
             $("#nextInfo").show();
             $("#closeModal").show();
             setTimeout(function () {
-                window.location.reload();
+                window.location.href = "reservations/payment/" + response.id;
             }, 1000);
         },
         error: function (xhr) {
@@ -69,6 +69,33 @@ $("#submitReservations").click(function () {
     });
 });
 
+
+$("#addToCart").click(function() {
+    $.ajax({
+        url: deleteAddToCart,
+        type: 'DELETE',
+        cache: false,
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        success: function (response) {
+
+            toastr.info("Add To Cart");
+            setTimeout(function () {
+                window.location.href = "/admin/reservations";
+            }, 1000);
+        },
+        error: function (xhr) {
+            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                $.each(xhr.responseJSON.errors, function (key, value) {
+                    toastr.error(value[0]);
+                });
+            } else {
+                toastr.error('An error occurred while deleting the cart.');
+            }
+        },
+    });
+})
 function sendPaymentRequest() {
     var formDataPayment = new FormData($("#paymentchoices")[0]);
     var reservationId = $('input[name="id"]').val();
@@ -80,7 +107,7 @@ function sendPaymentRequest() {
     }
 
     if (paymentType === "Terminal") {
-        console.log('Test');
+   
         $.ajax({
             url:
                 "/admin/reservations/payment/" +
@@ -104,7 +131,7 @@ function sendPaymentRequest() {
                         window.location.href = "/admin/reservations";
                     }, 1000);
                 } else {
-                    console.log(response)
+                    console.log(response);
                     toastr.error(response.message || "Payment failed");
                 }
             },
@@ -186,7 +213,6 @@ function sendPaymentBalanceRequest() {
             },
         });
     } else {
-      
         $.ajax({
             url: "/admin/reservations/invoice/" + cartId + "/paybalance",
             type: "POST",

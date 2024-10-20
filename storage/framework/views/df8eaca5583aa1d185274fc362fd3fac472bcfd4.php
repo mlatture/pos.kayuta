@@ -1,0 +1,1 @@
+Hello world<?php /**PATH C:\Users\THOMAS JON\OneDrive\Desktop\pos.kayuta\resources\views\cart\components\create_station.blade.php ENDPATH**/ ?>

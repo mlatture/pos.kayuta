@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 class Order extends Model
 {
     protected $guarded = [];
+    protected $fillable = ['user_id', 'total', 'gift_card_amount', 'received_amount', 'created_at', 'updated_at'];
 
     public function items()
     {

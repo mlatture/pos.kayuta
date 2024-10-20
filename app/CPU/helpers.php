@@ -536,19 +536,40 @@ class Helpers
         return floatval($discount);
     }
 
+    // public static function module_permission_check($mod_name)
+    // {
+    //     $user_role = auth('admin')->user()->role;
+    //     $permission = $user_role->module_access;
+    //     if (isset($permission) && $user_role->status == 1 && in_array($mod_name, (array)json_decode($permission)) == true) {
+    //         return true;
+    //     }
+
+    //     if (auth('admin')->user()->admin_role_id == 1) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
     public static function module_permission_check($mod_name)
     {
-        $user_role = auth('admin')->user()->role;
+        $user = auth()->user(); 
+        if (!$user) {
+            return false;
+        }
+
+        $user_role = $user->role;
         $permission = $user_role->module_access;
-        if (isset($permission) && $user_role->status == 1 && in_array($mod_name, (array)json_decode($permission)) == true) {
+
+        if (isset($permission) && $user_role->status == 1 && in_array($mod_name, (array)json_decode($permission))) {
             return true;
         }
 
-        if (auth('admin')->user()->admin_role_id == 1) {
+        if ($user->admin_role_id == 1) {
             return true;
         }
+
         return false;
     }
+
 
     public static function convert_currency_to_usd($price)
     {

@@ -28,6 +28,7 @@ $(document).ready(function () {
                 $("#backInfo").show();
                 // $('.thirdpage-modal').hide();
                 $("#nextInfo").hide();
+               
                 $("#submitReservations").show();
             });
         });
@@ -38,6 +39,7 @@ $(document).ready(function () {
             $("#backInfo").hide();
             $(".firstpage-modal").fadeIn(400, function () {
                 $("#submitReservations").hide();
+              
                 $("#nextInfo").show();
                 $("#closeModal").show();
             });
@@ -277,4 +279,38 @@ $(document).on("click", "#action1", function () {
     const id = $(this).data("id");
     url = "reservations/relocate/" + id;
     window.location = url;
+});
+
+$('.reservationEmail').on('input', function() {
+    let email = $(this).val();
+    console.log(email);
+
+    if (email) {
+        $.ajax({
+            url: customerInfo,
+            type: 'GET',
+            data: {
+                email: email
+            },
+            success: function(data) {
+                if (data.success) {
+
+                    $("#f_name").val(data.info.fname);
+                    $("#l_name").val(data.info.lname);
+                    $("#con_num").val(data.info.con);
+                    $("#address").val(data.info.address);
+                } else {
+                    $("#f_name").val('');
+                    $("#l_name").val('');
+                    $("#con_num").val('');
+                    $("#address").val('');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("Error: ", error);
+                console.log("Status: ", status);
+                console.log("Response: ", xhr.responseText);
+            },
+        });
+    }
 });
