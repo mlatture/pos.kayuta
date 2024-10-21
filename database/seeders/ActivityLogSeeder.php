@@ -27,7 +27,18 @@ class ActivityLogSeeder extends Seeder
         preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
         if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
+            foreach ($matches[0] as $insertStatement) {
+                if (preg_match('/INSERT INTO `(.+?)`.+VALUES \(.+?, \'(\d+)\',.+?\);/is', $insertStatement, $insertMatches)) {
+                    $tableName = $insertMatches[1];
+                    $recordId = $insertMatches[2];
+
+                   
+                    DB::unprepared("DELETE FROM `$tableName` WHERE id = '$recordId';");
+                }
+                
+              
+                $insertStatements .= $insertStatement . "\n";
+            }
         }
 
         if (!empty($insertStatements)) {
