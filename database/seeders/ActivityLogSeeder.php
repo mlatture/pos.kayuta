@@ -23,7 +23,7 @@ class ActivityLogSeeder extends Seeder
         }
 
         $sql = File::get($path);
-        $insertStatements = '';
+
         preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
         if (!empty($matches[0])) {
@@ -32,17 +32,14 @@ class ActivityLogSeeder extends Seeder
                     $tableName = $insertMatches[1];
                     $recordId = $insertMatches[2];
 
-                   
                     DB::unprepared("DELETE FROM `$tableName` WHERE id = '$recordId';");
                 }
-                
-              
-                $insertStatements .= $insertStatement . "\n";
+
+               
+                DB::unprepared($insertStatement);
             }
         }
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
-        }
+        $this->command->info('Activity log table seeded successfully.');
     }
 }

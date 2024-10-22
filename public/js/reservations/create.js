@@ -107,7 +107,6 @@ function sendPaymentRequest() {
     }
 
     if (paymentType === "Terminal") {
-        console.log("Test");
         $.ajax({
             url:
                 "/admin/reservations/payment/" +
@@ -124,7 +123,6 @@ function sendPaymentRequest() {
             success: function (response) {
                 hideLoader();
                 if (response.success) {
-                    console.log(response.success);
                     toastr.options.timeOut = 3000;
                     toastr.success("Payment added successfully");
                     setTimeout(function () {

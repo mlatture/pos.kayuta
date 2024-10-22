@@ -108,7 +108,6 @@
                     },
                     success: function (response) {
                         resolve(response); 
-                        console.log(response.new_register)
                     },
                     error: function (xhr) {
                         reject(xhr.responseJSON);
