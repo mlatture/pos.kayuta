@@ -108,4 +108,6 @@ class Reservation extends Model
     {
         return $this->payment->payment ?? 0;
     }
+
+  
 }

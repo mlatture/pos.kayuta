@@ -50,7 +50,11 @@ $(document).ready(function () {
         var selectedSiteClass = $("#siteclass option:selected").data(
             "siteclass"
         );
-        console.log(selectedSiteClass);
+
+     
+        
+        var selectedHookup = $("#hookup option:selected").data("sitehookup");
+
         $.ajax({
             type: "GET",
             url: "getsite",
@@ -58,6 +62,7 @@ $(document).ready(function () {
             cache: false,
             data: {
                 siteclass: selectedSiteClass,
+                hookup: selectedHookup,
             },
             success: function (data) {
                 $("#siteSelector").empty();
@@ -114,6 +119,10 @@ $(document).ready(function () {
         loadSites();
         number_of_guests();
     });
+
+    $("#hookup").on("change", function(){
+        loadSites();
+    })
 
     $("#customerSelector").on("select2:select", function (e) {
         var data = e.params.data;
@@ -283,7 +292,6 @@ $(document).on("click", "#action1", function () {
 
 $('.reservationEmail').on('input', function() {
     let email = $(this).val();
-    console.log(email);
 
     if (email) {
         $.ajax({

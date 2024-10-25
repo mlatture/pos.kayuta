@@ -17,10 +17,13 @@ class SubmenuItemsTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/submenu_items.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('submenu_items')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

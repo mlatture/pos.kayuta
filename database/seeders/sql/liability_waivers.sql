@@ -1,5 +1,5 @@
 -- Inserting into liability_waivers table
-INSERT INTO `liability_waivers` (`created_at`, `description`, `id`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `liability_waivers` (`created_at`, `description`,  `status`, `title`, `updated_at`) VALUES
 ('2023-09-30 12:15:53', '<h1><big>LIABILITY WAIVER</big></h1>
 
 <p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
@@ -120,5 +120,5 @@ INSERT INTO `liability_waivers` (`created_at`, `description`, `id`, `status`, `t
 
 <p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
-<p>OF KAYUTA LAKE&#39;S&nbsp;POLICIES, TERMS, AND CONDITION</p>', '1', '1', 'Liability Waiver', '2023-12-02 15:21:11');
+<p>OF KAYUTA LAKE&#39;S&nbsp;POLICIES, TERMS, AND CONDITION</p>',  '1', 'Liability Waiver', '2023-12-02 15:21:11');
 

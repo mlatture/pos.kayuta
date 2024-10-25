@@ -18,10 +18,13 @@ class ProductVendorsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/product_vendors.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('product_vendors')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

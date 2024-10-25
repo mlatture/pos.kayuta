@@ -8,11 +8,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProductsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
         $path = database_path('seeders/sql/products.sql');
@@ -21,6 +16,8 @@ class ProductsSeeder extends Seeder
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('products')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

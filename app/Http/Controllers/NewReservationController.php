@@ -115,27 +115,60 @@ class NewReservationController extends Controller
 
     public function getSites(Request $request)
     {
-        $currentDate = now();
-
-        $reservedSiteIds = Reservation::where(function ($query) use ($currentDate) {
-            $query->whereBetween('cid', [$currentDate, '9999-12-31'])
-                ->orWhereBetween('cod', ['0000-01-01', $currentDate]);
-        })->pluck('siteid')->toArray();
-
+        $fromDate = Carbon::parse($request->fromDate);
+        $toDate = Carbon::parse($request->toDate);
+    
+        $reservedSiteIds = Reservation::where('cid', '<', $toDate)
+            ->where('cod', '>', $fromDate)
+            ->pluck('siteid')
+            ->toArray();
+    
         $siteQuery = Site::whereNotIn('siteid', $reservedSiteIds);
-
+    
         if ($request->has('siteclass') && !empty($request->siteclass)) {
-            $siteclass = $request->siteclass;
-
-            $firstWord = explode(' ', trim($siteclass))[0];
-            $siteQuery->where('siteclass', 'LIKE', $firstWord . '%');
-
+            $siteclassArray = explode(',', trim($request->siteclass));
+            $siteclasses = array_map(function($value){
+                return str_replace(' ', '_', trim($value));
+            }, $siteclassArray);
+    
+            if (!empty($siteclasses)) {
+                $siteQuery->where(function($query) use ($siteclasses, $request) {
+                    if (in_array('RV_Sites', $siteclasses)) {
+                        $query->where(function($q) use ($request) {
+                            $q->where('siteclass', 'RV_Sites')
+                              ->orWhere('siteclass', 'RV_Sites,Tent_Sites');
+                            if ($request->has('hookup') && !empty($request->hookup)) {
+                                $hookup = $request->hookup;
+                                $q->where('hookup', $hookup);
+                            }
+                        });
+    
+                        $siteclasses = array_diff($siteclasses, ['RV_Sites']);
+                    }
+    
+                    if (in_array('Tent_Sites', $siteclasses)) {
+                        $query->orWhere(function($q) {
+                            $q->where('siteclass', 'Tent_Sites')
+                              ->orWhere('siteclass', 'RV_Sites,Tent_Sites');
+                        });
+    
+                       
+                        $siteclasses = array_diff($siteclasses, ['Tent_Sites']);
+                    }
+    
+                    if (!empty($siteclasses)) {
+                        $query->orWhereIn('siteclass', $siteclasses);
+                    }
+                });
+            }
         }
-
-        $site = $siteQuery->get();
-
-        return response()->json($site);
+    
+        $sites = $siteQuery->get();
+    
+        return response()->json($sites);
     }
+    
+    
 
 
     public function paymentIndex(Request $request, $id)
@@ -156,109 +189,68 @@ class NewReservationController extends Controller
     public function storeInfo(Request $request)
     {
         $randomId = substr(bin2hex(random_bytes(7)), 0, 13);
-
         $fromDate = Carbon::parse($request->fromDate);
         $toDate = Carbon::parse($request->toDate);
-        $numberOfNights = $toDate->diffInDays($fromDate);
         $currentUTC = now('UTC');
-        $currentDate = Carbon::now()->format('l');
-        $rvSiteClasses = ['WE30A', 'WSE30A', 'WSE50A', 'WE50A', 'NOHU'];
+        
+        
+        // $rvSiteClasses = ['WE30A', 'WSE30A', 'WSE50A', 'WE50A', 'NOHU'];
         $site = Site::where('siteid', $request->siteId)->first();
-
-        $customer = Customer::where('email', $request->email)->first();
-
-        if(!$customer) {
-            $customer = Customer::create([
+        $customer = Customer::firstOrCreate(
+            ['email' => $request->email],
+            [
                 'first_name' => $request->f_name,
                 'last_name' => $request->l_name,
-                'email' => $request->email,
                 'phone' => $request->con_num,
                 'address' => $request->address,
-                'user_id' => 0.
-            ]);
-        }
+                'user_id' => 0
+            ]
+        );
     
         if (!$site) {
             return response()->json(['error' => 'Site not found'], 404);
         }
-        $tier = null;
-        if ($request->siteclass === 'RV Sites') {
-            if (in_array($request->hookup, $rvSiteClasses)) {
-                $tier = RateTier::where('tier', $request->hookup)->first();
-            } elseif ($request->hookup === 'No Hookup') {
-                $tier = RateTier::where('tier', 'NOHU')->first();
-            } else {
-                return response()->json(['error' => 'Invalid hookup type selected'], 400);
-            }
-        } elseif ($request->siteclass === 'Boat Slips') {
-            $tier = RateTier::where('tier', 'BOAT')->first();
-        } elseif ($request->siteclass === 'Jet Ski Slips') {
-            $tier = RateTier::where('tier', 'JETSKI')->first();
-        } else {
-            $tier = RateTier::where('tier', $request->siteclass)->first();
-        }
+        $cartReservation = new CartReservation();
 
+        $tier = $cartReservation->getTierForSiteClass($request);
+    
         if (!$tier) {
             return response()->json(['error' => 'Rate tier not found'], 400);
         }
-
-        if ($numberOfNights === 30) {
-            $rate = $tier->monthlyrate;
-        } elseif ($numberOfNights === 7) {
-            $rate = $tier->weeklyrate;
-        } elseif ($numberOfNights >= 1) {
-            $rates = [
-                'Sunday' => $tier->sundayrate,
-                'Monday' => $tier->mondayrate,
-                'Tuesday' => $tier->tuesdayrate,
-                'Wednesday' => $tier->wednesdayrate,
-                'Thursday' => $tier->thursdayrate,
-                'Friday' => $tier->fridayrate,
-                'Saturday' => $tier->saturdayrate,
-            ];
-            $baseRate = 0;
-            for ($i = 0; $i < $numberOfNights; $i++) {
-                $day = $fromDate->copy()->addDays($i)->format('l');
-                $baseRate += $rates[$day];
-            }
-
-            $rate = $baseRate;
-        } else {
-            return response()->json(['error' => 'Invalid number of nights'], 400);
+    
+        try {
+            $calculation = $cartReservation->calculateRate($fromDate, $toDate, $tier, $request);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
-
-        $siteLockValue = $request->siteLock === 'on' ? 20 : 0;
-        $subtotal = $rate + $siteLockValue;
-        $taxRate = 0.0875;
-        $totalTax = $subtotal * $taxRate;
-        $total = $subtotal + $totalTax;
-
-        $cart = new CartReservation();
-        $cart->customernumber = $customer->id;
-        $cart->cid = $fromDate;
-        $cart->cod = $toDate;
-        $cart->cartid = $randomId;
-        $cart->siteid = $request->siteId;
-        $cart->riglength = $request->riglength;
-        $cart->sitelock = $siteLockValue;
-        $cart->nights = $numberOfNights;
-        $cart->siteclass = $request->siteclass;
-        $cart->hookups = $request->hookup ?? 0;
-        $cart->email = $request->email;
-        $cart->base = 0;
-        $cart->subtotal = $subtotal;
-        $cart->number_of_guests = $request->num_guests ?? 0;
-        $cart->taxrate = $taxRate;
-        $cart->totaltax = $totalTax;
-        $cart->total = $total;
-        $cart->rid = 'uc';
-        $cart->holduntil = $currentUTC;
-        $cart->description = "{$numberOfNights} night(s) for {$cart->siteclass} at {$request->siteId}";
-
-        $cart->save();
-
-        return response()->json(['success' => true, 'total' => $total, 'subtotal' => $subtotal, 'tax' => $totalTax, 'id' => $cart->id]);
+    
+        $cart = CartReservation::create([
+            'customernumber' => $customer->id,
+            'cid' => $fromDate,
+            'cod' => $toDate,
+            'cartid' => $randomId,
+            'siteid' => $request->siteId,
+            'riglength' => $request->riglength,
+            'sitelock' => $request->siteLock === 'on' ? 20 : 0,
+            'nights' => $calculation['numberOfNights'],
+            'siteclass' => $request->siteclass,
+            'hookups' => $request->hookup ?? 0,
+            'email' => $request->email,
+            'base' => $calculation['base_rate'],
+            'subtotal' => $calculation['subtotal'],
+            'number_of_guests' => $request->num_guests ?? 0,
+            'taxrate' => 0.0875,
+            'totaltax' => $calculation['totalTax'],
+            'total' => $calculation['total'],
+            'rid' => 'uc',
+            'holduntil' => $currentUTC,
+            'description' => "{$calculation['numberOfNights']} night(s) for {$request->siteclass} at {$request->siteId}",
+        ]);
+    
+        return response()->json(['success' => true, 'total' => $calculation['total'], 'subtotal' => $calculation['subtotal'], 'tax' => $calculation['totalTax'], 'id' => $cart->id]);
     }
+    
+   
 
     public function store(Request $request)
     {
@@ -340,13 +332,6 @@ class NewReservationController extends Controller
     
     
     
-
-
-
-    
-
-
-
     public function storePayment(Request $request, $id)
     {
         $cart_reservation = CartReservation::findOrFail($id);
@@ -413,8 +398,7 @@ class NewReservationController extends Controller
             'receipt' => $randomReceiptID,
             'method' => $paymentType,
             'customernumber' => $cart_reservation->customernumber,
-            'description' => $request->description ?? '',
-            'checknumber' => $request->xCheckNum ?? '',
+           
             'email' => $cart_reservation->email,
             'payment' => $amount,
         ]);
@@ -432,8 +416,7 @@ class NewReservationController extends Controller
             'receipt' => $randomReceiptID,
             'method' => $paymentType,
             'customernumber' => $cart_reservation->customernumber,
-            'description' => $request->description ?? '',
-            'checknumber' => $request->xCheckNum ?? '',
+          
             'email' => $cart_reservation->email,
             'payment' => $request->xCash,
         ]);

@@ -18,10 +18,13 @@ class UnitRateSeeder extends Seeder
     {
         $path = database_path('seeders/sql/unit_rate.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('unit_rate')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

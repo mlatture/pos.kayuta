@@ -18,10 +18,13 @@ class UserSeeder extends Seeder
     {
         $path = database_path('seeders/sql/users.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('users')->delete();
 
         $sql = File::get($path);
         $insertStatements = '';

@@ -93,6 +93,5 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(VirtualTourOfBearsSeeder::class);
         $this->call(VirtualTourOfSitesSeeder::class);
-        $this->call(WhitelistTablesSeeder::class);
     }
 }

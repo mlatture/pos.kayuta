@@ -17,10 +17,13 @@ class SitesTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/sites.sql');
 
+      
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('sites')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

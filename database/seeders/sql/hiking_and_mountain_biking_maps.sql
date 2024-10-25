@@ -1,5 +1,5 @@
 -- Inserting into hiking_and_mountain_biking_maps table
-INSERT INTO `hiking_and_mountain_biking_maps` (`created_at`, `description`, `id`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `hiking_and_mountain_biking_maps` (`created_at`, `description`,  `status`, `title`, `updated_at`) VALUES
 ('2023-09-30 11:38:30', '<h2>hiking trails,&nbsp;</h2>
 
 <h2>mountain biking trails,</h2>
@@ -70,5 +70,5 @@ INSERT INTO `hiking_and_mountain_biking_maps` (`created_at`, `description`, `id`
 	<li>
 	<p><a href=\"https://www.kayuta.com/woodhull-mountain\" target=\"_self\">Woodhull Mountain</a></p>
 	</li>
-</ul>', '1', '1', 'Hiking And Mountain Biking Map', '2023-11-05 19:45:19');
+</ul>', '1', 'Hiking And Mountain Biking Map', '2023-11-05 19:45:19');
 

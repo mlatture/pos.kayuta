@@ -1,5 +1,4 @@
--- Inserting into campground_policies table
-INSERT INTO `campground_policies` (`created_at`, `description`, `id`, `pdf`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `campground_policies` (`created_at`, `description`, `pdf`, `status`, `title`, `updated_at`) VALUES
 ('2023-09-28 22:10:40', '<p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
 <p>OF KAYUTA LAKE&#39;S CAMPGROUND POLICIES/RULES.</p>
@@ -173,7 +172,7 @@ INSERT INTO `campground_policies` (`created_at`, `description`, `id`, `pdf`, `st
 
 <p>SWIMMING FACILITY RULES AND REGULATIONS:As per the NYS Health Department</p>
 
-<p>THERE IS NO LIFEGUARD ON DUTY AT THE POOL - SWIM AT YOUR OWN RISK</p>
+<p>THERE IS NO LIFEGARD ON DUTY AT THE POOL - SWIM AT YOUR OWN RISK</p>
 
 <p>The swimming facilities at Kayuta Lake Campground, 10892 Campground Rd, Forestport, NY 13338 are not supervised by a lifeguard or another responsible person. In place of on-site supervision, this facility has established a series of safeguards to be followed by all guests. We are required to notify you of these rules, to ensure that water rescue equipment is at the pool and that the swimming area is maintained in a sanitary manner. In the interest of your safety and that of your guests, we require you to follow these rules. Please read the safety rules located at the entrance and outlined in this brochure. If you have any questions, we will be happy to discuss them with you.</p>
 
@@ -663,5 +662,4 @@ INSERT INTO `campground_policies` (`created_at`, `description`, `id`, `pdf`, `st
 
 <p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
-<p>OF KAYUTA LAKE&#39;S POLICIES, TERMS, AND CONDITIONS.</p>', '1', '2023-09-28-6515f9e073547.docx', '1', 'Campground Policies/Rules', '2023-09-28 22:10:40');
-
+<p>OF KAYUTA LAKE&#39;S POLICIES, TERMS, AND CONDITIONS.</p>', '2023-09-28-6515f9e073547.docx', '1', 'Campground Policies/Rules', '2023-09-28 22:10:40');

@@ -9,5 +9,6 @@ class TaxType extends Model
 {
     use HasFactory;
 
+    protected $table = 'tax_types';
     protected $guarded = [];
 }

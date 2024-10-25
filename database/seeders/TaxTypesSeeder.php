@@ -18,10 +18,13 @@ class TaxTypesSeeder extends Seeder
     {
         $path = database_path('seeders/sql/tax_types.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('tax_types')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';
