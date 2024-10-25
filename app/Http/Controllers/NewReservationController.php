@@ -126,21 +126,48 @@ class NewReservationController extends Controller
         $siteQuery = Site::whereNotIn('siteid', $reservedSiteIds);
     
         if ($request->has('siteclass') && !empty($request->siteclass)) {
-            $siteclass = $request->siteclass;
+            $siteclassArray = explode(',', trim($request->siteclass));
+            $siteclasses = array_map(function($value){
+                return str_replace(' ', '_', trim($value));
+            }, $siteclassArray);
     
-            $firstWord = explode(' ', trim($siteclass))[0];
-            $siteQuery->where('siteclass', 'LIKE', $firstWord . '%');
-        }
+            if (!empty($siteclasses)) {
+                $siteQuery->where(function($query) use ($siteclasses, $request) {
+                    if (in_array('RV_Sites', $siteclasses)) {
+                        $query->where(function($q) use ($request) {
+                            $q->where('siteclass', 'RV_Sites')
+                              ->orWhere('siteclass', 'RV_Sites,Tent_Sites');
+                            if ($request->has('hookup') && !empty($request->hookup)) {
+                                $hookup = $request->hookup;
+                                $q->where('hookup', $hookup);
+                            }
+                        });
     
-        if ($request->has('hookup') && !empty($request->hookup)) {
-            $hookup = $request->hookup;
-            $siteQuery->where('hookup', $hookup);
+                        $siteclasses = array_diff($siteclasses, ['RV_Sites']);
+                    }
+    
+                    if (in_array('Tent_Sites', $siteclasses)) {
+                        $query->orWhere(function($q) {
+                            $q->where('siteclass', 'Tent_Sites')
+                              ->orWhere('siteclass', 'RV_Sites,Tent_Sites');
+                        });
+    
+                       
+                        $siteclasses = array_diff($siteclasses, ['Tent_Sites']);
+                    }
+    
+                    if (!empty($siteclasses)) {
+                        $query->orWhereIn('siteclass', $siteclasses);
+                    }
+                });
+            }
         }
     
         $sites = $siteQuery->get();
     
         return response()->json($sites);
     }
+    
     
 
 
@@ -213,7 +240,7 @@ class NewReservationController extends Controller
             'subtotal' => $calculation['subtotal'],
             'number_of_guests' => $request->num_guests ?? 0,
             'taxrate' => 0.0875,
-            'totaltax' => 0.0875,
+            'totaltax' => $calculation['totalTax'],
             'total' => $calculation['total'],
             'rid' => 'uc',
             'holduntil' => $currentUTC,

@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class WhitelistTable extends Model
 {
-    protected $table = 'whitelist_table'; 
+    protected $table = 'whitelist_tables'; 
 }

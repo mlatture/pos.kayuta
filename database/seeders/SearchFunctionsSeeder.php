@@ -18,10 +18,13 @@ class SearchFunctionsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/search_functions.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('search_functions')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

@@ -18,10 +18,13 @@ class ReviewsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/reviews.sql');
 
+        
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('reviews')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

@@ -18,10 +18,13 @@ class SeasonalWaitingListsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/seasonal_waiting_lists.sql');
 
+      
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('seasonal_waiting_lists')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

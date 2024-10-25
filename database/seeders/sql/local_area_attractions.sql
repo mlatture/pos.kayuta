@@ -1,5 +1,5 @@
 -- Inserting into local_area_attractions table
-INSERT INTO `local_area_attractions` (`created_at`, `description`, `id`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `local_area_attractions` (`created_at`, `description`,  `status`, `title`, `updated_at`) VALUES
 ('2023-09-30 11:47:26', '<h2>local area attractions</h2>
 
 <p>Old Forge (29mi/40min)</p>
@@ -186,5 +186,5 @@ Just up the road from the campground are:</p>
 	</li>
 </ul>
 
-<p>The 422-acre Kayuta Lake averages 10 feet deep with a maximum depth of 22 feet. Key species found in the lake include panfish, bullhead, trout and smallmouth bass, pickerel, brown and lake trout. Be sure to bring your fishing gear! Don&#39;t have your own gear or forgot it at home, come to the General Store for Rods, hooks, bait, and tackle!</p>', '1', '1', 'Local Area Attractions', '2023-11-05 19:46:10');
+<p>The 422-acre Kayuta Lake averages 10 feet deep with a maximum depth of 22 feet. Key species found in the lake include panfish, bullhead, trout and smallmouth bass, pickerel, brown and lake trout. Be sure to bring your fishing gear! Don&#39;t have your own gear or forgot it at home, come to the General Store for Rods, hooks, bait, and tackle!</p>','1', 'Local Area Attractions', '2023-11-05 19:46:10');
 

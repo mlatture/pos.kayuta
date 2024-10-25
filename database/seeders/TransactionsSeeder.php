@@ -18,10 +18,13 @@ class TransactionsSeeder extends Seeder
     {
         $path = database_path('seeders/sql/transactions.sql');
 
+      
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('transactions')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

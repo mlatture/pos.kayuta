@@ -17,10 +17,13 @@ class RateTiersTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/rate_tiers.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('rate_tiers')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

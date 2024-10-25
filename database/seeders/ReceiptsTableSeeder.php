@@ -17,10 +17,13 @@ class ReceiptsTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/receipts.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('receipts')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

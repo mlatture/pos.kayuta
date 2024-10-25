@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\RateTier;
 use Carbon\Carbon;
 use App\Models\Site;
-use App\Models\CartReservation;
 class CartReservation extends Model
 {
     use HasFactory;
@@ -72,9 +71,10 @@ class CartReservation extends Model
     
         $subtotal = $rate + $siteLockValue;
         $taxRate = 0.0875;
-        $totalTax = $taxRate;
+        $totalTax = $taxRate * $subtotal;
         $total = $subtotal + $totalTax;
         
+
     
         return [
             'rate' => $rate,

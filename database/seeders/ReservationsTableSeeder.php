@@ -16,10 +16,13 @@ class ReservationsTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/reservations.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('reservations')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

@@ -17,10 +17,13 @@ class SiteHookupsTableSeeder extends Seeder
     {
         $path = database_path('seeders/sql/site_hookups.sql');
 
+       
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
+
+        DB::table('site_hookups')->truncate();
 
         $sql = File::get($path);
         $insertStatements = '';

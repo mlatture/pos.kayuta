@@ -111,7 +111,7 @@
                             <td>Tax</td>
                             <td></td>
                             <td>Sales Tax (8.75%)</td>
-                            <td>$ {{ $reservation->taxrate }}</td>
+                            <td>${{ $reservation->taxrate }}</td>
                         </tr>
                         <tr class="total-row">
                             <td colspan="2"></td>

@@ -51,9 +51,9 @@ $(document).ready(function () {
             "siteclass"
         );
 
+     
         
         var selectedHookup = $("#hookup option:selected").data("sitehookup");
-        console.log('Hook', selectedHookup);
 
         $.ajax({
             type: "GET",
