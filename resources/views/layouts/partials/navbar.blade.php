@@ -217,9 +217,16 @@
                         <span>Sites</span>
                     </a></li>
                 @endHasPermission
+                @hasPermission(config('constants.role_modules.list_sites_management.value'))
+                <li><a class="dropdown-item" href="{{ route('admin.whitelist') }}">
+                        <i class="nav-icon fas fa-briefcase"></i>
+                        <span>Whitelist</span>
+                    </a></li>
+                @endHasPermission
 
             </ul>
         </li>
+
 
         <li class="nav-item">
             <a href="#" class="nav-link" onclick="document.getElementById('logout-form').submit()">
