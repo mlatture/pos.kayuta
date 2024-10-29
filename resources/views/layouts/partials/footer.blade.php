@@ -2,5 +2,5 @@
     <div class="float-right d-none d-sm-block">
       
     </div>
-    <strong>&copy; <?php echo date('Y')?> - Point of Sale System</strong> - {{ config('app.name') }}
+    <strong>&copy; <?php echo date('Y')?> - WebDaVinci Flow</strong>
   </footer>
