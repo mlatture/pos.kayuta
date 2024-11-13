@@ -34,6 +34,8 @@ $(document).ready(function () {
         });
     });
 
+
+
     $("#backInfo").on("click", function () {
         $(".secondpage-modal").fadeOut(400, function () {
             $("#backInfo").hide();
@@ -45,6 +47,56 @@ $(document).ready(function () {
             });
         });
     });
+
+    $("#fromDate, #toDate, #siteSelector").on("change", function () {
+        var fromDate = $("#fromDate").val();
+        var toDate = $("#toDate").val();
+        var siteSelector = $("#siteSelector").val();
+    
+        if (fromDate && toDate && siteSelector) {
+        
+            $.ajax({
+                url: `${webdavinci_api}/api/get_pricing`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    start_date: fromDate,
+                    end_date: toDate,
+                    site_id: siteSelector,
+                   
+                }),
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-API-KEY": `${webdavinci_api_key}`
+                },
+                success: function (api_data) {
+                    updateSubtotal(api_data);
+
+                    $(".sitelock").on("change", function () {
+                        updateSubtotal(api_data);
+                    });
+                    
+                },
+                error: function (xhr, status, error) {
+                    console.log("Error:", error);
+                    console.log("Status:", status);
+                    console.log("Response:", xhr.responseText);
+                }
+            });
+        }
+    });
+
+    function updateSubtotal(api_data){
+        let subtotal = api_data.total_price;
+
+        if($(".sitelock").is(':checked')){
+            subtotal += 20;
+        }
+
+        $("#subtotal").val(subtotal);
+    }
+    
+    
 
     function loadSites() {
         var selectedSiteClass = $("#siteclass option:selected").data(
@@ -248,6 +300,8 @@ $(document).ready(function () {
     loadSites();
 });
 
+
+
 $(document).on("click", ".actionsbtn", function () {
     const id = $(this).data("id");
 
@@ -322,3 +376,6 @@ $('.reservationEmail').on('input', function() {
         });
     }
 });
+
+
+

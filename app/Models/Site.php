@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class Site extends Model
@@ -86,7 +88,7 @@ class Site extends Model
     {
         return $this->select([
             'sites.siteid',
-            \DB::raw('1 AS status'),
+            DB::raw('1 AS status'),
             'sitename',
             'hookup',
             'availableonline',
@@ -107,8 +109,8 @@ class Site extends Model
                         $query->whereBetween('reservations.cid', [$cid . ' ' . $this->cit, $cod . ' ' . $this->cot])
                             ->orWhereBetween('reservations.cod', [$cid . ' ' . $this->cit, $cod . ' ' . $this->cot])
                             ->orWhere(function ($query) use ($cid, $cod) {
-                                $query->whereBetween(\DB::raw("'" . $cid . ' ' . $this->cit . "'"), [\DB::raw('reservations.cid'), \DB::raw('reservations.cod')])
-                                    ->orWhereBetween(\DB::raw("'" . $cod . ' ' . $this->cot . "'"), [\DB::raw('reservations.cid'), \DB::raw('reservations.cod')]);
+                                $query->whereBetween(DB::raw("'" . $cid . ' ' . $this->cit . "'"), [DB::raw('reservations.cid'), DB::raw('reservations.cod')])
+                                    ->orWhereBetween(DB::raw("'" . $cod . ' ' . $this->cot . "'"), [DB::raw('reservations.cid'), DB::raw('reservations.cod')]);
                             });
                     });
             })
@@ -118,8 +120,8 @@ class Site extends Model
                         $query->whereBetween('cart_reservations.cid', [$cid . ' ' . $this->cit, $cod . ' ' . $this->cot])
                             ->orWhereBetween('cart_reservations.cod', [$cid . ' ' . $this->cit, $cod . ' ' . $this->cot])
                             ->orWhere(function ($query) use ($cid, $cod) {
-                                $query->whereBetween(\DB::raw("'" . $cid . ' ' . $this->cit . "'"), [\DB::raw('cart_reservations.cid'), \DB::raw('cart_reservations.cod')])
-                                    ->orWhereBetween(\DB::raw("'" . $cod . ' ' . $this->cot . "'"), [\DB::raw('cart_reservations.cid'), \DB::raw('cart_reservations.cod')]);
+                                $query->whereBetween(DB::raw("'" . $cid . ' ' . $this->cit . "'"), [DB::raw('cart_reservations.cid'), DB::raw('cart_reservations.cod')])
+                                    ->orWhereBetween(DB::raw("'" . $cod . ' ' . $this->cot . "'"), [DB::raw('cart_reservations.cid'), DB::raw('cart_reservations.cod')]);
                             });
                     });
                 // ->where(\DB::raw('cart_reservations.holduntil'), '>', \DB::raw('NOW()'));
@@ -197,7 +199,7 @@ class Site extends Model
         ])
             ->selectRaw("GROUP_CONCAT(IFNULL(IF(r.siteid IS NOT NULL OR c.siteid IS NOT NULL, 'N', 'A'), 'Available') ORDER BY d.date) AS availability")
             ->crossJoin(
-                \DB::raw("(SELECT
+                DB::raw("(SELECT
         DATE_ADD('" . $cid . "', INTERVAL n DAY) AS date
         FROM
         (SELECT a.N + b.N * 10 + 1 AS N FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a, (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) b ORDER BY N) numbers

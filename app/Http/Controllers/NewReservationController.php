@@ -17,8 +17,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\DeleteCartJob;
 use App\Events\CartDeleted;
-
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
 class NewReservationController extends Controller
 {
@@ -37,42 +38,42 @@ class NewReservationController extends Controller
         return response()->json(['success' => true]);
     }
 
+    
     public function getReservations(Request $request)
     {
         $limit = $request->input('limit', 10);
-        $siteId = $request->input('siteId');
+        $siteId = $request->input('siteid');
         $types = $request->input('tier', []);
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $paymentCartIds = Payment::pluck('cartid')->toArray();
 
-
         $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
             ->join('payments', 'reservations.cartid', '=', 'payments.cartid')
             ->whereIn('reservations.cartid', $paymentCartIds)
             ->select('reservations.*', 'customers.phone', 'customers.address', 'payments.payment')
-            ->orderByDesc('reservations.id');
-
-        if ($siteId) {
+            ->orderByDesc('reservations.id')
+            ->distinct('reservations.id'); 
+        
+        if($siteId){
             $reservationsQuery->where('reservations.siteid', $siteId);
         }
 
-        if (!empty($types)) {
+        if(!empty($types)){
             $reservationsQuery->whereIn('reservations.siteclass', $types);
         }
 
-        if ($startDate && $endDate) {
+        if($startDate && $endDate){
             $reservationsQuery->where(function ($query) use ($startDate, $endDate) {
                 $query->whereDate('reservations.cid', '>=', $startDate)
                     ->whereDate('reservations.cod', '<=', $endDate);
             });
-        } elseif ($startDate) {
+        }elseif ($startDate) {
             $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
         } elseif ($endDate) {
             $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
         }
-
 
         $reservations = $reservationsQuery->paginate($limit);
 
@@ -494,6 +495,11 @@ class NewReservationController extends Controller
             'rid' => 'uc',
         ]);
         $reservation->save();
+            
+
+
+
+     
     }
 
     private function saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId)
@@ -528,7 +534,7 @@ class NewReservationController extends Controller
 
             $cardonFiles->save();
         } catch (\Exception $e) {
-            \Log::error('Error saving card on file', ['exception' => $e->getMessage()]);
+            Log::error('Error saving card on file', ['exception' => $e->getMessage()]);
 
         }
     }
@@ -587,6 +593,7 @@ class NewReservationController extends Controller
     }
     
 
+    
    
     
 }

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\RateTier;
+use App\Models\Site;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\RateTier;
-use Carbon\Carbon;
-use App\Models\Site;
+
 class CartReservation extends Model
 {
     use HasFactory;
@@ -69,7 +71,7 @@ class CartReservation extends Model
     
         $siteLockValue = $request->siteLock === 'on' ? 20 : 0;
     
-        $subtotal = $rate + $siteLockValue;
+        $subtotal = $request->subtotal;
         $taxRate = 0.0875;
         $totalTax = $taxRate * $subtotal;
         $total = $subtotal + $totalTax;

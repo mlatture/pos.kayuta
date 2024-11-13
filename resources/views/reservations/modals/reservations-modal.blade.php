@@ -233,7 +233,7 @@
                                     <div class="custom-checkbox-container">
                                         <div class="checkbox-wrapper-55">
                                             <label class="rocker rocker-small">
-                                                <input type="checkbox" id="siteLock" name="siteLock" checked>
+                                                <input type="checkbox" class="sitelock" id="siteLock" name="siteLock" checked>
                                                 <span class="switch-left">Yes</span>
                                                 <span class="switch-right">No</span>
                                             </label>
@@ -243,6 +243,19 @@
 
                                 </div>
 
+                            </div>
+
+                            <div class="col-md-6">
+                                
+                                <div class="form-group">
+                                    <label for="subtotal">Sub Total</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="text" class="form-control" id="subtotal" name="subtotal">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
