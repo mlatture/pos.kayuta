@@ -11,6 +11,9 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\StationRegisters;
+use App\Models\UpsellRate;
+use App\Models\UpsellText;
+use App\Models\UpsellOrder;
 class CartController extends Controller
 {
     private $object;
@@ -50,19 +53,19 @@ class CartController extends Controller
     {
         try {
             DB::beginTransaction();
-    
+
             $request->validate([
                 'barcode' => 'nullable|exists:products,barcode',
                 'product_id' => 'nullable|exists:products,id',
             ]);
-    
+
             $barcode = $request->barcode;
             $productId = $request->product_id;
-    
+
             if (!$barcode && !$productId) {
                 return $this->object->respondBadRequest(['error' => "Bar code or Product ID is Required!"]);
             }
-    
+
             if ($barcode) {
                 $product = Product::with(['taxType'])->where('barcode', $barcode)->first();
                 $cart = $request->user()->cart()->where('barcode', $barcode)->first();
@@ -70,20 +73,20 @@ class CartController extends Controller
                 $product = Product::with(['taxType'])->where('id', $productId)->first();
                 $cart = $request->user()->cart()->where('products.id', $productId)->first();
             }
-    
+
             if ($cart) {
                 // Check if the product has limited stock (non-negative) and if the cart quantity exceeds available stock
                 if ($product->quantity >= 0 && $product->quantity <= $cart->pivot->quantity) {
                     return $this->object->respondBadRequest(['error' => 'Product available only: ' . $product->quantity]);
                 }
-    
+
                 // Handle discount
                 if ($product->discount_type == 'fixed_amount') {
                     $cart->pivot->discount += $product->discount;
                 } else if ($product->discount_type == 'percentage') {
                     $cart->pivot->discount += ($product->price * $product->discount) / 100;
                 }
-    
+
                 // Handle tax
                 if ($product->taxType) {
                     if ($product->taxType->tax_type == 'fixed_amount') {
@@ -92,7 +95,7 @@ class CartController extends Controller
                         $cart->pivot->tax += ($product->price * $product->taxType->tax) / 100;
                     }
                 }
-    
+
                 // Update quantity in cart
                 $cart->pivot->quantity += 1;
                 $cart->pivot->save();
@@ -101,7 +104,7 @@ class CartController extends Controller
                 if ($product->quantity >= 0 && $product->quantity < 1) {
                     return $this->object->respondBadRequest(['error' => 'Product out of stock']);
                 }
-    
+
                 // Handle discount
                 $discount = 0;
                 if ($product->discount_type == 'fixed_amount') {
@@ -109,7 +112,7 @@ class CartController extends Controller
                 } else if ($product->discount_type == 'percentage') {
                     $discount = ($product->price * $product->discount) / 100;
                 }
-    
+
                 // Handle tax
                 $tax = 0;
                 if ($product->taxType) {
@@ -119,7 +122,7 @@ class CartController extends Controller
                         $tax = ($product->price * $product->taxType->tax) / 100;
                     }
                 }
-    
+
                 // Add to cart (no stock limit if quantity is negative)
                 $request->user()->cart()->attach($product->id, [
                     'quantity' => 1,
@@ -127,16 +130,50 @@ class CartController extends Controller
                     'tax' => $tax
                 ]);
             }
-    
+
+            $upsellMessage = $this->handleUpsell($product->id, auth()->user()->name);
+
             DB::commit();
-    
-            return $this->object->respond(['cart' => $request->user()->cart()->get()], [], true, 'Product added!');
+
+            return $this->object->respond([
+                'upsell_message' => $upsellMessage,
+                'cart' => $request->user()->cart()->get()], 
+                [], true, 'Product added!',
+            );
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);
         }
     }
-    
+
+    private function handleUpsell($orderNumber, $cashier)
+    {
+        $upsellRate = UpsellRate::orderBy('created_at', 'desc')->first();
+        $ratePercent = $upsellRate ? $upsellRate->rate_percent : 50.00;
+        
+        $showUpsell = rand(0, 100) < $ratePercent;
+
+        if($showUpsell){
+            $upsellText = UpsellText::where('active_message', true)->inRandomOrder()->first();
+
+            if($upsellText){
+                UpsellOrder::create([
+                    'order_number' => $orderNumber,
+                    'cashier' => $cashier,
+                    'upsell_text_id' => $upsellText->id,
+                ]);
+
+
+                return $upsellText->message_text;
+            } else {
+               return null;
+            }
+        } else {
+            return null;
+        }
+
+        return null;
+    }
 
 
     public function changeQty(Request $request)

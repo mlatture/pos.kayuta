@@ -2,7 +2,7 @@
     <div class="row mb-4">
         <div class="col">
             <label for="email_invoice" id="emailLabel">Email:</label>
-            <input type="text" id="email_invoice" class="form-control shadow-sm" placeholder="Enter Email">
+            <input type="text" id="email_invoice" class="form-control shadow-sm" placeholder="Enter Email" autocomplete="off">
             <input type="hidden" id="cust_email">
         </div>
     </div>

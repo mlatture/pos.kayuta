@@ -285,9 +285,15 @@ $(document).ready(function () {
             success: function (data) {
                 let tableBody = $("#notReserveTable tbody");
                 tableBody.empty();
-
                 $.each(data.data, function (index, item) {
+                    console.log(item.customernumber);
+
+                    if(item.customernumber === null){
+                        return;
+                    }
+                    
                     tableBody.append(`
+
                         <tr>
                             <td>${item.first_name} ${item.last_name}</td>
                         

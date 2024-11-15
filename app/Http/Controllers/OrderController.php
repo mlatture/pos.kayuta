@@ -2,19 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\OrderStoreRequest;
-use App\Jobs\SendOrderReceiptJob;
-use App\Models\Order;
-use App\Models\Reservation;
 use Exception;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\OrderItem;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Models\PosPayment;
+use App\Models\UpsellRate;
+use App\Models\UpsellText;
+use App\Models\Reservation;
+use App\Models\UpsellOrder;
+use Illuminate\Http\Request;
 
 use App\Mail\OrderInvoiceMail;
+use App\Jobs\SendOrderReceiptJob;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Requests\OrderStoreRequest;
 
 class OrderController extends Controller
 {
@@ -110,14 +115,22 @@ class OrderController extends Controller
 
             dispatch(new SendOrderReceiptJob($order));
 
+         
+
             DB::commit();
 
-            return response()->json(['success', 'Order Placed Successfully!', "order_id" => $order->id]);
+            return response()->json([
+                'success', 'Order Placed Successfully!', 
+                "order_id" => $order->id,
+              
+            ]);
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);
         }
     }
+
+  
     public function update(Request $request)
     {
         

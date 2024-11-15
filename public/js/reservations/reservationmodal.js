@@ -26,10 +26,12 @@ $(document).ready(function () {
         $(".firstpage-modal").fadeOut(400, function () {
             $(".secondpage-modal").fadeIn(400, function () {
                 $("#backInfo").show();
-                // $('.thirdpage-modal').hide();
+               
                 $("#nextInfo").hide();
                
                 $("#submitReservations").show();
+
+
             });
         });
     });
@@ -44,6 +46,11 @@ $(document).ready(function () {
               
                 $("#nextInfo").show();
                 $("#closeModal").show();
+
+                
+                $(".secodnpage-modal input").val('');
+                $(".secodnpage-modal select").val('');
+
             });
         });
     });

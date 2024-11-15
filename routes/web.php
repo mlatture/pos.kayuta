@@ -115,7 +115,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
+    Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
+    Route::put('update-sites-pricing', [CalendarReservationController::class, 'updateSitePricing'])->name('update.pricing');
 });
 
 

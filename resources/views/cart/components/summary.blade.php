@@ -29,7 +29,7 @@
         </div>
     </div>
 </div>
-<!-- Off-canvas -->
+
 <div class="offcanvas offcanvas-end" data-bs-keyboard="false" tabindex="-1" id="offcanvasOrder"  aria-labelledby="offcanvasOrderLabel">
     <div class="offcanvas-header border-bottom">
         <div class="header-title">
@@ -89,17 +89,7 @@
                     </div>
                     <input type="hidden" id="order_id" name="order_id" value="{{ old('order_id', $order_id ?? '') }}">
 
-                    {{-- <div class="col-sm-12 border-top">
-                        <div class="row pt-2">
-                            <div class="col-6">
-                                <p><b>Change</b></p>
-                            </div>
-                            <div class="col-6">
-                                <span>$</span>
-                                <p class="float-right" id="offcanvasChange"></p>
-                            </div>
-                        </div>
-                    </div> --}}
+                 
                 </div>
             </div>
         </div>

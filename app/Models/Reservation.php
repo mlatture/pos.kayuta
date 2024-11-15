@@ -18,6 +18,9 @@ class Reservation extends Model
 
     protected $dates = ['cid', 'cod'];
 
+    protected $fillable = [
+        'cartid', 'siteid', 'customernumber', 'cid', 'cod', 'siteclass',  'total',
+    ];
 
 
     protected $guarded = [];

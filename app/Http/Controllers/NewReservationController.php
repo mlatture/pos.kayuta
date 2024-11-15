@@ -88,8 +88,12 @@ class NewReservationController extends Controller
         $limit = $request->input('limit', 10);
         $paymentCartIds = Payment::pluck('cartid');
 
-        $reservations = CartReservation::whereNotIn('cartid', $paymentCartIds)->leftJoin('customers', 'cart_reservations.customernumber', '=', 'customers.id')->select('cart_reservations.*', 'customers.first_name', 'customers.last_name')->orderBy('cart_reservations.id', 'DESC')->paginate($limit);
+        $reservations = CartReservation::whereNotIn('cartid', $paymentCartIds)
+        ->leftJoin('customers', 'cart_reservations.customernumber', '=', 'customers.id')
+        ->select('cart_reservations.*', 'customers.first_name', 'customers.last_name')
+        ->orderBy('cart_reservations.id', 'DESC')->paginate($limit);
 
+        
         return response()->json($reservations);
     }
 

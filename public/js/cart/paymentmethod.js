@@ -111,7 +111,7 @@ $(document).ready(function () {
                         },
                         success: function (response) {
                             resolve(response);
-                                      
+                                    
                             if (!isPartial) { 
                                
                                 orderId = response.order_id;  
@@ -128,7 +128,7 @@ $(document).ready(function () {
                             }
                     
                           
-                            console.log(response) 
+                          
                         },
                         error: function (reject) {
                             resolve(reject);
@@ -139,7 +139,7 @@ $(document).ready(function () {
         }).then((result) => {
             if (result.isConfirmed && result.value) {
                 let response = result.value;
-           
+
                 finalizeOrder(amount, totalAmount, response, firstRemainingBalance, customer_email, orderId);
     
             } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -194,7 +194,7 @@ $(document).ready(function () {
             data: { amount: amount },
             success: function (response) {
                 if (response.message === "Payment Approved") {
-                    // Swal.fire("Success", response.message, "success");
+                  
                     handlePayment(customer_id, amount, 0, "CreditCard", response.success.xMaskedCardNumber, response.success.xRefNum, totalAmount, isPartial, orderId);
                 } else {
                     Swal.fire("Error", response.error || response.message, "error");
@@ -207,15 +207,17 @@ $(document).ready(function () {
     }
     
     function finalizeOrder(order_amount, totalAmount, response, firstRemainingBalance, customer_email, orderId) {
-       console.log(customer_email);
+        
         var offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasOrder"), { backdrop: false });
         $('#offcanvasOrder').on('hide.bs.offcanvas', function (e) {
             e.preventDefault(); 
         });
 
+      
+
         $("#submitOrderButton").hide();
         $("#updateOrderButton").attr("hidden", false);
-    
+       
         if (order_amount >= totalAmount || response.totalpayAmount.amount >= response.OrderItem.price) {
          
             offcanvas.hide();
@@ -231,11 +233,17 @@ $(document).ready(function () {
                 stack: 6,
             });
 
+            
+            
+        
+
             sendInvoiceEmail(customer_email,orderId)
-            // setTimeout(function () {
-            //     clearInputFields(true);
-            //     window.location.reload();
-            // }, 3000);
+            setTimeout(function () {
+               
+                clearInputFields(true);
+              
+                window.location.reload();
+            }, 3000);
         } else {
             $.toast({
                 heading: response[0] || "Success",
@@ -248,6 +256,14 @@ $(document).ready(function () {
             });
             $("#submitOrderButton").hide();
             $("#updateOrderButton").attr("hidden", false);
+
+            
+            // if(response.upsell_message){
+            //     $("#messageModalBody").text(response.upsell_message);
+            //     var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+            //     messageModal.show();
+            // }
+        
         }
     }
     
