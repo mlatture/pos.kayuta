@@ -28,17 +28,29 @@ class ReportController extends Controller
 
     public function salesReport(Request $request)
     {
-        try {
-            $where = [];
-            if(auth()->user()->organization_id){
-                $where['organization_id'] = auth()->user()->organization_id;
-            }
-            $orders =   $this->order->getAllOrders($where, $request->all());
-            return view('reports.sales-report')->with('orders', $orders);
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+        $filters = $request->all();
+        $where = [];
+    
+        if (!empty($filters['date_range'])) {
+            $dates = explode(' - ', $filters['date_range']);
+            $startDate = date('Y-m-d', strtotime($dates[0]));
+            $endDate = date('Y-m-d', strtotime($dates[1]));
+    
+            $where[] = ['created_at', '>=', $startDate];
+            $where[] = ['created_at', '<=', $endDate];
         }
+    
+        $orders = $this->order->getAllOrders($where, $filters);
+    
+        if ($request->ajax()) {
+            return view('reports.components.sales_report_table', compact('orders'))->render();
+        }
+    
+        return view('reports.sales-report', compact('orders'));
     }
+    
+    
+    
 
     public function giftCardReport(Request $request)
     {

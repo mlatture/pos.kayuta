@@ -59,7 +59,6 @@ $(document).ready(function () {
         var fromDate = $("#fromDate").val();
         var toDate = $("#toDate").val();
         var siteSelector = $("#siteSelector").val();
-    
         if (fromDate && toDate && siteSelector) {
         
             $.ajax({
@@ -74,9 +73,11 @@ $(document).ready(function () {
                 }),
                 headers: {
                     "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-                    "X-API-KEY": `${webdavinci_api_key}`
+                    "X-API-KEY": `${webdavinci_api_key}`,
+                    "X-DOMAIN": window.location.protocol + '//' + window.location.hostname + (window.location.port ? `:${window.location.port}` : '') 
                 },
                 success: function (api_data) {
+                    console.log(api_data);
                     updateSubtotal(api_data);
 
                     $(".sitelock").on("change", function () {

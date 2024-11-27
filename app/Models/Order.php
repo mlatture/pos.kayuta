@@ -5,31 +5,59 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderItem;
 use App\Models\PosPayment;
+use App\Models\Reservation;
+
 class Order extends Model
 {
     protected $guarded = [];
     protected $fillable = ['user_id', 'total', 'gift_card_amount', 'received_amount', 'created_at', 'updated_at'];
 
+    // Define relationship with order items
     public function items()
     {
-        return $this->hasMany(OrderItem::class)->with(['product']);
+        return $this->hasMany(OrderItem::class)->with(['product', 'product.taxType']);
     }
 
+    // Alias for items if used elsewhere
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    public function payments()
+    // Define relationship with payments
+    public function posPayments()
     {
         return $this->hasMany(PosPayment::class, 'order_id');
     }
 
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'customernumber');
+    }
+
+
+    public function getSourceAttribute()
+    {
+        if($this->posPayments->isNotEmpty()){
+            return 'POS';
+        }
+
+        if($this->reservations->isNotEmpty()){
+            return 'Reservation';
+        }
+
+        return 'N/A';
+    }
+
+
+
+    // Relationship with customer (user)
     public function customer()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    // Get customer name
     public function getCustomerName()
     {
         if ($this->customer) {
@@ -38,53 +66,54 @@ class Order extends Model
         return 'Working Customer';
     }
 
-    public function total()
+    // Calculate the total using accessor
+    public function getTotalAttribute()
     {
-        $orderItemTotal = $this->items->map(function ($i) {
-            return $i->price;
-        })->sum();
+        $orderItemTotal = $this->items->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
 
-        $orderTotal = $orderItemTotal   -   $this->gift_card_amount;
+        $orderTotal = $orderItemTotal - ($this->gift_card_amount ?? 0); 
 
         return $orderTotal;
     }
 
+    // Format the total
     public function formattedTotal()
     {
-        return number_format($this->total(), 2);
+        return number_format($this->total, 2);
     }
 
+    // Calculate the received amount
     public function receivedAmount()
     {
-        return $this->payments->map(function ($i) {
-            return $i->amount;
-        })->sum();
+        return $this->posPayments->sum('amount'); 
     }
 
+    // Format the received amount
     public function formattedReceivedAmount()
     {
         return number_format($this->receivedAmount(), 2);
     }
 
+    // Find order by ID with relationships
     public static function orderFindById($id)
     {
-        return self::with(['payments', 'items', 'customer'])->find($id);
+        return self::with(['reservations','posPayments',  'items', 'customer'])->find($id);
     }
 
+    // Get all orders with optional filters
     public function getAllOrders($where = [], $filters = [])
     {
-        return self::with(['payments', 'items', 'customer'])->where($where)
-        ->when(count($filters) > 0, function ($query) use ($filters) {
-            $query->when(isset($filters['date']) && !empty($filters['date']), function ($query) use ($filters) {
-                $filters['date'] = explode('-', $filters['date']);
+        return self::with(['reservations', 'posPayments', 'items', 'items',  'customer'])
+            ->where($where)
+            ->when(isset($filters['date_range']), function ($query) use ($filters) {
+                $dates = explode(' - ', $filters['date_range']);
                 $query->whereBetween(
-                    'created_at',
-                    [
-                        date('Y-m-d', strtotime($filters['date'][0])),
-                        date('Y-m-d', strtotime($filters['date'][1]))
-                    ]
+                    $filters['date_to_use'] ?? 'created_at',
+                    [date('Y-m-d', strtotime($dates[0])), date('Y-m-d', strtotime($dates[1]))]
                 );
-            });
-        })->get();
+            })
+            ->get();
     }
 }

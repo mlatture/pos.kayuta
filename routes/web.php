@@ -40,7 +40,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('product-vendors', ProductVendorController::class);
     Route::resource('products', ProductController::class);
     Route::get('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
-    Route::resource('categories', CategoryController::class);
+    Route::post('/products/toggle-suggested-addon', [ProductController::class, 'toggleSuggestedAddon'])
+    ->name('products.toggle-suggested-addon');    Route::resource('categories', CategoryController::class);
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
     Route::resource('customers', CustomerController::class);

@@ -2,66 +2,114 @@
 
 @section('title', 'Sales Report Management')
 @section('content-header', 'Sales Report Management')
-{{-- @section('content-actions')
-    <a href="{{route('gift-cards.create')}}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Gift Card</a>
-@endsection --}}
+
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
+
+    <style>
+        .daterangepicker {
+            z-index: 9999 !important;
+        }
+
+        .refresh-btn-container {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 0;
+        }
+
+        .refresh-btn-container button {
+            padding: 8px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .refresh-btn-container button:hover {
+            background-color: #218838;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            font-size: 14px;
+        }
+
+
+        .dt-length select,
+        .dt-search input {
+            width: 8%;
+
+
+        }
+
+
+        .dt-buttons {
+            float: right;
+        }
+    </style>
 @endsection
+
 @section('content')
     <div class="row animated fadeInUp">
-        <div class="card">
-            <div class="card-body">
-                {{-- <h4 class="card-title mb-0">Filters</h4> --}}
-                <!--                    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>-->
-                <form action="{!! route('reports.salesReport') !!}" method="GET">
-                    <div class="row mt-3">
-                        {{-- <div class="col-md-5">
-                            <div class="form-group">
-                                <input type="text" class="form-control" id="tb-fname" placeholder="Search"
-                                    name="search" value="{!! isset($_GET['search']) ? $_GET['search'] : '' !!}">
-                            </div>
-                        </div> --}}
-                        <div class="col-md-7">
-                            <div class='input-group mb-3'>
-                                <input type='text' class="form-control daterange" id="productDate" name="date" autocomplete="off"
-                                    value="{!! isset($_GET['date']) ? $_GET['date'] : '' !!}" />
-                                <span class="input-group-text">
-                                    <span class="ti-calendar"></span>
-                                </span>
-                            </div>
+        <div class="card" style="background-color: #F4F6F9; box-shadow: none; border: none;">
+            <div class="card-body" style="border: none;">
+                <div class="row mt-3 d-flex justify-content-center">
+                    <div class="col-md-3">
+                        <label for="">Date Range</label>
+                        <div class='input-group mb-3'>
+                            <input type='text' class="form-control daterange" id="productDate" autocomplete="off"
+                                placeholder="Select Date" />
                         </div>
-                        <div class="col-md-5">
-                            <button type="submit"
-                                class="search-btn btn btn-primary waves-effect waves-light text-white w-100 height-55">
-                                Search
+                    </div>
+                    <div class="col-md-3">
+                        <label for="">Date To Use</label>
+                        <div class='input-group mb-3'>
+                            <select id="dateToUse" class="form-control">
+                                <option value="transaction_date">Transaction Date</option>
+                                <option value="payment_date">Payment Date</option>
+                                <option value="delivery_date">Delivery Date</option>
+                                <option value="order_date">Order Date</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-20">
+                        <div class="refresh-btn-container">
+                            <button class="btn btn-danger" id="refreshBtn">
+                                <i class="fas fa-sync"></i> Refresh
                             </button>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="col-12">
         <div class="card">
             <div class="card-body">
                 <div class="row">
-                    <div class="table-responsive m-t-40 p-0">
+                    <div class="table-responsive m-t-40 p-0" id="dataTableContainer">
                         <table table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
                             width="100%">
                             <thead>
                                 <tr>
                                     <th>Transaction Date</th>
                                     <th>Source</th>
-                                    <th>Customer #/POS id</th>
+                                    <th>Confirmation # / POS ID</th>
                                     <th>Customer</th>
-                                    <th>Order Number</th>
-                                    <th width="20%">Products</th>
-                                    <th>Tax</th>
-                                    <th>Discount</th>
+                                    <th>Site</th>
+                                    <th>Type</th>
+                                    <th>Account</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
                                     <th>Amount</th>
-                                    <th>Created At</th>
+                                    <th>Qty</th>
+                                    <th>Unit</th>
+                                    <th>Total</th>
+                                    <th>User</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -71,31 +119,64 @@
                                 @endphp
                                 @foreach ($orders as $key => $order)
                                     <tr>
-                                        <td>{{ date('m/d/Y', strtotime($order->created_at)) }}</td>
-                                        <td>POS (Orders)</td>
-                                        <td>{{ $order->customer->id ?? 'N/A' }}</td>
-                                        <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : 'N/A' }}
-                                        </td>
-                                        <td>{{ $order->id ?? 'N/A' }}
+                                        <td>{{ $order->created_at->format('m/d/Y') }}</td>
+                                        <td>{{ $order->source ?? '' }}</td>
+                                        <td>{{ $order->id ?? '' }}</td>
+                                        <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : 'N/A' }}</td>
+                                        <td>{{ $order->reservations->first()->siteid ?? 'N/A' }}</td>
+                                        <td>{{ $order->items->first()->product->taxType->title ?? '' }}</td>
+                                        <td>{{ $order->account ?? '' }}</td>
+                                        <td>{{ 'Product Charge' }}</td>
+                                        <td>{{ $order->description ?? '' }}</td>
+                                        <td>
+                                            @if ($order->source === 'POS')
+                                                @php
+                                                    $item = $order->items->first();
+                                                    $price = $item ? $item->price : 0;
+                                                    $quantity = $item ? $item->quantity : 1; 
+                                                    $amount = $quantity != 0 ? $price / $quantity : 0; 
+                                                @endphp
+                                                ${{ number_format($amount, 2) }}
+                                            @elseif($order->source === 'Reservation')
+                                                ${{ $order->reservations->first() ? number_format($order->reservations->first()->base, 2) : 0 }}
+                                            @else
+                                                $0
+                                            @endif
                                         </td>
                                         <td>
-                                            <ul>
-                                                @forelse ($order->items as $detail)
-                                                    @php
-                                                        $tax += $detail->tax;
-                                                        $discount += $detail->discount;
-                                                    @endphp
-                                                    <li>{{ $detail->product ? $detail->product->name . " ($detail->quantity)" : 'N/A' }}
-                                                    </li>
-                                                @empty
-                                                    No Products Found
-                                                @endforelse
-                                            </ul>
+                                            @if ($order->source === 'POS')
+                                                {{ $order->items->first() ? $order->items->first()->quantity : 0 }}
+                                            @elseif($order->source === 'Reservation')
+                                                {{ $order->reservations->first()->nights ?? 0 }}
+                                            @else
+                                                0
+                                            @endif
                                         </td>
-                                        <td>{{ $tax ?? 0 }}</td>
-                                        <td>{{ $discount ?? 0 }}</td>
-                                        <td>{{ $order->amount ?? 0 }}</td>
-                                        <td>{{ $order->created_at }}</td>
+                                        <td>
+                                            @if ($order->source === 'Reservation')
+                                                @if ($order->reservations->first()->nights == 7)
+                                                    Week
+                                                @elseif ($order->reservations->first()->nights == 30)
+                                                    Month
+                                                @elseif ($order->reservations->first()->nights <= 7)
+                                                    Day
+                                                @else
+                                                  
+                                                @endif
+                                            @else
+                                             
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($order->source === 'POS')
+                                                ${{ $order->items->first() ? number_format($order->items->first()->price, 2) : 0 }}
+                                            @elseif($order->source === 'Reservation')
+                                                ${{ $order->reservations->first() ? number_format($order->reservations->first()->total, 2) : 0 }}
+                                            @else
+                                                $0
+                                            @endif
+                                        </td>
+                                        <td>{{ $order->user }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -114,60 +195,62 @@
             $('#productDate').daterangepicker({
                 autoUpdateInput: false,
                 locale: {
-                    cancelLabel: 'Clear'
-                }
+                    cancelLabel: 'Clear',
+                },
             });
 
             $('#productDate').on('apply.daterangepicker', function(ev, picker) {
                 $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format(
                     'MM/DD/YYYY'));
+                fetchFilteredOrders();
             });
 
             $('#productDate').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).val('');
             });
 
-            $('#productDate').attr("placeholder", "Select Date");
+            function fetchFilteredOrders() {
+                var dateRange = $('#productDate').val();
+                var dateToUse = $('#dateToUse').val();
+
+                console.log("Date Range:", dateRange);
+
+                if (dateRange) {
+                    var dates = dateRange.split(' - ');
+                    var startDate = dates[0];
+                    var endDate = dates[1];
+
+                    $.ajax({
+                        url: "{{ route('reports.salesReport') }}",
+                        type: 'GET',
+                        data: {
+                            date_range: dateRange,
+                        },
+                        success: function(response) {
+                            $('#dataTableContainer').html(response);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching orders:', error);
+                        }
+                    });
+                } else {
+                    console.log("No date range selected");
+                }
+            }
 
             $('.table').DataTable({
-                dom: 'Bfrtip',
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
-                searching: false
+                responsive: true,
+                dom: 'lBfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                language: {
+                    search: 'Search records...'
+                },
+                pageLength: 10
             });
 
-            $(document).on('click', '.btn-delete', function() {
-                $this = $(this);
-                const swalWithBootstrapButtons = Swal.mixin({
-                    customClass: {
-                        confirmButton: 'btn btn-success',
-                        cancelButton: 'btn btn-danger'
-                    },
-                    buttonsStyling: false
-                })
-
-                swalWithBootstrapButtons.fire({
-                    title: 'Are you sure?',
-                    text: "Do you really want to delete this Gift Card?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'No',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.value) {
-                        $.post($this.data('url'), {
-                            _method: 'DELETE',
-                            _token: '{{ csrf_token() }}'
-                        }, function(res) {
-                            $this.closest('tr').fadeOut(500, function() {
-                                $(this).remove();
-                            })
-                        })
-                    }
-                })
+            $('#refreshBtn').click(function() {
+                window.location.reload();
             })
-        })
+        });
     </script>
 @endsection

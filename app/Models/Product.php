@@ -10,6 +10,10 @@ class Product extends Model
 {
     protected $guarded = [];
 
+    protected $fillable = [
+        'suggested_addon',
+    ];
+
     public function taxType()
     {
         return $this->belongsTo(TaxType::class);
