@@ -42,7 +42,7 @@ class OrderController extends Controller
         if ($request->end_date) {
             $orders = $orders->where('created_at', '<=', $request->end_date . ' 23:59:59');
         }
-        $orders = $orders->with(['items', 'payments', 'customer'])->latest()->paginate(10);
+        $orders = $orders->with(['items', 'posPayments', 'customer'])->latest()->paginate(10);
 
         $total = $orders->map(function ($i) {
             return $i->total();
@@ -53,6 +53,8 @@ class OrderController extends Controller
 
         return view('orders.index', compact('orders', 'total', 'receivedAmount'));
     }
+
+   
 
     public function ordersToBeReturn(Request $request)
     {
@@ -69,10 +71,11 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $order = Order::create([
-                'user_id' => $request->customer_id,
+                'user_id' => $request->user()->id,
                 'gift_card_id' => $request->gift_card_id ?? 0,
                 'admin_id' => $request->user()->id,
                 'amount' => $request->amount,
+                'customer_id' => $request->customer_id,
                 'gift_card_amount'  =>  $request->gift_card_discount ?? 0
             ]);
 
@@ -102,11 +105,11 @@ class OrderController extends Controller
                 $status = 'Change';
             }
         
-            $order->payments()->create([
+            $order->posPayments()->create([
                 'amount' => $request->amount,
                 'admin_id' => $request->user()->id,
                 'payment_method' => $request->payment_method,
-                'payment_acc_number' => $request->acc_number,
+                'payment_acc_number' => $request->acc_number, 
                 'x_ref_num' => $request->x_ref_num,
                 'payment_status' => $status,
             ]);

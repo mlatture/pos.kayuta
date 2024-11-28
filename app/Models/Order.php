@@ -10,7 +10,7 @@ use App\Models\Reservation;
 class Order extends Model
 {
     protected $guarded = [];
-    protected $fillable = ['user_id', 'total', 'gift_card_amount', 'received_amount', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'admin_id', 'total', 'amount', 'order_id', 'customer_id', 'gift_card_amount', 'received_amount', 'created_at', 'updated_at'];
 
     // Define relationship with order items
     public function items()
@@ -30,6 +30,8 @@ class Order extends Model
         return $this->hasMany(PosPayment::class, 'order_id');
     }
 
+    
+
     public function reservations()
     {
         return $this->hasMany(Reservation::class, 'customernumber');
@@ -46,7 +48,7 @@ class Order extends Model
             return 'Reservation';
         }
 
-        return 'N/A';
+        return '';
     }
 
 

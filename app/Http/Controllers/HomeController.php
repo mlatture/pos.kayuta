@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reservation;
-use App\Models\Order;
-use App\Models\Customer;
-use App\Models\Product;
 use App\Models\Site;
 use App\Models\User;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\Customer;
+use App\Models\OrderItem;
+use App\Models\Reservation;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -35,28 +36,28 @@ class HomeController extends Controller
         $sitesQuery = Site::query();
         $ordersQuery = Order::query();
         $bestProductsQuery = Product::query();
-     
-        if(auth()->user()->organization_id){
-            $reservationsQuery->where('organization_id',auth()->user()->organization_id);
-            $customersQuery->where('organization_id',auth()->user()->organization_id);
-            $sitesQuery->where('organization_id',auth()->user()->organization_id);
-            $ordersQuery->where('organization_id',auth()->user()->organization_id);
-            $bestProductsQuery->where('organization_id',auth()->user()->organization_id);
-        }
-
-        $reservations       =   $reservationsQuery->where('created_at', '>=', date('Y-m-1'))->get();
-        $customers_count    =   $customersQuery->count();
-        $site_count         =   $sitesQuery->count();
-        $order              =   $ordersQuery->where('created_at', '>=', date('Y-m-1'))->get();
-
-        $today_reservations =   $reservations->where('created_at', '>=', date('Y-m-d'));
-        $today_orders       =   $order->where('created_at', '>=', date('Y-m-d'));
-        $total_income       =   $reservations->sum('total') + $order->sum('amount');
-        $income_today       =   $reservations->sum('total') + $order->sum('amount');
-
-        $currentMonth       =   now()->month;
-
-        $best_products      =   $bestProductsQuery->whereHas('orderItems', function ($query) use ($currentMonth) {
+        
+        $reservations = $reservationsQuery->where('created_at', '>=', date('Y-m-1'))->get();
+        $customers_count = $customersQuery->count();
+        $site_count = $sitesQuery->count();
+        $orders = $ordersQuery->where('created_at', '>=', date('Y-m-1'))->get();
+    
+        $today_reservations = $reservations->where('created_at', '>=', date('Y-m-d'));
+        $today_orders = $orders->where('created_at', '>=', date('Y-m-d'));
+    
+        // Calculate total income
+        $reservations_income = $reservations->sum('total');
+        $orders_income = $orders->sum('amount');
+        $total_income = $reservations_income + $orders_income;
+    
+        // Calculate today's income
+        $today_reservations_income = $today_reservations->sum('total');
+        $today_orders_income = $today_orders->sum('amount');
+        $income_today = $today_reservations_income + $today_orders_income;
+    
+        $currentMonth = now()->month;
+    
+        $best_products = $bestProductsQuery->whereHas('orderItems', function ($query) use ($currentMonth) {
             $query->whereHas('order', function ($query) use ($currentMonth) {
                 $query->whereMonth('created_at', $currentMonth);
             });
@@ -68,16 +69,16 @@ class HomeController extends Controller
         }])
         ->orderByDesc('total_quantity')
         ->first();
-
+    
         return view('home', [
-            'reservation_count'     =>  $reservations->count(),
-            'today_reservations'    =>  $today_reservations->count(),
-            'income'                =>  $total_income,
-            'income_today'          =>  $income_today,
-            'customers_count'       =>  $customers_count,
-            'site_count'            =>  $site_count,
-            'best_products'         =>  $best_products,
-        
+            'reservation_count' => $reservations->count(),
+            'today_reservations' => $today_reservations->count(),
+            'income' => $total_income,
+            'income_today' => $income_today,
+            'customers_count' => $customers_count,
+            'site_count' => $site_count,
+            'best_products' => $best_products,
         ]);
     }
+    
 }

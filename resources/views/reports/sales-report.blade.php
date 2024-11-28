@@ -102,14 +102,14 @@
                                     <th>Customer</th>
                                     <th>Site</th>
                                     <th>Type</th>
-                                    <th>Account</th>
+                                   
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th>Qty</th>
                                     <th>Unit</th>
                                     <th>Total</th>
-                                    <th>User</th>
+                                    {{-- <th>User</th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -122,12 +122,14 @@
                                         <td>{{ $order->created_at->format('m/d/Y') }}</td>
                                         <td>{{ $order->source ?? '' }}</td>
                                         <td>{{ $order->id ?? '' }}</td>
-                                        <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : 'N/A' }}</td>
-                                        <td>{{ $order->reservations->first()->siteid ?? 'N/A' }}</td>
+                                        <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : '' }}</td>
+                                        <td>{{ $order->reservations->first()->siteid ?? '' }}</td>
                                         <td>{{ $order->items->first()->product->taxType->title ?? '' }}</td>
-                                        <td>{{ $order->account ?? '' }}</td>
+                                       
                                         <td>{{ 'Product Charge' }}</td>
-                                        <td>{{ $order->description ?? '' }}</td>
+                                        <td>
+                                            {{ $order->items->first()->product->description ?? '' }}
+                                        </td>
                                         <td>
                                             @if ($order->source === 'POS')
                                                 @php
@@ -176,7 +178,7 @@
                                                 $0
                                             @endif
                                         </td>
-                                        <td>{{ $order->user }}</td>
+                                        {{-- <td>{{ $order->user }}</td> --}}
                                     </tr>
                                 @endforeach
                             </tbody>

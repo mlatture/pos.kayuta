@@ -421,7 +421,6 @@ class NewReservationController extends Controller
             'receipt' => $randomReceiptID,
             'method' => $paymentType,
             'customernumber' => $cart_reservation->customernumber,
-          
             'email' => $cart_reservation->email,
             'payment' => $request->xCash,
         ]);
@@ -492,7 +491,7 @@ class NewReservationController extends Controller
             'sitelock' => $cart_reservation->sitelock,
             'rigtype' => $cart_reservation->hookups,
             'riglength' => $cart_reservation->riglength,
-            'xconfnum' => 0,
+            'xconfnum' => $request->xconfnum ?? '123',
             'createdby' => auth()->user()->name,
             'receipt' => $randomReceiptID,
             'rateadjustment' => 0,
