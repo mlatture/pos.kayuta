@@ -30,7 +30,7 @@
                                         <th>Item Price</th>
                                         <th>Quantity</th>
                                         <th>Status</th>
-                                        <th>Turn on to allow this product as an add-on when a guest is making a booking.</th>
+                                        
                                         <th>Suggested Add On</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
@@ -56,13 +56,7 @@
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
-                                            <td class="text-center">
-                                                <input type="checkbox" class="form-check-input suggested-addon-toggle"
-                                                    data-id="{{ $product->id }}"
-                                                    {{ $product->suggested_addon ? 'checked' : '' }}>
-
-
-                                            </td>
+                                            
                                             <td>
                                                 
                                                 <span
@@ -145,46 +139,6 @@
             })
         });
 
-        $(document).on('change', '.suggested-addon-toggle', function() {
-            const isChecked = $(this).is(':checked');
-            const productId = $(this).data('id');
-
-            $.ajax({
-                url: "{{ route('products.toggle-suggested-addon') }}",
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    id: productId,
-                    suggested_addon: isChecked ? 1 : 0
-                },
-                success: function(response) {
-                    const $badge = $(`.suggested-addon-badge[data-id="${productId}"]`);
-
-                    if (isChecked) {
-                        $badge.removeClass('badge-secondary').addClass('badge-success').text('Yes');
-                    } else {
-                        $badge.removeClass('badge-success').addClass('badge-secondary').text('No');
-                    }
-
-
-                    Swal.fire({
-                        title: 'Success!',
-                        text: response.message,
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false,
-                    });
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Something went wrong. Please try again.',
-                        icon: 'error',
-                        timer: 2000,
-                        showConfirmButton: false,
-                    });
-                }
-            });
-        });
+    
     </script>
 @endsection
