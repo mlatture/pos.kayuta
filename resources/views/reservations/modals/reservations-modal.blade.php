@@ -286,6 +286,8 @@
                                 </div>
                             </div>
                         </div>
+
+
                         <div class="form-row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -304,6 +306,27 @@
                         </div>
                     </div>
 
+                    <div class="form-row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="addon-table-body" class="form-label font-weight-bold">Add On</label>
+                                <div class="table-responsive">
+                                    <table id="addon-table-body" class="table table-striped table-bordered">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be appended here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
 
                 </form>
             </div>

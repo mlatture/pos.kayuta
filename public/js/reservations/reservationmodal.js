@@ -26,31 +26,25 @@ $(document).ready(function () {
         $(".firstpage-modal").fadeOut(400, function () {
             $(".secondpage-modal").fadeIn(400, function () {
                 $("#backInfo").show();
-               
+
                 $("#nextInfo").hide();
-               
+
                 $("#submitReservations").show();
-
-
             });
         });
     });
-
-
 
     $("#backInfo").on("click", function () {
         $(".secondpage-modal").fadeOut(400, function () {
             $("#backInfo").hide();
             $(".firstpage-modal").fadeIn(400, function () {
                 $("#submitReservations").hide();
-              
+
                 $("#nextInfo").show();
                 $("#closeModal").show();
 
-                
-                $(".secodnpage-modal input").val('');
-                $(".secodnpage-modal select").val('');
-
+                $(".secodnpage-modal input").val("");
+                $(".secodnpage-modal select").val("");
             });
         });
     });
@@ -60,21 +54,27 @@ $(document).ready(function () {
         var toDate = $("#toDate").val();
         var siteSelector = $("#siteSelector").val();
         if (fromDate && toDate && siteSelector) {
-        
             $.ajax({
                 url: `${webdavinci_api}/api/get_pricing`,
-                method: 'POST',
-                contentType: 'application/json',
+                method: "POST",
+                contentType: "application/json",
                 data: JSON.stringify({
                     start_date: fromDate,
                     end_date: toDate,
                     site_id: siteSelector,
-                   
                 }),
                 headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content"
+                    ),
                     "X-API-KEY": `${webdavinci_api_key}`,
-                    "X-DOMAIN": window.location.protocol + '//' + window.location.hostname + (window.location.port ? `:${window.location.port}` : '') 
+                    "X-DOMAIN":
+                        window.location.protocol +
+                        "//" +
+                        window.location.hostname +
+                        (window.location.port
+                            ? `:${window.location.port}`
+                            : ""),
                 },
                 success: function (api_data) {
                     console.log(api_data);
@@ -83,36 +83,31 @@ $(document).ready(function () {
                     $(".sitelock").on("change", function () {
                         updateSubtotal(api_data);
                     });
-                    
                 },
                 error: function (xhr, status, error) {
                     console.log("Error:", error);
                     console.log("Status:", status);
                     console.log("Response:", xhr.responseText);
-                }
+                },
             });
         }
     });
 
-    function updateSubtotal(api_data){
+    function updateSubtotal(api_data) {
         let subtotal = api_data.total_price;
 
-        if($(".sitelock").is(':checked')){
+        if ($(".sitelock").is(":checked")) {
             subtotal += 20;
         }
 
         $("#subtotal").val(subtotal);
     }
-    
-    
 
     function loadSites() {
         var selectedSiteClass = $("#siteclass option:selected").data(
             "siteclass"
         );
 
-     
-        
         var selectedHookup = $("#hookup option:selected").data("sitehookup");
 
         $.ajax({
@@ -180,9 +175,9 @@ $(document).ready(function () {
         number_of_guests();
     });
 
-    $("#hookup").on("change", function(){
+    $("#hookup").on("change", function () {
         loadSites();
-    })
+    });
 
     $("#customerSelector").on("select2:select", function (e) {
         var data = e.params.data;
@@ -213,6 +208,46 @@ $(document).ready(function () {
             },
         });
     }
+
+  function loadAddOns(){
+    $.ajax({
+        url: "getaddons", 
+        method: "GET",
+        success: function (response) {
+        const tbody = $("#addon-table-body");
+            tbody.empty(); 
+
+            if (response.length > 0) {
+                response.forEach((addon) => {
+                    const row = `
+                        <tr>
+                            <td>${addon.name}</td>
+                            <td>${addon.price}</td>
+                        </tr>`;
+                    tbody.append(row);
+                });
+            } else {
+                const noDataRow = `
+                    <tr>
+                        <td colspan="2" style="text-align: center;">No addons available</td>
+                    </tr>`;
+                tbody.append(noDataRow);
+            }
+        },
+        error: function (error) {
+            console.error("Error fetching addons:", error);
+            const tbody = $("#addon-table-body");
+            tbody.empty();
+            const errorRow = `
+                <tr>
+                    <td colspan="2" style="text-align: center; color: red;">Failed to load addons</td>
+                </tr>`;
+            tbody.append(errorRow);
+        },
+    });
+  }
+
+  loadAddOns();
 
     $("#customerSelector").change(function () {
         var selectedOption = $(this).find("option:selected");
@@ -308,8 +343,6 @@ $(document).ready(function () {
     loadSites();
 });
 
-
-
 $(document).on("click", ".actionsbtn", function () {
     const id = $(this).data("id");
 
@@ -352,31 +385,30 @@ $(document).on("click", "#action1", function () {
     window.location = url;
 });
 
-$('.reservationEmail').on('input', function() {
+$(".reservationEmail").on("input", function () {
     let email = $(this).val();
 
     if (email) {
         $.ajax({
             url: customerInfo,
-            type: 'GET',
+            type: "GET",
             data: {
-                email: email
+                email: email,
             },
-            success: function(data) {
+            success: function (data) {
                 if (data.success) {
-
                     $("#f_name").val(data.info.fname);
                     $("#l_name").val(data.info.lname);
                     $("#con_num").val(data.info.con);
                     $("#address").val(data.info.address);
                 } else {
-                    $("#f_name").val('');
-                    $("#l_name").val('');
-                    $("#con_num").val('');
-                    $("#address").val('');
+                    $("#f_name").val("");
+                    $("#l_name").val("");
+                    $("#con_num").val("");
+                    $("#address").val("");
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.log("Error: ", error);
                 console.log("Status: ", status);
                 console.log("Response: ", xhr.responseText);
@@ -384,6 +416,3 @@ $('.reservationEmail').on('input', function() {
         });
     }
 });
-
-
-

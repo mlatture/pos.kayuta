@@ -78,6 +78,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     //Reservations
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);
+    Route::get('/getaddons', [NewReservationController::class, 'getAddon']);
     Route::get('/getsiteclasses', [NewReservationController::class, 'getSiteClasses']);
     Route::get('/getsitehookups', [NewReservationController::class, 'getSiteHookups']);
     Route::get('/getsite', [NewReservationController::class, 'getSites']);

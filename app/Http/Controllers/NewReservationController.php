@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CardsOnFile;
-use Illuminate\Http\Request;
-use App\Models\Customer;
-use App\Models\Reservation;
-use App\Models\SiteClass;
-use App\Models\SiteHookup;
-use App\Models\RateTier;
+use Exception;
+use Carbon\Carbon;
 use App\Models\Site;
 use App\Models\Payment;
-use App\Models\CartReservation;
+use App\Models\Product;
+use App\Models\Customer;
 use App\Models\GiftCard;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
-use App\Jobs\DeleteCartJob;
+use App\Models\RateTier;
+use App\Models\SiteClass;
+use App\Models\SiteHookup;
 use App\Events\CartDeleted;
-use Illuminate\Support\Facades\Http;
+use App\Jobs\DeleteCartJob;
+use App\Models\CardsOnFile;
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+use App\Models\CartReservation;
 use Illuminate\Support\Facades\DB;
-use Exception;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class NewReservationController extends Controller
 {
@@ -100,13 +101,22 @@ class NewReservationController extends Controller
     public function getCustomers()
     {
         $customer = Customer::orderBy('id', 'DESC')->get();
-        return response()->json($customer);
+
+
+
+        return response()->json($customer, $product);
     }
 
     public function getSiteClasses()
     {
         $siteclass = SiteClass::all();
         return response()->json($siteclass);
+    }
+
+    public function getAddon()
+    {
+        $product = Product::where('suggested_addon', 1)->get();
+        return response()->json($product);
     }
 
 
