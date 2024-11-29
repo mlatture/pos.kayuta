@@ -24,6 +24,8 @@ use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
 use App\Http\Controllers\StationRegisterController;
 use App\Http\Controllers\DynamicTableController;
+use App\Http\Controllers\API\DataController;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -90,7 +92,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
-    
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
 
@@ -141,5 +142,8 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
+
+
+    Route::get('get_data', [DataController::class, 'getData'])->name('get.data');
 
 });

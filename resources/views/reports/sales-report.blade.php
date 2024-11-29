@@ -87,6 +87,7 @@
         </div>
     </div>
 
+   
     <div class="col-12">
         <div class="card">
             <div class="card-body">
@@ -94,7 +95,7 @@
                     <div class="table-responsive m-t-40 p-0" id="dataTableContainer">
                         <table table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
                             width="100%">
-                            <thead>
+                            <thead class="text-center">
                                 <tr>
                                     <th>Transaction Date</th>
                                     <th>Source</th>
@@ -109,15 +110,16 @@
                                     <th>Qty</th>
                                     <th>Unit</th>
                                     <th>Total</th>
-                                    {{-- <th>User</th> --}}
+                                    <th>User</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody  class="text-center">
                                 @php
                                     $tax = 0;
                                     $discount = 0;
                                 @endphp
                                 @foreach ($orders as $key => $order)
+                             
                                     <tr>
                                         <td>{{ $order->created_at->format('m/d/Y') }}</td>
                                         <td>{{ $order->source ?? '' }}</td>
@@ -127,8 +129,12 @@
                                         <td>{{ $order->items->first()->product->taxType->title ?? '' }}</td>
                                        
                                         <td>{{ 'Product Charge' }}</td>
-                                        <td>
-                                            {{ $order->items->first()->product->description ?? '' }}
+                                        <td style="width: 10px !important;">
+                                            <span>
+                                                <p>
+                                                    {{ Str::limit($order->items->first()->product->description ?? '', 20, '...') }}
+                                                </p>
+                                            </span>
                                         </td>
                                         <td>
                                             @if ($order->source === 'POS')
@@ -178,7 +184,7 @@
                                                 $0
                                             @endif
                                         </td>
-                                        {{-- <td>{{ $order->user }}</td> --}}
+                                        <td>{{ $order->admin->name ?? '' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

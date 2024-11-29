@@ -8,4 +8,5 @@
   <script>
     const webdavinci_api = "{{ env('WEBDAVINCI_API') }}";
     const webdavinci_api_key = "{{ env('WEBDAVINCI_API_KEY') }}";
+    const getData = "{{ route('get.data') }}"; 
   </script>

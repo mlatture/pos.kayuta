@@ -22,4 +22,3 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::get('search-sites', [CheckAvailability::class, 'getSites']);
 Route::get('sites-and-reservations', [CheckAvailability::class, 'getReservAndSites']);
-Route::get('get_data', [DataController::class, 'getData']);
