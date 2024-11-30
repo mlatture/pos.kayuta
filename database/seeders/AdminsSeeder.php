@@ -24,22 +24,9 @@ class AdminsSeeder extends Seeder
 
         $sql = File::get($path);
 
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO `(.+?)`.+?VALUES \((.+?),(.+?)\);/is', $sql, $matches);
+        // Execute the SQL file to insert data
+        DB::unprepared($sql);
 
-        if (!empty($matches[0])) {
-            foreach ($matches[0] as $key => $insertStatement) {
-                $tableName = $matches[1][$key]; 
-                $recordId = trim($matches[2][$key]); 
-
-                DB::unprepared("DELETE FROM `$tableName` WHERE id = '$recordId';");
-
-                $insertStatements .= $insertStatement . "\n";
-            }
-        }
-
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
-        }
+        $this->command->info('Admins table seeded!');
     }
 }
