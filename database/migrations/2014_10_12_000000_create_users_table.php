@@ -22,9 +22,7 @@ return new class extends Migration
                     $table->integer('organization_id')->nullable();
                 }
 
-                if (!Schema::hasColumn($tableName, 'name')) {
-                    $table->string('name', 80)->nullable();
-                }
+             
                 if (!Schema::hasColumn($tableName, 'f_name')) {
                     $table->string('f_name', 255)->nullable();
                 }
@@ -127,7 +125,6 @@ return new class extends Migration
                 $table->id();
                 $table->integer('organization_id')->nullable();
 //                $table->integer('testing_123')->nullable();
-                $table->string('name', 80)->nullable();
                 $table->string('f_name', 255)->nullable();
                 $table->string('l_name', 191)->nullable();
                 $table->string('phone', 25)->nullable();
