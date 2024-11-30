@@ -102,6 +102,7 @@
                         <div class="col">
                             <select class="form-control select2" name="customer_id" id="customer_id">
 
+                                <option value="1">Walk-in Customer</option>
 
                                 @foreach ($customers as $customer)
                                     <option value="{{ $customer->id }}"
