@@ -110,7 +110,9 @@
 
     <!-- Custom JS -->
     <!-- <script src="{{ asset('js/app.js') }}"></script> -->
+    <script src="{{ asset('js/push_data.js')}}"></script>
     <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
+    
     <script src="{{ asset('js/reservations/create.js') }}"></script>
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
     <script src="{{ asset('js/reservations/payment.js') }}"></script>

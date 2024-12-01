@@ -30,6 +30,7 @@ class Order extends Model
         return $this->hasMany(PosPayment::class, 'order_id');
     }
 
+ 
     
 
     public function reservations()
@@ -49,6 +50,11 @@ class Order extends Model
         }
 
         return '';
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
 
@@ -101,13 +107,13 @@ class Order extends Model
     // Find order by ID with relationships
     public static function orderFindById($id)
     {
-        return self::with(['reservations','posPayments',  'items', 'customer'])->find($id);
+        return self::with(['reservations','posPayments',  'items', 'customer', 'admin'])->find($id);
     }
 
     // Get all orders with optional filters
     public function getAllOrders($where = [], $filters = [])
     {
-        return self::with(['reservations', 'posPayments', 'items', 'items',  'customer'])
+        return self::with(['reservations', 'posPayments', 'items', 'items',  'customer', 'admin'])
             ->where($where)
             ->when(isset($filters['date_range']), function ($query) use ($filters) {
                 $dates = explode(' - ', $filters['date_range']);
