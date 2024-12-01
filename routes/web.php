@@ -24,6 +24,8 @@ use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
 use App\Http\Controllers\StationRegisterController;
 use App\Http\Controllers\DynamicTableController;
+use App\Http\Controllers\API\CheckAvailability;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -141,5 +143,5 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
-
+    Route::get('get-data', [CheckAvailability::class, 'getData']);
 });

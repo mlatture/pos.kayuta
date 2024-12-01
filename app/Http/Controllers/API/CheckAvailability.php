@@ -36,10 +36,23 @@ class CheckAvailability extends Controller
 
         return response()->json([
             'sites' => $sites,
-            'reservations' => $reservations
+        'reservations' => $reservations
         ]);
     }
 
+
+    public function getData()
+    {
+        $sites = Site::all();
+        $reservations = Reservation::all();
+        $rate_tier = RateTier::all();
+
+        return response()->json([
+            'sites' => $sites,
+            'reservations' => $reservations,
+            'rate_tier' => $rate_tier
+        ]);
+    }
 
   
     
