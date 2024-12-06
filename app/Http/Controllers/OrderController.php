@@ -93,17 +93,6 @@ class OrderController extends Controller
             }
             $request->user()->cart()->detach();
 
-            $status = '';
-            $amount = $request->amount;
-            if($amount == 0){
-                $status = 'Not Paid';  
-            }else if($amount < ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Partial';
-            }else if($amount == ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Paid';
-            } else if($amount > ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Change';
-            }
         
             $order->posPayments()->create([
                 'amount' => $request->amount,
@@ -111,7 +100,6 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_acc_number' => $request->acc_number, 
                 'x_ref_num' => $request->x_ref_num,
-                'payment_status' => $status,
             ]);
 
             $order = Order::orderFindById($order->id);

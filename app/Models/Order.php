@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderItem;
 use App\Models\PosPayment;
 use App\Models\Reservation;
+use App\Models\Admin;
 
 class Order extends Model
 {
@@ -30,7 +31,6 @@ class Order extends Model
         return $this->hasMany(PosPayment::class, 'order_id');
     }
 
- 
     
 
     public function reservations()
@@ -52,17 +52,17 @@ class Order extends Model
         return '';
     }
 
-    public function admin()
-    {
-        return $this->belongsTo(Admin::class, 'admin_id');
-    }
-
 
 
     // Relationship with customer (user)
     public function customer()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class, 'admin_id', 'id');
     }
 
     // Get customer name
@@ -104,24 +104,60 @@ class Order extends Model
         return number_format($this->receivedAmount(), 2);
     }
 
-    // Find order by ID with relationships
+  
     public static function orderFindById($id)
     {
-        return self::with(['reservations','posPayments',  'items', 'customer', 'admin'])->find($id);
+        return self::with(['posPayments',  'items', 'customer'])->find($id);
     }
 
-    // Get all orders with optional filters
     public function getAllOrders($where = [], $filters = [])
     {
-        return self::with(['reservations', 'posPayments', 'items', 'items',  'customer', 'admin'])
-            ->where($where)
+        return self::with(['reservations', 'posPayments', 'items', 'customer', 'admin'])
             ->when(isset($filters['date_range']), function ($query) use ($filters) {
                 $dates = explode(' - ', $filters['date_range']);
-                $query->whereBetween(
-                    $filters['date_to_use'] ?? 'created_at',
-                    [date('Y-m-d', strtotime($dates[0])), date('Y-m-d', strtotime($dates[1]))]
-                );
+                $startDate = date('Y-m-d', strtotime(trim($dates[0])));
+                $endDate = date('Y-m-d', strtotime(trim($dates[1])));
+                
+                switch ($filters['date_to_use'] ?? 'transaction_date') {
+                    case 'transaction_date': 
+                        $query->where(function ($q) use ($startDate, $endDate) {
+                            $q->whereBetween('created_at', [$startDate, $endDate]) 
+                              ->orWhereHas('reservations', function ($q2) use ($startDate, $endDate) {
+                                  $q2->whereBetween('created_at', [$startDate, $endDate]); 
+                              })
+                              ->orWhereHas('items', function ($q3) use ($startDate, $endDate) {
+                                  $q3->whereBetween('created_at', [$startDate, $endDate]); 
+                              });
+                        });
+                        break;
+                
+                    case 'checkin_date':
+                       
+                        $query->whereHas('reservations', function ($q) use ($startDate, $endDate) {
+                            $q->whereBetween('cid', [$startDate, $endDate]);
+                        });
+                        break;
+                
+                    case 'staying_on':
+                     
+                        $query->whereHas('reservations', function ($q) use ($startDate, $endDate) {
+                            $q->where('cid', '<=', $endDate) 
+                              ->where('cod', '>=', $startDate); 
+                        });
+                        break;
+                
+                    default: 
+                       
+                        $query->whereBetween('created_at', [$startDate, $endDate]);
+                        break;
+                }
+                
             })
+            ->where($where)
             ->get();
     }
+    
+    
+    
+    
 }

@@ -286,7 +286,6 @@ $(document).ready(function () {
                 let tableBody = $("#notReserveTable tbody");
                 tableBody.empty();
                 $.each(data.data, function (index, item) {
-                    console.log(item.customernumber);
 
                     if(item.customernumber === null){
                         return;
@@ -427,5 +426,46 @@ $(document).ready(function () {
 
     fetchReservations();
     fetchNotReserve();
+
+
+    function loadAddOns() {
+        $.ajax({
+            url: "getaddons",
+            method: "GET",
+            success: function(response) {
+                const tbody = $("#addon-table-body");
+                tbody.empty();
+
+                if (response.length > 0) {
+                    response.forEach((addon) => {
+                        const row = `
+                <tr>
+                    <td>${addon.name}</td>
+                    <td>${addon.price}</td>
+                </tr>`;
+                        tbody.append(row);
+                    });
+                } else {
+                    const noDataRow = `
+            <tr>
+                <td colspan="2" style="text-align: center;">No addons available</td>
+            </tr>`;
+                    tbody.append(noDataRow);
+                }
+            },
+            error: function(error) {
+                console.error("Error fetching addons:", error);
+                const tbody = $("#addon-table-body");
+                tbody.empty();
+                const errorRow = `
+        <tr>
+            <td colspan="2" style="text-align: center; color: red;">Failed to load addons</td>
+        </tr>`;
+                tbody.append(errorRow);
+            },
+        });
+    }
+
+    loadAddOns();
     
 });

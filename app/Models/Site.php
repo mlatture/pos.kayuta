@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-
+use Carbon\Carbon;
 class Site extends Model
 {
     use HasFactory;
@@ -22,6 +22,51 @@ class Site extends Model
         'rigtypes'  =>  'array',
         'amenities' =>  'array'
     ];
+
+    protected $fillable = [
+        'sitename', 'siteclass', 'seasonal', 'siteid'
+    ];
+
+    public static function getIncomePersite($filters = [])
+    {
+        $query = self::query()
+            ->LeftJoin('reservations', 'sites.siteid', '=', 'reservations.siteid')
+            ->selectRaw('
+                sites.siteid as site_id, 
+                sites.sitename as site_name,
+                sites.siteclass as site_type,
+                sites.seasonal,
+                COUNT(reservations.id) as nights_occupied,
+                SUM(reservations.total) as income_from_stays
+            ')
+            ->groupBy('sites.siteid', 'sites.sitename', 'sites.siteclass', 'sites.seasonal');
+    
+        if (!empty($filters['site_id'])) {
+            $query->where('sites.siteid', $filters['site_id']);
+        }
+    
+        if (!empty($filters['site_name'])) {
+            $query->where('sites.sitename', 'like', '%' . $filters['site_name'] . '%');
+        }
+    
+        if (!empty($filters['site_type'])) {
+            $query->where('sites.siteclass', $filters['site_type']);
+        }
+    
+        if (isset($filters['seasonal'])) {
+            $query->where('sites.seasonal', $filters['seasonal']);
+        }
+    
+        return $query->get()->map(function ($site) {
+            $totalDays = Carbon::parse('first day of this year')->diffInDays(now());
+            $site->percent_occupancy = $totalDays > 0
+                ? round(($site->nights_occupied / $totalDays) * 100, 2)
+                : 0;
+    
+            return $site;
+        });
+    }
+    
 
     public function getTotalDaysAttribute()
     {

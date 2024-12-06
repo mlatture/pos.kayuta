@@ -101,6 +101,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('tax-types', TaxTypeController::class);
     Route::resource('gift-cards', GiftCardController::class);
     Route::get('reports/sales-report', [ReportController::class, 'salesReport'])->name('reports.salesReport');
+    Route::get('reports/income-per-site-report', [ReportController::class, 'incomePerSiteReport'])->name('reports.incomePerSiteReport');
     Route::get('reports/reservation-report', [ReportController::class, 'reservationReport'])->name('reports.reservationReport');
     Route::get('reports/gift-card-report', [ReportController::class, 'giftCardReport'])->name('reports.giftCardReport');
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
@@ -114,6 +115,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
+    Route::get('cart/get-product-for-receipt', [CartController::class, 'getProductForReceipt'])->name('cart.get-product-for-receipt');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
@@ -143,5 +145,5 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
-    Route::get('get-data', [CheckAvailability::class, 'getData']);
+    Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
 });

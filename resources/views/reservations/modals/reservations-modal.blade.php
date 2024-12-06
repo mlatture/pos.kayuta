@@ -233,7 +233,8 @@
                                     <div class="custom-checkbox-container">
                                         <div class="checkbox-wrapper-55">
                                             <label class="rocker rocker-small">
-                                                <input type="checkbox" class="sitelock" id="siteLock" name="siteLock" checked>
+                                                <input type="checkbox" class="sitelock" id="siteLock" name="siteLock"
+                                                    checked>
                                                 <span class="switch-left">Yes</span>
                                                 <span class="switch-right">No</span>
                                             </label>
@@ -246,7 +247,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                
+
                                 <div class="form-group">
                                     <label for="subtotal">Sub Total</label>
                                     <div class="input-group">
@@ -326,7 +327,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
 
                 </form>
             </div>
@@ -344,4 +345,7 @@
 
 <script>
     var customerInfo = " {{ route('customer.info') }}";
+
+
+ 
 </script>

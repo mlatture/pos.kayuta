@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -29,6 +30,8 @@ class CartController extends Controller
         });
     }
 
+
+
     public function index(Request $request)
     {
         $registers = StationRegisters::all();
@@ -48,6 +51,38 @@ class CartController extends Controller
         $categories = $categoriesQuery->get();
         return view('cart.index', compact('customers', 'cart', 'products', 'categories', 'registers'));
     }
+
+    public function getProductForReceipt(Request $request)
+    {
+        $orderId = $request->order_id;
+    
+        $order_item = OrderItem::where('order_id', $orderId)->get();
+    
+        $productIds = $order_item->pluck('product_id');
+    
+        $products = Product::whereIn('id', $productIds)->get();
+    
+        $productDetails = $order_item->map(function ($order_item) use ($products) {
+            $product = $products->firstWhere('id', $order_item->product_id);
+    
+            $total =  $order_item->quantity * $order_item->price;
+    
+            return [
+                'product_name' => $product ? $product->name : 'Unknown Product',
+                'price' => $order_item->price,
+                'quantity' => $order_item->quantity,
+                'tax' => $order_item->tax,
+                'discount' => $order_item->discount,
+                'total' => $total,
+            ];
+        });
+    
+        return response()->json([
+            'success' => true,
+            'products' => $productDetails  
+        ]);
+    }
+    
 
     public function store(Request $request)
     {
