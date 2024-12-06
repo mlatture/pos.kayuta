@@ -311,7 +311,7 @@
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="addon-table-body" class="form-label font-weight-bold">Add On</label>
-                                <div class="table-responsive">
+                                <div class="table-responsive"> 
                                     <table id="addon-table-body" class="table table-striped table-bordered">
                                         <thead class="thead-dark">
                                             <tr>
