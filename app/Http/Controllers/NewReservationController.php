@@ -104,7 +104,7 @@ class NewReservationController extends Controller
 
 
 
-        return response()->json($customer, $product);
+        return response()->json($customer);
     }
 
     public function getSiteClasses()
@@ -483,7 +483,7 @@ class NewReservationController extends Controller
     {
         $reservation = new Reservation([
             'cartid' => $request->cartid,
-            'source' => 'Walk In',
+            'source' => 'Reservation',
             'email' => $cart_reservation->email,
             'fname' => $customer->first_name,
             'lname' => $customer->last_name,
@@ -502,10 +502,12 @@ class NewReservationController extends Controller
             'rigtype' => $cart_reservation->hookups,
             'riglength' => $cart_reservation->riglength,
             'xconfnum' => $request->xconfnum ?? '123',
-            'createdby' => auth()->user()->name,
+            'createdby' => auth()->user()->name, 
             'receipt' => $randomReceiptID,
             'rateadjustment' => 0,
             'rid' => 'uc',
+            
+            
         ]);
         $reservation->save();
             

@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\GiftCard;
 use App\Models\Order;
 use App\Models\Reservation;
+use App\Models\Site;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
+    
     private $order;
+    private $site;
     private $reservation;
     private $giftCard;
 
-    public function __construct(Order $order, Reservation $reservation, GiftCard $giftCard)
+    public function __construct(Order $order, Site $site, Reservation $reservation, GiftCard $giftCard)
     {
         $this->middleware('admin_has_permission:'.config('constants.role_modules.payment_report.value'))->only(['paymentReport']);
         $this->middleware('admin_has_permission:'.config('constants.role_modules.reservation_report.value'))->only(['reservationReport']);
@@ -24,29 +28,36 @@ class ReportController extends Controller
         $this->order        =   $order;
         $this->reservation  =   $reservation;
         $this->giftCard     =   $giftCard;
+        $this->site         =   $site;
     }
 
-    public function salesReport(Request $request)
+  public function salesReport(Request $request)
     {
-        $filters = $request->all();
-        $where = [];
-    
-        if (!empty($filters['date_range'])) {
-            $dates = explode(' - ', $filters['date_range']);
-            $startDate = date('Y-m-d', strtotime($dates[0]));
-            $endDate = date('Y-m-d', strtotime($dates[1]));
-    
-            $where[] = ['created_at', '>=', $startDate];
-            $where[] = ['created_at', '<=', $endDate];
-        }
-    
-        $orders = $this->order->getAllOrders($where, $filters);
-    
+        $filters = $request->only(['date_range', 'date_to_use']); 
+        $where = []; 
+        
+        $orders = $this->order->getAllOrders($where, $filters); 
+        
         if ($request->ajax()) {
-            return view('reports.components.sales_report_table', compact('orders'))->render();
+            Log::info(["Testing Filters", $orders]);
+            return view('reports.components.sales_report_table', compact('orders'))->render();  
         }
     
-        return view('reports.sales-report', compact('orders'));
+        return view('reports.sales-report', compact('orders'));  
+    }
+    
+    
+    
+
+    public function incomePerSiteReport(Request $request)
+    {   
+        $filters = $request->only(['site_id', 'site_name', 'site_type', 'seasonal']);
+
+        $sites = $this->site->getIncomePersite($filters);
+        
+        return view('reports.income-per-site-report', [
+            'sites' => $sites
+        ]);
     }
     
     

@@ -67,6 +67,8 @@
     </div>
 </div>
 
+<div id="receiptContainer"></div>
+
 <script>
    
 

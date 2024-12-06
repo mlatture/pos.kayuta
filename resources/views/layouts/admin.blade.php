@@ -7,6 +7,7 @@
     <title>@yield('title', 'WebDaVinci Flow')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}" />
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
@@ -17,21 +18,70 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css"
         rel="stylesheet" />
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet" />
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
     <link href='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css' rel='stylesheet' />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/daterangepicker/3.1/daterangepicker.min.css">
-
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.0/css/autoFill.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css">
     @yield('css')
     @stack('css')
 
     <script>
+        const webdavinci_api = "{{ env('WEBDAVINCI_API') }}";
+        const webdavinci_api_key = "{{ env('WEBDAVINCI_API_KEY') }}";
+
+
+        function get_data() {
+            $.ajax({
+                url: "{{ route('get.data.to.push') }}",
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    push_data(data);
+                },
+                error: function(err) {
+                    console.log(err);
+                }
+            });
+        }
+
+        function push_data(data) {
+            $.ajax({
+                url: `${webdavinci_api}/api/push_data`,
+                method: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify({
+                    data: data
+                }),
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-API-KEY": `${webdavinci_api_key}`,
+                    "X-DOMAIN": window.location.protocol + "//" + window.location.hostname + (window.location.port ?
+                        `:${window.location.port}` : ""),
+                },
+                success: function(response) {
+                    console.log('Push Data:', response);
+                },
+                error: function(err) {
+                    console.log(err);
+                }
+            });
+        }
+
+
+
+        get_data();
+
+
         window.APP = @json([
-    'currency_symbol' => config('settings.currency_symbol'),
-    'warning_quantity' => config('settings.warning_quantity'),
-]);
+            'currency_symbol' => config('settings.currency_symbol'),
+            'warning_quantity' => config('settings.warning_quantity'),
+        ]);
     </script>
 </head>
 
@@ -98,26 +148,26 @@
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script src="https://cdn.datatables.net/2.0.3/js/dataTables.js"></script>
-    <script src="https://cdn.datatables.net/2.0.3/js/dataTables.bootstrap5.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.flash.min.js"></script>
+
+
+
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/autofill/2.7.0/js/dataTables.autoFill.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js"></script>
+
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
-
     <!-- Custom JS -->
     <!-- <script src="{{ asset('js/app.js') }}"></script> -->
-    <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
-    <script src="{{ asset('js/reservations/create.js') }}"></script>
-    <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
-    <script src="{{ asset('js/reservations/payment.js') }}"></script>
-    <script src="{{ asset('js/reservations/filter.js') }}"></script>
-    <script src="{{ asset('js/cart/create.js')}}"></script>
-    <script src="{{ asset('js/cart/random.js')}}"></script>
-    <script src="{{ asset('js/cart/paymentmethod.js')}}"></script>
+
+    <script src="{{ asset('js/cart/create.js') }}"></script>
+    <script src="{{ asset('js/cart/random.js') }}"></script>
+    <script src="{{ asset('js/cart/paymentmethod.js') }}"></script>
     @yield('js')
     @stack('js')
 </body>

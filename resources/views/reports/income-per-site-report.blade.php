@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Sales Report Management')
-@php
+@section('title', 'Income Per Site Report')
+{{-- @php
     $firstTransactionDate = $orders->first() ? $orders->first()->created_at->format('l, F j, Y') : '';
     $lastTransactionDate = $orders->last() ? $orders->last()->created_at->format('l, F j, Y') : '';
-@endphp
-@section('content-header', "Sales ($firstTransactionDate - $lastTransactionDate)")
+@endphp --}}
+@section('content-header', "Income Per Site Report")
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
@@ -69,7 +69,7 @@
 @endsection
 
 @section('content')
-    <div class="row ">
+    {{-- <div class="row ">
         <div class="card" style="background-color: #F4F6F9; box-shadow: none; border: none;">
             <div class="card-body" style="border: none;">
                 <div class="row mt-3 d-flex justify-content-center align-items-center">
@@ -81,9 +81,9 @@
                     <div class="col-md-3 d-flex align-items-center">
                         <label for="dateToUse" class="">Date To Use:</label>
                         <select id="dateToUse" class="form-control">
-                            <option value="transaction_date">Transaction Date</option>
-                            <option value="checkin_date">Date Checked In</option>
                             <option value="arrival_date">Arrival Date</option>
+                            <option value="checkin_date">Date Checked In</option>
+                            <option value="transaction_date">Transaction Date</option>
                             <option value="staying_on">Staying On</option>
                         </select>
                     </div>
@@ -95,7 +95,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     <div class="col-12">
         <div class="card">
             <div class="card-body">
@@ -105,88 +105,29 @@
                             width="100%">
                             <thead>
                                 <tr>
-                                    <th>Transaction Date</th>
-                                    <th>Source</th>
-                                    <th>Confirmation # / POS ID</th>
-                                    <th>Customer</th>
-                                    <th>Site</th>
-                                    <th>Type</th>
-
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Amount</th>
-                                    <th>Qty</th>
-                                    <th>Unit</th>
-                                    <th>Total</th>
-                                    <th>User</th>
+                                    <th>Site ID</th>
+                                    <th>Site Name</th>
+                                    <th>Site Type</th>
+                                    <th>Seasonal</th>
+                                    <th>Nights Occupied</th>
+                                    <th>Income from Stays</th>
+                                    <th>Percent Occupancy</th>
+                                    <th>Other Income</th>
+                                    <th>Total Income from Site</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @php
-                                    $tax = 0;
-                                    $discount = 0;
-                                @endphp
-                                @foreach ($orders as $key => $order)
+                                @foreach ($sites as $site)
                                     <tr>
-                                        <td>{{ $order->created_at->format('m/d/Y') }}</td>
-                                        <td>{{ $order->source ?? '' }}</td>
-                                        <td>{{ $order->id ?? '' }}</td>
-                                        <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : '' }}
-                                        </td>
-                                        <td>{{ $order->reservations->first()->siteid ?? '' }}</td>
-                                        <td>{{ $order->items->first()->product->taxType->title ?? '' }}</td>
-
-                                        <td>{{ 'Product Charge' }}</td>
-                                        <td>
-                                            {{ $order->items->first()->product->description ?? '' }}
-                                        </td>
-                                        <td>
-                                            @if ($order->source === 'POS')
-                                                @php
-                                                    $item = $order->items->first();
-                                                    $price = $item ? $item->price : 0;
-                                                    $quantity = $item ? $item->quantity : 1;
-                                                    $amount = $quantity != 0 ? $price / $quantity : 0;
-                                                @endphp
-                                                ${{ number_format($amount, 2) }}
-                                            @elseif($order->source === 'Reservation')
-                                                ${{ $order->reservations->first() ? number_format($order->reservations->first()->base, 2) : 0 }}
-                                            @else
-                                                $0
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($order->source === 'POS')
-                                                {{ $order->items->first() ? $order->items->first()->quantity : 0 }}
-                                            @elseif($order->source === 'Reservation')
-                                                {{ $order->reservations->first()->nights ?? 0 }}
-                                            @else
-                                                0
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($order->source === 'Reservation')
-                                                @if ($order->reservations->first()->nights == 7)
-                                                    Week
-                                                @elseif ($order->reservations->first()->nights == 30)
-                                                    Month
-                                                @elseif ($order->reservations->first()->nights <= 7)
-                                                    Day
-                                                @else
-                                                @endif
-                                            @else
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($order->source === 'POS')
-                                                ${{ $order->items->first() ? number_format($order->items->first()->price, 2) : 0 }}
-                                            @elseif($order->source === 'Reservation')
-                                                ${{ $order->reservations->first() ? number_format($order->reservations->first()->total, 2) : 0 }}
-                                            @else
-                                                $0
-                                            @endif
-                                        </td>
-                                        <td>{{ ucfirst($order->admin->name) }}</td>
+                                        <td>{{ $site->site_id }}</td>
+                                        <td>{{ $site->site_name }}</td>
+                                        <td>{{ $site->site_type }}</td>
+                                        <td>{{ $site->seasonal ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $site->nights_occupied }}</td>
+                                        <td>{{ number_format($site->income_from_stays, 2) }}</td>
+                                        <td>{{ $site->percent_occupancy }}%</td>
+                                        <td>{{ number_format($site->other_income, 2) }}</td>
+                                        <td>{{ number_format($site->total_income, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -203,6 +144,7 @@
     <script>
         $(document).ready(function() {
             $('#productDate').daterangepicker({
+
                 autoApply: false,
                 autoUpdateInput: true,
                 locale: {
@@ -228,35 +170,28 @@
             });
 
             $('#productDate').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val('');
-                fetchFilteredOrders();
-            });
-
-            $('#dateToUse').change(function() {
-                fetchFilteredOrders();
+                $(this).val(''); // Clear the input field
             });
 
             function fetchFilteredOrders() {
                 var dateRange = $('#productDate').val();
                 var dateToUse = $('#dateToUse').val();
 
+                console.log("Date Range:", dateRange);
+
                 if (dateRange) {
                     var dates = dateRange.split(' - ');
-                    var startDate = moment(dates[0], 'MM/DD/YYYY').format('YYYY-MM-DD');
-                    var endDate = moment(dates[1], 'MM/DD/YYYY').format('YYYY-MM-DD');
-
+                    var startDate = dates[0];
+                    var endDate = dates[1];
 
                     $.ajax({
                         url: "{{ route('reports.salesReport') }}",
                         type: 'GET',
                         data: {
                             date_range: dateRange,
-                            date_to_use: dateToUse
                         },
                         success: function(response) {
-                            console.log('Orders fetched:', response);
-                            $('#dataTableContainer').html(
-                                response);
+                            $('#dataTableContainer').html(response);
                         },
                         error: function(xhr, status, error) {
                             console.error('Error fetching orders:', error);
@@ -280,7 +215,7 @@
 
             $('#refreshBtn').click(function() {
                 window.location.reload();
-            });
+            })
         });
     </script>
 @endsection

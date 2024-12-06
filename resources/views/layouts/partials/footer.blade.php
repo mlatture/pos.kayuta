@@ -17,7 +17,7 @@
             dataType: 'json',
 
             success: function(data) {
-                console.log(data);
+               
                 push_data(data);
             },
             error: function(err) {
@@ -27,6 +27,7 @@
     }
 
     function push_data(data) {
+        console.log('Pushing Data:', data);
         $.ajax({
             url: `${webdavinci_api}/api/push_data`,
             method: 'POST',
@@ -36,7 +37,7 @@
             }),
 
             headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(r
                     "content"
                 ),
                 "X-API-KEY": `${webdavinci_api_key}`,
