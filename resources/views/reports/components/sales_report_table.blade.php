@@ -23,11 +23,16 @@ width="100%">
         $tax = 0;
         $discount = 0;
     @endphp
-
-
     @foreach ($orders as $key => $order)
+
         <tr>
-            <td>{{ $order->created_at->format('m/d/Y') }}</td>
+            <td>
+                @if($order->source === 'POS')
+                    {{ $order->created_at->format('m/d/Y') }}
+                @elseif($order->source === 'Reservation')
+                    {{ $order->reservations->first()->created_at->format('m/d/Y') }}  
+                @endif 
+            </td>
             <td>{{ $order->source ?? '' }}</td>
             <td>{{ $order->id ?? '' }}</td>
             <td>{{ $order->customer ? $order->customer->f_name . ' ' . $order->customer->l_name : '' }}
