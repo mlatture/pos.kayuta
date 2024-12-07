@@ -164,6 +164,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
     <!-- Custom JS -->
     <!-- <script src="{{ asset('js/app.js') }}"></script> -->
+    <script src="{{ asset('js/reservations/payments.js') }}"></script>
+    <script src="{{ asset('js/reservations/create.js') }}"></script>
 
     <script src="{{ asset('js/cart/create.js') }}"></script>
     <script src="{{ asset('js/cart/random.js') }}"></script>
