@@ -7,7 +7,7 @@ use App\Models\OrderItem;
 use App\Models\PosPayment;
 use App\Models\Reservation;
 use App\Models\Admin;
-
+use Exception;
 class Order extends Model
 {
     protected $guarded = [];
@@ -115,48 +115,55 @@ class Order extends Model
         return self::with(['reservations', 'posPayments', 'items', 'customer', 'admin'])
             ->when(isset($filters['date_range']), function ($query) use ($filters) {
                 $dates = explode(' - ', $filters['date_range']);
-                $startDate = date('Y-m-d', strtotime(trim($dates[0])));
-                $endDate = date('Y-m-d', strtotime(trim($dates[1])));
-                
-                switch ($filters['date_to_use'] ?? 'transaction_date') {
-                    case 'transaction_date': 
-                        $query->where(function ($q) use ($startDate, $endDate) {
-                            $q->whereBetween('created_at', [$startDate, $endDate]) 
-                              ->orWhereHas('reservations', function ($q2) use ($startDate, $endDate) {
-                                  $q2->whereBetween('created_at', [$startDate, $endDate]); 
-                              })
-                              ->orWhereHas('items', function ($q3) use ($startDate, $endDate) {
-                                  $q3->whereBetween('created_at', [$startDate, $endDate]); 
-                              });
+    
+                if (count($dates) === 2) {
+                    $startDate = now()->parse(trim($dates[0]))->setTimezone('UTC')->startOfDay();
+                    $endDate = now()->parse(trim($dates[1]))->setTimezone('UTC')->endOfDay();
+                } else {
+                    throw new Exception('Invalid date range format');
+                }
+    
+                $dateToUse = $filters['date_to_use'] ?? 'transaction_date';
+    
+                switch ($dateToUse) {
+                    case 'transaction_date':
+                        $query->whereBetween('created_at', [$startDate, $endDate])
+                            ->orWhereHas('reservations', function ($q) use ($startDate, $endDate) {
+                                $q->whereBetween('created_at', [$startDate, $endDate]);
+                            });
+                        break;
+    
+                    case 'checkin_date':
+                        $query->whereHas('reservations', function ($q) use ($startDate, $endDate) {
+                            $q->whereBetween('checkedin', [$startDate, $endDate]);
                         });
                         break;
-                
-                    case 'checkin_date':
-                       
+    
+                    case 'arrival_date':
                         $query->whereHas('reservations', function ($q) use ($startDate, $endDate) {
                             $q->whereBetween('cid', [$startDate, $endDate]);
                         });
                         break;
-                
+    
                     case 'staying_on':
-                     
                         $query->whereHas('reservations', function ($q) use ($startDate, $endDate) {
-                            $q->where('cid', '<=', $endDate) 
-                              ->where('cod', '>=', $startDate); 
+                            $q->where('cid', '<=', $endDate)
+                                ->where('cod', '>=', $startDate);
                         });
                         break;
-                
-                    default: 
-                       
-                        $query->whereBetween('created_at', [$startDate, $endDate]);
+    
+                    default:
+                        $query->whereBetween('created_at', [$startDate, $endDate])
+                            ->orWhereHas('reservations', function ($q) use ($startDate, $endDate) {
+                                $q->whereBetween('created_at', [$startDate, $endDate]);
+                            });
+                         
                         break;
                 }
-                
             })
             ->where($where)
             ->get();
     }
-    
     
     
     

@@ -138,20 +138,20 @@
                             </select>
                         </div>
 
-                        <div style="height: 400px; overflow-y: auto;">
-                            <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Site</th>
-                                        <th>Type</th>
-                                        <th>Site Lock</th>
-                                        <th>Balance</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                    <div style="height: 400px; overflow-y: auto;">
+                        <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Site</th>
+                                    <th>Type</th>
+                                    <th>Site Lock</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
 
                                 </tbody>
                             </table>
@@ -207,13 +207,4 @@
     <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-
-    <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
-    <script src="{{ asset('js/reservations/create.js') }}"></script>
-    <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
-    <script src="{{ asset('js/reservations/payment.js') }}"></script>
-    <script src="{{ asset('js/reservations/filter.js') }}"></script>
-    <script>
-      
-    </script>
 @endpush

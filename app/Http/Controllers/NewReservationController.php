@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
+
 class NewReservationController extends Controller
 {
     public function index($id)
@@ -37,6 +38,60 @@ class NewReservationController extends Controller
         $reservation->save();
 
         return response()->json(['success' => true]);
+    }
+
+    public function updateCheckedIn(Request $request)
+    {
+        $cartid = $request->input('cartid');
+
+        $request->validate([
+            'cartid' => 'required|exists:reservations,cartid',
+        ]);
+
+        try{
+            $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            $reservation->update([
+                'checkedin' => Carbon::now(),
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Reservation checked in successfully.', 'checked_in_date' => $reservation->checkedin->format('Y-m-d H:i:s')], 200);
+        } catch (Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to checked-in status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        
+    }
+
+    public function updateCheckedOut(Request $request)
+    {
+        $cartid = $request->input('cartid');
+        $request->validate([
+            'cartid' => 'required|exists:reservations,cartid',
+        ]);
+
+        try{
+            $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            $reservation->update([
+                'checkedout' => Carbon::now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reservation checked out successfully.',
+                'checked_out_date' => $reservation->checkedout->format('Y-m-d H:i:s')
+            ], 200);    
+            
+        } catch(Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to checked-out status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     
