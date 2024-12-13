@@ -88,24 +88,11 @@ $(document).ready(function () {
             );
         } else if (paymentMethod === "GiftCard") {
             let giftCardNumber = $("#giftcardno").val();
-            processGiftCardPayment(
-                giftCardNumber,
-                customer_id,
-                amount,
-                totalAmount,
-                isPartial,
-                orderId,
-                customer_email
-            );
+            processGiftCardPayment(giftCardNumber, customer_id, amount, totalAmount, isPartial, orderId, customer_email);
+
         } else if (paymentMethod === "CreditCard") {
-            processCreditCardPayment(
-                customer_id,
-                amount,
-                totalAmount,
-                isPartial,
-                orderId,
-                customer_email
-            );
+            processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email);
+
         }
     }
 
@@ -299,8 +286,13 @@ $(document).ready(function () {
                         response.success.xRefNum,
                         totalAmount,
                         isPartial,
-                        orderId
+                        orderId,
+                        customer_email
                     );
+
+                    console.log(orderId, 'Test')
+
+                   
                 } else {
                     Swal.fire(
                         "Error",
@@ -314,6 +306,7 @@ $(document).ready(function () {
             },
         });
     }
+
 
     function finalizeOrder(
         order_amount,
@@ -367,9 +360,9 @@ $(document).ready(function () {
                 }
             });
 
-           
-
-            sendInvoiceEmail(customer_email, orderId);
+            if(customer_email && customer_email.trim() !== ''){
+                sendInvoiceEmail(customer_email, orderId);
+            }
             setTimeout(function () {
                 clearInputFields(true);
 
@@ -481,7 +474,7 @@ $(document).ready(function () {
                 email: customer_email,
                 order_id: orderId,
             },
-            sunccess: function (response) {
+            success: function (response) {
                 console.log(response.message);
             },
             error: function (xhr) {
@@ -489,4 +482,15 @@ $(document).ready(function () {
             },
         });
     }
+
+    $('#customer_id').on('change', function(){
+        let customer_email = $(this).find('option:selected').data('email');
+    
+        console.log(customer_email);
+
+        $('#cust_email').val(customer_email);
+        $('#email_invoice').val(customer_email);
+    });
 });
+
+

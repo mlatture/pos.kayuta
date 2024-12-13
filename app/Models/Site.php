@@ -30,16 +30,17 @@ class Site extends Model
     public static function getIncomePersite($filters = [])
     {
         $query = self::query()
-            ->LeftJoin('reservations', 'sites.siteid', '=', 'reservations.siteid')
+            ->leftJoin('reservations', 'sites.siteid', '=', 'reservations.siteid')
             ->selectRaw('
                 sites.siteid as site_id, 
                 sites.sitename as site_name,
                 sites.siteclass as site_type,
                 sites.seasonal,
+                reservations.created_at as created_date,
                 COUNT(reservations.id) as nights_occupied,
                 SUM(reservations.total) as income_from_stays
             ')
-            ->groupBy('sites.siteid', 'sites.sitename', 'sites.siteclass', 'sites.seasonal');
+            ->groupBy('sites.siteid', 'sites.sitename', 'sites.siteclass', 'sites.seasonal', 'reservations.created_at');
     
         if (!empty($filters['site_id'])) {
             $query->where('sites.siteid', $filters['site_id']);
@@ -57,7 +58,7 @@ class Site extends Model
             $query->where('sites.seasonal', $filters['seasonal']);
         }
     
-        return $query->get()->map(function ($site) {
+        $sites = $query->get()->map(function ($site) {
             $totalDays = Carbon::parse('first day of this year')->diffInDays(now());
             $site->percent_occupancy = $totalDays > 0
                 ? round(($site->nights_occupied / $totalDays) * 100, 2)
@@ -65,8 +66,29 @@ class Site extends Model
     
             return $site;
         });
+    
+        $firstTransactionDate = $sites->pluck('created_date')->filter()->min();
+        $lastTransactionDate = $sites->pluck('created_date')->filter()->max();
+    
+        if ($firstTransactionDate) {
+            $firstTransactionDate = \Carbon\Carbon::parse($firstTransactionDate)->format('l, F j, Y');
+        }
+        if ($lastTransactionDate) {
+            $lastTransactionDate = \Carbon\Carbon::parse($lastTransactionDate)->format('l, F j, Y');
+        }
+    
+        $totalIncome = $sites->sum('income_from_stays');
+    
+        return [
+            'sites' => $sites,
+            'totalIncome' => $totalIncome,
+            'firstTransactionDate' => $firstTransactionDate,
+            'lastTransactionDate' => $lastTransactionDate,
+        ];
     }
     
+    
+
 
     public function getTotalDaysAttribute()
     {

@@ -31,19 +31,32 @@ class ReportController extends Controller
         $this->site         =   $site;
     }
 
-  public function salesReport(Request $request)
+    public function salesReport(Request $request)
     {
         $filters = $request->only(['date_range', 'date_to_use']); 
         $where = []; 
         
         $orders = $this->order->getAllOrders($where, $filters); 
+
+        $totalSum = $orders->reduce(function($carry, $order){
+            if($order->source === 'POS'){
+                $price = optional($order->items->first())->price ?? 0; 
+            } elseif($order->source === 'Reservation'){
+                $price = optional($order->reservations->first())->total ?? 0;
+                
+            } else {
+                $price = 0;
+            }
+            return $carry + $price;
+        }, 0);
+
         
         if ($request->ajax()) {
             Log::info(["Testing Filters", $orders]);
-            return view('reports.components.sales_report_table', compact('orders'))->render();  
+            return view('reports.components.sales_report_table', compact('orders', 'totalSum'))->render();  
         }
     
-        return view('reports.sales-report', compact('orders'));  
+        return view('reports.sales-report', compact('orders', 'totalSum'));  
     }
     
     
@@ -52,13 +65,17 @@ class ReportController extends Controller
     public function incomePerSiteReport(Request $request)
     {   
         $filters = $request->only(['site_id', 'site_name', 'site_type', 'seasonal']);
-
-        $sites = $this->site->getIncomePersite($filters);
-        
+    
+        $result = $this->site->getIncomePersite($filters);
+    
         return view('reports.income-per-site-report', [
-            'sites' => $sites
+            'sites' => $result['sites'],
+            'totalSum' => $result['totalIncome'],
+            'firstTransactionDate' => $result['firstTransactionDate'],
+            'lastTransactionDate' => $result['lastTransactionDate'],
         ]);
     }
+    
     
     
     
