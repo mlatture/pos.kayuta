@@ -2,19 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\OrderStoreRequest;
-use App\Jobs\SendOrderReceiptJob;
-use App\Models\Order;
-use App\Models\Reservation;
 use Exception;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\OrderItem;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Models\PosPayment;
+use App\Models\UpsellRate;
+use App\Models\UpsellText;
+use App\Models\Reservation;
+use App\Models\UpsellOrder;
+use Illuminate\Http\Request;
 
 use App\Mail\OrderInvoiceMail;
+use App\Jobs\SendOrderReceiptJob;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Requests\OrderStoreRequest;
 
 class OrderController extends Controller
 {
@@ -37,7 +42,7 @@ class OrderController extends Controller
         if ($request->end_date) {
             $orders = $orders->where('created_at', '<=', $request->end_date . ' 23:59:59');
         }
-        $orders = $orders->with(['items', 'payments', 'customer'])->latest()->paginate(10);
+        $orders = $orders->with(['items', 'posPayments', 'customer'])->latest()->paginate(10);
 
         $total = $orders->map(function ($i) {
             return $i->total();
@@ -48,6 +53,8 @@ class OrderController extends Controller
 
         return view('orders.index', compact('orders', 'total', 'receivedAmount'));
     }
+
+   
 
     public function ordersToBeReturn(Request $request)
     {
@@ -64,10 +71,11 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $order = Order::create([
-                'user_id' => $request->customer_id,
+                'user_id' => $request->user()->id,
                 'gift_card_id' => $request->gift_card_id ?? 0,
                 'admin_id' => $request->user()->id,
                 'amount' => $request->amount,
+                'customer_id' => $request->customer_id,
                 'gift_card_amount'  =>  $request->gift_card_discount ?? 0
             ]);
 
@@ -85,39 +93,35 @@ class OrderController extends Controller
             }
             $request->user()->cart()->detach();
 
-            $status = '';
-            $amount = $request->amount;
-            if($amount == 0){
-                $status = 'Not Paid';  
-            }else if($amount < ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Partial';
-            }else if($amount == ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Paid';
-            } else if($amount > ($item->price * $item->pivot->quantity) + $item->pivot->tax - $item->pivot->discount){
-                $status = 'Change';
-            }
         
-            $order->payments()->create([
+            $order->posPayments()->create([
                 'amount' => $request->amount,
                 'admin_id' => $request->user()->id,
                 'payment_method' => $request->payment_method,
-                'payment_acc_number' => $request->acc_number,
+                'payment_acc_number' => $request->acc_number, 
                 'x_ref_num' => $request->x_ref_num,
-                'payment_status' => $status,
             ]);
 
             $order = Order::orderFindById($order->id);
 
             dispatch(new SendOrderReceiptJob($order));
 
+         
+
             DB::commit();
 
-            return response()->json(['success', 'Order Placed Successfully!', "order_id" => $order->id]);
+            return response()->json([
+                'success', 'Order Placed Successfully!', 
+                "order_id" => $order->id,
+              
+            ]);
         } catch (Exception $e) {
             DB::rollBack();
             return $this->object->respondBadRequest(['error' => $e->getMessage()]);
         }
     }
+
+  
     public function update(Request $request)
     {
         

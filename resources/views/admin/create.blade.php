@@ -64,12 +64,12 @@
                 <div class="form-group">
                     <label for="phone">Phone</label>
                     <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror"
-                        id="phone" placeholder="Enter your phone number" required value="{{ old('phone') }}">
-                    @error('phone')
+                        id="phone" placeholder="Enter your phone number"  value="{{ old('phone') }}">
+                    {{-- @error('phone')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
-                    @enderror
+                    @enderror --}}
                 </div>
 
                 <div class="form-group">
@@ -94,15 +94,6 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="organization_id">Select Organization</label>
-                    <select id="organization_id" class="js-example-basic-single admin-select w-100 " name="organization_id" required>
-                        <option value="">Select Organization</option>
-                        @foreach($organizations as $organization)
-                            <option value="{{ $organization->id }}">{{ $organization->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
 
                 <div class="form-group">
                     <label for="organization">Select Admin Role</label>

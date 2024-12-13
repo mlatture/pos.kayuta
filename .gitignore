@@ -17,4 +17,10 @@ yarn-error.log
 *.DS_Store
 .htaccess
 public/uploaded_data/
+<<<<<<< HEAD
 storage/
+=======
+storage/
+storage/logs/
+storage/logs/laravel.log
+>>>>>>> 03af03b40cddce6283cff9eee4cfe9d2c81dca2c

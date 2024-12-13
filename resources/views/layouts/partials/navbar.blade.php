@@ -53,7 +53,7 @@
     </a>
 
     <ul class="navbar-nav ms-auto  d-flex flex-row">
-      
+
 
         @if (auth()->user()->hasPermission(config('constants.role_modules.dashboard.value')))
             <li class="nav-item">
@@ -81,38 +81,36 @@
         @endif
 
         @hasPermission(config('constants.role_modules.pos_management.value'))
-        <li class="nav-item">
-            <a href="{{ route('cart.index') }}" class="nav-link {{ activeSegment('cart') }}">
-                <div class="d-flex align-items-center">
-                    <i class="fa-solid fa-store me-2"></i>
-                    <span class="ms-2">POS</span>
-                </div>
-            </a>
-        </li>
-
+            <li class="nav-item">
+                <a href="{{ route('cart.index') }}" class="nav-link {{ activeSegment('cart') }}">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-store me-2"></i>
+                        <span class="ms-2">POS</span>
+                    </div>
+                </a>
+            </li>
         @endHasPermission
 
         @hasPermission(config('constants.role_modules.reservation_management.value'))
-        <li class="nav-item">
-            <a href="{{ route('reservations.index') }}" class="nav-link {{ activeSegment('reservations') }}">
-                <div class="d-flex align-items-center">
-                    <i class="nav-icon fas fa-calendar-alt me-2"></i>
-                    <span>Reservations</span>
-                </div>
-            </a>
-        </li>
+            <li class="nav-item">
+                <a href="{{ route('reservations.index') }}" class="nav-link {{ activeSegment('reservations') }}">
+                    <div class="d-flex align-items-center">
+                        <i class="nav-icon fas fa-calendar-alt me-2"></i>
+                        <span>Reservations</span>
+                    </div>
+                </a>
+            </li>
         @endHasPermission
 
         @hasPermission(config('constants.role_modules.list_gift_cards.value'))
-        <li class="nav-item">
-            <a href="{{ route('gift-cards.index') }}" class="nav-link {{ activeSegment('gift-cards') }}">
-                <div class="d-flex align-items-center">
-                    <i class="nav-icon fas fa-gift me-2"></i>
-                    <span>Gift Cards</span>
-                </div>
-            </a>
-        </li>
-
+            <li class="nav-item">
+                <a href="{{ route('gift-cards.index') }}" class="nav-link {{ activeSegment('gift-cards') }}">
+                    <div class="d-flex align-items-center">
+                        <i class="nav-icon fas fa-gift me-2"></i>
+                        <span>Gift Cards</span>
+                    </div>
+                </a>
+            </li>
         @endHasPermission
 
         <li class="nav-item dropdown">
@@ -122,28 +120,28 @@
             </a>
             <ul class="dropdown-menu">
                 @hasPermission(config('constants.role_modules.list_products.value'))
-                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('products.index') }}">
-                        <i class="nav-icon fas fa-boxes me-2"></i>
-                        <span>Products</span>
-                    </a></li>
+                    <li><a class="dropdown-item d-flex align-items-center" href="{{ route('products.index') }}">
+                            <i class="nav-icon fas fa-boxes me-2"></i>
+                            <span>Products</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.list_categories.value'))
-                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('categories.index') }}">
-                        <i class="nav-icon fas fa-tag me-2"></i>
-                        <span>Categories</span>
-                    </a></li>
+                    <li><a class="dropdown-item d-flex align-items-center" href="{{ route('categories.index') }}">
+                            <i class="nav-icon fas fa-tag me-2"></i>
+                            <span>Categories</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.list_product_vendors.value'))
-                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('product-vendors.index') }}">
-                        <i class="nav-icon fas fa-truck me-2"></i>
-                        <span>Product Vendors</span>
-                    </a></li>
+                    <li><a class="dropdown-item d-flex align-items-center" href="{{ route('product-vendors.index') }}">
+                            <i class="nav-icon fas fa-truck me-2"></i>
+                            <span>Product Vendors</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.list_tax_types.value'))
-                <li><a class="dropdown-item d-flex align-items-center" href="{{ route('tax-types.index') }}">
-                        <i class="nav-icon fas fa-percent me-2"></i>
-                        <span>Tax Types</span>
-                    </a></li>
+                    <li><a class="dropdown-item d-flex align-items-center" href="{{ route('tax-types.index') }}">
+                            <i class="nav-icon fas fa-percent me-2"></i>
+                            <span>Tax Types</span>
+                        </a></li>
                 @endHasPermission
             </ul>
         </li>
@@ -161,34 +159,40 @@
             </a>
             <ul class="dropdown-menu">
                 @hasPermission(config('constants.role_modules.sales_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.salesReport') }}">
-                        <i class="nav-icon fas fa-dollar-sign"></i>
-                        <span>Sales Report</span>
-                    </a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.salesReport') }}">
+                            <i class="nav-icon fas fa-dollar-sign"></i>
+                            <span>Sales Report</span>
+                        </a></li>
                 @endHasPermission
-                @hasPermission(config('constants.role_modules.reservation_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.reservationReport') }}">
-                        <i class="nav-icon fas fa-calendar-check"></i>
-                        <span>Reservation Report</span>
+                @hasPermission(config('constants.role_modules.sales_report.value'))
+                <li><a class="dropdown-item" href="{{ route('reports.incomePerSiteReport') }}">
+                        <i class="nav-icon fas fa-dollar-sign"></i>
+                        <span>Income Per Site Report</span>
                     </a></li>
+            @endHasPermission
+                @hasPermission(config('constants.role_modules.reservation_report.value'))
+                    <li><a class="dropdown-item" href="{{ route('reports.reservationReport') }}">
+                            <i class="nav-icon fas fa-calendar-check"></i>
+                            <span>Reservation Report</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.gift_card_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.giftCardReport') }}">
-                        <i class="nav-icon fas fa-gift"></i>
-                        <span>Gift Card Report</span>
-                    </a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.giftCardReport') }}">
+                            <i class="nav-icon fas fa-gift"></i>
+                            <span>Gift Card Report</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.tax_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.taxReport') }}">
-                        <i class="nav-icon fas fa-percent"></i>
-                        <span>Tax Report</span>
-                    </a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.taxReport') }}">
+                            <i class="nav-icon fas fa-percent"></i>
+                            <span>Tax Report</span>
+                        </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.payment_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.paymentReport') }}">
-                        <i class="nav-icon fas fa-credit-card"></i>
-                        <span>Payment Report</span>
-                    </a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.paymentReport') }}">
+                            <i class="nav-icon fas fa-credit-card"></i>
+                            <span>Payment Report</span>
+                        </a></li>
                 @endHasPermission
             </ul>
         </li>
@@ -212,14 +216,21 @@
                         </a></li>
                 @endif
                 @hasPermission(config('constants.role_modules.list_sites_management.value'))
-                <li><a class="dropdown-item" href="{{ route('sites.index') }}">
-                        <i class="nav-icon fas fa-globe"></i>
-                        <span>Sites</span>
-                    </a></li>
+                    <li><a class="dropdown-item" href="{{ route('sites.index') }}">
+                            <i class="nav-icon fas fa-globe"></i>
+                            <span>Sites</span>
+                        </a></li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.list_sites_management.value'))
+                    <li><a class="dropdown-item" href="{{ route('admin.whitelist') }}">
+                            <i class="nav-icon fas fa-briefcase"></i>
+                            <span>Whitelist</span>
+                        </a></li>
                 @endHasPermission
 
             </ul>
         </li>
+
 
         <li class="nav-item">
             <a href="#" class="nav-link" onclick="document.getElementById('logout-form').submit()">

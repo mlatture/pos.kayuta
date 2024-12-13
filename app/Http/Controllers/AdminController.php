@@ -26,10 +26,8 @@ class AdminController extends Controller
     public function store(Request $request){
         $request->validate([
             'name' => 'required',
-            'phone' => 'required',
             'email' => 'required|email|unique:admins,email',
             'password' => 'required',
-            'organization_id' => 'required|exists:organizations,id',
             'admin_role_id' => 'required|exists:admin_roles,id',
             'image' => 'nullable|file',
             'status' => 'required|boolean'
@@ -56,10 +54,9 @@ class AdminController extends Controller
     public function update(Request $request, $id) {
         $request->validate([
             'name' => 'required',
-            'phone' => 'required',
             'email' => 'required|email',
             'password' => 'nullable',
-            'organization_id' => 'required|exists:organizations,id',
+          
             'admin_role_id' => 'required|exists:admin_roles,id',
             'image' => 'nullable|file',
             'status' => 'required|boolean'

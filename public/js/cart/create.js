@@ -23,7 +23,13 @@ function storeCart(barcode = null, productId = null) {
                 hideAfter: 2000,
                 stack: 6
             });
-            window.location.reload();
+
+            if(response.response.data.upsell_message){
+                localStorage.setItem('upsell_message', response.response.data.upsell_message)
+            }
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
         },
         error: function(reject) {
             if (reject.status === 422) {
@@ -73,6 +79,14 @@ function storeCart(barcode = null, productId = null) {
         }
     });
 }
+$(document).ready(function(){
+    var upsellMessage = localStorage.getItem('upsell_message');
+    if(upsellMessage) {
+        $("#upsell_message").text(upsellMessage);
+
+        localStorage.removeItem('upsell_message')
+    }
+})
 
 $(document).on('change', '.product-quantity', function() {
     var productId = $(this).data('id');

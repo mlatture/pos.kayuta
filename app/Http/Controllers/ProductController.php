@@ -235,4 +235,22 @@ class ProductController extends Controller
             'success' => true
         ]);
     }
+
+
+    public function toggleSuggestedAddon(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:products,id',
+            'suggested_addon' => 'required|boolean'
+        ]);
+
+        $product = Product::findOrFail($request->id);
+        $product->suggested_addon = $request->suggested_addon;
+        $product->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Suggested Add-on status updated successfully!',
+        ]);
+    }
 }

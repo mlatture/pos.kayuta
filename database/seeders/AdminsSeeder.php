@@ -23,6 +23,7 @@ class AdminsSeeder extends Seeder
         }
 
         $sql = File::get($path);
+<<<<<<< HEAD
 
         $insertStatements = '';
         preg_match_all('/INSERT INTO `(.+?)`.+?VALUES \((.+?),(.+?)\);/is', $sql, $matches);
@@ -37,9 +38,12 @@ class AdminsSeeder extends Seeder
                 $insertStatements .= $insertStatement . "\n";
             }
         }
+=======
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
-        }
+        // Execute the SQL file to insert data
+        DB::unprepared($sql);
+>>>>>>> 03af03b40cddce6283cff9eee4cfe9d2c81dca2c
+
+        $this->command->info('Admins table seeded!');
     }
 }

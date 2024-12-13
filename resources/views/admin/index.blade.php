@@ -23,7 +23,6 @@
                                         <th>ID</th>
                                         <th>Image</th>
                                         <th>Name</th>
-                                        <th>Organization Name</th>
                                         <th>Phone</th>
                                         <th>Email</th>
                                         <th>Admin Role</th>
@@ -34,14 +33,14 @@
                                 </thead>
                                 <tbody>
                                     @foreach($admins as $admin)
+                              
                                         <tr>
                                             <td>{{ $admin->id }}</td>
                                             <td><img src="{{ asset('images/logo.png') }}" class="org-img img-fluid" alt=""></td>
                                             <td><span class="name">{{ $admin->name }}</span></td>
-                                            <td><span class="Organization-Name">{{ $admin->organization ? $admin->organization->name : "" }}</span></td>
                                             <td><span class="phone">{{ $admin->phone }}</span></td>
                                             <td><span class="address_2">{{ $admin->email }}</span></td>
-                                            <td><span class="admin-role">{{ $admin->role->name }}</span></td>
+                                            <td><span class="admin-role">{{ $admin->role }}</span></td>
 
                                             <td>
                                                 <span @class(["right","badge","badge-success" => $admin->status, 'badge-danger' => !$admin->status])>{{ $admin->status ? "Active" : "Inactive" }}</span>

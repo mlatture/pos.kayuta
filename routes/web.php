@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CalendarReservationController;
 use App\Http\Controllers\PayBalanceController;
 use App\Http\Controllers\StationRegisterController;
+use App\Http\Controllers\DynamicTableController;
+use App\Http\Controllers\API\CheckAvailability;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -39,7 +42,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('product-vendors', ProductVendorController::class);
     Route::resource('products', ProductController::class);
     Route::get('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
-    Route::resource('categories', CategoryController::class);
+    Route::post('/products/toggle-suggested-addon', [ProductController::class, 'toggleSuggestedAddon'])
+    ->name('products.toggle-suggested-addon');    Route::resource('categories', CategoryController::class);
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
     Route::resource('customers', CustomerController::class);
@@ -76,6 +80,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     //Reservations
     Route::post('/postcustomer', [NewReservationController::class, 'store']);
     Route::get('/getcustomers', [NewReservationController::class, 'getCustomers']);
+    Route::get('/getaddons', [NewReservationController::class, 'getAddon']);
     Route::get('/getsiteclasses', [NewReservationController::class, 'getSiteClasses']);
     Route::get('/getsitehookups', [NewReservationController::class, 'getSiteHookups']);
     Route::get('/getsite', [NewReservationController::class, 'getSites']);
@@ -90,12 +95,14 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
-
+    Route::put('reservations/update_checked_in', [NewReservationController::class, 'updateCheckedIn']);
+    Route::put('reservations/update_checked_out', [NewReservationController::class, 'updateCheckedOut']);
     Route::resource('reservations', ReservationController::class);
     Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
     Route::resource('tax-types', TaxTypeController::class);
     Route::resource('gift-cards', GiftCardController::class);
     Route::get('reports/sales-report', [ReportController::class, 'salesReport'])->name('reports.salesReport');
+    Route::get('reports/income-per-site-report', [ReportController::class, 'incomePerSiteReport'])->name('reports.incomePerSiteReport');
     Route::get('reports/reservation-report', [ReportController::class, 'reservationReport'])->name('reports.reservationReport');
     Route::get('reports/gift-card-report', [ReportController::class, 'giftCardReport'])->name('reports.giftCardReport');
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
@@ -109,10 +116,35 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/cart/change-qty', [CartController::class, 'changeQty'])->name('cart.changeQty');
     Route::delete('/cart/delete', [CartController::class, 'delete'])->name('cart.delete');
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
+    Route::get('cart/get-product-for-receipt', [CartController::class, 'getProductForReceipt'])->name('cart.get-product-for-receipt');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
+    Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
+    Route::put('update-sites-pricing', [CalendarReservationController::class, 'updateSitePricing'])->name('update.pricing');
+});
+
+
+Route::prefix('admin')->middleware('auth')->group(static function () {
+
+    Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
+    Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
+
+    Route::controller(DynamicTableController::class)->group(static function() {
+        Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
+        Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');
+        Route::delete('delete-table/{table}', 'delete_table')->name('admin.delete-table');
+
+        Route::get('dynamic-module-records/{table}', 'dynamic_module_records')->name('admin.dynamic-module-records');
+        Route::get('dynamic-module/{table}/{id?}', 'dynamic_module_create_form_data')->name('admin.dynamic-module-create-form-data');
+        Route::post('store-dynamic-module/{table}', 'dynamic_module_store_form_data')->name('admin.dynamic-module-store-form-data');
+        Route::put('update-dynamic-module/{table}/{id}', 'dynamic_module_update_form_data')->name('admin.dynamic-module-update-form-data');
+    });
+
+    Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
+    Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
+    Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
 });

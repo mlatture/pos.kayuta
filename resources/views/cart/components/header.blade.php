@@ -14,10 +14,11 @@
                         <a class="dropdown-item" href="#"
                             onclick="setRegister({{ $register->id }}, '{{ $register->name }}')">{{ $register->name }}</a>
                     @endforeach
-                    @if (\App\CPU\Helpers::module_permission_check('pos_admin'))
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" id="addNewStationRegister">Add new Register</a>
-                    @endif
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" id="addNewStationRegister">Add new Register</a>
+                    {{-- @if (\App\CPU\Helpers::module_permission_check('admin'))
+                       
+                    @endif --}}
                 </div>
             </div>
 

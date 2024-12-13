@@ -26,9 +26,9 @@ $(document).ready(function () {
         $(".firstpage-modal").fadeOut(400, function () {
             $(".secondpage-modal").fadeIn(400, function () {
                 $("#backInfo").show();
-                // $('.thirdpage-modal').hide();
+
                 $("#nextInfo").hide();
-               
+
                 $("#submitReservations").show();
             });
         });
@@ -39,20 +39,80 @@ $(document).ready(function () {
             $("#backInfo").hide();
             $(".firstpage-modal").fadeIn(400, function () {
                 $("#submitReservations").hide();
-              
+
                 $("#nextInfo").show();
                 $("#closeModal").show();
+
+                $(".secodnpage-modal input").val("");
+                $(".secodnpage-modal select").val("");
             });
         });
     });
+
+    $("#fromDate, #toDate, #siteSelector").on("change", function () {
+        var fromDate = $("#fromDate").val();
+        var toDate = $("#toDate").val();
+        var siteSelector = $("#siteSelector").val();
+        if (fromDate && toDate && siteSelector) {
+            $.ajax({
+                url: `${webdavinci_api}/api/get_pricing`,
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    start_date: fromDate,
+                    end_date: toDate,
+                    site_id: siteSelector,
+                }),
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content"
+                    ),
+                    "X-API-KEY": `${webdavinci_api_key}`,
+                    "X-DOMAIN":
+                        window.location.protocol +
+                        "//" +
+                        window.location.hostname +
+                        (window.location.port
+                            ? `:${window.location.port}`
+                            : ""),
+                },
+                success: function (api_data) {
+                    console.log(api_data);
+                    updateSubtotal(api_data);
+
+                    $(".sitelock").on("change", function () {
+                        updateSubtotal(api_data);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log("Error:", error);
+                    console.log("Status:", status);
+                    console.log("Response:", xhr.responseText);
+                },
+            });
+        }
+    });
+
+    function updateSubtotal(api_data) {
+        let subtotal = api_data.total_price;
+
+        if ($(".sitelock").is(":checked")) {
+            subtotal += 20;
+        }
+
+        $("#subtotal").val(subtotal);
+    }
 
     function loadSites() {
         var selectedSiteClass = $("#siteclass option:selected").data(
             "siteclass"
         );
 
+<<<<<<< HEAD
      
         
+=======
+>>>>>>> 03af03b40cddce6283cff9eee4cfe9d2c81dca2c
         var selectedHookup = $("#hookup option:selected").data("sitehookup");
 
         $.ajax({
@@ -120,9 +180,15 @@ $(document).ready(function () {
         number_of_guests();
     });
 
+<<<<<<< HEAD
     $("#hookup").on("change", function(){
         loadSites();
     })
+=======
+    $("#hookup").on("change", function () {
+        loadSites();
+    });
+>>>>>>> 03af03b40cddce6283cff9eee4cfe9d2c81dca2c
 
     $("#customerSelector").on("select2:select", function (e) {
         var data = e.params.data;
@@ -153,6 +219,8 @@ $(document).ready(function () {
             },
         });
     }
+
+
 
     $("#customerSelector").change(function () {
         var selectedOption = $(this).find("option:selected");
@@ -290,31 +358,30 @@ $(document).on("click", "#action1", function () {
     window.location = url;
 });
 
-$('.reservationEmail').on('input', function() {
+$(".reservationEmail").on("input", function () {
     let email = $(this).val();
 
     if (email) {
         $.ajax({
             url: customerInfo,
-            type: 'GET',
+            type: "GET",
             data: {
-                email: email
+                email: email,
             },
-            success: function(data) {
+            success: function (data) {
                 if (data.success) {
-
                     $("#f_name").val(data.info.fname);
                     $("#l_name").val(data.info.lname);
                     $("#con_num").val(data.info.con);
                     $("#address").val(data.info.address);
                 } else {
-                    $("#f_name").val('');
-                    $("#l_name").val('');
-                    $("#con_num").val('');
-                    $("#address").val('');
+                    $("#f_name").val("");
+                    $("#l_name").val("");
+                    $("#con_num").val("");
+                    $("#address").val("");
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.log("Error: ", error);
                 console.log("Status: ", status);
                 console.log("Response: ", xhr.responseText);

@@ -2,23 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CardsOnFile;
-use Illuminate\Http\Request;
-use App\Models\Customer;
-use App\Models\Reservation;
-use App\Models\SiteClass;
-use App\Models\SiteHookup;
-use App\Models\RateTier;
+use Exception;
+use Carbon\Carbon;
 use App\Models\Site;
 use App\Models\Payment;
-use App\Models\CartReservation;
+use App\Models\Product;
+use App\Models\Customer;
 use App\Models\GiftCard;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
-use App\Jobs\DeleteCartJob;
+use App\Models\RateTier;
+use App\Models\SiteClass;
+use App\Models\SiteHookup;
 use App\Events\CartDeleted;
-
+use App\Jobs\DeleteCartJob;
+use App\Models\CardsOnFile;
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+use App\Models\CartReservation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+
 
 class NewReservationController extends Controller
 {
@@ -37,42 +40,96 @@ class NewReservationController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updateCheckedIn(Request $request)
+    {
+        $cartid = $request->input('cartid');
+
+        $request->validate([
+            'cartid' => 'required|exists:reservations,cartid',
+        ]);
+
+        try{
+            $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            $reservation->update([
+                'checkedin' => Carbon::now(),
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Reservation checked in successfully.', 'checked_in_date' => $reservation->checkedin->format('Y-m-d H:i:s')], 200);
+        } catch (Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to checked-in status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        
+    }
+
+    public function updateCheckedOut(Request $request)
+    {
+        $cartid = $request->input('cartid');
+        $request->validate([
+            'cartid' => 'required|exists:reservations,cartid',
+        ]);
+
+        try{
+            $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            $reservation->update([
+                'checkedout' => Carbon::now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reservation checked out successfully.',
+                'checked_out_date' => $reservation->checkedout->format('Y-m-d H:i:s')
+            ], 200);    
+            
+        } catch(Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to checked-out status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    
     public function getReservations(Request $request)
     {
         $limit = $request->input('limit', 10);
-        $siteId = $request->input('siteId');
+        $siteId = $request->input('siteid');
         $types = $request->input('tier', []);
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $paymentCartIds = Payment::pluck('cartid')->toArray();
 
-
         $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
             ->join('payments', 'reservations.cartid', '=', 'payments.cartid')
             ->whereIn('reservations.cartid', $paymentCartIds)
             ->select('reservations.*', 'customers.phone', 'customers.address', 'payments.payment')
-            ->orderByDesc('reservations.id');
-
-        if ($siteId) {
+            ->orderByDesc('reservations.id')
+            ->distinct('reservations.id'); 
+        
+        if($siteId){
             $reservationsQuery->where('reservations.siteid', $siteId);
         }
 
-        if (!empty($types)) {
+        if(!empty($types)){
             $reservationsQuery->whereIn('reservations.siteclass', $types);
         }
 
-        if ($startDate && $endDate) {
+        if($startDate && $endDate){
             $reservationsQuery->where(function ($query) use ($startDate, $endDate) {
                 $query->whereDate('reservations.cid', '>=', $startDate)
                     ->whereDate('reservations.cod', '<=', $endDate);
             });
-        } elseif ($startDate) {
+        }elseif ($startDate) {
             $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
         } elseif ($endDate) {
             $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
         }
-
 
         $reservations = $reservationsQuery->paginate($limit);
 
@@ -87,14 +144,21 @@ class NewReservationController extends Controller
         $limit = $request->input('limit', 10);
         $paymentCartIds = Payment::pluck('cartid');
 
-        $reservations = CartReservation::whereNotIn('cartid', $paymentCartIds)->leftJoin('customers', 'cart_reservations.customernumber', '=', 'customers.id')->select('cart_reservations.*', 'customers.first_name', 'customers.last_name')->orderBy('cart_reservations.id', 'DESC')->paginate($limit);
+        $reservations = CartReservation::whereNotIn('cartid', $paymentCartIds)
+        ->leftJoin('customers', 'cart_reservations.customernumber', '=', 'customers.id')
+        ->select('cart_reservations.*', 'customers.first_name', 'customers.last_name')
+        ->orderBy('cart_reservations.id', 'DESC')->paginate($limit);
 
+        
         return response()->json($reservations);
     }
 
     public function getCustomers()
     {
         $customer = Customer::orderBy('id', 'DESC')->get();
+
+
+
         return response()->json($customer);
     }
 
@@ -102,6 +166,12 @@ class NewReservationController extends Controller
     {
         $siteclass = SiteClass::all();
         return response()->json($siteclass);
+    }
+
+    public function getAddon()
+    {
+        $product = Product::where('suggested_addon', 1)->get();
+        return response()->json($product);
     }
 
 
@@ -416,7 +486,10 @@ class NewReservationController extends Controller
             'receipt' => $randomReceiptID,
             'method' => $paymentType,
             'customernumber' => $cart_reservation->customernumber,
+<<<<<<< HEAD
           
+=======
+>>>>>>> 03af03b40cddce6283cff9eee4cfe9d2c81dca2c
             'email' => $cart_reservation->email,
             'payment' => $request->xCash,
         ]);
@@ -469,7 +542,7 @@ class NewReservationController extends Controller
     {
         $reservation = new Reservation([
             'cartid' => $request->cartid,
-            'source' => 'Walk In',
+            'source' => 'Reservation',
             'email' => $cart_reservation->email,
             'fname' => $customer->first_name,
             'lname' => $customer->last_name,
@@ -487,13 +560,20 @@ class NewReservationController extends Controller
             'sitelock' => $cart_reservation->sitelock,
             'rigtype' => $cart_reservation->hookups,
             'riglength' => $cart_reservation->riglength,
-            'xconfnum' => 0,
-            'createdby' => auth()->user()->name,
+            'xconfnum' => $request->xconfnum ?? '123',
+            'createdby' => auth()->user()->name, 
             'receipt' => $randomReceiptID,
             'rateadjustment' => 0,
             'rid' => 'uc',
+            
+            
         ]);
         $reservation->save();
+            
+
+
+
+     
     }
 
     private function saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId)
@@ -528,7 +608,7 @@ class NewReservationController extends Controller
 
             $cardonFiles->save();
         } catch (\Exception $e) {
-            \Log::error('Error saving card on file', ['exception' => $e->getMessage()]);
+            Log::error('Error saving card on file', ['exception' => $e->getMessage()]);
 
         }
     }
@@ -587,6 +667,7 @@ class NewReservationController extends Controller
     }
     
 
+    
    
     
 }

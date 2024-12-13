@@ -64,7 +64,7 @@ $(document).ready(function(){
     
                 typeSelect.trigger('change');
             }
-        });
+    });
     }
     
 

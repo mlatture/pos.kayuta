@@ -178,6 +178,21 @@ $(document).ready(function () {
                 balance = '$' + parseFloat(balances).toFixed(2); 
                 balanceClass = "bg-danger text-white";
             }
+
+            let checked_in_date; 
+            let checked_out_date;
+            if (item.checkedin === null) {
+                checked_in_date = `<input type="checkbox" name="cartid" value="${item.cartid}" class="checked_in_date">`;
+            } else {
+                checked_in_date = item.checkedin;
+            }
+    
+            if (item.checkedout === null) {
+                checked_out_date = `<input type="checkbox" name="cartid" value="${item.cartid}" class="checked_out_date">`;
+            } else {
+                checked_out_date = item.checkedout;
+            }
+    
             
 
             tableBody.append(`
@@ -187,6 +202,12 @@ $(document).ready(function () {
                     data-bs-placement="top" 
                     title="Arrival: ${cid}\nDeparture: ${cod}\nSite: ${item.siteid} - ${item.siteclass}\nAddress: ${item.address} \nPhone: ${item.phone}\nCust#: ${item.customernumber}"
                     class="reservation-row" data-status="${dateStatus}">
+                    <td class="text-center">
+                        ${checked_in_date}
+                    </td>
+                    <td  class="text-center"> 
+                        ${checked_out_date}
+                    </td>
                     <td>${item.fname} ${item.lname}</td>
                     <td>${item.siteid}</td>
                     <td>${item.siteclass}</td>
@@ -215,6 +236,51 @@ $(document).ready(function () {
             `);
         });
     }
+
+    $(document).on('change', '.checked_in_date', function(){
+        let cartid = $(this).val();
+        let row = $(this).closest('tr');
+       
+       $.ajax({
+            url: "reservations/update_checked_in",
+            type: "PUT",
+            data: { cartid: cartid },
+            dataType: "json",
+            cache: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                row.find('td:first').text(response.checked_in_date)
+            },
+            error: function (error){
+                console.log('Error: ', error);
+            }
+       });
+    });
+
+    $(document).on('change', '.checked_out_date', function(){
+        let cartid = $(this).val();
+        let row = $(this).closest('tr');
+       
+        $.ajax({
+            url: "reservations/update_checked_out",
+            type: "PUT",
+            data: { cartid: cartid },
+            dataType: "json",
+            cache: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                row.find('td:nth-child(2)').text(response.checked_out_date)
+            },
+            error: function (error){
+                console.log('Error: ', error);
+            }
+        })
+    });
+   
 
     $("#searchInput").on("input", function () {
         let searchTerm = $(this).val();
@@ -285,9 +351,14 @@ $(document).ready(function () {
             success: function (data) {
                 let tableBody = $("#notReserveTable tbody");
                 tableBody.empty();
-
                 $.each(data.data, function (index, item) {
+
+                    if(item.customernumber === null){
+                        return;
+                    }
+                    
                     tableBody.append(`
+
                         <tr>
                             <td>${item.first_name} ${item.last_name}</td>
                         
@@ -421,5 +492,46 @@ $(document).ready(function () {
 
     fetchReservations();
     fetchNotReserve();
+
+
+    function loadAddOns() {
+        $.ajax({
+            url: "getaddons",
+            method: "GET",
+            success: function(response) {
+                const tbody = $("#addon-table-body");
+                tbody.empty();
+
+                if (response.length > 0) {
+                    response.forEach((addon) => {
+                        const row = `
+                <tr>
+                    <td>${addon.name}</td>
+                    <td>${addon.price}</td>
+                </tr>`;
+                        tbody.append(row);
+                    });
+                } else {
+                    const noDataRow = `
+            <tr>
+                <td colspan="2" style="text-align: center;">No addons available</td>
+            </tr>`;
+                    tbody.append(noDataRow);
+                }
+            },
+            error: function(error) {
+                console.error("Error fetching addons:", error);
+                const tbody = $("#addon-table-body");
+                tbody.empty();
+                const errorRow = `
+        <tr>
+            <td colspan="2" style="text-align: center; color: red;">Failed to load addons</td>
+        </tr>`;
+                tbody.append(errorRow);
+            },
+        });
+    }
+
+    loadAddOns();
     
 });

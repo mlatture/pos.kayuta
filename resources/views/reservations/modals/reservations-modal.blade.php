@@ -233,7 +233,8 @@
                                     <div class="custom-checkbox-container">
                                         <div class="checkbox-wrapper-55">
                                             <label class="rocker rocker-small">
-                                                <input type="checkbox" id="siteLock" name="siteLock" checked>
+                                                <input type="checkbox" class="sitelock" id="siteLock" name="siteLock"
+                                                    checked>
                                                 <span class="switch-left">Yes</span>
                                                 <span class="switch-right">No</span>
                                             </label>
@@ -243,6 +244,19 @@
 
                                 </div>
 
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <div class="form-group">
+                                    <label for="subtotal">Sub Total</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="text" class="form-control" id="subtotal" name="subtotal">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -273,6 +287,8 @@
                                 </div>
                             </div>
                         </div>
+
+
                         <div class="form-row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -286,6 +302,27 @@
                                     <label for="address">Address</label>
                                     <input type="text" class="form-control" id="address" name="address"
                                         placeholder="Address">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="addon-table-body" class="form-label font-weight-bold">Add On</label>
+                                <div class="table-responsive"> 
+                                    <table id="addon-table-body" class="table table-striped table-bordered">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be appended here -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -308,4 +345,7 @@
 
 <script>
     var customerInfo = " {{ route('customer.info') }}";
+
+
+ 
 </script>
