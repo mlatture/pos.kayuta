@@ -100,26 +100,33 @@
                         </div>
 
                         <div class="col">
-                            <select class="form-control select2" name="customer_id" id="customer_id">
+                            <select class="form-control select2" class="get_customers" name="customer_id" id="customer_id">
 
                                 <option value="1">Walk-in Customer</option>
+                                @php
+                                    $filteredCustomers = $customers->filter(
+                                        fn($customer) => $customer->f_name !== 'walk-in',
+                                    );
+                                @endphp
 
-                                @foreach ($customers as $customer)
+                                @foreach ($filteredCustomers as $customer)
                                     <option value="{{ $customer->id }}"
-                                        data-name="{{ $customer->f_name . ' ' . $customer->l_name }}">
+                                        data-name="{{ $customer->f_name . ' ' . $customer->l_name }}"
+                                        data-email="{{ $customer->email }}">
                                         {{ $customer->f_name . ' ' . $customer->l_name }}
                                     </option>
                                 @endforeach
+
                                 <option value="add_new_user">Add New User</option>
 
                             </select>
                         </div>
 
                         @php
-                                            $subtotal = 0;
-                                            $totalDiscount = 0;
-                                            $totalTax = 0;
-                                        @endphp
+                            $subtotal = 0;
+                            $totalDiscount = 0;
+                            $totalTax = 0;
+                        @endphp
                     </div>
                     <div class="user-cart">
                         <div class="card">
@@ -136,7 +143,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                      
+
                                         @foreach ($cart as $key => $cartItem)
                                             @php
                                                 $productPrice = $cartItem->price * $cartItem->pivot->quantity;
@@ -172,7 +179,7 @@
                                     </tbody>
 
                                 </table>
-                              
+
 
                             </div>
                             <p id="upsell_message" class='p-2'></p>

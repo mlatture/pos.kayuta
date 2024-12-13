@@ -150,19 +150,18 @@
             </div><!--End Info-->
         </center><!--End InvoiceTop-->
 
-        <div id="mid">
+        {{-- <div id="mid">
             <div class="info">
                 <h2>Contact Info</h2>
                 <p>
-                    Name: {!! !empty($order->customer->f_name) ? $order->customer->f_name : 'Walking Customer' !!}</br>
+                    Name: {!! !empty($order->customer->f_name) ? $order->customer->f_name : 'Walk-in Customer' !!}</br>
                     @if ($order->customer)
                        
-                        Email: {!! !empty($order->customer->email) ? $order->customer->email : 'N/A' !!}</br>
                         Phone: {!! !empty($order->customer->phone) ? $order->customer->phone : 'N/A' !!}</br>
                     @endif
                 </p>
             </div>
-        </div><!--End Invoice Mid-->
+        </div> --}}
 
         <div id="bot">
 

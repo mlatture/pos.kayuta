@@ -1,11 +1,17 @@
 @extends('layouts.admin')
 
 @section('title', 'Income Per Site Report')
-{{-- @php
-    $firstTransactionDate = $orders->first() ? $orders->first()->created_at->format('l, F j, Y') : '';
-    $lastTransactionDate = $orders->last() ? $orders->last()->created_at->format('l, F j, Y') : '';
-@endphp --}}
-@section('content-header', "Income Per Site Report")
+@php
+    $firstTransactionDate = $firstTransactionDate ?? 'N/A';
+    $lastTransactionDate = $lastTransactionDate ?? 'N/A';
+
+    $contentHeader = "Income Per Site ($firstTransactionDate - $lastTransactionDate)";
+@endphp
+
+
+
+
+@section('content-header', $contentHeader . ' - Total Income: ' . '$' . number_format($totalSum, 2))
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
@@ -69,7 +75,7 @@
 @endsection
 
 @section('content')
-    {{-- <div class="row ">
+    <div class="row ">
         <div class="card" style="background-color: #F4F6F9; box-shadow: none; border: none;">
             <div class="card-body" style="border: none;">
                 <div class="row mt-3 d-flex justify-content-center align-items-center">
@@ -95,7 +101,7 @@
                 </div>
             </div>
         </div>
-    </div> --}}
+    </div>
     <div class="col-12">
         <div class="card">
             <div class="card-body">

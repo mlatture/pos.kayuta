@@ -4,9 +4,9 @@
 @php
     $firstTransactionDate = $orders->first() ? $orders->first()->created_at->format('l, F j, Y') : '';
     $lastTransactionDate = $orders->last() ? $orders->last()->created_at->format('l, F j, Y') : '';
+    $contentHeader = "Sales ($firstTransactionDate - $lastTransactionDate)";
 @endphp
-@section('content-header', "Sales ($firstTransactionDate - $lastTransactionDate)")
-
+@section('content-header', $contentHeader . '-' . 'Total Sales: '. '$' . number_format($totalSum, 2))
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
 
@@ -125,7 +125,7 @@
                                 @php
                                     $tax = 0;
                                     $discount = 0;
-                                @endphp
+                                @endphp 
                                 @foreach ($orders as $key => $order)
 
                                     <tr>
@@ -193,10 +193,12 @@
                                                 $0
                                             @endif
                                         </td>
-                                        <td>{{ ucfirst($order->admin->name) }}</td>
+                                        <td>{{ optional($order->admin)->name ? ucfirst($order->admin->name) : '' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
+
+                        
                         </table>
                     </div>
                 </div>
@@ -277,7 +279,23 @@
             $('.table').DataTable({
                 responsive: true,
                 dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
-                buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
+                buttons: [
+                    'colvis', 
+                    'copy', 
+                    {
+                        extend: 'csv',
+                        title: @json($contentHeader),
+                    },
+                    {
+                        extend: 'excel',
+                        title: @json($contentHeader),
+                    },
+                    {
+                        extend: 'pdf',
+                        title: @json($contentHeader),
+                    },
+               
+                    'print'],
                 language: {
                     search: 'Search: ',
                     lengthMenu: 'Show _MENU_ entries',
