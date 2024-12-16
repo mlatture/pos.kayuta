@@ -16,6 +16,8 @@ class AddListingFieldsToSettingsTable extends Migration
             $table->boolean('boat_listing_show')->default(false);
             $table->boolean('pool_listing_show')->default(false);
             $table->boolean('product_listing_show')->default(false);
+            $table->unsignedBigInteger('organization_id')->nullable(); // Foreign key for the organization
+
         });
     }
 
@@ -25,7 +27,7 @@ class AddListingFieldsToSettingsTable extends Migration
     public function down(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn(['golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show']);
+            $table->dropColumn(['golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show','organization_id']);
         });
     }
 }
