@@ -15,31 +15,31 @@ class AttachmentsSeeder extends Seeder
      */
     public function run()
     {
-        // Path to the SQL file
-        $path = database_path('seeders/sql/attachments.sql');
+        //     // Path to the SQL file
+        //     $path = database_path('seeders/sql/attachments.sql');
 
-        // Check if the file exists
-        if (!File::exists($path)) {
-            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
-            return;
-        }
+        //     // Check if the file exists
+        //     if (!File::exists($path)) {
+        //         $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+        //         return;
+        //     }
 
-        // Read the contents of the SQL file
-        $sql = File::get($path);
+        //     // Read the contents of the SQL file
+        //     $sql = File::get($path);
 
-        // Split the SQL content into separate statements using ";" as a delimiter
-        $statements = array_filter(array_map('trim', explode(';', $sql)));
+        //     // Split the SQL content into separate statements using ";" as a delimiter
+        //     $statements = array_filter(array_map('trim', explode(';', $sql)));
 
-        // Execute each statement individually
-        foreach ($statements as $statement) {
-            if (!empty($statement)) {
-                try {
-                    DB::unprepared($statement . ';'); // Add ";" back to each statement
-                } catch (\Exception $e) {
-                    $this->command->error("Error executing statement: $statement");
-                    $this->command->error($e->getMessage());
-                }
-            }
-        }
+        //     // Execute each statement individually
+        //     foreach ($statements as $statement) {
+        //         if (!empty($statement)) {
+        //             try {
+        //                 DB::unprepared($statement . ';'); // Add ";" back to each statement
+        //             } catch (\Exception $e) {
+        //                 $this->command->error("Error executing statement: $statement");
+        //                 $this->command->error($e->getMessage());
+        //             }
+        //         }
+        //     }
     }
 }

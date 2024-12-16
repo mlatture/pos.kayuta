@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
@@ -16,23 +15,34 @@ class ChattingsSeeder extends Seeder
      */
     public function run()
     {
-        $path = database_path('seeders/sql/chattings.sql');
+        // $path = database_path('seeders/sql/chattings.sql');
 
-        if (!File::exists($path)) {
-            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
-            return;
-        }
+        // // Check if the SQL file exists
+        // if (!File::exists($path)) {
+        //     $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+        //     return;
+        // }
 
-        $sql = File::get($path);
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+        // // Read the SQL file
+        // $sql = File::get($path);
 
-        if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
-        }
+        // // Remove comments and blank lines
+        // $sql = preg_replace('/--.*(\n|\r\n?)/', '', $sql); // Remove single-line comments
+        // $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);   // Remove multi-line comments
+        // $sql = preg_replace('/^\s*$/m', '', $sql);         // Remove blank lines
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
-        }
+        // // Split the SQL into individual statements
+        // $statements = array_filter(array_map('trim', explode(';', $sql)));
+
+        // foreach ($statements as $statement) {
+        //     if (!empty($statement)) {
+        //         try {
+        //             DB::unprepared($statement . ';'); // Add semicolon back if missing
+        //         } catch (\Exception $e) {
+        //             $this->command->error("Error executing statement: $statement");
+        //             $this->command->error($e->getMessage());
+        //         }
+        //     }
+        // }
     }
 }
