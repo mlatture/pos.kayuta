@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
@@ -16,23 +15,31 @@ class AttachmentsSeeder extends Seeder
      */
     public function run()
     {
+        // Path to the SQL file
         $path = database_path('seeders/sql/attachments.sql');
 
+        // Check if the file exists
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
 
+        // Read the contents of the SQL file
         $sql = File::get($path);
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
-        if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
-        }
+        // Split the SQL content into separate statements using ";" as a delimiter
+        $statements = array_filter(array_map('trim', explode(';', $sql)));
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
+        // Execute each statement individually
+        foreach ($statements as $statement) {
+            if (!empty($statement)) {
+                try {
+                    DB::unprepared($statement . ';'); // Add ";" back to each statement
+                } catch (\Exception $e) {
+                    $this->command->error("Error executing statement: $statement");
+                    $this->command->error($e->getMessage());
+                }
+            }
         }
     }
 }
