@@ -16,23 +16,23 @@ class HelpTopicsSeeder extends Seeder
      */
     public function run()
     {
-        $path = database_path('seeders/sql/help_topics.sql');
+        // $path = database_path('seeders/sql/help_topics.sql');
 
-        if (!File::exists($path)) {
-            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
-            return;
-        }
+        // if (!File::exists($path)) {
+        //     $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+        //     return;
+        // }
 
-        $sql = File::get($path);
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+        // $sql = File::get($path);
+        // $insertStatements = '';
+        // preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
-        if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
-        }
+        // if (!empty($matches[0])) {
+        //     $insertStatements = implode("\n", $matches[0]);
+        // }
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
-        }
+        // if (!empty($insertStatements)) {
+        //     DB::unprepared($insertStatements);
+        // }
     }
 }
