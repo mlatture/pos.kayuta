@@ -9,11 +9,21 @@ return new class extends Migration {
     {
         $tableName = 'attachments';
 
-        if (Schema::hasTable($tableName)) {
+        if (!Schema::hasTable($tableName)) {
+            // Create the table if it does not exist
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('title', 150)->nullable();
+                $table->text('description')->nullable();
+                $table->string('type', 50)->nullable();
+                $table->string('attachmenttype', 100)->nullable();
+                $table->string('attachment', 100)->nullable();
+                $table->boolean('status')->default(1);
+                $table->timestamps();
+            });
+        } else {
+            // Add missing columns to the existing table
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                if (!Schema::hasColumn($tableName, 'id')) {
-                    $table->id();
-                }
                 if (!Schema::hasColumn($tableName, 'title')) {
                     $table->string('title', 150)->nullable();
                 }
@@ -35,17 +45,6 @@ return new class extends Migration {
                 if (!Schema::hasColumn($tableName, 'created_at')) {
                     $table->timestamps();
                 }
-            });
-        } else {
-            Schema::create($tableName, function (Blueprint $table) {
-                $table->id();
-                $table->string('title', 150)->nullable();
-                $table->text('description')->nullable();
-                $table->string('type', 50)->nullable();
-                $table->string('attachmenttype', 100)->nullable();
-                $table->string('attachment', 100)->nullable();
-                $table->boolean('status')->default(1);
-                $table->timestamps();
             });
         }
     }
