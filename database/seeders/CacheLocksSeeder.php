@@ -17,18 +17,28 @@ class CacheLocksSeeder extends Seeder
     {
         $path = database_path('seeders/sql/cache_locks.sql');
 
+        // Check if the SQL file exists
         if (!File::exists($path)) {
             $this->command->info("SQL file not found at: $path. Skipping this seeder.");
             return;
         }
 
+        // Read the SQL file
         $sql = File::get($path);
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
-        if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
+        // Split the SQL content into individual statements
+        $statements = array_filter(array_map('trim', explode(';', $sql)));
+
+        // Execute each statement
+        foreach ($statements as $statement) {
+            if (!empty($statement)) {
+                try {
+                    DB::unprepared($statement . ';'); // Ensure a semicolon is added back
+                } catch (\Exception $e) {
+                    $this->command->error("Error executing statement: $statement");
+                    $this->command->error($e->getMessage());
+                }
+            }
         }
-        DB::unprepared($insertStatements);
     }
 }
