@@ -4,6 +4,8 @@
 @section('content-header', 'Reservation List')
 
 @section('content')
+
+
     @include('reservations.components.header')
 
     <style>
@@ -115,16 +117,18 @@
                                 <a href="javacript:void(0)" class="text-white" data-bs-toggle="collapse"
                                     data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample"
                                     style="color: #EFC368 !important"><i class="fa-solid fa-users"></i> Add Customer</a>
-                                <a href="javacript:void(0)" class="text-white" id="openDatePicker"
-                                    style="color: #EFC368 !important"><i class="fa-solid fa-calendar-week"></i> Quick
-                                    Add</a>
+                                <a href="javascript:void(0)" class="text-white" id="openDatePicker" role="button"
+                                    style="color: #EFC368 !important">
+                                    <i class="fa-solid fa-calendar-week"></i> Quick Add
+                                </a>
+
                             </div>
                             <!-- <div>
-                                <a href="#" class="text-white text-decoration-none">
-                                    <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
-                                    Help
-                                </a>
-                            </div> -->
+                                            <a href="#" class="text-white text-decoration-none">
+                                                <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
+                                                Help
+                                            </a>
+                                        </div> -->
                         </div>
                     </div>
                     <div class="card-body">
@@ -138,20 +142,20 @@
                             </select>
                         </div>
 
-                    <div style="height: 400px; overflow-y: auto;">
-                        <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Site</th>
-                                    <th>Type</th>
-                                    <th>Site Lock</th>
-                                    <th>Balance</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div style="height: 400px; overflow-y: auto;">
+                            <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Site</th>
+                                        <th>Type</th>
+                                        <th>Site Lock</th>
+                                        <th>Balance</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
 
                                 </tbody>
                             </table>
@@ -207,4 +211,8 @@
     <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
+    <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
+
+ 
 @endpush
