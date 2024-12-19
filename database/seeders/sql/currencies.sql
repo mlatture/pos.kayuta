@@ -1,5 +1,5 @@
 -- Inserting into currencies table
-INSERT INTO `currencies` (`code`, `created_at`, `exchange_rate`, `name`, `status`, `symbol`, `updated_at`) VALUES
+INSERT INTO `currencies` (code, created_at, exchange_rate, name, status, symbol, updated_at) VALUES
 ('USD', NULL, '1', 'USD', '1', '$', '2021-06-27 18:39:37'),
 ('BDT', NULL, '84','BDT', '1', '৳', '2021-07-06 16:52:58'),
 ('INR', '2020-10-15 22:23:04', '60', 'Indian Rupi', '1', '₹', '2021-06-04 23:26:38'),

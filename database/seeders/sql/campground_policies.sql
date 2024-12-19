@@ -1,4 +1,4 @@
-INSERT INTO `campground_policies` (`created_at`, `description`, `pdf`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `campground_policies` (created_at, description, pdf, status, title, updated_at) VALUES
 ('2023-09-28 22:10:40', '<p>YOUR ENTRY INTO THE PARK INDICATES YOUR ACCEPTANCE</p>
 
 <p>OF KAYUTA LAKE&#39;S CAMPGROUND POLICIES/RULES.</p>
