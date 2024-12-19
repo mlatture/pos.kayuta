@@ -47,45 +47,44 @@
             </thead>
             <tbody>
                 @foreach ($orders as $order)
-
                     <tr>
-
-                        <td>{{$order->id}}</td>
-                        <td>{{$order->getCustomerName()}}</td>
-                        <td>{{ config('settings.currency_symbol') }} {{$order->formattedTotal()}}</td>
-                        <td>{{ config('settings.currency_symbol') }} {{$order->formattedReceivedAmount()}}</td>
+                        <td>{{ $order->id }}</td>
+                        <td>{{ $order->getCustomerName() }}</td>
+                        <td>{{ config('settings.currency_symbol') }} {{ number_format(is_numeric($order->formattedTotal()) ? $order->formattedTotal() : 0, 2) }}</td>
+                        <td>{{ config('settings.currency_symbol') }} {{ number_format(is_numeric($order->formattedReceivedAmount()) ? $order->formattedReceivedAmount() : 0, 2) }}</td>
                         <td>
                             @if(number_format($order->receivedAmount(), 2) == 0)
                                 <span class="badge badge-danger">Not Paid</span>
-                            @elseif(number_format($order->receivedAmount(), 2) < number_format($order->total(), 2))
+                            @elseif(number_format($order->receivedAmount(), 2) < number_format($order->formattedTotal(), 2))
                                 <span class="badge badge-warning">Partial</span>
-                            @elseif(number_format($order->receivedAmount(), 2) == number_format($order->total(), 2))
+                            @elseif(number_format($order->receivedAmount(), 2) == number_format($order->formattedTotal(), 2))
                                 <span class="badge badge-success">Paid</span>
-                            @elseif(number_format($order->receivedAmount(), 2) > number_format($order->total(), 2))
+                            @elseif(number_format($order->receivedAmount(), 2) > number_format($order->formattedTotal(), 2))
                                 <span class="badge badge-info">Change</span>
                             @endif
                         </td>
-                        <td>{{config('settings.currency_symbol')}}
-                            {{number_format($order->total() - $order->receivedAmount(), 2)}}
+                        <td>{{ config('settings.currency_symbol') }}
+                            {{ number_format($order->formattedTotal() - $order->receivedAmount(), 2) }}
                         </td>
-                        @foreach($order->payments as $payment)
-                            <td class="paymentMethod" data-payment_acc_num="{{$payment->payment_acc_number}}" data-paymentmethod="{{$payment->payment_method}}">{{$payment->payment_method}}</td>
+                        @foreach($order->posPayments as $payment)
+                            <td class="paymentMethod" data-payment_acc_num="{{ $payment->payment_acc_number }}" data-paymentmethod="{{ $payment->payment_method }}">
+                                {{ $payment->payment_method }}
+                            </td>
                         @endforeach
-                        <td>{{$order->created_at}}</td>
+                        <td>{{ $order->created_at->format('Y-m-d H:i:s') }}</td>
                         <td>
-                            <a href="{!! route('orders.generate.invoice', $order->id) !!}" class="label label-info"
-                                target="_blank"><i class="fas fa-file-alt"></i>
+                            <a href="{!! route('orders.generate.invoice', $order->id) !!}" class="label label-info" target="_blank">
+                                <i class="fas fa-file-alt"></i>
                             </a>
-
                             <a href="javascript:void(0)" class="returnOrder label label-info" target="_blank"
-                                data-bs-toggle="modal" data-bs-target="#returnModal" data-id="{{$order->id}}">
+                                data-bs-toggle="modal" data-bs-target="#returnModal" data-id="{{ $order->id }}">
                                 <i class="fa-solid fa-up-right-from-square"></i>
                             </a>
                         </td>
                     </tr>
                 @endforeach
             </tbody>
-
+            
             <tfoot>
                 <tr>
                     <th></th>

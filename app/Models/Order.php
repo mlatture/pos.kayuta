@@ -11,6 +11,9 @@ use Exception;
 class Order extends Model
 {
     protected $guarded = [];
+    protected $casts = [
+        'total' => 'float',
+    ];
     protected $fillable = ['user_id', 'admin_id', 'total', 'amount', 'order_id', 'customer_id', 'gift_card_amount', 'received_amount', 'created_at', 'updated_at'];
 
     // Define relationship with order items
@@ -89,21 +92,26 @@ class Order extends Model
     // Format the total
     public function formattedTotal()
     {
-        return number_format($this->total, 2);
+        $total = $this->items->sum('price');
+
+        return (float) $total;
     }
 
     // Calculate the received amount
     public function receivedAmount()
     {
-        return $this->posPayments->sum('amount'); 
+        return (float) $this->posPayments->sum('amount');
     }
+    
 
     // Format the received amount
     public function formattedReceivedAmount()
     {
-        return number_format($this->receivedAmount(), 2);
+        $receivedAmount = $this->receivedAmount();
+    
+        return number_format(is_numeric($receivedAmount) ? $receivedAmount : 0, 2);
     }
-
+    
   
     public static function orderFindById($id)
     {
