@@ -17,29 +17,45 @@ class ActivityLogSeeder extends Seeder
     {
         $path = database_path('seeders/sql/activity_log.sql');
 
-        if (!File::exists($path)) {
-            $this->command->info("SQL file not found at: $path. Skipping this seeder.");
+        $sql = File::get($path);
+
+        if (!preg_match('/INSERT INTO `activity_log` \(([^)]+)\) VALUES/is', $sql, $columnsMatch)) {
+            $this->command->error("Failed to parse column names from the SQL file.");
             return;
         }
 
-        $sql = File::get($path);
+        $columnNames = array_map('trim', explode(',', $columnsMatch[1]));
 
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
+        if (!preg_match_all('/\(([^)]+)\)(,|;)/s', $sql, $rows)) {
+            $this->command->error("No values found to insert.");
+            return;
+        }
 
-        if (!empty($matches[0])) {
-            foreach ($matches[0] as $insertStatement) {
-                if (preg_match('/INSERT INTO `(.+?)`.+VALUES \(.+?, \'(\d+)\',.+?\);/is', $insertStatement, $insertMatches)) {
-                    $tableName = $insertMatches[1];
-                    $recordId = $insertMatches[2];
+        foreach ($rows[1] as $row) {
+            $columns = preg_split('/,(?=(?:[^\']*\'[^\']*\')*[^\']*$)/', $row);
+            $columns = array_map(fn($value) => trim($value, " '"), $columns);
 
-                    DB::unprepared("DELETE FROM `$tableName` WHERE id = '$recordId';");
-                }
+            if (count($columnNames) !== count($columns)) {
+                $this->command->error("Column count mismatch for row: ($row)");
+                continue;
+            }
 
-               
-                DB::unprepared($insertStatement);
+            $data = array_combine($columnNames, $columns);
+
+            $data = array_map(fn($value) => $value === 'NULL' ? null : $value, $data);
+
+            $exists = DB::table('activity_log')
+                ->where('user_id', $data['user_id'] ?? null)
+                ->where('created_at', $data['created_at'] ?? null)
+                ->exists();
+
+            if (!$exists) {
+                DB::table('activity_log')->insert($data);
             }
         }
 
-        $this->command->info('Activity log table seeded successfully.');
+        $this->command->info('Activity Cart table seeded successfully!');
+
+        
     }
 }

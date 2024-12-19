@@ -23,15 +23,42 @@ class CampgroundMapsSeeder extends Seeder
         }
 
         $sql = File::get($path);
-        $insertStatements = '';
-        preg_match_all('/INSERT INTO .+?;/is', $sql, $matches);
 
-        if (!empty($matches[0])) {
-            $insertStatements = implode("\n", $matches[0]);
+        if (!preg_match('/INSERT INTO `campground_maps` \(([^)]+)\) VALUES/is', $sql, $columnsMatch)) {
+            $this->command->error("Failed to parse column names from the SQL file.");
+            return;
         }
 
-        if (!empty($insertStatements)) {
-            DB::unprepared($insertStatements);
+        $columnNames = array_map('trim', explode(',', $columnsMatch[1]));
+
+        if (!preg_match_all('/\(([^)]+)\)(,|;)/s', $sql, $rows)) {
+            $this->command->error("No values found to insert.");
+            return;
         }
+
+        foreach ($rows[1] as $row) {
+            $columns = preg_split('/,(?=(?:[^\']*\'[^\']*\')*[^\']*$)/', $row);
+            $columns = array_map(fn($value) => trim($value, " '"), $columns);
+
+            if (count($columnNames) !== count($columns)) {
+                $this->command->error("Column count mismatch for row: ($row)");
+                continue;
+            }
+
+            $data = array_combine($columnNames, $columns);
+
+            $data = array_map(fn($value) => $value === 'NULL' ? null : $value, $data);
+
+            $exists = DB::table('campground_maps')
+                ->where('image', $data['image'] ?? null)
+                ->where('created_at', $data['created_at'] ?? null)
+                ->exists();
+
+            if (!$exists) {
+                DB::table('campground_maps')->insert($data);
+            }
+        }
+
+        $this->command->info('Campground Maps table seeded successfully!');
     }
 }

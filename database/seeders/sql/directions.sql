@@ -1,5 +1,5 @@
 -- Inserting into directions table
-INSERT INTO `directions` (`created_at`, `description`,  `latitude`, `longitude`, `pdf`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `directions` (created_at, description,  latitude, longitude, pdf, status, title, updated_at) VALUES
 ('2023-09-28 10:06:43', '<h3>GPS Notes:</h3>
 
 <p>When coming down O&#39;Brien Rd, ignore your GPS if it tells you to turn right on Kayuta Terrace. This is a dead end with NO campground access and no means to turn around. Keep going straight for another 500&#39; to Campground Road and make a right turn there. You will see our campground sign on the corner.<br />

@@ -1,5 +1,5 @@
 -- Inserting into business_settings table
-INSERT INTO `business_settings` (`created_at`,  `type`, `updated_at`, `value`) VALUES
+INSERT INTO `business_settings` (created_at,  type, updated_at, value) VALUES
 ('2020-10-11 12:43:44',  'system_default_currency', '2021-06-04 23:25:29', '1'),
 ('2020-10-11 12:53:02',  'language', '2021-06-11 02:16:25', '[{\"id\":\"1\",\"name\":\"english\",\"code\":\"en\",\"status\":1}]'),
 ('2020-10-12 15:29:18',  'mail_config', '2023-09-24 17:28:18', '{\"status\":\"1\",\"name\":\"Kayuta Lake\",\"host\":\"sandbox.smtp.mailtrap.io\",\"driver\":\"smtp\",\"port\":\"2525\",\"username\":\"9e41171e6321d0\",\"email_id\":\"info@kayuta-lake.com\",\"encryption\":\"TLS\",\"password\":\"bd72f3e5674c1a\"}'),

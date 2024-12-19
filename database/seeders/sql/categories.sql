@@ -1,5 +1,5 @@
 -- Inserting into categories table
-INSERT INTO `categories` (`created_at`, `name`,  `status`, `updated_at`) VALUES
+INSERT INTO `categories` (created_at, name,  status, updated_at) VALUES
 ('2024-02-16 16:38:20',  'Food','1', '2024-02-16 16:38:25'),
 ('2024-02-18 05:50:24',  'Drinks','1', '2024-02-18 05:50:24'),
 ('2024-03-15 16:45:11',  'Apparel', '1', '2024-03-15 16:49:06'),

@@ -1,5 +1,5 @@
 -- Inserting into admins table
-INSERT INTO `admins` (`admin_role_id`, `created_at`, `email`, `email_verified_at`,  `image`, `name`, `password`, `phone`, `remember_token`, `status`, `updated_at`) VALUES
+INSERT INTO `admins` (admin_role_id, created_at, email, email_verified_at,  image, name, password, phone, remember_token, status, updated_at) VALUES
 ('1', '2023-05-05 08:57:00', 'admin@kayuta-lake.com', NULL,  'def.png', 'admin', '$2a$12$VpoliA7ep8WezOBo.RJY0OKrKOIVwUh8e5loBGoYUr0qpdBfo38Xe', '+92 303030333', 'GQw3ElW6e9IkNSkb5ZyYGmbWehBOOA3PjAjklqoGhUUO4FQ8vcfIgojrD6HQ', '1', '2023-05-05 08:57:00'),
 ('7', '2023-05-05 20:48:33', 'manager@example.com', NULL,  '2023-05-05-64546e81b6939.png', 'employee 1', '$2y$10$M/.U5GhbeYvfH3AIhm7B3uU2V4dqMyqVyX9Z.KSGAsMSC68/cRfX6', '233432423', NULL, '1', '2023-05-05 20:48:33'),
 ('7', '2023-12-13 14:19:51', 'john@gmail.com', NULL,  '2023-12-13-6579bd878deea.png', 'john', '$2y$10$dkEejUt.PoKcvRksPUz83.r0ZFgCGLzrNZ6/.GogOAlgGdrhTEkTy', '09876543211', NULL, '1', '2023-12-13 14:19:51'),

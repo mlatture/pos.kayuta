@@ -1,5 +1,5 @@
 -- Inserting into amenities table
-INSERT INTO `amenities` (`created_at`,  `image`, `status`, `title`, `updated_at`) VALUES
+INSERT INTO `amenities` (created_at,  image, status, title, updated_at) VALUES
 ('2023-09-25 21:53:16',  '2023-09-25-651201dc96839.webp', '1', 'Lorem Ipsum', '2023-09-25 22:02:01'),
 ('2023-09-25 22:07:13',  '2023-09-25-6512049165afb.webp', '1', 'Lorem Ipsum', '2023-09-25 22:07:13'),
 ('2023-09-25 22:07:39',  '2023-09-25-651204ab3e532.webp', '1', 'Lorem Ipsum', '2023-09-25 22:07:39'),
