@@ -464,6 +464,11 @@ $(document).ready(function () {
     }
 
     function sendInvoiceEmail(customer_email, orderId) {
+        if (!customer_email || !customer_email.includes("@")) {
+            console.error("Invalid customer email:", customer_email);
+            return;
+        }
+    
         $.ajax({
             url: sentInvoiceEmail,
             type: "POST",
@@ -478,11 +483,16 @@ $(document).ready(function () {
                 console.log(response.message);
             },
             error: function (xhr) {
-                console.log(xhr);
+                Swal.fire(
+                    "Error",
+                    "Failed to send the invoice email. Please verify the email address.",
+                    "error"
+                );
+                console.error(xhr);
             },
         });
     }
-
+    
     $('#customer_id').on('change', function(){
         let customer_email = $(this).find('option:selected').data('email');
     
