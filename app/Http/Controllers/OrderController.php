@@ -104,7 +104,7 @@ class OrderController extends Controller
 
             $order = Order::orderFindById($order->id);
 
-            dispatch(new SendOrderReceiptJob($order));
+            // dispatch(new SendOrderReceiptJob($order));
 
          
 

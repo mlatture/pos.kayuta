@@ -79,8 +79,7 @@ class GiftCardController extends Controller
         // }
 
         $giftCard = new GiftCard;
-        $giftCard->organization_id = auth()->user()->organization_id;
-        $giftCard->user_email = $request->user_email;
+        $giftCard->customer_email = $request->user_email;
         $giftCard->expire_date = $request->expire_date;
         $giftCard->status = $request->status;
         $giftCard->barcode = $request->barcode;
