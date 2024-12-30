@@ -119,7 +119,10 @@ class ProductController extends Controller
     
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = $image->getClientOriginalName();
+            $request->validate([
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10048',
+            ]);
+            $filename = time() . '_' . $image->getClientOriginalName();
             $image->storeAs('public/products', $filename);
         }
         
