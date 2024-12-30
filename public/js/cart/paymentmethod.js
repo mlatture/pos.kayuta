@@ -269,42 +269,89 @@ $(document).ready(function () {
         customer_email
     ) {
         $.ajax({
-            url: processTerminal,
-            type: "POST",
-            headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-            },
-            data: { amount: amount },
+            url: 'https://localemv.com:8887',
+            type: 'POST',
+            contentType: 'application/x-www-form-urlencoded',
+            data: $.param({
+                xKey: encodeURIComponent(cardknoxApiKey),
+                xCommand: 'cc:Sale',
+                xAmount: encodeURIComponent(amount),
+                xAllowDuplicate: encodeURIComponent('TRUE'),
+            }),
             success: function (response) {
-                if (response.message === "Payment Approved") {
+                let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
+                console.log(jsonResponse);
+                const xResult = jsonResponse.xResult;
+
+                if(xResult === 'A') {
                     handlePayment(
                         customer_id,
-                        amount,
+                        jsonResponse.xAuthAmount,
                         0,
-                        "CreditCard",
-                        response.success.xMaskedCardNumber,
-                        response.success.xRefNum,
+                        jsonResponse.xCardType,
+                        jsonResponse.xMaskedCardNumber,
+                        jsonResponse.RefNum,
                         totalAmount,
                         isPartial,
                         orderId,
                         customer_email
-                    );
-
-                    console.log(orderId, 'Test')
-
-                   
-                } else {
+                    )
+                }else if(jsonResponse.xError === 'NaN is not a valid integer'){
                     Swal.fire(
                         "Error",
-                        response.error || response.message,
+                        `${amount} is not a valid integer`,
                         "error"
                     );
+                }else{
+                    Swal.fire(
+                        "Canceled",
+                        "The transaction was canceled.",
+                        "warning"
+                    );
+                
                 }
             },
-            error: function (xhr) {
-                Swal.fire("Error", "Failed to process the request.", "error");
-            },
-        });
+            error: function (xhr, error) {
+                console.error('Error', xhr, error);
+            }
+        })
+        // $.ajax({
+        //     url: processTerminal,
+        //     type: "POST",
+        //     headers: {
+        //         "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        //     },
+        //     data: { amount: amount },
+        //     success: function (response) {
+        //         if (response.message === "Payment Approved") {
+        //             handlePayment(
+        //                 customer_id,
+        //                 amount,
+        //                 0,
+        //                 "CreditCard",
+        //                 response.success.xMaskedCardNumber,
+        //                 response.success.xRefNum,
+        //                 totalAmount,
+        //                 isPartial,
+        //                 orderId,
+        //                 customer_email
+        //             );
+
+        //             console.log(orderId, 'Test')
+
+                   
+        //         } else {
+        //             Swal.fire(
+        //                 "Error",
+        //                 response.error || response.message,
+        //                 "error"
+        //             );
+        //         }
+        //     },
+        //     error: function (xhr) {
+        //         Swal.fire("Error", "Failed to process the request.", "error");
+        //     },
+        // });
     }
 
 
