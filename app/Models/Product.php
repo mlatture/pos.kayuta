@@ -12,6 +12,20 @@ class Product extends Model
 
     protected $fillable = [
         'suggested_addon',
+        'category_id',
+        'tax_type_id',
+        'name',
+        'description',
+        'image',
+        'barcode',
+        'price',
+        'quantity',
+        'discount_type',
+        'discount',
+        'status',
+        'product_vendoer_id',
+        'cost',
+        
     ];
 
     public function taxType()
