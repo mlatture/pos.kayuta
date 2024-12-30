@@ -44,9 +44,10 @@
                                             <td>{{ Str::limit($product->name, 20) }}</td>
                                             <td>
                                                 <img class="product-img img-thumbnail"
-                                                    src="{{ $product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}"
-                                                    width="60px" height="60px" alt="{{ $product->name }}">
+                                                     src="{{ $product->image && file_exists(public_path('images/products/' . $product->image)) ? asset('images/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
+                                                     width="60px" height="60px" alt="{{ $product->name }}">
                                             </td>
+                                            
                                             <td>{{ $product->barcode }}</td>
                                             <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
                                             <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>

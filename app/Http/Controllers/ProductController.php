@@ -123,7 +123,7 @@ class ProductController extends Controller
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10048',
             ]);
             $filename = time() . '_' . $image->getClientOriginalName();
-            $image->storeAs('public/products', $filename);
+            $image->move(public_path('images/products'), $filename);
         }
         
         

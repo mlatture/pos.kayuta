@@ -233,7 +233,7 @@ $(document).ready(function () {
                                 ? val.name.substring(0, 10) + "..."
                                 : val.name;
 
-                        let imagePath = `/storage/products/${val.image}`;
+                        let imagePath = `/images/products/${val.image}`;
                         let fallbackImageUrl = "/images/product-thumbnail.jpg";
                         let imageUrl = imagePath;
 
@@ -330,7 +330,7 @@ $(document).ready(function () {
                 console.log("Response:", response);
                 let productsHtml = "";
                 $.each(response.data, function (index, product) {
-                    let imagePath = `/storage/products/${product.image}`;
+                    let imagePath = `/images/products/${product.image}`;
                     let fallbackImageUrl = "/images/product-thumbnail.jpg";
                     let imageUrl = imagePath;
 
