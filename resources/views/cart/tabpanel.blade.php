@@ -13,19 +13,9 @@
                                     {{ $product->quantity < 0 ? '*' : $product->quantity }}
 
                                 </span>
-                                @php
-                                    $imagePath = 'images/products/' . $product->image;
-                                    $fallbackImageUrl = asset('images/product-thumbnail.jpg');
+                             
 
-                                    if (!empty($product->image) && file_exists(public_path($imagePath))) {
-                                        $imageUrl = asset($imagePath);
-                                    } else {
-                                        $imageUrl = $fallbackImageUrl;
-                                    }
-                                @endphp
-                                               
-
-                                <img    src="{{ $product->image && Storage::disk('public')->exists('products/' . $product->image) ? Storage::url('products/' . $product->image) : Storage::url('product-thumbnail.jpg') }}"  class="rounded mx-auto d-block img-fluid"
+                                <img     src="{{ $product->image && file_exists(public_path('images/products/' . $product->image)) ? asset('images/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
                                     alt="Product Image">
 
 
