@@ -11,6 +11,21 @@ class Payment extends Model
 
     protected $guarded = [];
 
+    protected $table = 'payments';
+
+    protected $fillable = [
+        'cartid',
+        'receipt',
+        'method',
+        'customernumber',
+        'email',
+        'payment',
+    ];
+
+    protected $casts = [
+        'payment' => 'float',
+    ];
+
     public function storePayment($data = [])
     {
         return self::create($data);

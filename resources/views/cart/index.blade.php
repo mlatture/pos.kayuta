@@ -252,8 +252,8 @@
         var processTerminal = "{{ route('orders.process.terminal') }}";
         var cartOrderUpdateUrl = "{{ route('orders.update') }}"
         var sentInvoiceEmail = "{{ route('orders.send.invoice') }}";
+        var processingCheckPayment = "{{ route('cart.processCheckPayment') }}";
         var addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
-        var cardknoxApiKey = "{{ env('CARDKNOX_API_KEY') }}";
         // function limitText(text, maxLength) {
         //     if (text.length > maxLength) {
         //         return text.substring(0, maxLength) + "...";

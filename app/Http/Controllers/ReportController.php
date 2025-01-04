@@ -58,6 +58,11 @@ class ReportController extends Controller
     
         return view('reports.sales-report', compact('orders', 'totalSum'));  
     }
+
+    public function zOutReport(Request $request)
+    {
+        return view('reports.z-out-report');
+    }
     
     
     

@@ -146,6 +146,12 @@
                             <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
                                 <thead>
                                     <tr>
+                                        <th>
+                                            Checked In Date
+                                        </th>
+                                        <th>
+                                            Checked Out Date
+                                        </th>
                                         <th>Name</th>
                                         <th>Site</th>
                                         <th>Type</th>

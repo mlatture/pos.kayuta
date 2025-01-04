@@ -170,6 +170,10 @@
     <script src="{{ asset('js/cart/create.js') }}"></script>
     <script src="{{ asset('js/cart/random.js') }}"></script>
     <script src="{{ asset('js/cart/paymentmethod.js') }}"></script>
+
+    <script>
+        var cardknoxApiKey = "{{ env('CARDKNOX_API_KEY') }}";
+    </script>
     @yield('js')
     @stack('js')
 </body>

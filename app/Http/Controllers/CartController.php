@@ -316,5 +316,38 @@ class CartController extends Controller
             'success' => $payments,
         ]);
     }
+
+    public function processCheckPayment(Request $request)
+    {
+        $data = [
+            'xKey' => config('services.cardknox.api_key'),
+            'xCommand' => 'check:sale',
+            'xVersion' => '5.0.0',
+            'xSoftwareName' => 'Kayutalake',
+            'xSoftwareVersion' => '1.0',
+            'xAmount' => $request->xAmount,
+            'xAccount' => $request->xAccount,
+            'xRouting' => $request->xRouting,
+            'xName' => $request->xName,
+            'xAllowDuplicate' => true,
+        ];
+        
+        $ch = curl_init('https://x1.cardknox.com/gateway');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/x-www-form-urlencoded', 'X-Recurring-Api-Version: 1.0']);
+        
+        $responseContent = curl_exec($ch);
+        curl_close($ch);
+    
+        if ($responseContent === false) {
+            return response()->json(['message' => 'Error communicating with payment gateway.'], 500);
+        }
+    
+        parse_str($responseContent, $responseArray);
+    
+        return response()->json($responseArray);
+    }
+    
     
 }
