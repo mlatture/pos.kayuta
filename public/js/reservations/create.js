@@ -102,42 +102,83 @@ function sendPaymentRequest() {
     var paymentType = $("#paymentType").val();
     var amount = $("#xAmount").val();
 
+    
     if (paymentType === "Terminal") {
         showLoader();
     }
 
     if (paymentType === "Terminal") {
+        console.log('Amount:', amount);
+        // Request Cardknox Terminal Payment
         $.ajax({
-            url:
-                "/admin/reservations/payment/" +
-                reservationId +
-                "/postTerminalPayment",
-            type: "POST",
-            data: formDataPayment,
-            contentType: false,
-            processData: false,
-            cache: false,
-            headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-            },
-            success: function (response) {
-                hideLoader();
-                if (response.success) {
-                    toastr.options.timeOut = 3000;
-                    toastr.success("Payment added successfully");
-                    setTimeout(function () {
-                        window.location.href = "/admin/reservations";
-                    }, 1000);
-                } else {
-                    console.log(response);
-                    toastr.error(response.message || "Payment failed");
+            url: 'https://localemv.com:8887',
+            type: 'POST',
+            contentType: 'application/x-www-form-urlencoded',
+            data: $.param({
+                xKey: encodeURIComponent(cardknoxApiKey),
+                xCommand: 'cc:Sale',
+                xAmount: encodeURIComponent(parseFloat(amount.replace(/,/g, ''))),
+                xAllowDuplicate: encodeURIComponent('TRUE'),
+            }),
+            success: function(response){
+                let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
+                const xResult = jsonResponse.xResult;
+
+                if(xResult === 'A'){
+                    $.ajax({
+                        url:
+                            "/admin/reservations/payment/" +
+                            reservationId +
+                            "/postTerminalPayment",
+                        type: "POST",
+                        data: formDataPayment,
+                        contentType: false,
+                        processData: false,
+                        cache: false,
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                        },
+                        success: function (data) {
+                            hideLoader();
+                            if (data.success) {
+                                toastr.options.timeOut = 3000;
+                                toastr.success("Payment added successfully");
+                                setTimeout(function () {
+                                    window.location.href = "/admin/reservations";
+                                }, 1000);
+                            } else {
+                                console.log(data);
+                                toastr.error(data.message || "Payment failed");
+                            }
+                        },
+                        error: function (xhr) {
+                            hideLoader();
+                            toastr.error("Error initiating terminal transaction");
+                        },
+                    });
+                }else if(jsonResponse.xError === 'NaN is not a valid integer'){
+                    Swal.fire(
+                        "Error",
+                        `${amount} is not a valid integer`,
+                        "error"
+                    );
+                }else{
+                    Swal.fire(
+                        "Canceled",
+                        "The transaction was canceled.",
+                        "warning"
+                    );
+                
                 }
+
             },
-            error: function (xhr) {
-                hideLoader();
-                toastr.error("Error initiating terminal transaction");
-            },
+            error: function(error){
+                console.error('Error', error);
+            }
         });
+
+        
+       
     } else {
         $.ajax({
             url:

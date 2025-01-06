@@ -19,6 +19,12 @@
             <i class="bi bi-credit-card-2-front"></i> Gift Card / RFID
         </label>
         <label class="btn btn-outline-secondary btn-payment flex-fill">
+            <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCheck"
+                value="Check" autocomplete="off" />
+            <i class="bi bi-credit-card-3-front"></i> Check
+        </label>
+
+        <label class="btn btn-outline-secondary btn-payment flex-fill">
             <input type="radio" name="payment_method" class="paymentMethod" id="paymentMethodCreditCard"
                 value="CreditCard" autocomplete="off" />
             <i class="bi bi-credit-card"></i> Credit Card
@@ -50,6 +56,22 @@
             <label for="orderAmountInput" id="orderLabel">Payment Amount:</label>
             <input type="text" id="orderAmountInput" class="form-control shadow-sm" placeholder="Payment Amount">
         </div>
+    </div>
+
+    <div class="row " id="checks" hidden>
+        <div class="col-12" id="check3" >
+            <label for="orderAmountInput" id="nameLabel">Name of Account:</label>
+            <input type="text" id="orderNameInput" class="form-control shadow-sm" placeholder="Name of Account:">
+        </div>
+        <div class="col-mt-6"  id="check1">
+            <label for="orderAmountInput" id="routingLabel">Routing No:</label>
+            <input type="text" id="orderRoutingInput" class="form-control shadow-sm" placeholder="Routing No:">
+        </div>
+        <div class="col-mt-6" id="check2" >
+            <label for="orderAmountInput" id="accountLabel">Account No:</label>
+            <input type="text" id="orderAccountInput" class="form-control shadow-sm" placeholder="Account No:">
+        </div>
+      
     </div>
 
    

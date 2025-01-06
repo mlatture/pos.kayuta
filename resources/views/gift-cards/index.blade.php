@@ -7,68 +7,69 @@
         <a href="{{ route('gift-cards.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Gift Card</a>
     @endHasPermission
 @endsection
+
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
 @endsection
+
 @section('content')
     <div class="card">
         <div class="card-body">
-            <table class="table table-hover table-responsive">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>ID</th>
-                        {{-- <th>Title</th> --}}
-                        <th>User Email</th>
-                        <th>Barcode</th>
-                        {{-- <th>Discount Type</th> --}}
-                        <th>Amount </th>
-                        {{-- <th>Start Date</th> --}}
-                        <th>Expiry Date</th>
-                        {{-- <th>Minimum Purchase</th>
-                    <th>Maximum Discount</th>
-                    <th>Limit</th> --}}
-                        <th>Status</th>
-                        <th>Created At</th>
-                        <th>Modified By</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($giftCards as $key => $gift)
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
                         <tr>
-                            <td>{{ $key + 1 }}</td>
-                            {{-- <td>{{$gift->title ?? ''}}</td> --}}
-                            <td>{{ $gift->user_email ?? '' }}</td>
-                            <td>{{ $gift->barcode ?? '' }}</td>
-                            {{-- <td>{{$gift->discount_type ? ucwords(str_replace('_', '', $gift->discount_type)) : 'N/A'}}</td> --}}
-                            <td>{{ $gift->amount ?? 0 }}</td>
-                            {{-- <td>{{ date('Y-m-d', strtotime($gift->start_date)) }}</td> --}}
-                            <td>{{ date('Y, M d', strtotime($gift->expire_date)) }}</td>
-                            {{-- <td>{{$gift->min_purchase ?? 0}}</td>
-                        <td>{{$gift->max_discount ?? 0}}</td>
-                        <td>{{$gift->limit ?? 0}}</td> --}}
-                            <td>{{ $gift->status ? 'Active' : 'Inactive' }}</td>
-                            <td>{{ $gift->created_at }}</td>
-                            <td>{{ $gift->modified_by }}</td>
-                            <td>
-                                @hasPermission(config('constants.role_modules.edit_gift_cards.value'))
-                                    <a href="{{ route('gift-cards.edit', $gift) }}" class="btn btn-primary"><i
-                                            class="fas fa-edit"></i></a>
-                                @endHasPermission
-                                @hasPermission(config('constants.role_modules.delete_gift_cards.value'))
-                                    <button class="btn btn-danger btn-delete"
-                                        data-url="{{ route('gift-cards.destroy', $gift) }}"><i
-                                            class="fas fa-trash"></i></button>
-                                @endHasPermission
-                            </td>
+                            <th>#</th>
+                            <th>User Email</th>
+                            <th>Barcode</th>
+                            <th>Amount</th>
+                            <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Modified By</th>
+                            <th>Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            {{ $giftCards->render() }}
+                    </thead>
+                    <tbody>
+                        @forelse ($giftCards as $key => $gift)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $gift->user_email ?? 'N/A' }}</td>
+                                <td>{{ $gift->barcode ?? 'N/A' }}</td>
+                                <td>{{ number_format($gift->amount ?? 0, 2) }}</td>
+                                <td>{{ $gift->expire_date ? date('Y, M d', strtotime($gift->expire_date)) : 'N/A' }}</td>
+                                <td>
+                                    <span class="badge {{ $gift->status ? 'badge-success' : 'badge-danger' }}">
+                                        {{ $gift->status ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>{{ $gift->created_at ? $gift->created_at->format('Y-m-d H:i:s') : 'N/A' }}</td>
+                                <td>{{ $gift->modified_by ?? 'N/A' }}</td>
+                                <td>
+                                    @hasPermission(config('constants.role_modules.edit_gift_cards.value'))
+                                        <a href="{{ route('gift-cards.edit', $gift) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endHasPermission
+                                    @hasPermission(config('constants.role_modules.delete_gift_cards.value'))
+                                        <button class="btn btn-danger btn-sm btn-delete" 
+                                                data-url="{{ route('gift-cards.destroy', $gift) }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    @endHasPermission
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="text-center">No Gift Cards Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                {{ $giftCards->links() }}
+            </div>
         </div>
     </div>
-
 @endsection
 
 @section('js')
@@ -76,36 +77,37 @@
     <script>
         $(document).ready(function() {
             $(document).on('click', '.btn-delete', function() {
-                $this = $(this);
-                const swalWithBootstrapButtons = Swal.mixin({
-                    customClass: {
-                        confirmButton: 'btn btn-success',
-                        cancelButton: 'btn btn-danger'
-                    },
-                    buttonsStyling: false
-                })
-
-                swalWithBootstrapButtons.fire({
+                const button = $(this);
+                Swal.fire({
                     title: 'Are you sure?',
                     text: "Do you really want to delete this Gift Card?",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'No',
+                    cancelButtonText: 'No, cancel!',
                     reverseButtons: true
                 }).then((result) => {
-                    if (result.value) {
-                        $.post($this.data('url'), {
-                            _method: 'DELETE',
-                            _token: '{{ csrf_token() }}'
-                        }, function(res) {
-                            $this.closest('tr').fadeOut(500, function() {
-                                $(this).remove();
-                            })
-                        })
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: button.data('url'),
+                            type: 'POST',
+                            data: {
+                                _method: 'DELETE',
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                button.closest('tr').fadeOut(500, function() {
+                                    $(this).remove();
+                                });
+                                Swal.fire('Deleted!', 'Gift Card has been deleted.', 'success');
+                            },
+                            error: function(response) {
+                                Swal.fire('Error!', 'Something went wrong. Try again later.', 'error');
+                            }
+                        });
                     }
-                })
-            })
-        })
+                });
+            });
+        });
     </script>
 @endsection

@@ -8,14 +8,33 @@ $(document).ready(function () {
             $("#giftcardno").removeAttr("readonly").focus();
             input.attr("placeholder", "Payment Amount").removeAttr("readonly");
             $("#expire").attr("hidden", true);
+
+            $("#checks").attr("hidden", true);
+       
         } else if ($(this).val() === "CreditCard") {
             $("#gift-card-section").attr("hidden", true);
             label.show().text("Payment Amount: ");
             input.attr("placeholder", "Payment Amount").removeAttr("readonly");
+
+            $("#checks").attr("hidden", true);
+      
+        } else if ($(this).val() === 'Check'){
+            $("#gift-card-section").attr("hidden", true);
+            $("#checks").attr("hidden", false);
+      
+
+            label.show().text("Check Amount");
+            input.attr("placeholder", "Check Amount").removeAttr("readonly");
+        
         } else {
+
             label.show().text("Payment Amount: ");
             input.attr("placeholder", "Payment Amount").removeAttr("readonly");
             $("#gift-card-section").attr("hidden", true);
+
+            $("#checks").attr("hidden", true);
+    
+
         }
 
         $(".btn-payment").removeClass("active");
@@ -69,6 +88,13 @@ $(document).ready(function () {
 
         let orderId = $("#order_id").val();
 
+        //Check Variables
+
+        let xname = $("#orderNameInput").val();
+        let xrouting = $("#orderRoutingInput").val();
+        let xaccount = $("#orderAccountInput").val();
+
+
         let change = 0;
         if (paymentMethod === "Cash") {
             if (amount > totalAmount) {
@@ -93,6 +119,8 @@ $(document).ready(function () {
         } else if (paymentMethod === "CreditCard") {
             processCreditCardPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email);
 
+        } else if (paymentMethod === 'Check') {
+            processCheckPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount);
         }
     }
 
@@ -187,6 +215,53 @@ $(document).ready(function () {
                 );
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire("Changes are not saved", "", "info");
+            }
+        });
+    }
+
+    function processCheckPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount) {
+        $.ajax({
+            url: processingCheckPayment,
+            type: 'GET',
+            dataType: 'json',
+            data: {
+
+                xAmount: amount,
+                xName: xname,
+                xRouting: xrouting,
+                xAccount: xaccount,
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            },
+            success: function (response) {
+               
+
+                if(response.xResult === 'A'){
+                    handlePayment(
+                        customer_id,
+                        response.xAuthAmount,
+                        0,
+                        response.xCardType,
+                        response.xMaskedCardNumber,
+                        response.RefNum,
+                        totalAmount,
+                        isPartial,
+                        orderId,
+                        customer_email
+                    )
+                } else {
+                    Swal.fire(
+                        "Error",
+                        `${response.xError}`,
+                        "error"
+                    );
+
+                    console.log('Response:', response);
+                }
+             },
+            error: function (xhr, error) {
+                console.error('Error', xhr, error);
             }
         });
     }

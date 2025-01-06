@@ -63,6 +63,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('orders-submits', [OrderController::class, 'store'])->name('orders.store');
     Route::post('orders-update', [OrderController::class, 'update'])->name('orders.update');
     Route::post('orders-send-email', [OrderController::class, 'sendInvoiceEmail'])->name('orders.send.invoice');
+    
     Route::get('reservations/book-site/{bookingId}', [ReservationController::class, 'bookSite'])->name('reservations.book.site');
     Route::get('reservations/site-detail/{siteId}/{bookingId}', [ReservationController::class, 'siteDetail'])->name('reservations.site.detail');
     Route::get('reservations/checkout/{bookingId}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
@@ -103,6 +104,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('gift-cards', GiftCardController::class);
     Route::get('reports/sales-report', [ReportController::class, 'salesReport'])->name('reports.salesReport');
     Route::get('reports/income-per-site-report', [ReportController::class, 'incomePerSiteReport'])->name('reports.incomePerSiteReport');
+    Route::get('reports/z-out-report', [ReportController::class, 'zOutReport'])->name('reports.zOutReport');
     Route::get('reports/reservation-report', [ReportController::class, 'reservationReport'])->name('reports.reservationReport');
     Route::get('reports/gift-card-report', [ReportController::class, 'giftCardReport'])->name('reports.giftCardReport');
     Route::get('reports/tax-report', [ReportController::class, 'taxReport'])->name('reports.taxReport');
@@ -118,6 +120,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/cart/empty', [CartController::class, 'empty'])->name('cart.empty');
     Route::get('cart/get-product-for-receipt', [CartController::class, 'getProductForReceipt'])->name('cart.get-product-for-receipt');
     Route::get('/cart/partialpayment', [CartController::class, 'showPartialPaymentCustomer'])->name('cart.partialpayment');
+    Route::get('/cart/processCheckPayment', [CartController::class, 'processCheckPayment'])->name('cart.processCheckPayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);

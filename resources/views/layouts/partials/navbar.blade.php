@@ -165,9 +165,15 @@
                         </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.sales_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.incomePerSiteReport') }}">
-                        <i class="nav-icon fas fa-dollar-sign"></i>
-                        <span>Income Per Site Report</span>
+                    <li><a class="dropdown-item" href="{{ route('reports.incomePerSiteReport') }}">
+                            <i class="nav-icon fas fa-dollar-sign"></i>
+                            <span>Income Per Site Report</span>
+                        </a></li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.sales_report.value'))
+                <li><a class="dropdown-item" href="{{ route('reports.zOutReport') }}">
+                        <i class="nav-icon fas fa-cash-register"></i>
+                        <span>Z-Out Report</span>
                     </a></li>
             @endHasPermission
                 @hasPermission(config('constants.role_modules.reservation_report.value'))
