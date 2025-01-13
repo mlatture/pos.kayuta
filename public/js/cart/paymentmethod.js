@@ -343,6 +343,9 @@ $(document).ready(function () {
         orderId,
         customer_email
     ) {
+        // For testing
+        // url: 'http://localemv.com:8889',
+
         $.ajax({
             url: 'https://localemv.com:8887',
             type: 'POST',
