@@ -131,6 +131,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
     Route::put('update-sites-pricing', [CalendarReservationController::class, 'updateSitePricing'])->name('update.pricing');
+
+    Route::post('insert-cards-on-files', [OrderController::class, 'insertCardsOnFiles'])->name('insert.cards.on.files');
 });
 
 

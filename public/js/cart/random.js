@@ -448,6 +448,8 @@ $(document).ready(function () {
         let totalDiscount = parseFloat(
             $("#total-discount").text().replace(/[^0-9.-]+/g, "")
         );
+
+        
     
         var offcanvas = new bootstrap.Offcanvas(
             document.getElementById("offcanvasOrder")
@@ -469,6 +471,8 @@ $(document).ready(function () {
         $("#offcanvasSubtotal").text(
             parseFloat($("#subtotal-amount").val().replace(/,/g, "")).toFixed(2)
         );
+
+
     
         if (totalDiscount > 0) {
             $("#discount-section").show();

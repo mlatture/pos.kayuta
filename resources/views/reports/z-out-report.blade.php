@@ -5,7 +5,7 @@
 
 
 
-@section('content-header', 'POS Z - Out Report')
+@section('content-header')
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
@@ -96,15 +96,17 @@
 @endsection
 
 @section('content')
+<h1><span id="dynamic-content-header" >POS Z - Out Report</span></h1>
+
     <div class="row ">
-        <div class="card" style="background-color: #F4F6F9; box-shadow: none; border: none;">
+        <div class="" style="background-color: #F4F6F9; box-shadow: none; border: none;">
             <div class="card-body" style="border: none;">
                 <div class="row mt-3 d-flex justify-content-center align-items-center">
 
                     <!-- Date Range -->
                     <div class="col-md-3">
                         <label for="productDate" class="form-label">Date Range:</label>
-                        <input type="text" class="form-control daterange" id="productDate" autocomplete="off"
+                        <input type="text" class="form-control daterange" id="z-out-datepicker" autocomplete="off"
                             placeholder="Select Date">
                     </div>
 
@@ -112,7 +114,7 @@
                     <div class="col-md-3">
                         <label for="station" class="form-label">Station:</label>
                         <select id="station" class="form-control">
-                         
+
                         </select>
                     </div>
 
@@ -168,33 +170,33 @@
                 <tbody>
                     <tr>
                         <td>Sales</td>
-                        <td>$689.16</td>
+                        <td id="grossSales"> </td>
                         <td>$0.00</td>
-                        <td>$689.16</td>
+                        <td id="netSales"></td>
                     </tr>
                     <tr>
                         <td>Tax</td>
-                        <td>$20.89</td>
+                        <td id="salesTax"></td>
                         <td>$0.00</td>
-                        <td>$20.89</td>
+                        <td id="netTax"></td>
                     </tr>
                     <tr>
                         <td>Total</td>
-                        <td>$710.05</td>
+                        <td id="totalSales"></td>
                         <td>$0.00</td>
-                        <td>$710.05</td>
+                        <td id="netTotalSales"></td>
                     </tr>
                     <tr>
                         <td>Trans. Count</td>
-                        <td>30</td>
+                        <td id="sales_tran_count"></td>
                         <td>0</td>
-                        <td>30</td>
+                        <td id="net_tran_count"></td>
                     </tr>
                 </tbody>
             </table>
 
             <h2 class="section-title">Sales Activity</h2>
-            <table>
+            <table id="salesActivityTable">
                 <thead>
                     <tr>
                         <th>Account</th>
@@ -204,36 +206,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>General Merchandise - Regular Sales Tax</td>
-                        <td>$199.58</td>
-                        <td>$17.47</td>
-                        <td>$217.05</td>
-                    </tr>
-                    <tr>
-                        <td>Grocery - No Tax</td>
-                        <td>$343.59</td>
-                        <td>$0.00</td>
-                        <td>$343.59</td>
-                    </tr>
-                    <tr>
-                        <td>Apparel - Has Clothing Tax</td>
-                        <td>$72.00</td>
-                        <td>$3.42</td>
-                        <td>$75.42</td>
-                    </tr>
-                    <tr>
-                        <td>Site Rental</td>
-                        <td>$73.99</td>
-                        <td>$0.00</td>
-                        <td>$73.99</td>
-                    </tr>
-                    <tr>
-                        <td>Total</td>
-                        <td>$689.16</td>
-                        <td>$20.89</td>
-                        <td>$710.05</td>
-                    </tr>
+
                 </tbody>
             </table>
         </div>
@@ -242,26 +215,17 @@
     <div class="card">
         <div class="card-body">
             <h2 class="section-title">Payment Summary</h2>
-            <table>
+            <table id="paymentSummaryTable">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th>Payment Method</th>
                         <th>Trans. Count</th>
                         <th>Amount</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>Credit Card</td>
-                        <td>8</td>
-                        <td>$124.88</td>
-                    </tr>
-                    <tr>
-                        <td>Cash</td>
-                        <td>24</td>
-                        <td>$585.17</td>
-                    </tr>
-                </tbody>
+               <tbody>
+
+               </tbody>
             </table>
 
         </div>
@@ -269,7 +233,7 @@
     <div class="card">
         <div class="card-body">
             <h2 class="section-title">Credit Card Listing</h2>
-            <table>
+            <table id="creditCardListingTable">
                 <thead>
                     <tr>
                         <th>Type</th>
@@ -277,43 +241,7 @@
                         <th>Amount</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>Visa: xxxx-7812</td>
-                        <td>Joey Chapman</td>
-                        <td>$25.01</td>
-                    </tr>
-                    <tr>
-                        <td>Visa: xxxx-0856</td>
-                        <td>David Williams</td>
-                        <td>$35.89</td>
-                    </tr>
-                    <tr>
-                        <td>Visa: xxxx-0035</td>
-                        <td>James Rando</td>
-                        <td>$23.64</td>
-                    </tr>
-                    <tr>
-                        <td>Visa: xxxx-5398</td>
-                        <td>Joseph Guffey</td>
-                        <td>$4.11</td>
-                    </tr>
-                    <tr>
-                        <td>Visa: xxxx-6530</td>
-                        <td>Samantha Longtin</td>
-                        <td>$15.00</td>
-                    </tr>
-                    <tr>
-                        <td>Visa: xxxx-3842</td>
-                        <td>Tanya Elthorp</td>
-                        <td>$21.23</td>
-                    </tr>
-                    <tr>
-                        <td>Total</td>
-                        <td></td>
-                        <td>$124.88</td>
-                    </tr>
-                </tbody>
+             <tbody></tbody>
             </table>
         </div>
     </div>
@@ -321,7 +249,7 @@
     <div class="card">
         <div class="card-body">
             <h2 class="section-title">User Activity</h2>
-            <table>
+            <table id="userActivityTable">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -355,38 +283,7 @@
                         <th>12 PM</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>7/6/2024</td>
-                        <td>Register 1</td>
-                        <td>Steph Postol</td>
-                        <td>30</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td>5</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td>7</td>
-                        <td></td>
-                        <td></td>
-                        <td>7</td>
-                        <td>4</td>
-                        <td>9</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
             </table>
 
         </div>
@@ -397,90 +294,238 @@
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
         $(document).ready(function() {
-            $('#productDate').daterangepicker({
+            $('.card').hide();
 
-                autoApply: false,
+            $('.filter-card').show();
+
+            $('#z-out-datepicker').daterangepicker({
+                singleDatePicker: true,
+                autoApply: true,
                 autoUpdateInput: true,
                 locale: {
                     cancelLabel: 'Clear',
                     format: 'MM/DD/YYYY',
                 },
                 ranges: {
-                    'Today': [moment(), moment()],
-                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-                    'This Month': [moment().startOf('month'), moment().endOf('month')],
-                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1,
-                        'month').endOf('month')]
-                },
+                            'Today': [moment(), moment()],
+                            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                            'This Month': [moment().startOf('month'), moment().endOf('month')],
+                            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1,
+                                'month').endOf('month')]
+                        },
                 alwaysShowCalendars: true,
                 showCustomRangeLabel: false,
                 opens: 'auto',
             });
 
-            $('#productDate').on('apply.daterangepicker', function(ev, picker) {
-                fetchFilteredOrders();
-            });
-
-            $('#productDate').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val(''); // Clear the input field
-            });
-
-            function fetchFilteredOrders() {
-                var dateRange = $('#productDate').val();
-                var dateToUse = $('#dateToUse').val();
-
-                console.log("Date Range:", dateRange);
-
-                if (dateRange) {
-                    var dates = dateRange.split(' - ');
-                    var startDate = dates[0];
-                    var endDate = dates[1];
-
-                    $.ajax({
-                        url: "{{ route('reports.salesReport') }}",
-                        type: 'GET',
-                        data: {
-                            date_range: dateRange,
-                        },
-                        success: function(response) {
-                            $('#dataTableContainer').html(response);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error fetching orders:', error);
-                        }
-                    });
+            function toggleCards(show = false) {
+                if (show) {
+                    $('.card').show();
                 } else {
-                    console.log("No date range selected");
+                    $('.card').hide();
                 }
-            };
-
-
-            function ucfirst(str) {
-                return str.charAt(0).toUpperCase() + str.slice(1);
             }
-            // Fetch User Names for dropdown
+
             $.ajax({
                 url: "{{ route('user.name') }}",
                 type: 'GET',
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     $('#user').empty();
+                    $('#user').append('<option disabled selected>Select a user</option>');
 
-                    $('#user').append('<option disabled selected> Select a user </option>');
-
-                    for (let res of response) {
-                        let name = ucfirst(res.name);
-                        let option = `<option value="${res.id}"> ${name} </option>`;
+                    response.forEach(res => {
+                        let name = res.name.charAt(0).toUpperCase() + res.name.slice(1);
+                        let option = `<option value="${res.id}" data-name="${name}">${name}</option>`;
                         $('#user').append(option);
-                    }
+                    });
 
+               
                 },
-                error: function(xhr, error) {
-                    console.error('Error: ', xhr, error);
+                error: function (xhr, error) {
+                    console.error('Error fetching users:', error);
                 }
             });
+            
+          
+            function fetchData() {
+                    let selectedDate = $('#z-out-datepicker').val();
+                    let selectedCustomerId = $('#user').val();
+                    let stationId = $('#station').val();
+                    let selectedUserName = $('#user option:selected').data('name');
+                    let selectedStatName = $('#station option:selected').data('name');
+                   
+                    if (!selectedCustomerId) {
+                        console.warn('User not selected. Hiding data cards.');
+                        toggleCards(false);
+                        return;
+                    }
+
+                    toggleCards(true);
+
+
+                    $.ajax({
+                        url: "{{ route('reports.zOutReport') }}",
+                        type: 'GET',
+                        dataType: 'JSON',
+                        data: {
+                            customer_id: selectedCustomerId,
+                            date_range: selectedDate,
+                            // station_id: stationId
+                        },
+                        success: function (response) {
+                            console.log(response);
+                            // Update Sales Summary
+                            $('#grossSales').text('$' + response.gross_sales.toFixed(2));
+                            $('#salesTax').text('$' + response.gross_sales_tax.toFixed(2));
+                            $('#totalSales').text('$' + (response.gross_sales - response.gross_sales_tax).toFixed(2));
+                            $('#sales_tran_count').text(response.transaction_count);
+
+                            $('#netSales').text('$' + response.net_sales.toFixed(2));
+                            $('#netTax').text('$' + response.net_tax.toFixed(2));
+                            $('#netTotalSales').text('$' + response.net_total_sales.toFixed(2));
+                            $('#net_tran_count').text(response.net_transaction_count);
+
+                            // Update Sales Activity
+                            let totalAmount = 0, totalTax = 0, grandTotal = 0;
+                            let salesActivityBody = response.sales_activity
+                                .map(activity => {
+                                    const grossSales = parseFloat(activity.gross_sales) || 0;
+                                    const totalTaxValue = parseFloat(activity.total_tax) || 0;
+                                    const total = grossSales + totalTaxValue;
+
+                                    totalAmount += grossSales;
+                                    totalTax += totalTaxValue;
+                                    grandTotal += total;
+
+                                    return `
+                                        <tr>
+                                            <td>${activity.tax_type}</td>
+                                            <td>$${grossSales.toFixed(2)}</td>
+                                            <td>$${totalTaxValue.toFixed(2)}</td>
+                                            <td>$${total.toFixed(2)}</td>
+                                        </tr>
+                                    `;
+                                }).join('');
+
+                            salesActivityBody += `
+                                <tr>
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>$${totalAmount.toFixed(2)}</strong></td>
+                                    <td><strong>$${totalTax.toFixed(2)}</strong></td>
+                                    <td><strong>$${grandTotal.toFixed(2)}</strong></td>
+                                </tr>
+                            `;
+
+                            $('#salesActivityTable tbody').html(salesActivityBody);
+
+                            // Update Payment Summary
+                            let paymentSummaryBody = response.payment_summary
+                                .map(summary => {
+                                    if (summary.transaction_count !== 0) {
+                                        return `
+                                            <tr>
+                                                <td>${summary.payment_method}</td>
+                                                <td>${summary.transaction_count}</td>
+                                                <td>$${parseFloat(summary.total_amount).toFixed(2)}</td>
+                                            </tr>
+                                        `;
+                                    }
+                                }).join('');
+
+                            $('#paymentSummaryTable tbody').html(paymentSummaryBody);
+
+                            // Update Credit Card Listing
+                            let creditCardListingTableBody = response.list
+                                .map(card => `
+                                    <tr>
+                                        <td>${card.method}: ${card.masked_card_number}</td>
+                                        <td>${card.name}</td>
+                                        <td>$${parseFloat(card.order_amount).toFixed(2)}</td>
+                                    </tr>
+                                `).join('');
+
+                            $('#creditCardListingTable tbody').html(creditCardListingTableBody);
+
+
+
+
+                            // Update User Activity 
+                          let userActivity = response.user_activity;
+                            console.log('User Activity:', userActivity);
+
+                            if (!userActivity || Object.keys(userActivity).length === 0) {
+                                console.warn('No user activity data available.');
+                                $('#userActivityTable tbody').html('<tr><td colspan="28">No data available</td></tr>');
+                                return;
+                            }
+
+                            let date = userActivity.date || 'N/A';
+                            let totalCount = userActivity.total_count || 0;
+                            let hourlyCounts = userActivity.hourly_counts || [];
+                            let hourlyPaymentCounts = userActivity.hourly_payment_counts || [];
+                            let totalPaymentCount = userActivity.total_payment_count || 0;
+
+                            let hourlyCountColumns = '';
+                            let hourlyPaymentColumns = '';
+
+                            for (let i = 0; i < 24; i++) {
+                                hourlyCountColumns += `<td>${hourlyCounts[i] || 0}</td>`;
+                                hourlyPaymentColumns += `<td>${hourlyPaymentCounts[i] || 0}</td>`;
+                            }
+
+                            let userActivityBody = `
+                                <tr>
+                                    <td>${date}</td>
+                                    <td>${selectedStatName || 'N/A'}</td>
+                                    <td>${selectedUserName || 'N/A'}</td>
+                                    <td>${totalCount}</td>
+                                    ${hourlyCountColumns}
+                                </tr>
+                               
+                            `;
+
+                            // Append rows to the table body
+                            $('#userActivityTable tbody').html(userActivityBody);
+
+
+
+                       
+                        },
+                        error: function (xhr, error) {
+                            console.error('Error fetching data:', error);
+                        }
+                    });
+                }
+                function handleFilterChange() {
+                    fetchData();
+                    updateContentHeader();
+                }
+
+                $('#z-out-datepicker').on('apply.daterangepicker', handleFilterChange);
+                $('#user').on('change', handleFilterChange);
+                $('#station').on('change', handleFilterChange);
+
+            function ucfirst(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            function updateContentHeader() {
+                let selectedDate = $('#z-out-datepicker').val() || 'N/A';
+                let selectedStation = $('#station option:selected').data('name') || 'N/A';
+                let selectedUser = $('#user option:selected').data('name') || 'N/A';
+
+                let formattedDate = selectedDate
+                    ? moment(selectedDate, 'MM/DD/YYYY').format('dddd, MMMM D, YYYY')
+                    : 'N/A';
+
+                let headerContent = `POS Z - Out Report (${formattedDate}) (Station: ${selectedStation}) (User: ${selectedUser})`;
+                $('#dynamic-content-header').text(headerContent);
+            }
+
+                
 
             // Fetch Station No: 
             $.ajax({
@@ -495,11 +540,14 @@
 
                     for (let res of response) {
                         let statName = ucfirst(res.name);
-                        let option = `<option value="${res.id}"> ${statName} </option>`;
+                        let option = `<option value="${res.id}" data-name="${statName}"> ${statName} </option>`;
 
                         console.log(res);
                         $('#station').append(option);
+                        
                     }
+
+                  
                 },
                 error: function(xhr, error) {
                     console.error('Error', xhr, error);
