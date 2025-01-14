@@ -9,6 +9,8 @@ use App\Models\Site;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\ZoutModel;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -61,8 +63,39 @@ class ReportController extends Controller
 
     public function zOutReport(Request $request)
     {
-        return view('reports.z-out-report');
+        $customer_id = $request->input('customer_id');
+        $dateRange = $request->input('date_range');
+        // $stationId = $request->input('station_id');
+
+        $grossSales = ZoutModel::getGrossSales($customer_id, $dateRange);
+        $tax = ZoutModel::getTax($customer_id, $dateRange);
+        $netSales = ZoutModel::getNetSales($customer_id, $dateRange);
+        $salesActivity = ZoutModel::getSalesActivity($customer_id, $dateRange);
+        $paymentSummary = ZoutModel::getPaymentSummary($customer_id, $dateRange);
+        $creditCardListing = ZoutModel::getCreditCardListing($customer_id, $dateRange);
+        $userActivity = ZoutModel::getUserActivity($customer_id, $dateRange);
+        if ($request->ajax()) {
+            return response()->json([
+                'gross_sales' => $grossSales['gross_sales'],
+                'transaction_count' => $grossSales['transaction_count'],
+                'gross_sales_tax' => $tax,
+                'net_sales' => $netSales['gross_sales'],
+                'net_tax' => $netSales['total_tax'],
+                'net_total_sales' => $netSales['net_sales'],
+                'net_transaction_count' => $netSales['transaction_count'],
+                'sales_activity' => $salesActivity,
+                'payment_summary' => $paymentSummary,
+                'list' => $creditCardListing,
+                'user_activity' => $userActivity
+            ]);
+        }
+
+        return view('reports.z-out-report', [
+            'gross_sales' => $grossSales,
+            'tax' => $tax,
+        ]);
     }
+
     
     
     

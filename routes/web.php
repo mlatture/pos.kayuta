@@ -25,6 +25,7 @@ use App\Http\Controllers\PayBalanceController;
 use App\Http\Controllers\StationRegisterController;
 use App\Http\Controllers\DynamicTableController;
 use App\Http\Controllers\API\CheckAvailability;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return redirect('/admin');
@@ -35,7 +36,8 @@ Auth::routes();
 Route::prefix('admin')->middleware('auth')->group(function () {
 
 
-    Route::post('users',[\App\Http\Controllers\UserController::class,'store'])->name('users.store');
+    Route::post('users',[UserController::class,'store'])->name('users.store');
+    Route::get('users_details', [UserController::class, 'getUserName'])->name('user.name');
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
@@ -123,11 +125,14 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/cart/processCheckPayment', [CartController::class, 'processCheckPayment'])->name('cart.processCheckPayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
+    Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
     Route::put('update-sites-pricing', [CalendarReservationController::class, 'updateSitePricing'])->name('update.pricing');
+
+    Route::post('insert-cards-on-files', [OrderController::class, 'insertCardsOnFiles'])->name('insert.cards.on.files');
 });
 
 

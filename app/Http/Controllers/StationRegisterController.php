@@ -35,6 +35,22 @@ class StationRegisterController extends Controller
 
     }
 
+    public function getStation()
+    {
+        $stations = StationRegisters::all();
+
+
+        $stationData = $stations->map(function($station){
+            return  [
+                'id' => $station->id,
+                'name' => $station->name
+            ];
+        });
+
+
+        return response()->json($stationData);
+    }
+
 
 
 }

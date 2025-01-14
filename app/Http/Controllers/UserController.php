@@ -20,5 +20,19 @@ class UserController extends Controller
         return redirect()->back()->with('success','User Added!');
     }
 
+    public function getUserName(){
+        $users = User::all();
+
+        $userData = $users->map(function($user){
+            return [
+                'id' => $user->id,
+                'name' => $user->f_name . ' ' . $user->l_name,
+            ];
+        });
+
+        return response()->json($userData);
+
+    }
+
   
 }

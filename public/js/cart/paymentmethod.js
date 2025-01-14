@@ -88,7 +88,7 @@ $(document).ready(function () {
 
         let orderId = $("#order_id").val();
 
-        //Check Variables
+
 
         let xname = $("#orderNameInput").val();
         let xrouting = $("#orderRoutingInput").val();
@@ -105,7 +105,7 @@ $(document).ready(function () {
                 amount,
                 change,
                 paymentMethod,
-                0,
+                0, 
                 0,
                 totalAmount,
                 isPartial,
@@ -124,102 +124,9 @@ $(document).ready(function () {
         }
     }
 
-    function handlePayment(
-        customer_id,
-        amount,
-        change,
-        paymentMethod,
-        number,
-        x_ref_num,
-        totalAmount,
-        isPartial,
-        orderId,
-        customer_email
-    ) {
-        let remainingBalance =
-            parseFloat($("#remainingBalance").text()) || totalAmount;
-        let firstRemainingBalance = remainingBalance - amount;
-        $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
+    
 
-        Swal.fire({
-            title:
-                change >= 0
-                    ? `Change is: $${change.toFixed(
-                          2
-                      )}. Do you want to proceed?`
-                    : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
-                          2
-                      )}`,
-            showCancelButton: true,
-            confirmButtonText: "Save",
-            cancelButtonText: `Don't save`,
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return new Promise((resolve) => {
-                    $.ajax({
-                        url: isPartial ? cartOrderUpdateUrl : cartOrderStoreUrl,
-                        type: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                                "content"
-                            ),
-                        },
-                        data: {
-                            order_id: orderId,
-                            amount: amount,
-                            customer_id: customer_id ?? 0,
-                            payment_method: paymentMethod,
-                            acc_number: number,
-                            x_ref_num: x_ref_num,
-                        },
-                        success: function (response) {
-                            resolve(response);
-
-                            if (!isPartial) {
-                                orderId = response.order_id;
-                                $("#order_id").val(orderId);
-                                $("#orderAmountInput").val("");
-                                $("#giftcardno").val("");
-                                $('input[name="payment_method"]:checked').prop(
-                                    "checked",
-                                    false
-                                );
-                            } else {
-                                $("#orderAmountInput").val("");
-                                $("#giftcardno").val("");
-                                $('input[name="payment_method"]:checked').prop(
-                                    "checked",
-                                    false
-                                );
-                                orderId = response.OrderItem.order_id;
-                                $("#order_id").val(orderId);
-                            }
-                        },
-                        error: function (reject) {
-                            resolve(reject);
-                        },
-                    });
-                });
-            },
-        }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                let response = result.value;
-
-                finalizeOrder(
-                    amount,
-                    totalAmount,
-                    response,
-                    firstRemainingBalance,
-                    customer_email,
-                    orderId
-                );
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                Swal.fire("Changes are not saved", "", "info");
-            }
-        });
-    }
-
-    function processCheckPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount) {
+    function processCheckPayment( customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount) {
         $.ajax({
             url: processingCheckPayment,
             type: 'GET',
@@ -235,16 +142,16 @@ $(document).ready(function () {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
             },
             success: function (response) {
-               
+                console.log('Check response', resp)
 
                 if(response.xResult === 'A'){
                     handlePayment(
                         customer_id,
                         response.xAuthAmount,
                         0,
-                        response.xCardType,
-                        response.xMaskedCardNumber,
-                        response.RefNum,
+                        'Check',
+                        response.xMaskedAccountNumber,
+                        response.xRefNum,
                         totalAmount,
                         isPartial,
                         orderId,
@@ -267,13 +174,15 @@ $(document).ready(function () {
     }
 
     function processGiftCardPayment(
+     
         giftCardNumber,
         customer_id,
         amount,
         totalAmount,
         isPartial,
         orderId,
-        customer_email
+        customer_email,
+    
     ) {
         $.ajax({
             url: processGiftCard,
@@ -336,6 +245,7 @@ $(document).ready(function () {
     }
 
     function processCreditCardPayment(
+    
         customer_id,
         amount,
         totalAmount,
@@ -343,6 +253,7 @@ $(document).ready(function () {
         orderId,
         customer_email
     ) {
+      
         $.ajax({
             url: 'https://localemv.com:8887',
             type: 'POST',
@@ -357,8 +268,10 @@ $(document).ready(function () {
                 let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
                 console.log(jsonResponse);
                 const xResult = jsonResponse.xResult;
+                var order_id = $("#order_id").val();
+                console.log('Email', customer_email, 'Order ID', orderId);
 
-                if(xResult === 'A') {
+                if (xResult === 'A') {
                     handlePayment(
                         customer_id,
                         jsonResponse.xAuthAmount,
@@ -369,8 +282,11 @@ $(document).ready(function () {
                         totalAmount,
                         isPartial,
                         orderId,
-                        customer_email
-                    )
+                        customer_email,
+                        jsonResponse,
+                    );
+
+                
                 }else if(jsonResponse.xError === 'NaN is not a valid integer'){
                     Swal.fire(
                         "Error",
@@ -390,43 +306,178 @@ $(document).ready(function () {
                 console.error('Error', xhr, error);
             }
         })
-        // $.ajax({
-        //     url: processTerminal,
-        //     type: "POST",
-        //     headers: {
-        //         "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-        //     },
-        //     data: { amount: amount },
-        //     success: function (response) {
-        //         if (response.message === "Payment Approved") {
-        //             handlePayment(
-        //                 customer_id,
-        //                 amount,
-        //                 0,
-        //                 "CreditCard",
-        //                 response.success.xMaskedCardNumber,
-        //                 response.success.xRefNum,
-        //                 totalAmount,
-        //                 isPartial,
-        //                 orderId,
-        //                 customer_email
-        //             );
+      
+    }
 
-        //             console.log(orderId, 'Test')
+    function handleCardsOnFiles(
+        customer_id,
+        orderId,
+        invoice,
+        customer_email,
+        cardNumber,
+        cardType,
+        token,
+        result,
+        status,
+        errorCode,
+        name
+    ){
+        $.ajax({
+            url: insertCardsOnFiles,
+            type: 'POST',
+            data: {
+                customernumber: customer_id,
+                cartid: invoice,
+                receipt: orderId,
+                email: customer_email,
+                xmaskedcardnumber: cardNumber,
+                method: cardType,
+                xtoken: token,
+                name: name,
+                gateway_response: JSON.stringify({
+                    result: result,
+                    status: status,
+                    errorCode: errorCode
+                }),
+            },
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                console.log('Success', response);
+            }, 
+            error: function(xhr, error){
+                console.error('Error', xhr, error);
+            }
+        })
+    }
 
-                   
-        //         } else {
-        //             Swal.fire(
-        //                 "Error",
-        //                 response.error || response.message,
-        //                 "error"
-        //             );
-        //         }
-        //     },
-        //     error: function (xhr) {
-        //         Swal.fire("Error", "Failed to process the request.", "error");
-        //     },
-        // });
+    function handlePayment(
+        customer_id,
+        amount,
+        change,
+        paymentMethod,
+        number,
+        x_ref_num,
+        totalAmount,
+        isPartial,
+        orderId,
+        customer_email,
+        jsonResponse,
+    ) {
+        let remainingBalance =
+            parseFloat($("#remainingBalance").text()) || totalAmount;
+        let firstRemainingBalance = remainingBalance - amount;
+        $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
+
+        Swal.fire({
+            title:
+                change >= 0
+                    ? `Change is: $${change.toFixed(
+                          2
+                      )}. Do you want to proceed?`
+                    : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
+                          2
+                      )}`,
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            cancelButtonText: `Don't save`,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return new Promise((resolve) => {
+                    $.ajax({
+                        url: isPartial ? cartOrderUpdateUrl : cartOrderStoreUrl,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"
+                            ),
+                        },
+                        data: {
+                            order_id: orderId,
+                            amount: amount,
+                            customer_id: customer_id ?? 0,
+                            payment_method: paymentMethod,
+                            acc_number: number,
+                            x_ref_num: x_ref_num,
+                        },
+                        success: function (response) {
+                            resolve(response);
+
+                            if (!isPartial) {
+                                orderId = response.order_id;
+                                $("#order_id").val(orderId);
+                                $("#orderAmountInput").val("");
+                                $("#giftcardno").val("");
+                                $('input[name="payment_method"]:checked').prop(
+                                    "checked",
+                                    false
+                                );
+
+                                handleCardsOnFiles(
+                                    customer_id,
+                                    orderId,
+                                    jsonResponse.xInvoice,
+                                    customer_email,
+                                    jsonResponse.xMaskedCardNumber,
+                                    jsonResponse.xCardType,
+                                    jsonResponse.xToken,
+                                    jsonResponse.xResult,
+                                    jsonResponse.xStatus,
+                                    jsonResponse.xErrorCode,
+                                    jsonResponse.xName,
+                                   
+                                );
+
+                            } else {
+                                $("#orderAmountInput").val("");
+                                $("#giftcardno").val("");
+                                $('input[name="payment_method"]:checked').prop(
+                                    "checked",
+                                    false
+                                );
+                                orderId = response.OrderItem.order_id;
+                                $("#order_id").val(orderId);
+
+                                handleCardsOnFiles(
+                                    customer_id,
+                                    orderId,
+                                    jsonResponse.xInvoice,
+                                    customer_email,
+                                    jsonResponse.xMaskedCardNumber,
+                                    jsonResponse.xCardType,
+                                    jsonResponse.xToken,
+                                    jsonResponse.xResult,
+                                    jsonResponse.xStatus,
+                                    jsonResponse.xErrorCode,
+                                   
+                                );
+                            }
+
+                         
+                        },
+                        error: function (reject) {
+                            resolve(reject);
+                        },
+                    });
+                });
+            },
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                let response = result.value;
+
+                finalizeOrder(
+                    amount,
+                    totalAmount,
+                    response,
+                    firstRemainingBalance,
+                    customer_email,
+                    orderId
+                );
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire("Changes are not saved", "", "info");
+            }
+        });
     }
 
 
@@ -450,21 +501,13 @@ $(document).ready(function () {
         $("#updateOrderButton").attr("hidden", false);
 
         if (
-            order_amount >= totalAmount ||
-            response.totalpayAmount.amount >= response.OrderItem.price
+            order_amount >= totalAmount 
+            // response.totalpayAmount.amount >= response.OrderItem.price
         ) {
             offcanvas.hide();
             $("#selected-product tbody").empty();
             $("#card-summary").empty();
-            $.toast({
-                heading: response[0] || "Success",
-                text: response[1] || "Order placed successfully!",
-                position: "top-right",
-                loaderBg: "#00c263",
-                icon: "success",
-                hideAfter: 3000,
-                stack: 6,
-            });
+         
 
             $.ajax({
                 url: 'cart/get-product-for-receipt',
@@ -485,11 +528,7 @@ $(document).ready(function () {
             if(customer_email && customer_email.trim() !== ''){
                 sendInvoiceEmail(customer_email, orderId);
             }
-            setTimeout(function () {
-                clearInputFields(true);
-
-                window.location.reload();
-            }, 3000);
+           
         } else {
             $.toast({
                 heading: response[0] || "Success",
@@ -519,7 +558,7 @@ $(document).ready(function () {
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; margin-top: 20px;">
             <h2>Order Receipt</h2>
             <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Customer Email:</strong> ${customer_email}</p>
+            <p><strong>Customer Email:</strong> ${(customer_email && customer_email !== 'undefined') ? customer_email : 'N/A'}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
             <hr>
             <h3>Product Details:</h3>
@@ -537,10 +576,9 @@ $(document).ready(function () {
                 <tbody>
         `;
     
-        if (Array.isArray(  orders_response.products) &&   orders_response.products.length > 0) {
+        if (Array.isArray(orders_response.products) && orders_response.products.length > 0) {
             orders_response.products.forEach((item) => {
-                let totalPrice =
-                    item.quantity * item.price + item.tax - item.discount;
+                let totalPrice = item.quantity * item.price + item.tax - item.discount;
                 receiptDetails += `
                 <tr>
                     <td style="border: 1px solid #ddd; padding: 8px;">${item.product_name}</td>
@@ -559,13 +597,15 @@ $(document).ready(function () {
             </tr>
             `;
         }
+        
+       
     
         receiptDetails += `
                 </tbody>
             </table>
             <hr>
             <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-            <p><strong>Paid Amount:</strong> $${order_amount.toFixed(2)}</p>
+            <p><strong>Paid Amount:</strong> $${!isNaN(parseFloat(order_amount)) ? parseFloat(order_amount).toFixed(2) : "0.00"}</p>
             <p><strong>Change:</strong> $${Math.abs(totalAmount - order_amount).toFixed(2)}</p>
         </div>
         `;
@@ -576,6 +616,23 @@ $(document).ready(function () {
         printWindow.document.write('</body></html>');
         printWindow.document.close(); 
         printWindow.print(); 
+
+        $.toast({
+            heading: response[0] || "Success",
+            text: response[1] || "Order placed successfully!",
+            position: "top-right",
+            loaderBg: "#00c263",
+            icon: "success",
+            hideAfter: 3000,
+            stack: 6,
+        });
+        
+
+        setTimeout(function () {
+            clearInputFields(true);
+
+            window.location.reload();
+        }, 3000);
     }
     
 

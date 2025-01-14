@@ -348,6 +348,8 @@ class CartController extends Controller
     
         return response()->json($responseArray);
     }
+
+  
     
     
 }

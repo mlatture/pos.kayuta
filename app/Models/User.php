@@ -18,6 +18,13 @@ class User extends Authenticatable
      */
     protected $guarded  =   [];
 
+    protected $table = 'users';
+    protected $fillable = [ 
+        'id',
+        'f_name',
+        'l_name'
+    ];
+
     /**
      * The attributes that should be hidden for arrays.
      *

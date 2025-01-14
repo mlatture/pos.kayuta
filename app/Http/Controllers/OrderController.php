@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\OrderStoreRequest;
+use App\Models\CardsOnFile;
+
 
 class OrderController extends Controller
 {
@@ -211,6 +213,29 @@ class OrderController extends Controller
                 'message' => 'Payment not completed',
             ], 400);
         }
+    }
+
+    public function insertCardsOnFiles(Request $request){
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:191',
+            'customernumber' => 'required|string|max:255',
+            'cartid' => 'required|string|max:255',
+            'receipt' => 'required|string|max:255',
+            'email' => 'nullable|email',
+            'xmaskedcardnumber' => 'required|string',
+            'method' => 'required|string',
+            'xtoken' => 'required|string',
+            'gateway_response' => 'required|json',
+        ]);
+
+        $card = CardsOnFile::create($validatedData);
+
+      
+        return response()->json([
+            'message' => 'Card stored successfully',
+            'data' => $card,
+
+        ], 201);
     }
     
 

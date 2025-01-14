@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\PosPayment;
 use App\Models\Reservation;
 use App\Models\Admin;
+use App\Models\CardsOnFile;
 use Exception;
 class Order extends Model
 {
@@ -174,5 +175,12 @@ class Order extends Model
     }
     
     
+ 
+   
+    
+    public function cardsOnFile()
+    {
+        return $this->hasMany(CardOnFile::class, 'order_id', 'id');
+    }
     
 }
