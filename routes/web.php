@@ -27,6 +27,7 @@ use App\Http\Controllers\DynamicTableController;
 use App\Http\Controllers\API\CheckAvailability;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PDFController;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -134,7 +135,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::post('insert-cards-on-files', [OrderController::class, 'insertCardsOnFiles'])->name('insert.cards.on.files');
 
+
     Route::post('/reports/z-out/download-pdf', [PDFController::class, 'generate_zOutPDF'])->name('reports.downloadPdf');
+
 });
 
 
