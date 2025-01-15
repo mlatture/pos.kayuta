@@ -287,7 +287,15 @@
             </table>
 
         </div>
+
+        <button id="downloadPdfBtn" class="btn btn-primary mt-3">
+            Download PDF
+        </button>
+        
     </div>
+
+    
+     
 @endsection
 
 @section('js')
@@ -553,6 +561,106 @@
                     console.error('Error', xhr, error);
                 }
             });
+
+
+            $('#downloadPdfBtn').on('click', function () {
+                const selectedUserName = $('#user option:selected').data('name');
+                const selectedStatName = $('#station option:selected').data('name');
+                const selectedDateRange = $('#z-out-datepicker').val();
+
+                // Gather data from the table
+                const reportData = {
+                    grossSales: $('#grossSales').text(),
+                    netSales: $('#netSales').text(),
+                    salesTax: $('#salesTax').text(),
+                    netTax: $('#netTax').text(),
+                    totalSales: $('#totalSales').text(),
+                    netTotalSales: $('#netTotalSales').text(),
+                    salesTranCount: $('#sales_tran_count').text(),
+                    netTranCount: $('#net_tran_count').text(),
+                    salesActivity: [],
+                    paymentSummary: [],
+                    creditCardListing: [],
+                    userActivity: [],
+
+                    selectedDateRange,
+                    selectedUserName,
+                    selectedStatName
+                };
+
+                // Collect Sales Activity Data
+                $('#salesActivityTable tbody tr').each(function () {
+                    const row = $(this).find('td');
+                    reportData.salesActivity.push({
+                        account: row.eq(0).text(),
+                        amount: row.eq(1).text(),
+                        tax: row.eq(2).text(),
+                        total: row.eq(3).text(),
+                    });
+                });
+
+                // Collect Payment Summary Data
+                $('#paymentSummaryTable tbody tr').each(function () {
+                    const row = $(this).find('td');
+                    reportData.paymentSummary.push({
+                        method: row.eq(0).text(),
+                        transactionCount: row.eq(1).text(),
+                        amount: row.eq(2).text(),
+                    });
+                });
+
+                // Collect Credit Card Listing Data
+                $('#creditCardListingTable tbody tr').each(function () {
+                    const row = $(this).find('td');
+                    reportData.creditCardListing.push({
+                        type: row.eq(0).text(),
+                        name: row.eq(1).text(),
+                        amount: row.eq(2).text(),
+                    });
+                });
+
+                $('#userActivityTable tbody tr').each(function () {
+                    const row = $(this).find('td');
+                    const hourlyCounts = [];
+
+                    row.slice(4).each(function () {
+                        hourlyCounts.push($(this).text());
+                    });
+
+                    reportData.userActivity.push({
+                        date: row.eq(0).text(),
+                        statName: row.eq(1).text(),
+                        userName: row.eq(2).text(),
+                        totalCount: row.eq(3).text(),
+                        hourlyCounts: hourlyCounts,
+                    });
+                });
+
+
+                $.ajax({
+                    url: "{{ route('reports.downloadPdf') }}", 
+                    type: 'POST',
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    },
+                    data: { reportData: reportData },
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    success: function (response) {
+                        const blob = new Blob([response], { type: 'application/pdf' });
+
+                        const link = document.createElement('a');
+                        link.href = window.URL.createObjectURL(blob);
+                        link.download = 'z-out-report.pdf';
+                        link.click();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error generating PDF:', error);
+                    }
+                });
+            });
+
         });
     </script>
 @endsection
