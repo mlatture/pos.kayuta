@@ -55,7 +55,7 @@ $(document).ready(function () {
         var siteSelector = $("#siteSelector").val();
         if (fromDate && toDate && siteSelector) {
             $.ajax({
-                url: `${webdavinci_api}/api/get_pricing`,
+                url: `https://pricing.webdavinci.com/public/api/get_pricing`,
                 method: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify({
@@ -63,19 +63,19 @@ $(document).ready(function () {
                     end_date: toDate,
                     site_id: siteSelector,
                 }),
-                headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                        "content"
-                    ),
-                    "X-API-KEY": `${webdavinci_api_key}`,
-                    "X-DOMAIN":
-                        window.location.protocol +
-                        "//" +
-                        window.location.hostname +
-                        (window.location.port
-                            ? `:${window.location.port}`
-                            : ""),
-                },
+                // headers: {
+                //     "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                //         "content"
+                //     ),
+                //     "X-API-KEY": `${webdavinci_api_key}`,
+                //     "X-DOMAIN":
+                //         window.location.protocol +
+                //         "//" +
+                //         window.location.hostname +
+                //         (window.location.port
+                //             ? `:${window.location.port}`
+                //             : ""),
+                // },
                 success: function (api_data) {
                     console.log(api_data);
                     updateSubtotal(api_data);
