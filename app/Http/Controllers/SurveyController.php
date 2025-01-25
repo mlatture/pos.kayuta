@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Survey;
 class SurveyController extends Controller
 {
-    public function create()
+    public function index()
     {
-        return view('surveys.create');
+        return view('feedback-survey.index');
     }
 
     public function store(Request $request)

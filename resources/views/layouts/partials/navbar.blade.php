@@ -116,7 +116,7 @@
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
                 <i class="nav-icon fas fa-store"></i>
-                <span class="ms-2">Store Setup</span>
+                <span class="ms-2">System Setup</span>
             </a>
             <ul class="dropdown-menu">
                 @hasPermission(config('constants.role_modules.list_products.value'))
@@ -143,6 +143,12 @@
                             <span>Tax Types</span>
                         </a></li>
                 @endHasPermission
+                @hasPermission(config('constants.role_modules.list_feedback_surveys.value'))
+                    <li><a class="dropdown-item d-flex align-items-center" href="{{ route('surveys.index') }}">
+                            <i class="nav-icon fas fa-percent me-2"></i>
+                            <span>Feedback Survey</span>
+                        </a></li>
+            @endHasPermission
             </ul>
         </li>
 

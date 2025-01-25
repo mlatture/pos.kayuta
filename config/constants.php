@@ -194,5 +194,9 @@ return [
             'name' => 'System Settings',
             'value' => 'system_settings'
         ],
+        'list_feedback_surveys' => [
+            'name' => 'Feedback Survey',
+            'value' => 'feedback_surveys'
+        ]
     ]
 ];
