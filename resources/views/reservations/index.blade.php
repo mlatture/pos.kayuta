@@ -223,8 +223,8 @@
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
 
     <script>
-        const webdavinci_api = "{{ env('WEBDAVINCI_API') }}";
-        const webdavinci_api_key = "{{ env('WEBDAVINCI_API_KEY') }}";
+        const webdavinci_api = "{{ config('app.webdavinci_api') }}";
+        const webdavinci_api_key = "{{ config('app.webdavinci_api_key') }}";
 
         
     </script>
