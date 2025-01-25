@@ -14,6 +14,8 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'webdavinci_api_key' => env('WEBDAVINCI_API_KEY'),
+    'webdavinci_api' => env('WEBDAVINCI_API'),
 
     /*
     |--------------------------------------------------------------------------

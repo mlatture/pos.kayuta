@@ -55,7 +55,7 @@ $(document).ready(function () {
         var siteSelector = $("#siteSelector").val();
         if (fromDate && toDate && siteSelector) {
             $.ajax({
-                url: `https://pricing.webdavinci.com/public/api/get_pricing`,
+                url: `${webdavinci_api}/api/get_pricing`,
                 method: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify({
