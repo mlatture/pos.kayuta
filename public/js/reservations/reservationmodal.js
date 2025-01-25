@@ -56,7 +56,7 @@ $(document).ready(function () {
         if (fromDate && toDate && siteSelector) {
             $.ajax({
                 url: `${webdavinci_api}/api/get_pricing`,
-                method: "POST",
+                method: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify({
                     start_date: fromDate,
@@ -92,6 +92,7 @@ $(document).ready(function () {
             });
         }
     });
+
 
     function updateSubtotal(api_data) {
         let subtotal = api_data.total_price;

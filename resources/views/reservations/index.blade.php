@@ -124,11 +124,11 @@
 
                             </div>
                             <!-- <div>
-                                            <a href="#" class="text-white text-decoration-none">
-                                                <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
-                                                Help
-                                            </a>
-                                        </div> -->
+                                                <a href="#" class="text-white text-decoration-none">
+                                                    <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
+                                                    Help
+                                                </a>
+                                            </div> -->
                         </div>
                     </div>
                     <div class="card-body">
@@ -222,5 +222,10 @@
     <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
 
- 
+    <script>
+        const webdavinci_api = "{{ config('app.webdavinci_api') }}";
+        const webdavinci_api_key = "{{ config('app.webdavinci_api_key') }}";
+
+        
+    </script>
 @endpush

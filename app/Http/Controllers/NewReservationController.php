@@ -21,7 +21,7 @@ use App\Models\CartReservation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-
+use App\Models\Survey;
 
 class NewReservationController extends Controller
 {
@@ -78,6 +78,14 @@ class NewReservationController extends Controller
             $reservation->update([
                 'checkedout' => Carbon::now(),
             ]);
+
+            Survey::create([
+                'guest_email' => $reservation->email,
+                'subject' => 'We value your feedback!',
+                'message' => 'Thank you for your stay. Please take a moment to fill out this survey.',
+                'created_at' => Carbon::now()->addDay(),
+            ]);
+
 
             return response()->json([
                 'success' => true,
