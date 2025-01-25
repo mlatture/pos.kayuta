@@ -34,8 +34,14 @@ class ProcessSurveyEmail implements ShouldQueue
      */
     public function handle()
     {
+        if ($this->attempts() > 3) {
+            return;
+        }
+
         Mail::to($this->survey->guest_email)->send(new SurveyEmail($this->survey));
         $this->survey->update(['sent' => true]); 
+
+        sleep(5);
     }
 }
 
