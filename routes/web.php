@@ -141,7 +141,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // Survey Methods
 
     Route::get('/surveys/index', [SurveyController::class, 'index'])->name('surveys.index');
-    Route::post('/surveys', [SurveyController::class, 'store'])->name('surveys.store');
+    Route::post('/surveys/publish', [SurveyController::class, 'store'])->name('surveys.store');
+    Route::get('/surveys/{surveyId}/response-survey', [SurveyController::class, 'responsesurvey'])->name('surveys.response_survey');
     Route::get('/surveys/{survey}/edit', [SurveyController::class, 'edit'])->name('surveys.edit');
     Route::patch('/surveys/{survey}', [SurveyController::class, 'update'])->name('surveys.update');
     Route::delete('/surveys/{survey}', [SurveyController::class, 'destroy'])->name('surveys.destroy');
