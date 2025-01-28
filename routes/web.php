@@ -29,6 +29,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PDFController;
 use App\Http\Controllers\SurveyController;
 
+
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -140,14 +142,19 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     // Survey Methods
 
-    Route::get('/surveys/create', [SurveyController::class, 'create'])->name('surveys.create');
-    Route::post('/surveys', [SurveyController::class, 'store'])->name('surveys.store');
+    Route::get('/surveys/index', [SurveyController::class, 'index'])->name('surveys.index');
+    Route::post('/surveys/publish', [SurveyController::class, 'store'])->name('surveys.store');
+    Route::post('/surveys/store/responses', [SurveyController::class, 'storeResponses'])->name('surveys.store_responses');
+    // Route::get('/surveys/{surveyId}/{email}/{siteId}/response-survey/{token}', [SurveyController::class, 'responsesurvey'])->name('surveys.response_survey');
+    Route::get('/surveys/published', [SurveyController::class, 'getPublishedSurvey'])->name('surveys.get_published_survey');
     Route::get('/surveys/{survey}/edit', [SurveyController::class, 'edit'])->name('surveys.edit');
+    Route::patch('update-survey-status', [SurveyController::class, 'updateStatus'])->name('surveys.update_status');
     Route::patch('/surveys/{survey}', [SurveyController::class, 'update'])->name('surveys.update');
     Route::delete('/surveys/{survey}', [SurveyController::class, 'destroy'])->name('surveys.destroy');
     
     Route::post('/reports/z-out/download-pdf', [PDFController::class, 'generate_zOutPDF'])->name('reports.downloadPdf');
 });
+
 
 
 Route::prefix('admin')->middleware('auth')->group(static function () {

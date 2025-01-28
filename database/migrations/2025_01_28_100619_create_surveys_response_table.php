@@ -13,17 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('surveys', function (Blueprint $table) {
+        Schema::create('surveys_response', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->json('survey_id');
-            $table->string('guest_email');
+            $table->string('email');
             $table->string('siteId');
-            $table->string('token');
-            $table->string('subject');
-            $table->text('message');
-            $table->boolean('sent')->default(false);
-            
+            $table->integer('survey_id');
+            $table->json('questions');
+            $table->json('answers');
+            $table->string('token')->nullable();
+            $table->unique('token', 'unique_tokens');
             $table->timestamps();
         });
     }
@@ -35,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('surveys');
+        Schema::dropIfExists('surveys_response');
     }
 };
