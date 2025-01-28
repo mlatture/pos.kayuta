@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Models\Survey;
+use App\Models\PublishSurveyModel;
+use App\Models\SurveysResponseModel;
 
 class NewReservationController extends Controller
 {
@@ -79,10 +81,24 @@ class NewReservationController extends Controller
                 'checkedout' => Carbon::now(),
             ]);
 
+            do {
+                $generate_token = str_replace(['+', '/', '='], '', base64_encode(random_bytes(16)));
+                $check_token = SurveysResponseModel::where('token', $generate_token)->exists();
+            } while ($check_token);
+
+            $publishedSurveyIds = PublishSurveyModel::where('active', true)->pluck('id');
+
+
+            
+
             Survey::create([
+                'name' => $reservation->fname.' '.$reservation->lname,
+                'survey_id' => $publishedSurveyIds->toJson(),
                 'guest_email' => $reservation->email,
+                'token' => $generate_token,
+                'siteId' => $reservation->siteid,
                 'subject' => 'We value your feedback!',
-                'message' => 'Thank you for your stay. Please take a moment to fill out this survey.',
+                'message' => 'Thanks for your recent visit to Kayuta Lake Campground. We`d love to get your feedback on your stay.',
                 'created_at' => Carbon::now()->addDay(),
             ]);
 

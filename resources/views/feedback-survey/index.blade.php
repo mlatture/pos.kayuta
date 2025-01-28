@@ -188,9 +188,8 @@
                     $(this).find('.answer-types > .answer-type').each(function() {
                         if ($(this).find('select').length) {
                             const rateValue = $(this).find('select').val();
-                            answerTypes.push(
-                            `rate(${rateValue})`); 
-                        } else if ($(this).find('input:radio:checked').length) {
+                            answerTypes.push( `rate: ${rateValue}`); 
+                        } else if ($(this).find('input:radio').length) {
                             answerTypes.push('radiobutton'); 
                         } else if ($(this).find('textarea').length) {
                             answerTypes.push('comments');

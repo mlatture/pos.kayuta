@@ -145,7 +145,7 @@
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.list_feedback_surveys.value'))
                     <li><a class="dropdown-item d-flex align-items-center" href="{{ route('surveys.index') }}">
-                            <i class="nav-icon fas fa-percent me-2"></i>
+                            <i class="fa-solid fa-comment me-2"></i>
                             <span>Feedback Survey</span>
                         </a></li>
             @endHasPermission

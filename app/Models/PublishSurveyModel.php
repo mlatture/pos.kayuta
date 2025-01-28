@@ -15,6 +15,7 @@ class PublishSurveyModel extends Model
         'questions', 
         'answer_types',
         'title',
+        'active',
     ];
 
 }

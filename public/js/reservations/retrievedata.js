@@ -266,7 +266,9 @@ $(document).ready(function () {
         $.ajax({
             url: "reservations/update_checked_out",
             type: "PUT",
-            data: { cartid: cartid },
+            data: { 
+                cartid: cartid 
+            },
             dataType: "json",
             cache: false,
             headers: {

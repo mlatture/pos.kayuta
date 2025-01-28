@@ -15,7 +15,11 @@ return new class extends Migration
     {
         Schema::create('surveys', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->json('survey_id');
             $table->string('guest_email');
+            $table->string('siteId');
+            $table->string('token');
             $table->string('subject');
             $table->text('message');
             $table->boolean('sent')->default(false);

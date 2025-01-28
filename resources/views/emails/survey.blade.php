@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Survey Email</title>
     <style>
@@ -52,7 +53,7 @@
             background-color: #45a049;
         }
 
-       
+
         footer {
             text-align: center;
             color: #aaaaaa;
@@ -61,17 +62,30 @@
         }
     </style>
 </head>
+
 <body>
     <div class="email-container">
         <h1>{{ ucfirst($survey->subject) }}</h1>
-        <p>Dear {{ $survey->guest_email }},</p>
+        <p>Dear {{ ucfirst($survey->name) }},</p>
         <p>{{ $survey->message }}</p>
 
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLScFk0U06-6VJx4fWUC1ngIpn6dbEy6At_4Z_UlcOoJJ631ARQ/viewform?usp=sf_link" class="cta-button">
-            Click here to complete the survey
-        </a>
+        @foreach (json_decode($survey->survey_id) as $surveyId)
+            <a href="{{ route(
+                'surveys.response_survey',
+                [
+                    'surveyId' => $surveyId,
+                    'email' => $survey->guest_email,
+                    'siteId' => $survey->siteId,
+                    'token' => $survey->token,
+                ],
+                false,
+            ) }}"
+                class="cta-button">
+                Complete Survey {{ $surveyId }}-{{ $survey->siteId }}
+            </a>
+        @endforeach
 
-    
+
         <p>Thank you,</p>
         <p>Your Team</p>
     </div>
@@ -80,4 +94,5 @@
         &copy; {{ date('Y') }} {{ env('APP_NAME') }}. All rights reserved.
     </footer>
 </body>
+
 </html>

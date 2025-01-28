@@ -13,12 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('publish_surveys', function (Blueprint $table) {
+        Schema::create('surveys_response', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('email');
+            $table->string('siteId');
+            $table->integer('survey_id');
             $table->json('questions');
-            $table->json('answer_types');
-            $table->boolean('active')->default(true);
+            $table->json('answers');
+            $table->string('token')->nullable();
+            $table->unique('token', 'unique_tokens');
             $table->timestamps();
         });
     }
@@ -30,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('publish_surveys');
+        Schema::dropIfExists('surveys_response');
     }
 };
