@@ -72,8 +72,7 @@ class SurveyController extends Controller
                     'answer_types' => $formattedAnswerTypes,
                 ];
             }
-            
-            // dd($result); die();
+       
 
         
 

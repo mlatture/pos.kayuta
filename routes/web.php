@@ -29,10 +29,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PDFController;
 use App\Http\Controllers\SurveyController;
 
-Route::domain('book.kayuta.com')->group(function () {
-    Route::get('/surveys/{surveyId}/{email}/{siteId}/response-survey/{token}', [SurveyController::class, 'responsesurvey'])
-        ->name('surveys.response_survey');
-});
+
 
 Route::get('/', function () {
     return redirect('/admin');

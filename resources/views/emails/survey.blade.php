@@ -70,21 +70,10 @@
         <p>{{ $survey->message }}</p>
 
         @foreach (json_decode($survey->survey_id) as $surveyId)
-            <a href="{{ route(
-                'surveys.response_survey',
-                [
-                    'surveyId' => $surveyId,
-                    'email' => $survey->guest_email,
-                    'siteId' => $survey->siteId,
-                    'token' => $survey->token,
-                ],
-                false,
-            ) }}"
-                class="cta-button">
-                Complete Survey {{ $surveyId }}-{{ $survey->siteId }}
-            </a>
+        <a href="{{ 'book.kayuta.com/'. 'surveys/' . $surveyId . '/' . $survey->guest_email . '/' . $survey->siteId . '/response-survey/' . $survey->token }}" class="cta-button">
+            Complete Survey {{ $surveyId }}-{{ $survey->siteId }}
+         </a>
         @endforeach
-
 
         <p>Thank you,</p>
         <p>Your Team</p>
