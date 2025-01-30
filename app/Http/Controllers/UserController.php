@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -21,12 +21,12 @@ class UserController extends Controller
     }
 
     public function getUserName(){
-        $users = User::all();
+        $users = Admin::all();
 
         $userData = $users->map(function($user){
             return [
                 'id' => $user->id,
-                'name' => $user->f_name . ' ' . $user->l_name,
+                'name' => $user->name,
             ];
         });
 

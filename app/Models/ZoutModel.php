@@ -19,12 +19,12 @@ class ZoutModel extends Model
 
     public function orders()
     {
-        return $this->hasMany(Order::class, 'customer_id', 'customer_id');    
+        return $this->hasMany(Order::class, 'admin_id', 'admin_id');    
     }
 
     public static function getGrossSales($customerId, $date = null)
     {
-        $query = Order::where('customer_id', $customerId);
+        $query = Order::where('admin_id', $customerId);
     
         if (!empty($date)) {
             $specificDate = Carbon::parse($date)->startOfDay();
@@ -43,7 +43,7 @@ class ZoutModel extends Model
 
     public static function getTax($customerId, $date = null)
     {
-        $customerOrderIds = Order::where('customer_id', $customerId);
+        $customerOrderIds = Order::where('admin_id', $customerId);
     
         if (!empty($date)) {
             $specificDate = Carbon::parse($date)->startOfDay();
@@ -73,7 +73,7 @@ class ZoutModel extends Model
 
     public static function getSalesActivity($customerId, $date = null)
     {
-        $customerOrderIds = Order::where('customer_id', $customerId);
+        $customerOrderIds = Order::where('admin_id', $customerId);
     
         if (!empty($date)) {
             $specificDate = Carbon::parse($date)->startOfDay();
@@ -101,7 +101,7 @@ class ZoutModel extends Model
     {
         $orderItems = OrderItem::with(['order', 'order.posPayments'])
             ->whereHas('order', function ($query) use ($customerId, $date) {
-                $query->where('customer_id', $customerId);
+                $query->where('admin_id', $customerId);
 
                 if (!empty($date)) {
                     $specificDate = Carbon::parse($date)->startOfDay();
@@ -148,7 +148,7 @@ class ZoutModel extends Model
     {
         $cardDetails = CardsOnFile::with(['order'])
             ->whereHas('order', function ($query) use ($customerId, $date) {
-                $query->where('customer_id', $customerId);
+                $query->where('admin_id', $customerId);
 
                 // Apply date filter if provided
                 if (!empty($date)) {
@@ -179,7 +179,7 @@ class ZoutModel extends Model
         }
     
         if (!empty($customerId)) {
-            $query->where('customer_id', $customerId);
+            $query->where('admin_id', $customerId);
         }
     
         $orders = $query->with(['posPayments'])->get();

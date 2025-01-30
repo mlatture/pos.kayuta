@@ -11,6 +11,7 @@ class SurveyController extends Controller
 {
     public function index()
     {
+        $responses = SurveysResponseModel::all()->groupBy('survey_id');
         return view('feedback-survey.index');
     }
 
@@ -170,10 +171,22 @@ class SurveyController extends Controller
     //     return redirect()->back()->with('success', 'Survey updated successfully!');
     // }
 
-    // public function destroy(Survey $survey)
-    // {
-    //     $survey->delete();
+    public function destroy(Request $request)
+    {
+        
+        $publishedSurveys = PublishSurveyModel::find($request->id);
 
-    //     return redirect()->back()->with('success', 'Survey deleted successfully!');
-    // }
+        $publishedSurveys->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Survey deleted successfully!'
+        ]);
+    }
+
+    public function showResponses() 
+    {
+       
+        $responses = SurveysResponseModel::all()->groupBy('survey_id');
+        return response()->json($responses);
+    }
 }

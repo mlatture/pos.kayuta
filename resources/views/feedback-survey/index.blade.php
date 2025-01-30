@@ -4,75 +4,56 @@
 @section('content-header', 'Survey Builder')
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
 @section('content')
-    <div class="container-fluid mt-4">
-        <!-- Vertical Toolbar -->
-        <div class="d-flex">
-            <div class="vertical-toolbar me-3">
-                <button class="btn btn-light d-block mb-2" title="Add New Question" id="addQuestion">
-                    <i class="fa fa-plus-circle"></i>
-                </button>
-                <div class="dropdown">
-                    <button class="btn btn-light d-block mb-2 dropdown-toggle" type="button" id="addAnswerType"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa fa-check"></i>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="addAnswerType">
-                        <li><a class="dropdown-item" href="#" data-type="rate">Rating</a></li>
-                        <li><a class="dropdown-item" href="#" data-type="yes/no">Yes/No</a></li>
-                        <li><a class="dropdown-item" href="#" data-type="comments">Comments</a></li>
-                    </ul>
-                </div>
-                <button class="btn btn-light d-block mb-2" title="Duplicate Question">
-                    <i class="fa fa-clone"></i>
-                </button>
-                <button class="btn btn-light d-block mb-2" title="Add Text">
-                    <i class="fa fa-font"></i>
-                </button>
-                <button class="btn btn-light d-block mb-2" title="Add Image">
-                    <i class="fa fa-image"></i>
-                </button>
-                <button class="btn btn-light d-block mb-2" title="Add Video">
-                    <i class="fa fa-video"></i>
-                </button>
-            </div>
-            <div class="flex-grow-1">
-                @include('feedback-survey.components.nav-items')
-                <div class="tab-content" id="surveyTabsContent">
-                    <!-- Questions Tab -->
-                    <form action="" id="survey=">
-                        <div class="tab-pane fade show active" id="questions" role="tabpanel"
-                            aria-labelledby="questions-tab">
-                            <div class="row mt-4 justify-content-center">
-                                <!-- Question List -->
-                                <div class="col-md-9">
-                                    <div id="questionContainer" class="d-flex flex-wrap">
-                                        <div class="card mb-3 me-3 hover-card" style="width: 300px;" data-id="1">
-                                            <div class="card-body">
-                                                <h5 class="card-title editable" id="question" contenteditable="true"
-                                                    placeholder="Type your question here">
-                                                    Question 1
-                                                </h5>
-                                                <br>
-                                                <div class="answer-types mt-3" id="selected-answer-types"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+<div style="display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #f8f9fa;">
+    <div class="container-fluid mt-4 flex-grow-1 d-flex" style="background-color: white; overflow-y: auto; padding: 20px; border-radius: 10px;">
+        <div class="flex-grow-1">
+            @include('feedback-survey.components.nav-items')
+            <div class="tab-content" id="surveyTabsContent">
+                <!-- Questions Tab -->
+                @include('feedback-survey.tabs.questions-tab')
 
-                    <!-- Responses Tab -->
-                    @include('feedback-survey.components.responses-tab')
+                <!-- Responses Tab -->
+                @include('feedback-survey.tabs.responses-tab')
 
-                    <!-- Settings Tab -->
-                    @include('feedback-survey.components.settings-tab')
-                </div>
+                <!-- Settings Tab -->
+                @include('feedback-survey.tabs.settings-tab')
             </div>
         </div>
+
+        <div class="vertical-toolbar ms-auto text-end mt-5">
+            <button class="btn btn-light d-block mb-2" title="Add New Question" id="addQuestion">
+                <i class="fa fa-plus-circle"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-light d-block mb-2 dropdown-toggle" type="button" id="addAnswerType"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa fa-check"></i>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="addAnswerType">
+                    <li><a class="dropdown-item" href="#" data-type="rate">Rating</a></li>
+                    <li><a class="dropdown-item" href="#" data-type="yes/no">Yes/No</a></li>
+                    <li><a class="dropdown-item" href="#" data-type="comments">Comments</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-light d-block mb-2 pending-feature" title="Duplicate Question">
+                <i class="fa fa-clone"></i>
+            </button>
+            <button class="btn btn-light d-block mb-2 pending-feature" title="Add Text">
+                <i class="fa fa-font"></i>
+            </button>
+            <button class="btn btn-light d-block mb-2 pending-feature" title="Add Image">
+                <i class="fa fa-image"></i>
+            </button>
+            <button class="btn btn-light d-block mb-2 pending-feature" title="Add Video">
+                <i class="fa fa-video"></i>
+            </button>
+        </div>
     </div>
+</div>
+
 @endsection
 
 @push('css')
@@ -82,8 +63,43 @@
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js"></script>
+
+
     <script>
         $(document).ready(function() {
+            const $toolbar = $(".vertical-toolbar");
+
+            $('#surveyTabs button[data-bs-toggle="tab"]').on("shown.bs.tab", function(event) {
+                const selectedTab = $(event.target).attr("data-bs-target");
+                const button = $('#publish-survey');
+                console.log("Switched to tab:", selectedTab);
+
+                if (selectedTab === "#questions") {
+                    $toolbar.fadeIn();
+                    button.fadeIn();
+                } else {
+                    $toolbar.fadeOut();
+                    button.fadeOut(); 
+                }
+            });
+        });
+
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".pending-feature").forEach(button => {
+                button.addEventListener("click", function() {
+                    alert("This feature is not implemented yet. Would you like to request it?");
+                });
+            });
+        });
+
+        $(document).ready(function() {
+
+
+
+
             let questionCount = 1;
 
             // Add New Question
@@ -123,7 +139,7 @@
                     // Rating Scale HTML
                     answerHTML = `
                     <div class="answer-type" data-type="rate">
-                        <select id="ratingScale${questionId}" class="form-select mb-3">
+                        <select id="ratingScale${questionId}" class="form-select mb-3" hidden>
                             ${[...Array(10).keys()].map(i => `<option value="${i + 1}" ${i + 1 === 5 ? 'selected' : ''}>${i + 1}</option>`).join('')}
                         </select>
                         <div class="rating-stars" id="ratingStars${questionId}">
@@ -188,9 +204,9 @@
                     $(this).find('.answer-types > .answer-type').each(function() {
                         if ($(this).find('select').length) {
                             const rateValue = $(this).find('select').val();
-                            answerTypes.push( `rate: ${rateValue}`); 
+                            answerTypes.push(`rate: ${rateValue}`);
                         } else if ($(this).find('input:radio').length) {
-                            answerTypes.push('radiobutton'); 
+                            answerTypes.push('radiobutton');
                         } else if ($(this).find('textarea').length) {
                             answerTypes.push('comments');
                         }
@@ -210,6 +226,22 @@
                     title: 'Survey Title',
                     data: data
                 };
+                console.log('Survey Data:', surveyData.data[0].answer_types.length > 0);
+
+                if (surveyData.data[0].answer_types.length === 0) {
+                    $.toast({
+                        heading: 'Error',
+                        text: 'No questions or answer types to publish!',
+                        position: 'top-right',
+                        loaderBg: '#00c263',
+                        icon: 'error',
+                        hideAfter: 2000,
+                        stack: 6
+                    });
+                    return;
+                }
+
+
 
                 $.ajax({
                     url: ' {{ route('surveys.store') }} ',
@@ -221,17 +253,39 @@
                     contentType: 'application/json',
                     data: JSON.stringify(surveyData),
                     success: function(result) {
-                        console.log('Survey published successfully:', result);
-                        alert('Survey published successfully!');
+                        $.toast({
+                            heading: 'Success',
+                            text: result.message,
+                            position: 'top-right',
+                            // bgColor: '#FF1356',4444333322221111
+                            loaderBg: '#00c263',
+                            icon: 'success',
+                            hideAfter: 2000,
+                            stack: 6
+                        });
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+
                     },
                     error: function(xhr, status, error) {
                         if (xhr.responseJSON && xhr.responseJSON.message) {
-                            console.error('Error publishing survey:', xhr.responseJSON.message);
-                            alert('Failed to publish the survey: ' + xhr.responseJSON.message);
+                            console.error('Error publishing survey:', xhr.responseJSON
+                                .message);
+
                         } else {
                             console.error('Error publishing survey:', error);
-                            alert('Failed to publish the survey. Please try again.');
                         }
+
+                        $.toast({
+                            heading: 'Error',
+                            text: errorMessage,
+                            position: 'top-right',
+                            loaderBg: '#f5365c',
+                            icon: 'error',
+                            hideAfter: 4000,
+                            stack: 6
+                        });
                     },
                     complete: function(response) {
                         if (response.status === 302 && response.responseText) {

@@ -86,6 +86,25 @@
                 register_name: registerName
             },
             success: function() {
+                let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
+
+                if(!Array.isArray(registerData)) {
+                    registerData = [];
+                }
+
+                let existingEntry = registerData.find(
+                    entry => entry.current_register_staff_id === {{ auth()->user()->id }}
+                );
+
+                if(!existingEntry) {
+                    registerData.push({
+                        current_register_id: registerId,
+                        current_register_staff_id: {{ auth()->user()->id }}
+                    });
+
+                    localStorage.setItem("current_register_data", JSON.stringify(registerData));
+
+                }
 
                 $('#registerDropdown').text('Station: ' + registerName);
             }
