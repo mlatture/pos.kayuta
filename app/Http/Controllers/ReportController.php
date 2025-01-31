@@ -63,7 +63,7 @@ class ReportController extends Controller
 
     public function zOutReport(Request $request)
     {
-        $customer_id = $request->input('customer_id');
+        $customer_id = $request->input('admin_id');
         $dateRange = $request->input('date_range');
         // $stationId = $request->input('station_id');
 

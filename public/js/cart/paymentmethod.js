@@ -555,22 +555,67 @@ $(document).ready(function () {
         orders_response
     ) {
         let receiptDetails = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; margin-top: 20px;">
+        <html>
+        <head>
+            <title>Receipt</title>
+            <style>
+                @page {
+                    size: 80mm 297mm;
+                    margin: 0;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    width: 80mm;
+                    margin: 0;
+                    padding: 10px;
+                }
+                h2, h3 {
+                    text-align: center;
+                    margin: 5px 0;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 5px;
+                    text-align: left;
+                    font-size: 11px;
+                }
+                th {
+                    background-color: #f2f2f2;
+                }
+                hr {
+                    border: none;
+                    border-top: 1px dashed #000;
+                    margin: 5px 0;
+                }
+                .total {
+                    font-weight: bold;
+                }
+                .center {
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
             <h2>Order Receipt</h2>
             <p><strong>Order ID:</strong> ${orderId}</p>
             <p><strong>Customer Email:</strong> ${(customer_email && customer_email !== 'undefined') ? customer_email : 'N/A'}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
             <hr>
-            <h3>Product Details:</h3>
-            <table style="width: 100%; border-collapse: collapse;">
+            <h3>Product Details</h3>
+            <table>
                 <thead>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Product</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Quantity</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Tax</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Discount</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">Total</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Tax</th>
+                        <th>Discount</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -581,42 +626,44 @@ $(document).ready(function () {
                 let totalPrice = item.quantity * item.price + item.tax - item.discount;
                 receiptDetails += `
                 <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${item.product_name}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">$${parseFloat(item.price).toFixed(2)}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">$${parseFloat(item.tax).toFixed(2)}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">$${parseFloat(item.discount).toFixed(2)}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">$${totalPrice.toFixed(2)}</td>
+                    <td>${item.product_name}</td>
+                    <td class="center">${item.quantity}</td>
+                    <td>$${parseFloat(item.price).toFixed(2)}</td>
+                    <td>$${parseFloat(item.tax).toFixed(2)}</td>
+                    <td>$${parseFloat(item.discount).toFixed(2)}</td>
+                    <td class="total">$${totalPrice.toFixed(2)}</td>
                 </tr>
                 `;
             });
         } else {
             receiptDetails += `
             <tr>
-                <td colspan="6" style="border: 1px solid #ddd; padding: 8px; text-align: center;">No items found.</td>
+                <td colspan="6" class="center">No items found.</td>
             </tr>
             `;
         }
-        
-       
     
         receiptDetails += `
                 </tbody>
             </table>
             <hr>
-            <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-            <p><strong>Paid Amount:</strong> $${!isNaN(parseFloat(order_amount)) ? parseFloat(order_amount).toFixed(2) : "0.00"}</p>
-            <p><strong>Change:</strong> $${Math.abs(totalAmount - order_amount).toFixed(2)}</p>
-        </div>
+            <p class="total"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+            <p class="total"><strong>Paid Amount:</strong> $${!isNaN(parseFloat(order_amount)) ? parseFloat(order_amount).toFixed(2) : "0.00"}</p>
+            <p class="total"><strong>Change:</strong> $${Math.abs(totalAmount - order_amount).toFixed(2)}</p>
+        </body>
+        <script>
+            window.onload = function() {
+                window.print();
+                setTimeout(function () { window.close(); }, 1000);
+            }
+        </script>
+        </html>
         `;
     
-        var printWindow = window.open('', '', 'height=600,width=800'); 
-        printWindow.document.write('<html><head><title>Receipt</title></head><body>');
+        var printWindow = window.open('', '', 'width=600,height=auto'); 
         printWindow.document.write(receiptDetails); 
-        printWindow.document.write('</body></html>');
         printWindow.document.close(); 
-        printWindow.print(); 
-
+    
         $.toast({
             heading: response[0] || "Success",
             text: response[1] || "Order placed successfully!",
@@ -626,14 +673,13 @@ $(document).ready(function () {
             hideAfter: 3000,
             stack: 6,
         });
-        
-
+    
         setTimeout(function () {
             clearInputFields(true);
-
             window.location.reload();
         }, 3000);
     }
+    
     
 
     function clearInputFields(isFullPayment = false) {
