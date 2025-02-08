@@ -25,7 +25,11 @@ class Product extends Model
         'status',
         'product_vendoer_id',
         'cost',
+        'dni',
+        'last_checked_date',
+        'category',
         
+
     ];
 
     public function taxType()

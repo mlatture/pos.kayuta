@@ -8,11 +8,6 @@
     $contentHeader = "Income Per Site ($firstTransactionDate - $lastTransactionDate)";
 @endphp
 
-
-
-
-@section('content-header', $contentHeader . ' - Total Income: ' . '$' . number_format($totalSum, 2))
-
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
 
@@ -75,6 +70,8 @@
 @endsection
 
 @section('content')
+<h2 id="reportHeader"></h2>
+
     <div class="row ">
         <div class="card" style="background-color: #F4F6F9; box-shadow: none; border: none;">
             <div class="card-body" style="border: none;">
@@ -107,37 +104,9 @@
             <div class="card-body">
                 <div class="row">
                     <div class="table-responsive m-t-40 p-0" id="dataTableContainer">
-                        <table table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
-                            width="100%">
-                            <thead>
-                                <tr>
-                                    <th>Site ID</th>
-                                    <th>Site Name</th>
-                                    <th>Site Type</th>
-                                    <th>Seasonal</th>
-                                    <th>Nights Occupied</th>
-                                    <th>Income from Stays</th>
-                                    <th>Percent Occupancy</th>
-                                    <th>Other Income</th>
-                                    <th>Total Income from Site</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($sites as $site)
-                                    <tr>
-                                        <td>{{ $site->site_id }}</td>
-                                        <td>{{ $site->site_name }}</td>
-                                        <td>{{ $site->site_type }}</td>
-                                        <td>{{ $site->seasonal ? 'Yes' : 'No' }}</td>
-                                        <td>{{ $site->nights_occupied }}</td>
-                                        <td>{{ number_format($site->income_from_stays, 2) }}</td>
-                                        <td>{{ $site->percent_occupancy }}%</td>
-                                        <td>{{ number_format($site->other_income, 2) }}</td>
-                                        <td>{{ number_format($site->total_income, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    
+
+                        @include('reports.components.income-per-site-table', ['sites' => $sites])
                     </div>
                 </div>
             </div>
@@ -145,12 +114,12 @@
     </div>
 @endsection
 
+
 @section('js')
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
         $(document).ready(function() {
             $('#productDate').daterangepicker({
-
                 autoApply: false,
                 autoUpdateInput: true,
                 locale: {
@@ -163,8 +132,7 @@
                     'Last 7 Days': [moment().subtract(6, 'days'), moment()],
                     'Last 30 Days': [moment().subtract(29, 'days'), moment()],
                     'This Month': [moment().startOf('month'), moment().endOf('month')],
-                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1,
-                        'month').endOf('month')]
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
                 },
                 alwaysShowCalendars: true,
                 showCustomRangeLabel: false,
@@ -172,41 +140,44 @@
             });
 
             $('#productDate').on('apply.daterangepicker', function(ev, picker) {
-                fetchFilteredOrders();
+                fetchFilteredOrders(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'));
             });
 
             $('#productDate').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val(''); // Clear the input field
+                $(this).val(''); 
             });
 
-            function fetchFilteredOrders() {
-                var dateRange = $('#productDate').val();
+            function fetchFilteredOrders(startDate, endDate) {
                 var dateToUse = $('#dateToUse').val();
 
-                console.log("Date Range:", dateRange);
-
-                if (dateRange) {
-                    var dates = dateRange.split(' - ');
-                    var startDate = dates[0];
-                    var endDate = dates[1];
-
-                    $.ajax({
-                        url: "{{ route('reports.salesReport') }}",
-                        type: 'GET',
-                        data: {
-                            date_range: dateRange,
-                        },
-                        success: function(response) {
-                            $('#dataTableContainer').html(response);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error fetching orders:', error);
-                        }
-                    });
-                } else {
-                    console.log("No date range selected");
-                }
+                $.ajax({
+                    url: "{{ route('reports.incomePerSiteReport') }}",
+                    type: 'GET',
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        date_to_use: dateToUse,
+                    },
+                    success: function(response) {
+                        console.log(response); 
+                        $("#incomeTableContainer").html(response.html);     
+                        updateHeader(response.firstTransactionDate, response.lastTransactionDate, response.totalSum);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    }
+                });
             }
+
+            function updateHeader(startDate, endDate, totalSum) {
+          
+                var totalIncome = totalSum;
+                $('#reportHeader').text(`Income Per Site (${startDate} - ${endDate}) - Total Income: $${totalIncome}`);
+            }
+
+
+        
+
 
             $('.table').DataTable({
                 responsive: true,
@@ -221,7 +192,7 @@
 
             $('#refreshBtn').click(function() {
                 window.location.reload();
-            })
+            });
         });
     </script>
 @endsection

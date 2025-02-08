@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Admin;
+use App\Models\DailyInventoryTask;
+use App\Models\Product;
 class LoginController extends Controller
 {
     /*
@@ -37,4 +41,40 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except('logout');
     }
+
+    private function isAdminRole($role)
+    {
+        $adminRoles = ['Master Admin', 'Manager', 'SuperAdmin', 'SiteEditor'];
+        return in_array($role, $adminRoles);
+    }
+
+    private function assignDailyInventoryTasks($adminId)
+    {
+        $settings = Admin::first();
+        $inventoryItemCount = $settings->daily_inventory_items;
+        $costThreshold = $settings->inventory_threshold;
+
+      
+        $products = Product::where('dni', false)
+            ->where('cost', '>', $costThreshold)
+            ->whereNotIn('id', DailyInventoryTask::where('staff_id', $adminId)
+                ->whereDate('assigned_at', today())
+                ->pluck('product_id'))
+            ->orderBy('last_checked_date', 'asc') 
+            ->limit($inventoryItemCount)
+            ->get();
+
+        foreach ($products as $product) {
+            DailyInventoryTask::create([
+                'staff_id' => $adminId, 
+                'product_id' => $product->id,
+                'status' => 'pending'
+            ]);
+
+            // Update last checked date
+            $product->update(['last_checked_date' => now()]);
+        }
+
+    }
+ 
 }

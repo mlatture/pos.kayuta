@@ -546,61 +546,66 @@ $(document).ready(function () {
         }
     }
 
-    function receiptPrint(
-        order_amount,
-        totalAmount,
-        orderId,
-        customer_email,
-        response,
-        orders_response
-    ) {
+    function receiptPrint(order_amount, totalAmount, orderId, customer_email, response, orders_response) {
+        
+        let storedLogo = localStorage.getItem("receiptLogo");
+        let storedHeaderText = localStorage.getItem("receiptHeaderText") || "";
+        let storedFooterText = localStorage.getItem("receiptFooterText") || "";
+    
         let receiptDetails = `
         <html>
         <head>
             <title>Receipt</title>
             <style>
                 @page {
-                    size: 80mm 297mm;
+                    size: 80mm auto; /* Adjusted for dynamic height */
                     margin: 0;
                 }
                 body {
                     font-family: Arial, sans-serif;
                     font-size: 12px;
-                    width: 80mm;
+                    width: 72mm; /* Usable width for 80mm printer */
                     margin: 0;
-                    padding: 10px;
+                    padding: 5px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
                 h2, h3 {
                     text-align: center;
                     margin: 5px 0;
+                }
+                .center {
+                    text-align: center;
+                }
+                .bold {
+                    font-weight: bold;
+                }
+                .receipt-logo {
+                    max-width: 70mm; /* Keep logo within 72mm limit */
+                    height: auto;
+                    display: block;
+                    margin: 0 auto 5px;
                 }
                 table {
                     width: 100%;
                     border-collapse: collapse;
                 }
                 th, td {
-                    border: 1px solid #000;
-                    padding: 5px;
+                    padding: 3px;
                     text-align: left;
                     font-size: 11px;
-                }
-                th {
-                    background-color: #f2f2f2;
                 }
                 hr {
                     border: none;
                     border-top: 1px dashed #000;
                     margin: 5px 0;
                 }
-                .total {
-                    font-weight: bold;
-                }
-                .center {
-                    text-align: center;
-                }
             </style>
         </head>
         <body>
+            ${storedLogo ? `<img class="receipt-logo" src="/storage/receipt_logos/${storedLogo}" alt="Logo">` : ""}
+            <p class="bold center">${storedHeaderText}</p>
             <h2>Order Receipt</h2>
             <p><strong>Order ID:</strong> ${orderId}</p>
             <p><strong>Customer Email:</strong> ${(customer_email && customer_email !== 'undefined') ? customer_email : 'N/A'}</p>
@@ -613,8 +618,6 @@ $(document).ready(function () {
                         <th>Product</th>
                         <th>Qty</th>
                         <th>Price</th>
-                        <th>Tax</th>
-                        <th>Discount</th>
                         <th>Total</th>
                     </tr>
                 </thead>
@@ -623,33 +626,33 @@ $(document).ready(function () {
     
         if (Array.isArray(orders_response.products) && orders_response.products.length > 0) {
             orders_response.products.forEach((item) => {
-                let totalPrice = item.quantity * item.price + item.tax - item.discount;
+                let totalPrice = (item.quantity * item.price) + (item.tax || 0) - (item.discount || 0);
                 receiptDetails += `
                 <tr>
                     <td>${item.product_name}</td>
                     <td class="center">${item.quantity}</td>
-                    <td>$${parseFloat(item.price).toFixed(2)}</td>
-                    <td>$${parseFloat(item.tax).toFixed(2)}</td>
-                    <td>$${parseFloat(item.discount).toFixed(2)}</td>
-                    <td class="total">$${totalPrice.toFixed(2)}</td>
+                    <td class="bold">$${parseFloat(item.price).toFixed(2)}</td>
+                    <td class="bold">$${totalPrice.toFixed(2)}</td>
                 </tr>
                 `;
             });
         } else {
             receiptDetails += `
             <tr>
-                <td colspan="6" class="center">No items found.</td>
+                <td colspan="4" class="center">No items found.</td>
             </tr>
             `;
         }
-    
+        
         receiptDetails += `
                 </tbody>
             </table>
             <hr>
-            <p class="total"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-            <p class="total"><strong>Paid Amount:</strong> $${!isNaN(parseFloat(order_amount)) ? parseFloat(order_amount).toFixed(2) : "0.00"}</p>
-            <p class="total"><strong>Change:</strong> $${Math.abs(totalAmount - order_amount).toFixed(2)}</p>
+            <p class="bold"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+            <p class="bold"><strong>Paid Amount:</strong> $${!isNaN(parseFloat(order_amount)) ? parseFloat(order_amount).toFixed(2) : "0.00"}</p>
+            <p class="bold"><strong>Change:</strong> $${Math.abs(order_amount - totalAmount).toFixed(2)}</p>
+            <hr>
+            <p class="center">${storedFooterText}</p>
         </body>
         <script>
             window.onload = function() {
@@ -659,19 +662,16 @@ $(document).ready(function () {
         </script>
         </html>
         `;
+        
     
-        var printWindow = window.open('', '', 'width=600,height=auto'); 
+        var printWindow = window.open('', '', 'width=400,height=600'); 
         printWindow.document.write(receiptDetails); 
         printWindow.document.close(); 
-    
-        $.toast({
-            heading: response[0] || "Success",
-            text: response[1] || "Order placed successfully!",
-            position: "top-right",
-            loaderBg: "#00c263",
-            icon: "success",
-            hideAfter: 3000,
-            stack: 6,
+        // printWindow.document.write("\x1b\x69");
+     
+        toastr.success("Order placed successfully!", "Success", {
+            positionClass: "toast-top-right",
+            timeOut: 2000
         });
     
         setTimeout(function () {
@@ -679,6 +679,7 @@ $(document).ready(function () {
             window.location.reload();
         }, 3000);
     }
+    
     
     
 

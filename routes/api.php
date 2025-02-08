@@ -4,7 +4,7 @@ use App\Http\Controllers\API\CheckAvailability;
 use App\Http\Controllers\API\DataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\ReceiptController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('upload-receipt-logo', [ReceiptController::class, 'uploadReceiptLogo']);
 
 Route::get('search-sites', [CheckAvailability::class, 'getSites']);
 Route::get('sites-and-reservations', [CheckAvailability::class, 'getReservAndSites']);

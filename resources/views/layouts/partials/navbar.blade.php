@@ -148,8 +148,20 @@
                             <i class="fa-solid fa-comment me-2"></i>
                             <span>Feedback Survey</span>
                         </a></li>
-            @endHasPermission
+                @endHasPermission
+
+                @hasPermission(config('constants.role_modules.list_receipt_printing.value'))
+                        <li>
+                            <a href="#" class="dropdown-item d-flex align-items-center" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#receiptPrintingModal" >
+                                <i class="fa-solid fa-print me-2"></i>
+                                <span>Receipt Printing</span>
+                            </a>
+                        </li>
+                @endHasPermission
             </ul>
+
         </li>
 
 
@@ -177,11 +189,11 @@
                         </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.sales_report.value'))
-                <li><a class="dropdown-item" href="{{ route('reports.zOutReport') }}">
-                        <i class="nav-icon fas fa-cash-register"></i>
-                        <span>Z-Out Report</span>
-                    </a></li>
-            @endHasPermission
+                    <li><a class="dropdown-item" href="{{ route('reports.zOutReport') }}">
+                            <i class="nav-icon fas fa-cash-register"></i>
+                            <span>Z-Out Report</span>
+                        </a></li>
+                @endHasPermission
                 @hasPermission(config('constants.role_modules.reservation_report.value'))
                     <li><a class="dropdown-item" href="{{ route('reports.reservationReport') }}">
                             <i class="nav-icon fas fa-calendar-check"></i>

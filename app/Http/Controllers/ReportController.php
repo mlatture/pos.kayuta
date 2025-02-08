@@ -99,12 +99,30 @@ class ReportController extends Controller
     
     
     
-
     public function incomePerSiteReport(Request $request)
     {   
-        $filters = $request->only(['site_id', 'site_name', 'site_type', 'seasonal']);
+        $filters = [
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'date_to_use' => $request->input('date_to_use', 'reservations.created_at')
+        ];
     
-        $result = $this->site->getIncomePersite($filters);
+        if ($request->has('date_range')) {
+            $dates = explode(' - ', $request->date_range);
+            $filters['start_date'] = Carbon::createFromFormat('m/d/Y', trim($dates[0]))->startOfDay();
+            $filters['end_date'] = Carbon::createFromFormat('m/d/Y', trim($dates[1]))->endOfDay();
+        }
+    
+        $result = Site::getIncomePersite($filters);
+    
+        if ($request->ajax()) {
+            return response()->json([
+                'firstTransactionDate' => $result['firstTransactionDate'],
+                'lastTransactionDate' => $result['lastTransactionDate'],
+                'totalSum' => number_format($result['totalIncome'], 2),
+                'html' => view('reports.components.income-per-site', ['sites' => $result['sites']])->render(),
+            ]);
+        }
     
         return view('reports.income-per-site-report', [
             'sites' => $result['sites'],
@@ -113,7 +131,6 @@ class ReportController extends Controller
             'lastTransactionDate' => $result['lastTransactionDate'],
         ]);
     }
-    
     
     
     

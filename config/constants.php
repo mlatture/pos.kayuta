@@ -197,6 +197,10 @@ return [
         'list_feedback_surveys' => [
             'name' => 'Feedback Survey',
             'value' => 'feedback_surveys'
+        ],
+        'list_receipt_printing' => [
+            'name' => 'Receipt Printing',
+            'value' => 'list_receipt_printing'
         ]
     ]
 ];
