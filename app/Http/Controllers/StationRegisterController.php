@@ -24,18 +24,59 @@ class StationRegisterController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $registers = StationRegisters::count();
-
-        $new = StationRegisters::create([
-            'name' => 'Register ' . ($registers + 1),
+        $request->validate([
+            'name' => 'required|string|max:50'
         ]);
-        return response()->json(['success' => true, 'new_register' => $new]);
-
+    
+        $registersCount = StationRegisters::count();
+        $newRegisterName = $request->name . ' ' . ($registersCount + 1);
+    
+        $newRegister = StationRegisters::create([
+            'name' => $newRegisterName,
+        ]);
+    
+        return response()->json([
+            'success' => true,
+            'new_register' => $newRegister
+        ]);
     }
 
+    public function rename(Request $request) 
+    {
+        $request->validate([
+            'name' => 'required|string|max:50',
+        ]);
+
+        $register = StationRegisters::findOrFail($request->id);
+        $register->name = $request->name;
+
+        if($register->save()) {
+            if (session('current_register_id') == $register->id) {
+                session([
+                    'current_register_name' => $request->name
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Register renamed successfully!',
+                'new_name' => $register->name
+            ]);
+
+        }
+       
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to rename register. Please try again.'
+        ], 500);
+    }
+    
+
     public function getStation()
+
     {
         $stations = StationRegisters::all();
 

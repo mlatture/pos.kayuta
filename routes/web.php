@@ -50,6 +50,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
     Route::post('/products/toggle-suggested-addon', [ProductController::class, 'toggleSuggestedAddon'])
     ->name('products.toggle-suggested-addon');    Route::resource('categories', CategoryController::class);
+    Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
     Route::resource('customers', CustomerController::class);
@@ -129,6 +130,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/cart/processCheckPayment', [CartController::class, 'processCheckPayment'])->name('cart.processCheckPayment');
     Route::post('/registers/set', [StationRegisterController::class, 'set'])->name('registers.set');
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
+    Route::put('/registers/rename', [StationRegisterController::class, 'rename'])->name('registers.rename');
     Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');

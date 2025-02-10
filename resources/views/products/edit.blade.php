@@ -8,14 +8,14 @@
     <div class="card">
         <div class="card-body">
 
-            <form action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data">
+            <form enctype="multipart/form-data" id="editProductForm">
                 @csrf
-                @method('PUT')
 
+                <input type="hidden" name="id" value="{{ $product->id }}">
                 <div class="form-group">
                     <label for="name">Name</label>
-                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                        id="name" placeholder="Name" value="{{ old('name', $product->name) }}" minlength="3" maxlength="15" required>
+                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" id="name"
+                        placeholder="Name" value="{{ old('name', $product->name) }}" minlength="3" maxlength="15" required>
                     @error('name')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -70,29 +70,58 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="image">Image</label>
-                    <div class="custom-file">
-                        <input type="file" class="custom-file-input" name="image" id="image">
-                        <label class="custom-file-label" for="image">Choose file</label>
-                    </div>
+
+                <div class="mb-3">
+                    <label for="image" class="form-label">Product Image</label>
+                    <input type="file" class="form-control @error('image') is-invalid @enderror" name="image"
+                        id="image">
                     @error('image')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
                     @enderror
                 </div>
+
 
                 <div class="form-group">
                     <label for="barcode">Barcode</label>
                     <input type="text" name="barcode" class="form-control @error('barcode') is-invalid @enderror"
-                        id="barcode" placeholder="barcode" value="{{ old('barcode', $product->barcode) }}" >
+                        id="barcode" placeholder="barcode" value="{{ old('barcode', $product->barcode) }}">
                     @error('barcode')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
                     @enderror
                 </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="cost" class="form-label">Item Cost</label>
+                        <input type="number" step="any" name="cost"
+                            class="form-control 
+                        @error('cost') is-invalid @enderror" id="cost"
+                            placeholder="Item Cost" value="{{ old('cost', $product->cost) }}" required>
+                        @error('cost')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="price" class="form-label">Item Price</label>
+                        <input type="number" step="any" name="price"
+                            class="form-control @error('price') is-invalid @enderror" id="price"
+                            placeholder="Item Price" value="{{ old('price', $product->price) }}" required>
+                        @error('price')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                </div>
+
 
                 <div class="form-group">
                     <label for="price">Price</label>
@@ -116,16 +145,19 @@
                     @enderror
                 </div>
 
-                <x-forms.input label="Vendor" placeholder="Select Product Vendor" :options="$productVendors->map(fn($vendor) => ['label' => $vendor->name,'value' => $vendor->id])->toArray()"
-                   input-name="product_vendor_id" input-id="product_vendor_id" :required="false" :value="old('product_vendor_id', $product->product_vendor_id)" type="select"
-                />
+                <x-forms.input label="Vendor" placeholder="Select Product Vendor" :options="$productVendors
+                    ->map(fn($vendor) => ['label' => $vendor->name, 'value' => $vendor->id])
+                    ->toArray()"
+                    input-name="product_vendor_id" input-id="product_vendor_id" :required="false" :value="old('product_vendor_id', $product->product_vendor_id)"
+                    type="select" />
 
                 <div class="form-group">
                     <label for="discount_type">Discount Type</label>
                     <select name="discount_type" class="form-control @error('discount_type') is-invalid @enderror"
                         id="discount_type">
                         <option value="">Select Discount Type</option>
-                        <option value="fixed_amount" {{ $product->discount_type === 'fixed_amount' ? 'selected' : '' }}>Fixed Amount
+                        <option value="fixed_amount" {{ $product->discount_type === 'fixed_amount' ? 'selected' : '' }}>
+                            Fixed Amount
                         </option>
                         <option value="percentage" {{ $product->discount_type === 'percentage' ? 'selected' : '' }}>
                             Percentage
@@ -165,14 +197,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="">Turn on to allow this product as an add-on when a guest is making a booking.</label>
+                    <label for="">Turn on to allow this product as an add-on when a guest is making a
+                        booking.</label>
                     <input type="checkbox" class="form-check-control suggested-addon-toggle"
-                    data-id="{{ $product->id }}"
-                    {{ $product->suggested_addon ? 'checked' : '' }}>
+                        data-id="{{ $product->id }}" {{ $product->suggested_addon ? 'checked' : '' }}>
 
                 </div>
 
-                <button class="btn btn-success btn-block btn-lg" type="submit">Save Changes</button>
+                <button class="btn btn-success btn-block btn-lg" id="save-changes" type="submit">Save Changes</button>
             </form>
         </div>
     </div>
@@ -183,6 +215,69 @@
     <script>
         $(document).ready(function() {
             bsCustomFileInput.init();
+        });
+
+
+        $('#save-changes').click(function(e) {
+            e.preventDefault();
+
+            var formData = new FormData($("#editProductForm")[0]);
+            console.log({{ $product->id }});
+
+            $.ajax({
+                url: `{{ route('products.update') }}`,
+                type: 'post',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function() {
+                    $('#save-changes').prop('disabled', true).text('Saving...');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false,
+                        });
+
+                        setTimeout(() => {
+                            window.location.href = "{{ route('products.index') }}";
+                        }, 2000);
+                        
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error',
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    $('.invalid-feedback').remove();
+                    $('.is-invalid').removeClass('is-invalid');
+
+                    $.each(errors, function(field, messages) {
+                        let input = $('[name"' + field + '"]');
+                        input.addClass('is-invalid');
+                        input.after('<div class="invalid-feedbacl">' + messages[0] + '</div>');
+                    });
+                },
+                complete: function() {
+                    $('#save-changes').prop('disabled', false).text('Save Changes');
+                }
+
+
+
+            });
         });
 
 

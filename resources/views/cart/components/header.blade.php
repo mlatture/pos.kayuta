@@ -16,6 +16,9 @@
                     @endforeach
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="#" id="addNewStationRegister">Add new Register</a>
+                    <a class="dropdown-item" href="#" id="renameRegister">Rename Register</a>
+
+
                     {{-- @if (\App\CPU\Helpers::module_permission_check('admin'))
                        
                     @endif --}}
@@ -75,6 +78,29 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    $(document).ready(function() {
+        function enforceRegisterSelection() {
+            let registerData = JSON.parse(localStorage.getItem("current_register_data"));
+
+            if (!registerData || !Array.isArray(registerData) || registerData.length === 0) {
+                $('#registerDropdown').addClass('btn-warning text-dark')
+                    .text('⚠️ Select Register to continue');
+                Swal.fire({
+                    title: 'Select a Register',
+                    text: 'You must select a register before proceeding.',
+                    icon: 'warning',
+                    allowOutsideClick: false,
+                    confirmButtonText: 'OK',
+                });
+                $('#myTabContent').hide();
+            } else {
+                $('#registerDropdown').removeClass('btn-warning text-dark').addClass('btn-dark text-white');
+            }
+        }
+
+        enforceRegisterSelection();
+    });
+
     function setRegister(registerId, registerName) {
 
         $.ajax({
@@ -88,7 +114,7 @@
             success: function() {
                 let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
 
-                if(!Array.isArray(registerData)) {
+                if (!Array.isArray(registerData)) {
                     registerData = [];
                 }
 
@@ -96,7 +122,7 @@
                     entry => entry.current_register_staff_id === {{ auth()->user()->id }}
                 );
 
-                if(!existingEntry) {
+                if (!existingEntry) {
                     registerData.push({
                         current_register_id: registerId,
                         current_register_staff_id: {{ auth()->user()->id }}
@@ -107,47 +133,214 @@
                 }
 
                 $('#registerDropdown').text('Station: ' + registerName);
+                $('#myTabContent').show();
+
+                window.location.reload();
             }
         });
     }
 
-    $('#addNewStationRegister').click(function () {
-    Swal.fire({
-        title: 'Register New Station',
-        showCancelButton: true,
-        confirmButtonText: "Save",
-        cancelButtonText: `Don't save`,
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: "{{ route('registers.create') }}",
-                    type: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-                    },
-                    success: function (response) {
-                        resolve(response); 
-                    },
-                    error: function (xhr) {
-                        reject(xhr.responseJSON);
-                    }
+    $('#addNewStationRegister').click(function() {
+        Swal.fire({
+            title: 'Register New Station',
+            input: 'text',
+            inputLabel: 'Enter Register Name',
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            cancelButtonText: "Don't save",
+            showLoaderOnConfirm: true,
+            preConfirm: (registerName) => {
+                return new Promise((resolve, reject) => {
+                    $.ajax({
+                        url: "{{ route('registers.create') }}",
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"),
+                        },
+                        data: {
+                            name: registerName
+                        },
+                        success: function(response) {
+                            resolve(response);
+                        },
+                        error: function(xhr) {
+                            reject(xhr.responseJSON);
+                        }
+                    });
                 });
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value.success) {
+                Swal.fire('Success', 'New register created successfully', 'success');
+                location.reload();
+            } else if (result.isDenied || result.dismiss) {
+                Swal.fire('Cancelled', 'No new register was added', 'info');
+            } else if (result.value && !result.value.success) {
+                Swal.fire('Error', 'There was an issue creating the register', 'error');
+            }
+        }).catch((error) => {
+            Swal.fire('Error', 'Failed to create new register: ' + error.message, 'error');
+        });
+    });
+    $(document).ready(function() {
+        function enforceRegisterSelection() {
+            let registerData = JSON.parse(localStorage.getItem("current_register_data"));
+
+            if (!registerData || !Array.isArray(registerData) || registerData.length === 0) {
+                $('#registerDropdown').addClass('btn-warning text-dark').text('⚠️ Select Register');
+                Swal.fire({
+                    title: 'Select a Register',
+                    text: 'You must select a register before proceeding.',
+                    icon: 'warning',
+                    allowOutsideClick: false,
+                    confirmButtonText: 'OK',
+                });
+                $('#myTabContent').hide();
+            } else {
+                $('#registerDropdown').removeClass('btn-warning text-dark').addClass('btn-dark text-white');
+                $('#myTabContent').show();
+            }
+        }
+
+        enforceRegisterSelection();
+
+        function setRegister(registerId, registerName) {
+            $.ajax({
+                url: '{{ route('registers.set') }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    register_id: registerId,
+                    register_name: registerName
+                },
+                success: function() {
+                    let registerData = JSON.parse(localStorage.getItem("current_register_data")) ||
+                        [];
+                    if (!Array.isArray(registerData)) {
+                        registerData = [];
+                    }
+                    let existingEntry = registerData.find(entry => entry
+                        .current_register_staff_id === {{ auth()->user()->id }});
+
+                    if (!existingEntry) {
+                        registerData.push({
+                            current_register_id: registerId,
+                            current_register_staff_id: {{ auth()->user()->id }}
+                        });
+                        localStorage.setItem("current_register_data", JSON.stringify(registerData));
+                    }
+                    $('#registerDropdown').text('Station: ' + registerName);
+                    $('#myTabContent').show();
+                }
             });
         }
-    }).then((result) => {
-        if (result.isConfirmed && result.value.success) {
-        
-            Swal.fire('Success', 'New register created successfully', 'success');
-            location.reload(); 
-        } else if (result.isDenied || result.dismiss) {
-            Swal.fire('Cancelled', 'No new register was added', 'info');
-        } else if (result.value && !result.value.success) {
-            Swal.fire('Error', 'There was an issue creating the register', 'error');
-        }
-    }).catch((error) => {
-        Swal.fire('Error', 'Failed to create new register: ' + error.message, 'error');
-    });
-});
 
+        $('#addNewStationRegister').click(function() {
+            Swal.fire({
+                title: 'Register New Station',
+                input: 'text',
+                inputLabel: 'Enter Register Name',
+                showCancelButton: true,
+                confirmButtonText: "Save",
+                cancelButtonText: "Don't save",
+                showLoaderOnConfirm: true,
+                preConfirm: (registerName) => {
+                    return new Promise((resolve, reject) => {
+                        $.ajax({
+                            url: "{{ route('registers.create') }}",
+                            type: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": $('meta[name="csrf-token"]')
+                                    .attr("content"),
+                            },
+                            data: {
+                                name: registerName
+                            },
+                            success: function(response) {
+                                resolve(response);
+                            },
+                            error: function(xhr) {
+                                reject(xhr.responseJSON);
+                            }
+                        });
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value.success) {
+                    Swal.fire('Success', 'New register created successfully', 'success');
+                    location.reload();
+                }
+            }).catch((error) => {
+                Swal.fire('Error', 'Failed to create new register: ' + error.message, 'error');
+            });
+        });
+
+        $('#renameRegister').click(function() {
+            let currentRegister = $('#registerDropdown').text().replace('Station: ', '').trim();
+            let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
+            let currentRegisterId = null;
+
+            if (Array.isArray(registerData) && registerData.length > 0) {
+                currentRegisterId = registerData.find(entry => entry.current_register_staff_id ===
+                        {{ auth()->user()->id }})?.current_register_id || registerData[0]
+                    .current_register_id;
+            }
+
+            console.log("Current Register ID:", currentRegisterId);
+
+            if (currentRegister === "Select Register" || currentRegister === "⚠️ Select Register") {
+                Swal.fire({
+                    title: 'No Register Selected',
+                    text: 'Please select a register before renaming.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Rename Register',
+                input: 'text',
+                inputLabel: 'Enter New Register Name',
+                inputValue: currentRegister,
+                showCancelButton: true,
+                confirmButtonText: "Save",
+                cancelButtonText: "Cancel",
+                showLoaderOnConfirm: true,
+                preConfirm: (newName) => {
+                    return new Promise((resolve, reject) => {
+                        $.ajax({
+                            url: "{{ route('registers.rename') }}",
+                            type: "PUT",
+                            headers: {
+                                "X-CSRF-TOKEN": $('meta[name="csrf-token"]')
+                                    .attr("content"),
+                            },
+                            data: {
+                                name: newName,
+                                id: currentRegisterId
+                            },
+                            success: function(response) {
+                                resolve(response);
+                            },
+
+                            error: function(xhr) {
+                                reject(xhr.responseJSON);
+                            }
+                        });
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value.success) {
+                    Swal.fire('Success', 'Register renamed successfully', 'success');
+                    location.reload();
+
+                }
+
+            }).catch((error) => {
+                Swal.fire('Error', 'Failed to rename register: ' + error.message, 'error');
+            });
+        });
+    });
 </script>

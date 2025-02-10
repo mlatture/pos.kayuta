@@ -194,35 +194,52 @@ class ProductController extends Controller
      * @param Product $product
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(ProductUpdateRequest $request, Product $product)
+    public function update(Request $request)
     {
-        $product->name          =   $request->name;
-        $product->category_id   =   $request->category_id;
-        $product->tax_type_id   =   $request->tax_type_id;
-        $product->description   =   $request->description;
-        $product->barcode       =   $request->barcode;
-        $product->price         =   $request->price;
-        $product->quantity      =   $request->quantity;
-        $product->status        =   $request->status;
-        $product->type          =   $request->type;
-        $product->discount_type =   $request->discount_type;
-        $product->discount      =   $request->discount;
-        $product->product_vendor_id = $request->product_vendor_id ?? null;
-     
-
+        $product = Product::findOrFail($request->id);
+        
+        $request->validate([
+            'name'          => 'required|string|max:15',
+            'category_id'   => 'required|exists:categories,id',
+            'description'   => 'nullable|string',
+            'image'         => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
+            'barcode'       => 'nullable|string|max:50|unique:products,barcode,' . $request->id,
+            'cost'          => 'required|numeric|min:0',
+            'price'         => 'required|numeric|min:0',
+            'quantity'      => 'required|integer',
+            'status'        => 'required|boolean',
+            'product_vendor_id' => 'nullable|exists:product_vendors,id',
+            'discount_type' => 'nullable|in:fixed_amount,percentage',
+            'discount'      => 'nullable|numeric|min:0',
+        ]);
+    
         if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::delete($product->image);
-            }
-            $image_path = $request->file('image')->store('products', 'public');
-            $product->image = $image_path;
+            $image = $request->file('image');
+            $filename = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('images/products'), $filename);
+            $product->image =  $filename;
         }
-
+    
+        $product->fill($request->only([
+            'name', 'category_id', 'tax_type_id', 'description', 'barcode',
+            'cost', 'price', 'quantity', 'status', 'type', 'discount_type',
+            'discount', 'product_vendor_id'
+        ]));
+    
         if (!$product->save()) {
-            return redirect()->back()->with('error', 'Sorry, Something went wrong while updating product.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry, something went wrong while updating the product.'
+            ], 500);
         }
-        return redirect()->route('products.index')->with('success', 'Success, Product has been updated.');
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Success! Product has been updated.',
+            'product' => $product,
+        ]);
     }
+    
 
 
     /**
