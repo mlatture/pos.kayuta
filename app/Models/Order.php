@@ -87,7 +87,7 @@ class Order extends Model
 
         $orderTotal = $orderItemTotal - ($this->gift_card_amount ?? 0); 
 
-        return $orderTotal;
+        return (float) $orderTotal;
     }
 
     // Format the total
@@ -95,7 +95,7 @@ class Order extends Model
     {
         $total = $this->items->sum('price');
 
-        return (float) $total;
+        return (float) $total;  
     }
 
     // Calculate the received amount

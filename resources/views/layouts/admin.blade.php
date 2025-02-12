@@ -29,17 +29,42 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/autofill/2.7.0/css/autoFill.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css">
 
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css">
 
     @yield('css')
     @stack('css')
 
+    <style>
+        div.dt-top-container {
+            display: flex;
+
+            text-align: center;
+        }
+
+        div.dt-center-in-div {
+            margin: 0 auto;
+            display: inline-block;
+            text-align: center;
+        }
+
+        div.dt-filter-spacer {
+            margin: 10px 0;
+        }
+
+        td.highlight {
+            background-color: #F4F6F9 !important;
+        }
+
+        div.dt-left-in-div {
+            float: left;
+        }
+
+        div.dt-right-in-div {
+            float: right;
+        }
+    </style>
+
     <script>
-   
-
-
-
         window.APP = @json([
             'currency_symbol' => config('settings.currency_symbol'),
             'warning_quantity' => config('settings.warning_quantity'),
@@ -96,7 +121,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/daterangepicker/3.1/daterangepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -122,7 +147,7 @@
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>

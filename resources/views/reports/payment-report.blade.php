@@ -98,7 +98,7 @@
                                         <!-- <td>{{ $discount ?? 0 }}</td> -->
                                         <td>{{ $order->formattedTotal() ?? 0 }}</td>
                                         <td>{{ $order->formattedReceivedAmount() ?? 0}}</td>
-                                        <td>{{ (intval($order->total()) > intval($order->receivedAmount())) ? (floatval($order->total()) - floatval($order->receivedAmount())) : 0  }}</td>
+                                        <td>{{ max($order->total - $order->receivedAmount(), 0) }}</td>
                                         <td>{{ $order->created_at }}</td>
                                     </tr>
                                 @endforeach
@@ -134,11 +134,28 @@
             $('#productDate').attr("placeholder", "Select Date");
 
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
                 ],
-                searching: false
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
 
             $(document).on('click', '.btn-delete', function() {

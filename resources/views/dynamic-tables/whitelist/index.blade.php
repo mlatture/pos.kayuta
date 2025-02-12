@@ -15,36 +15,17 @@
                             <table class="table table-hover table-striped border">
                                 <thead>
                                 <tr>
+                                    <th>Actions</th>
                                     <th>ID</th>
                                     <th>Table Name</th>
                                     <th>Can Read?</th>
                                     <th>Can Update?</th>
                                     <th>Can Delete?</th>
-                                    <th>Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach ($whitelists as $key => $whitelist)
                                     <tr>
-                                        <td>{{ $whitelist->id }}</td>
-                                        <td>{{ $whitelist->table_name }}</td>
-                                        @php
-                                            $allowRead = auth()->user()->hasPermission("read_{$whitelist->table_name}");
-                                            $allowUpdate = auth()->user()->hasPermission("update_{$whitelist->table_name}");
-                                            $allowDelete = auth()->user()->hasPermission("delete_{$whitelist->table_name}");
-                                        @endphp
-                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowRead ? 'Yes' : 'No' }}
-                                                </span>
-                                        </td>
-                                        <td><span class="badge {{ $allowUpdate ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowUpdate ? 'Yes' : 'No' }}
-                                                </span>
-                                        </td>
-                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
-                                                    {{ $allowDelete ? 'Yes' : 'No' }}
-                                                </span>
-                                        </td>
                                         <td>
                                             @if (auth()->user()->hasPermission("read_{$whitelist->table_name}"))
                                                 <a title="View {{ $whitelist->table_name }} data"
@@ -66,6 +47,26 @@
                                                 </a>
                                             @endif
                                         </td>
+                                        <td>{{ $whitelist->id }}</td>
+                                        <td>{{ $whitelist->table_name }}</td>
+                                        @php
+                                            $allowRead = auth()->user()->hasPermission("read_{$whitelist->table_name}");
+                                            $allowUpdate = auth()->user()->hasPermission("update_{$whitelist->table_name}");
+                                            $allowDelete = auth()->user()->hasPermission("delete_{$whitelist->table_name}");
+                                        @endphp
+                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowRead ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
+                                        <td><span class="badge {{ $allowUpdate ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowUpdate ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
+                                        <td><span class="badge {{ $allowRead ? 'badge-success' : 'badge-danger' }}">
+                                                    {{ $allowDelete ? 'Yes' : 'No' }}
+                                                </span>
+                                        </td>
+                                      
                                     </tr>
                                 @endforeach
                                 </tbody>
@@ -82,44 +83,61 @@
     <script>
         $(document).ready(function () {
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
 
-            $(document).on('click', '.delete-table', function (event) {
-                event.preventDefault();
-                const url = $(this).data('url');
+            $(document).on('click', '.delete-table', function() {
+                $this = $(this);
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger'
+                    },
+                    buttonsStyling: false
+                })
 
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "All the related settings will be deleted!",
-                    icon: "warning",
+                swalWithBootstrapButtons.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to delete this whitelist?",
+                    icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes, delete it!"
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No',
+                    reverseButtons: true
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: url,
-                            type: 'delete',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            },
-                            success: function (data) {
-                                $('#deleteModal').modal('hide');
-                                toastr.success(data.message);
-                                setTimeout(() => location.reload(), 2000);
-                            },
-                            error: function (xhr) {
-                                toastr.error(xhr.responseJSON.message);
-                            }
-                        });
+                    if (result.value) {
+                        $.post($this.data('url'), {
+                            _method: 'DELETE',
+                            _token: '{{ csrf_token() }}'
+                        }, function(res) {
+                            $this.closest('tr').fadeOut(500, function() {
+                                $(this).remove();
+                            })
+                        })
                     }
-                });
-            });
+                })
+            })
         });
     </script>
 @endsection

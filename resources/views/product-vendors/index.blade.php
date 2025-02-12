@@ -22,6 +22,7 @@
                                    width="100%">
                                 <thead>
                                 <tr><!-- Log on to codeastro.com for more projects -->
+                                    <th>Actions</th>
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Contact Name</th>
@@ -29,19 +30,11 @@
                                     <th>Work Phone</th>
                                     <th>Created At</th>
                                     <th>Updated At</th>
-                                    <th>Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach ($productVendors as $k => $productVendor)
                                     <tr>
-                                        <td>{{ $productVendor->id }}</td>
-                                        <td>{{ Str::limit($productVendor->name, 20) }}</td>
-                                        <td>{{ $productVendor->contact_name }}</td>
-                                        <td>{{ $productVendor->email }}</td>
-                                        <td>{{ $productVendor->work_phone }}</td>
-                                        <td>{{ $productVendor->created_at }}</td>
-                                        <td>{{ $productVendor->updated_at }}</td>
                                         <td>
                                             @hasPermission(config('constants.role_modules.edit_product_vendors.value'))
                                             <a href="{{ route('product-vendors.edit', $productVendor) }}" class="btn btn-primary"><i
@@ -53,6 +46,13 @@
                                                     class="fas fa-trash"></i></button>
                                             @endHasPermission
                                         </td>
+                                        <td>{{ $productVendor->id }}</td>
+                                        <td>{{ Str::limit($productVendor->name, 20) }}</td>
+                                        <td>{{ $productVendor->contact_name }}</td>
+                                        <td>{{ $productVendor->email }}</td>
+                                        <td>{{ $productVendor->work_phone }}</td>
+                                        <td>{{ $productVendor->created_at }}</td>
+                                        <td>{{ $productVendor->updated_at }}</td>
                                     </tr>
                                 @endforeach
                                 </tbody>
@@ -71,10 +71,28 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
 
             $(document).on('click', '.btn-delete', function() {

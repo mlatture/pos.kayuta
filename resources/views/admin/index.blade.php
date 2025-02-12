@@ -20,6 +20,7 @@
                                 width="100%">
                                 <thead>
                                     <tr>
+                                        <th>Actions</th>
                                         <th>ID</th>
                                         <th>Image</th>
                                         <th>Name</th>
@@ -28,36 +29,38 @@
                                         <th>Admin Role</th>
                                         <th>Status</th>
                                         <th>Created At</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($admins as $admin)
-                              
+                                    @foreach ($admins as $admin)
                                         <tr>
+                                            <td>
+                                                <a href="{{ route('admins.edit', $admin->id) }}" class="btn btn-primary"><i
+                                                        class="fas fa-edit"></i></a>
+                                                <a class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('admins.destroy', $admin->id) }}"><i
+                                                        class="fas fa-trash"></i></a>
+
+                                            </td>
                                             <td>{{ $admin->id }}</td>
-                                            <td><img src="{{ asset('images/logo.png') }}" class="org-img img-fluid" alt=""></td>
+                                            <td><img src="{{ asset('images/logo.png') }}" class="org-img img-fluid"
+                                                    alt=""></td>
                                             <td><span class="name">{{ $admin->name }}</span></td>
                                             <td><span class="phone">{{ $admin->phone }}</span></td>
                                             <td><span class="address_2">{{ $admin->email }}</span></td>
                                             <td><span class="admin-role">{{ $admin->role }}</span></td>
 
                                             <td>
-                                                <span @class(["right","badge","badge-success" => $admin->status, 'badge-danger' => !$admin->status])>{{ $admin->status ? "Active" : "Inactive" }}</span>
+                                                <span
+                                                    @class([
+                                                        'right',
+                                                        'badge',
+                                                        'badge-success' => $admin->status,
+                                                        'badge-danger' => !$admin->status,
+                                                    ])>{{ $admin->status ? 'Active' : 'Inactive' }}</span>
                                             </td>
                                             <td>
                                                 <span class="created_at">{{ $admin->created_at->format('m/d/Y') }}</span>
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('admins.edit',$admin->id) }}" class="btn btn-primary"><i
-                                                        class="fas fa-edit"></i></a>
-                                                <form action="{{ route('admins.destroy',$admin->id) }}"
-                                                      method="post" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn btn-danger btn-delete" type="submit"><i
-                                                            class="fas fa-trash"></i></button>
-                                                </form>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -70,4 +73,65 @@
             </div>
         </div>
     </div>
+
+    @push('js')
+        <script>
+            $('.table').DataTable({
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: [
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
+            });
+
+            $(document).on('click', '.btn-delete', function() {
+                $this = $(this);
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger'
+                    },
+                    buttonsStyling: false
+                })
+
+                swalWithBootstrapButtons.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to delete this account?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.value) {
+                        $.post($this.data('url'), {
+                            _method: 'DELETE',
+                            _token: '{{ csrf_token() }}'
+                        }, function(res) {
+                            $this.closest('tr').fadeOut(500, function() {
+                                $(this).remove();
+                            })
+                        })
+                    }
+                })
+            })
+        </script>
+    @endpush
 @endsection

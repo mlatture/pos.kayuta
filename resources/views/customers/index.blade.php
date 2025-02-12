@@ -10,6 +10,35 @@
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
+    <style>
+        div.dt-top-container {
+            display: flex;
+
+            text-align: center;
+        }
+
+        div.dt-center-in-div {
+            margin: 0 auto;
+            display: inline-block;
+            text-align: center;
+        }
+
+        div.dt-filter-spacer {
+            margin: 10px 0;
+        }
+
+        td.highlight {
+            background-color: #F4F6F9 !important;
+        }
+
+        div.dt-left-in-div {
+            float: left;
+        }
+
+        div.dt-right-in-div {
+            float: right;
+        }
+    </style>
 @endsection
 @section('content')
     <div class="row animated fadeInUp">
@@ -22,24 +51,18 @@
                                 width="100%">
                                 <thead>
                                     <tr>
+                                        <th>Actions</th>
                                         <th>ID</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Contact</th>
                                         <th>Address</th>
                                         <th>Created At</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($customers as $key => $customer)
                                         <tr>
-                                            <td>{{ $key + 1 }}</td>
-                                            <td>{{ $customer->f_name }} {{ $customer->l_name }}</td>
-                                            <td>{{ $customer->email }}</td>
-                                            <td>{{ $customer->phone }}</td>
-                                            <td>{{ $customer->street_address }}</td>
-                                            <td>{{ $customer->created_at }}</td>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_customers.value'))
                                                 <a href="{{ route('customers.edit', $customer) }}"
@@ -51,6 +74,12 @@
                                                         class="fas fa-trash"></i></button>
                                                 @endHasPermission
                                             </td>
+                                            <td>{{ $key + 1 }}</td>
+                                            <td>{{ $customer->f_name }} {{ $customer->l_name }}</td>
+                                            <td>{{ $customer->email }}</td>
+                                            <td>{{ $customer->phone }}</td>
+                                            <td>{{ $customer->street_address }}</td>
+                                            <td>{{ $customer->created_at }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -68,10 +97,27 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'colvis', 
+                    'copy', 
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+               
+                    'print'],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
 
             $(document).on('click', '.btn-delete', function() {

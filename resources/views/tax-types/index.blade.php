@@ -22,25 +22,18 @@
                                 width="100%">
                                 <thead>
                                     <tr><!-- Log on to codeastro.com for more projects -->
+                                        <th>Actions</th>
                                         <th>ID</th>
                                         <th>Title</th>
                                         <th>Tax Type</th>
                                         <th>Tax</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($taxTypes as $k => $tax)
                                         <tr>
-                                            <td>{{ $tax->id }}</td>
-                                            <td>{{ $tax->title }}</td>
-                                            <td>{{ $tax->tax_type }}</td>
-                                            <td>{{ $tax->tax_type == 'fixed_amount' ? config('settings.currency_symbol') . $tax->tax : $tax->tax . '%' }}
-                                            </td>
-                                            <td>{{ $tax->created_at }}</td>
-                                            <td>{{ $tax->updated_at }}</td>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_tax_types.value'))
                                                 <a href="{{ route('tax-types.edit', $tax) }}" class="btn btn-primary"><i
@@ -52,6 +45,13 @@
                                                         class="fas fa-trash"></i></button>
                                                 @endHasPermission
                                             </td>
+                                            <td>{{ $tax->id }}</td>
+                                            <td>{{ $tax->title }}</td>
+                                            <td>{{ $tax->tax_type }}</td>
+                                            <td>{{ $tax->tax_type == 'fixed_amount' ? config('settings.currency_symbol') . $tax->tax : $tax->tax . '%' }}
+                                            </td>
+                                            <td>{{ $tax->created_at }}</td>
+                                            <td>{{ $tax->updated_at }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -69,10 +69,28 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
 
             $(document).on('click', '.btn-delete', function() {

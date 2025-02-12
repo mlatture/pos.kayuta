@@ -22,25 +22,17 @@
                                 width="100%">
                                 <thead>
                                     <tr><!-- Log on to codeastro.com for more projects -->
+                                        <th>Actions</th>
                                         <th>ID</th>
                                         <th>Name</th>
                                         <th>Status</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($categories as $k => $category)
                                         <tr>
-                                            <td>{{ $category->id }}</td>
-                                            <td>{{ $category->name }}</td>
-                                            <td>
-                                                <span
-                                                    class="right badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span>
-                                            </td>
-                                            <td>{{ $category->created_at }}</td>
-                                            <td>{{ $category->updated_at }}</td>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_categories.value'))
                                                 <a href="{{ route('categories.edit', $category) }}"
@@ -52,6 +44,14 @@
                                                         class="fas fa-trash"></i></button>
                                                 @endHasPermission
                                             </td>
+                                            <td>{{ $category->id }}</td>
+                                            <td>{{ $category->name }}</td>
+                                            <td>
+                                                <span
+                                                    class="right badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span>
+                                            </td>
+                                            <td>{{ $category->created_at }}</td>
+                                            <td>{{ $category->updated_at }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -69,10 +69,28 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                dom: 'Bfrtip',
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
             });
             $(document).on('click', '.btn-delete', function() {
                 $this = $(this);
@@ -86,7 +104,7 @@
 
                 swalWithBootstrapButtons.fire({
                     title: 'Are you sure?',
-                    text: "Do you really want to delete this product?",
+                    text: "Do you really want to delete this category?",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, delete it!',

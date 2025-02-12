@@ -3,7 +3,8 @@
 @section('title', 'Admins Roles Management')
 @section('content-header', 'Admins Roles Management')
 @section('content-actions')
-    <a href="{{ route('admin-roles.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Admin Role</a>
+    <a href="{{ route('admin-roles.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Admin
+        Role</a>
 @endsection
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
@@ -20,47 +21,64 @@
                                 width="100%">
                                 <thead>
                                     <tr>
+                                        <th>Actions</th>
                                         <th>ID</th>
                                         <th>Name</th>
                                         <th>Module Access</th>
                                         <th>Status</th>
                                         <th>Created At</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($adminRoles as $adminRole)
+                                    @php
+                                        $permissions = [];
+                                    @endphp
+
+                                    @foreach ($adminRoles as $adminRole)
                                         <tr>
+                                            <td>
+                                                <a href="{{ route('admin-roles.edit', $adminRole->id) }}"
+                                                    class="btn btn-primary"><i class="fas fa-edit"></i></a>
+                                                <a class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('admin-roles.destroy', $adminRole->id) }}"><i
+                                                        class="fas fa-trash"></i></a>
+
+
+                                            </td>
                                             <td>{{ $adminRole->id }}</td>
                                             <td><span class="name">{{ $adminRole->name }}</span></td>
+                                            <td class="text-wrap">
+                                                @php
+                                                    $moduleAccess = is_string($adminRole->module_access)
+                                                        ? json_decode($adminRole->module_access, true)
+                                                        : $adminRole->module_access;
+                                                @endphp
+
+                                                @if (!empty($moduleAccess) && is_array($moduleAccess))
+                                                    @foreach ($moduleAccess as $access)
+                                                        <span
+                                                            class="badge badge-info">{{ ucwords(str_replace('_', ' ', $access)) }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">No Access</span>
+                                                @endif
+                                            </td>
+
+
+
+
                                             <td>
-                                                @foreach($adminRole->module_access as $access)
-                                                    <div class="row">
-                                                        <div class="col">
-                                                            @if(isset(config('constants.role_modules')[$access]))
-                                                                {{ config('constants.role_modules')[$access]['name'] }}
-                                                            @else
-                                                                {{ $access }}
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                @endforeach
+                                                <span
+                                                    @class([
+                                                        'right',
+                                                        'badge',
+                                                        'badge-success' => $adminRole->status,
+                                                        'badge-danger' => !$adminRole->status,
+                                                    ])>{{ $adminRole->status ? 'Active' : 'Inactive' }}</span>
                                             </td>
                                             <td>
-                                                <span  @class(["right","badge","badge-success" => $adminRole->status,'badge-danger' => !$adminRole->status])>{{ $adminRole->status  ? "Active" : "Inactive" }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="created_at">{{ $adminRole->created_at->format('m/d/Y') }}</span>
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('admin-roles.edit',$adminRole->id) }}" class="btn btn-primary"><i
-                                                        class="fas fa-edit"></i></a>
-                                                <form action="{{ route('admin-roles.destroy',$adminRole->id) }}" method="post" class="d-inline" >
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn btn-danger btn-delete"  type="submit"><i
-                                                            class="fas fa-trash"></i></button>
-                                                </form>
+                                                <span
+                                                    class="created_at">{{ $adminRole->created_at->format('m/d/Y') }}</span>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -73,4 +91,66 @@
             </div>
         </div>
     </div>
+
+    @push('js')
+        <script>
+            $('.table').DataTable({
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: [
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
+            });
+
+
+            $(document).on('click', '.btn-delete', function() {
+                $this = $(this);
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger'
+                    },
+                    buttonsStyling: false
+                })
+
+                swalWithBootstrapButtons.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to delete this role?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.value) {
+                        $.post($this.data('url'), {
+                            _method: 'DELETE',
+                            _token: '{{ csrf_token() }}'
+                        }, function(res) {
+                            $this.closest('tr').fadeOut(500, function() {
+                                $(this).remove();
+                            })
+                        })
+                    }
+                })
+            })
+        </script>
+    @endpush
 @endsection
