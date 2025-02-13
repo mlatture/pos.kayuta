@@ -3,9 +3,9 @@
 @section('title', 'Site Management')
 @section('content-header', 'Site Management')
 @section('content-actions')
-{{--    @hasPermission(config('constants.role_modules.create_sites_management.value'))--}}
-{{--    <a href="{{ route('sites.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Site</a>--}}
-{{--    @endHasPermission--}}
+    {{--    @hasPermission(config('constants.role_modules.create_sites_management.value')) --}}
+    {{--    <a href="{{ route('sites.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Site</a> --}}
+    {{--    @endHasPermission --}}
 @endsection
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
@@ -22,6 +22,7 @@
                                 width="100%">
                                 <thead>
                                     <tr><!-- Log on to codeastro.com for more projects -->
+                                        <th>Actions</th>
                                         <th> SL </th>
                                         <th> Site ID </th>
                                         <th> Site Name </th>
@@ -35,13 +36,20 @@
                                         <th> Amenities </th>
                                         {{-- <th> Ratetier </th> --}}
                                         {{-- <th> Action </th> --}}
-                                        {{-- <th>Actions</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($sites as $k => $site)
-                                        <tr>
-                                            <td>{{ ++$k }}</td>
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
+                                            <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
+                                                    class="fas fa-edit"></i></a>
+                                            <a class="btn btn-danger btn-delete"
+                                                data-url="{{ route('sites.destroy', $site) }}"><i
+                                                    class="fas fa-trash"></i></a>
+                                        </td>
+                                        <td>{{ ++$k }}</td>
                                             <td>
                                                 {{ $site->siteid ?? 'N/A' }}
                                             </td>
@@ -83,16 +91,9 @@
                                             </td>
 
                                             {{-- <td>
-                            {{ $site->ratetier ?? 'N/A' }}
-                        </td> --}}
-
-                                            {{-- <td>
-                                                <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
-                                                        class="fas fa-edit"></i></a>
-                                                <button class="btn btn-danger btn-delete"
-                                                    data-url="{{ route('sites.destroy', $site) }}"><i
-                                                        class="fas fa-trash"></i></button>
+                                                {{ $site->ratetier ?? 'N/A' }}
                                             </td> --}}
+
 
                                         </tr>
                                     @endforeach

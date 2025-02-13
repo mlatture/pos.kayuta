@@ -53,6 +53,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
+    Route::get('sites/view/{site}', [SiteController::class, 'view'])->name('sites.view');
     Route::resource('customers', CustomerController::class);
     Route::group(['middleware' => 'master_admin'],function(){
         Route::resource('organizations', OrganizationController::class)->except(['show']);
