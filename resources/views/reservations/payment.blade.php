@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 
 @section('content')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     @push('css')
         <style>
             .invoice-header {
@@ -20,6 +23,15 @@
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                 padding: 10px;
+            }
+
+            .container-gantt {
+                margin-top: 10px;
+                background-color: #77898d;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                height: auto;
             }
 
             .table-invoice {
@@ -64,6 +76,22 @@
                 text-align: right;
                 margin-top: 20px;
             }
+
+            .gantt .bar-progress {
+                fill: #4CAF50 !important;
+            }
+
+            .gantt .grid-background {
+                padding: 10px !important;
+            }
+
+            .gantt .grid-header {
+                fill: #77898d !important;
+                stroke: #e0e0e0;
+                stroke-width: 1.4;
+            }
+           
+          
         </style>
     @endpush
     @php
@@ -138,6 +166,13 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="container-gantt">
+            <h4>
+                Sites
+            </h4>
+            <svg id="gantt"> </svg>
         </div>
         <form id="paymentchoices" method="POST">
             <header class="invoice-header mt-4">
@@ -295,6 +330,10 @@
 
     </div>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
+
     <script>
         var checkGiftCart = "{{ route('check.gift-card') }}";
         var deleteAddToCart = "{{ route('reservations.delete.add-to-cart') }}";
@@ -303,7 +342,7 @@
             cluster: 'mt1',
         });
 
-      
+
         var channel = pusher.subscribe('cart-deletions');
 
         channel.bind('pusher:subscription_succeeded', function() {
@@ -320,9 +359,26 @@
             }, 1000);
         });
 
-      
+
         pusher.connection.bind('error', function(err) {
             console.error('Pusher error:', err);
+        });
+
+        $(document).ready(function() {
+            var tasks = [{
+                id: "Reservation-{{ $reservation->id }}",
+                name: "{{ $reservation->siteclass }} - {{ $reservation->siteid }}",
+                start: "{{ date('Y-m-d', strtotime($reservation->cid)) }}",
+                end: "{{ date('Y-m-d', strtotime($reservation->cod)) }}",
+                progress: 100,
+                custom_class: "gantt-bar-fixed"
+            }];
+
+            var gantt = new Gantt("#gantt", tasks, {
+                view_mode: "Day",
+                language: "en",
+                draggable: false
+            });
         });
     </script>
 @endsection
