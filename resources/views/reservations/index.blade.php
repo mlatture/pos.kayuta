@@ -98,12 +98,119 @@
             background-color: #218838;
 
         }
+
+        .gantt .grid-header {
+            fill: #2E7D32 !important;
+            stroke: #e0e0e0;
+            stroke-width: 1.4;
+        }
+
+        .gantt .grid-header text {
+            fill: #ffffff !important;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .gantt .date text {
+            fill: #ffffff !important;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .gantt .grid-row {
+            fill: #4A4A4A !important;
+        }
+
+        .gantt .grid-row:nth-child(even) {
+            fill: #5a5a5a !important;
+        }
+
+        .gantt .bar-progress {
+            fill: #2E7D32 !important;
+            stroke: #ffffff;
+
+            stroke-width: 1;
+            rx: 4;
+            ry: 4;
+        }
+
+        .gantt .bar-label {
+            fill: #ffffff !important;
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+
+
+        .gantt .unavailable-bar {
+            fill: #D32F2F !important;
+            opacity: 0.7;
+            stroke: #B71C1C;
+            stroke-width: 1;
+            stroke-dasharray: 5;
+        }
+
+        .gantt .date {
+            position: sticky;
+            top: 0;
+            background: #37474F !important;
+            z-index: 2;
+        }
+
+        .gantt-container {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+        }
+
+        .gantt-table {
+            border-collapse: collapse;
+            width: 350px;
+            font-size: 14px;
+        }
+
+        .gantt-table th,
+        .gantt-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .gantt-table th {
+            background-color: #455a64;
+            color: white;
+        }
+
+
+
+        .gantt .bar-progress {
+            fill: #4CAF50 !important;
+            opacity: 0.85;
+        }
+
+
+        .gantt .bar:hover {
+            filter: brightness(1.2);
+        }
+
+        .gantt-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: none;
+            pointer-events: none;
+            z-index: 1000;
+        }
     </style>
 
 
     <div class="container-fluid mt-4">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col">
                 <div class="card shadow-sm">
                     <div class="card-header bg-dark">
                         <h5 class="card-title mb-0" style="color: #EFC368 !important">Confirmed Customers</h5>
@@ -124,15 +231,15 @@
 
                             </div>
                             <!-- <div>
-                                                <a href="#" class="text-white text-decoration-none">
-                                                    <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
-                                                    Help
-                                                </a>
-                                            </div> -->
+                                                                        <a href="#" class="text-white text-decoration-none">
+                                                                            <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
+                                                                            Help
+                                                                        </a>
+                                                                    </div> -->
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                        {{-- <div class="mb-3 d-flex justify-content-between align-items-center">
                             <label for="limitSelector" class="form-label">Show:</label>
                             <select id="limitSelector" class="form-select w-auto">
                                 <option value="5">5</option>
@@ -169,12 +276,20 @@
                             </table>
                         </div>
 
-                        <div id="paginationLinks" class="pagination-links text-center"></div>
+                        <div id="paginationLinks" class="pagination-links text-center"></div> --}}
+
+                        <div class="gantt-container" style="max-height: 600px;">
+                            <div id="ganttTable"></div>
+                            <div id="ganttReservations"></div>
+
+                        </div>
+
+
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="card shadow-sm">
                     <div class="card-header bg-dark">
                         <h5 class="card-title mb-0" style="color: #EFC368 !important">Cart Reservations</h5>
@@ -207,7 +322,7 @@
                         <div id="paginationLinks1" class="pagination-links text-center"></div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
     @extends('reservations.modals.modals')
@@ -219,13 +334,23 @@
     <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
     <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
 
     <script>
         const webdavinci_api = "{{ config('app.webdavinci_api') }}";
         const webdavinci_api_key = "{{ config('app.webdavinci_api_key') }}";
-
-        
     </script>
 @endpush

@@ -4,7 +4,7 @@
             Point Of Sale
         </a>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            <div class="dropdown">
+            <div class="dropdown" id="registerDropdownContainer">
                 <button class="btn btn-dark text-white dropdown-toggle" type="button" id="registerDropdown"
                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Station: {{ session('current_register_name', 'Select Register') }}
@@ -78,31 +78,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    $(document).ready(function() {
-        function enforceRegisterSelection() {
-            let registerData = JSON.parse(localStorage.getItem("current_register_data"));
-
-            if (!registerData || !Array.isArray(registerData) || registerData.length === 0) {
-                $('#registerDropdown').addClass('btn-warning text-dark')
-                    .text('⚠️ Select Register to continue');
-                Swal.fire({
-                    title: 'Select a Register',
-                    text: 'You must select a register before proceeding.',
-                    icon: 'warning',
-                    allowOutsideClick: false,
-                    confirmButtonText: 'OK',
-                });
-                $('#myTabContent').hide();
-            } else {
-                $('#registerDropdown').removeClass('btn-warning text-dark').addClass('btn-dark text-white');
-            }
-        }
-
-        enforceRegisterSelection();
-    });
-
-    function setRegister(registerId, registerName) {
-
+    window.setRegister = function(registerId, registerName) {
         $.ajax({
             url: '{{ route('registers.set') }}',
             method: 'POST',
@@ -113,76 +89,26 @@
             },
             success: function() {
                 let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
-
                 if (!Array.isArray(registerData)) {
                     registerData = [];
                 }
-
-                let existingEntry = registerData.find(
-                    entry => entry.current_register_staff_id === {{ auth()->user()->id }}
-                );
+                let existingEntry = registerData.find(entry => entry.current_register_staff_id ===
+                    {{ auth()->user()->id }});
 
                 if (!existingEntry) {
                     registerData.push({
                         current_register_id: registerId,
                         current_register_staff_id: {{ auth()->user()->id }}
                     });
-
                     localStorage.setItem("current_register_data", JSON.stringify(registerData));
-
                 }
-
                 $('#registerDropdown').text('Station: ' + registerName);
                 $('#myTabContent').show();
-
-                window.location.reload();
             }
         });
-    }
+    };
 
-    $('#addNewStationRegister').click(function() {
-        Swal.fire({
-            title: 'Register New Station',
-            input: 'text',
-            inputLabel: 'Enter Register Name',
-            showCancelButton: true,
-            confirmButtonText: "Save",
-            cancelButtonText: "Don't save",
-            showLoaderOnConfirm: true,
-            preConfirm: (registerName) => {
-                return new Promise((resolve, reject) => {
-                    $.ajax({
-                        url: "{{ route('registers.create') }}",
-                        type: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                                "content"),
-                        },
-                        data: {
-                            name: registerName
-                        },
-                        success: function(response) {
-                            resolve(response);
-                        },
-                        error: function(xhr) {
-                            reject(xhr.responseJSON);
-                        }
-                    });
-                });
-            }
-        }).then((result) => {
-            if (result.isConfirmed && result.value.success) {
-                Swal.fire('Success', 'New register created successfully', 'success');
-                location.reload();
-            } else if (result.isDenied || result.dismiss) {
-                Swal.fire('Cancelled', 'No new register was added', 'info');
-            } else if (result.value && !result.value.success) {
-                Swal.fire('Error', 'There was an issue creating the register', 'error');
-            }
-        }).catch((error) => {
-            Swal.fire('Error', 'Failed to create new register: ' + error.message, 'error');
-        });
-    });
+
     $(document).ready(function() {
         function enforceRegisterSelection() {
             let registerData = JSON.parse(localStorage.getItem("current_register_data"));
@@ -193,10 +119,42 @@
                     title: 'Select a Register',
                     text: 'You must select a register before proceeding.',
                     icon: 'warning',
-                    allowOutsideClick: false,
+                    allowOutsideClick: true, // Allow dismissal
+                    allowEscapeKey: true,
                     confirmButtonText: 'OK',
+                }).then((result) => {
+                    console.log('Swal Result:', result);
+
+                    if (result.isConfirmed) { // If user dismisses modal
+                        let dropdownElement = document.getElementById("registerDropdownContainer");
+
+                        if (dropdownElement) {
+                            Swal.fire({
+                                title: 'Choose a Register',
+                                html: dropdownElement.innerHTML,
+                                showCancelButton: false,
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    document.querySelectorAll(".dropdown-item").forEach(
+                                        item => {
+                                            item.addEventListener("click", function() {
+                                              
+                                                Swal.close();
+                                            });
+                                        });
+                                }
+
+                            })
+                        } else {
+                            console.error("Element #registerDropdownContainer not found.");
+                        }
+                    }
                 });
+
+
                 $('#myTabContent').hide();
+
             } else {
                 $('#registerDropdown').removeClass('btn-warning text-dark').addClass('btn-dark text-white');
                 $('#myTabContent').show();
@@ -205,36 +163,6 @@
 
         enforceRegisterSelection();
 
-        function setRegister(registerId, registerName) {
-            $.ajax({
-                url: '{{ route('registers.set') }}',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    register_id: registerId,
-                    register_name: registerName
-                },
-                success: function() {
-                    let registerData = JSON.parse(localStorage.getItem("current_register_data")) ||
-                        [];
-                    if (!Array.isArray(registerData)) {
-                        registerData = [];
-                    }
-                    let existingEntry = registerData.find(entry => entry
-                        .current_register_staff_id === {{ auth()->user()->id }});
-
-                    if (!existingEntry) {
-                        registerData.push({
-                            current_register_id: registerId,
-                            current_register_staff_id: {{ auth()->user()->id }}
-                        });
-                        localStorage.setItem("current_register_data", JSON.stringify(registerData));
-                    }
-                    $('#registerDropdown').text('Station: ' + registerName);
-                    $('#myTabContent').show();
-                }
-            });
-        }
 
         $('#addNewStationRegister').click(function() {
             Swal.fire({

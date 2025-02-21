@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\Customer;
 class CartReservation extends Model
 {
     use HasFactory;
@@ -39,6 +39,11 @@ class CartReservation extends Model
         'description',
     ];
     protected $guarded = [];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customernumber', 'id');
+    }
 
     public static function calculateRate($fromDate, $toDate, $tier, $request)
     {

@@ -151,14 +151,19 @@
                 @endHasPermission
 
                 @hasPermission(config('constants.role_modules.list_receipt_printing.value'))
-                        <li>
-                            <a href="#" class="dropdown-item d-flex align-items-center" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#receiptPrintingModal" >
-                                <i class="fa-solid fa-print me-2"></i>
-                                <span>Receipt Printing</span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="#" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal"
+                            data-bs-target="#receiptPrintingModal">
+                            <i class="fa-solid fa-print me-2"></i>
+                            <span>Receipt Printing</span>
+                        </a>
+                    </li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.list_sites_management.value'))
+                    <li><a class="dropdown-item" href="{{ route('sites.index') }}">
+                            <i class="nav-icon fas fa-globe"></i>
+                            <span>Sites</span>
+                        </a></li>
                 @endHasPermission
             </ul>
 
@@ -239,18 +244,19 @@
                             <span>Admin Role</span>
                         </a></li>
                 @endif
-                @hasPermission(config('constants.role_modules.list_sites_management.value'))
-                    <li><a class="dropdown-item" href="{{ route('sites.index') }}">
-                            <i class="nav-icon fas fa-globe"></i>
-                            <span>Sites</span>
-                        </a></li>
-                @endHasPermission
+
                 @hasPermission(config('constants.role_modules.list_sites_management.value'))
                     <li><a class="dropdown-item" href="{{ route('admin.whitelist') }}">
                             <i class="nav-icon fas fa-briefcase"></i>
                             <span>Whitelist</span>
                         </a></li>
                 @endHasPermission
+                @hasPermission(config('constants.role_modules.reservation_in_cart.value'))
+                <li><a class="dropdown-item" href="{{ route('reservations.reservation-in-cart') }}">
+                        <i class="nav-icon fas fa-briefcase"></i>
+                        <span>Reservation in Cart</span>
+                    </a></li>
+            @endHasPermission
 
             </ul>
         </li>

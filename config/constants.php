@@ -201,6 +201,10 @@ return [
         'list_receipt_printing' => [
             'name' => 'Receipt Printing',
             'value' => 'list_receipt_printing'
+        ],
+        'reservation_in_cart' => [
+            'name' => 'Reservation in Cart',
+            'value' => 'reservation_in_cart'
         ]
     ]
 ];

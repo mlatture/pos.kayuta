@@ -101,6 +101,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
+    Route::get('reservation-in-cart', [NewReservationController::class, 'reservationInCart'])->name('reservations.reservation-in-cart');
     
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
@@ -164,7 +165,7 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
     Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
-
+    
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');

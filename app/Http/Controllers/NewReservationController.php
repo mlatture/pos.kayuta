@@ -27,6 +27,28 @@ use App\Models\SurveysResponseModel;
 
 class NewReservationController extends Controller
 {
+
+    protected $reservation;
+    protected $site;
+    protected $payment;
+    protected $customer;
+    protected $cartReservation;
+    protected $siteClass;
+    protected $siteHookup;
+    
+
+    public function __construct(Reservation $reservation, Site $site, Payment $payment, Customer $customer, CartReservation $cartReservation, SiteClass $siteClass, SiteHookup $siteHookup)
+    {
+        $this->middleware('admin_has_permission:'.config('constants.role_modules.reservation_management.value'));
+        $this->reservation = $reservation;
+        $this->site = $site;
+        $this->payment = $payment;
+        $this->customer = $customer;
+        $this->cartReservation = $cartReservation;
+        $this->siteClass = $siteClass;
+        $this->siteHookup = $siteHookup;
+    }
+
     public function index($id)
     {
         return view('reservations.index');
@@ -121,43 +143,107 @@ class NewReservationController extends Controller
     
     public function getReservations(Request $request)
     {
-        $limit = $request->input('limit', 10);
-        $siteId = $request->input('siteid');
-        $types = $request->input('tier', []);
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        // $limit = $request->input('limit', 10);
+        // $siteId = $request->input('siteid');
+        // $types = $request->input('tier', []);
+        // $startDate = $request->input('start_date');
+        // $endDate = $request->input('end_date');
 
-        $paymentCartIds = Payment::pluck('cartid')->toArray();
+        // $paymentCartIds = Payment::pluck('cartid')->toArray();
 
-        $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
-            ->join('payments', 'reservations.cartid', '=', 'payments.cartid')
-            ->whereIn('reservations.cartid', $paymentCartIds)
-            ->select('reservations.*', 'customers.phone', 'customers.address', 'payments.payment')
-            ->orderByDesc('reservations.id')
-            ->distinct('reservations.id'); 
+        // $reservationsQuery = Reservation::join('customers', 'reservations.customernumber', '=', 'customers.id')
+        //     ->join('payments', 'reservations.cartid', '=', 'payments.cartid')
+        //     ->whereIn('reservations.cartid', $paymentCartIds)
+        //     ->select('reservations.*', 'customers.phone', 'customers.address', 'payments.payment')
+        //     ->orderByDesc('reservations.id')
+        //     ->distinct('reservations.id'); 
         
-        if($siteId){
-            $reservationsQuery->where('reservations.siteid', $siteId);
+        // if($siteId){
+        //     $reservationsQuery->where('reservations.siteid', $siteId);
+        // }
+
+        // if(!empty($types)){
+        //     $reservationsQuery->whereIn('reservations.siteclass', $types);
+        // }
+
+        // if($startDate && $endDate){
+        //     $reservationsQuery->where(function ($query) use ($startDate, $endDate) {
+        //         $query->whereDate('reservations.cid', '>=', $startDate)
+        //             ->whereDate('reservations.cod', '<=', $endDate);
+        //     });
+        // }elseif ($startDate) {
+        //     $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
+        // } elseif ($endDate) {
+        //     $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
+        // }
+
+        // $reservations = $reservationsQuery->paginate($limit);
+        // return response()->json($reservations);
+
+        $siteIds = [];
+        if ($request->site_names){
+            $siteIds = array_merge($siteIds, explode(',', $request->site_names));
+        }
+        if ($request->site_classes){
+            $siteIds = array_merge($siteIds, explode(',', $request->site_classes));
+        }
+        $siteIds = array_unique($siteIds);
+        if ($request->date) {
+            $date                   =   explode('-', $request->date);
+            if (count($date) > 1) {
+                $filters['startDate']   =   date('Y-m-d', strtotime($date[0]));
+                $filters['endDate']   = date('Y-m-d', strtotime($date[1]));
+            }
+        } else {
+            $filters['startDate']   =   date('Y-m-01');
+            $filters['endDate']   =   date('Y-m-t');
+        }
+        $allSites = $this->site->getAllSiteWithReservations([], $filters, [])->get();
+        $sites = collect();
+        if ($siteIds){
+            $sites  =   $this->site->getAllSiteWithReservations([], $filters, $siteIds)->get();
+//            dd($sites);
+        }
+        else {
+            $sites = $allSites;
         }
 
-        if(!empty($types)){
-            $reservationsQuery->whereIn('reservations.siteclass', $types);
+        $calendar = generateLinearCalendar($filters['startDate'], $filters['endDate']);
+
+        foreach ($sites as $site) {
+            $totalDays = 0;
+            foreach ($site->reservations as $reservation) {
+                $totalDays += Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
+            }
+            $site->totalDays = $totalDays;
         }
 
-        if($startDate && $endDate){
-            $reservationsQuery->where(function ($query) use ($startDate, $endDate) {
-                $query->whereDate('reservations.cid', '>=', $startDate)
-                    ->whereDate('reservations.cod', '<=', $endDate);
-            });
-        }elseif ($startDate) {
-            $reservationsQuery->whereDate('reservations.cid', '>=', $startDate);
-        } elseif ($endDate) {
-            $reservationsQuery->whereDate('reservations.cod', '<=', $endDate);
-        }
+        // $reservations = new Reservation();
 
-        $reservations = $reservationsQuery->paginate($limit);
 
-        return response()->json($reservations);
+        // if ($request->end_date) {
+        //     $reservations = $reservations->whereDate('created_at', '<=', $request->end_date);
+        // }
+
+        // $reservations = $reservations->latest()->simplePaginate(10);
+
+        // $total = $reservations->map(function ($reservation) {
+        //     return $reservation->total;
+        // })->sum();
+        $allReservations = Reservation::orderBy('id', 'desc')->get();
+        $allCurrentSites = Site::orderBy('id', 'desc')->get();
+        $payments = $this->payment::whereIn('cartid', $allReservations->pluck('cartid')->toArray())->get();
+        $customers = Customer::whereIn('id', $allReservations->pluck('customernumber')->toArray())->get();
+        return response()->json([
+            'allReservations' => $allReservations,
+            'allCurrentSites' => $allCurrentSites,
+            'sites' => $sites,
+            'calendar' => $calendar,
+            'allSites' => $allSites,
+            'payments' => $payments,
+            'customers' => $customers,
+        ]);
+        // return view('reservations.index', compact('sites', 'calendar', 'allSites', 'allReservations', 'allCurrentSites'));
     }
 
 
@@ -655,6 +741,13 @@ class NewReservationController extends Controller
         }
     
         return response()->json(['success' => true, 'message' => 'All expired carts have been deleted.']);
+    }
+
+    public function reservationInCart() 
+    {
+        $customer = Customer::pluck('id', 'first_name', 'last_name');
+        $reservations = CartReservation::with('customer')->get();
+        return view('cart-reservations.index', compact('reservations', 'customer'));
     }
     
 
