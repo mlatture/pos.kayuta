@@ -98,11 +98,15 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('reservations/payment/{id}/postpayment', [NewReservationController::class, 'storePayment']);
     Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'processPayment']);
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
-    Route::get('reservations/payment/{id}', [NewReservationController::class, 'paymentIndex']);
+    Route::get('reservations/payment/{confirmationNumber}', [NewReservationController::class, 'paymentIndex'])->name('reservations.payment.index');
     Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
     Route::get('reservation-in-cart', [NewReservationController::class, 'reservationInCart'])->name('reservations.reservation-in-cart');
-    
+    Route::get('reservations/quote-site', [NewReservationController::class, 'quoteSite'])->name('reservations.quoteSite');
+    Route::get('reservations/create-reservation', [NewReservationController::class, 'createReservation'])->name('reservations.create-reservation');
+    Route::get('lookup-customer', [NewReservationController::class, 'lookupCustomer'])->name('reservations.lookup-customer');
+    Route::post('new-reservation/create', [NewReservationController::class, 'createNewReservation'])->name('reservations.create-new-reservation');
+
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
     Route::put('reservations/update_checked_in', [NewReservationController::class, 'updateCheckedIn']);

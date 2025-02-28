@@ -10,13 +10,9 @@ class Customer extends Model
 
     protected $table = 'customers';
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'email',
-        'phone',
-        'address',
-        'avatar',
-        'user_id',
+        'first_name', 'last_name', 'email', 'phone', 'home_phone', 'work_phone', 
+        'customer_number', 'driving_license', 'date_of_birth', 'anniversary', 'age', 
+        'address', 'address_2', 'address_3', 'city', 'state', 'zip', 'country'
     ];
 
     public function getAvatarUrl()
