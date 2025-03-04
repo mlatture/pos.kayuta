@@ -362,9 +362,7 @@
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
 
     <script>
-        // const webdavinci_api = "{{ config('app.webdavinci_api') }}";
-        // const webdavinci_api_key = "{{ config('app.webdavinci_api_key') }}";
-
+        
         let today = new Date().toISOString().split('T')[0];
         let tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
