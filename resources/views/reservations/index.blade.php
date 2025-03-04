@@ -5,6 +5,9 @@
 
 @section('content')
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
+
+
 
     @include('reservations.components.header')
 
@@ -228,6 +231,16 @@
             border: 2px solid green;
             background-color: #f0fff0;
         }
+
+        .quote-btn {
+            position: fixed;
+            bottom: 30px;
+            z-index: 1000;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 
 
@@ -259,11 +272,11 @@
 
                             </div>
                             <!-- <div>
-                                                                                                                                                            <a href="#" class="text-white text-decoration-none">
-                                                                                                                                                                <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
-                                                                                                                                                                Help
-                                                                                                                                                            </a>
-                                                                                                                                                        </div> -->
+                                                                                                                                                                                                                                    <a href="#" class="text-white text-decoration-none">
+                                                                                                                                                                                                                                        <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
+                                                                                                                                                                                                                                        Help
+                                                                                                                                                                                                                                    </a>
+                                                                                                                                                                                                                                </div> -->
                         </div>
                     </div>
                     <div class="card-body">
@@ -279,23 +292,42 @@
 
                         <div class="container">
                             <!-- Date Filters -->
-                            <div class="filter-container row mb-3" hidden>
+                            <div class="filter-container row g-3 align-items-end mb-3" hidden>
+                                <!-- Check-in Date -->
                                 <div class="col-md-4">
                                     <label for="checkin">Check-in:</label>
                                     <input type="date" id="checkin" class="form-control"
                                         value="{{ now()->format('Y-m-d') }}" onchange="calculateNights()">
                                 </div>
+
+                                <!-- Check-out Date -->
                                 <div class="col-md-4">
                                     <label for="checkout">Check-out:</label>
                                     <input type="date" id="checkout" class="form-control"
                                         value="{{ now()->addDay()->format('Y-m-d') }}" onchange="calculateNights()">
                                 </div>
-                                <div class="col-md-4">
-                                    <span id="nights" class="form-control mt-4">Nights: 1</span>
-                                </div>
-                                <button id="quoteButton" hidden onclick="quoteSites()" class="btn btn-primary mt-3">Get
-                                    Quote</button>
 
+                                <!-- Nights Display -->
+                                <div class="col-md-4">
+                                    <label>Nights:</label>
+                                    <input type="text" id="nights" class="form-control" value="1" readonly>
+                                </div>
+
+                                <!-- Site Availability Button -->
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
+                                        data-bs-target="#filterModal">
+                                        Site Availability
+                                    </button>
+                                </div>
+
+                                <!-- Get Quote Button (Hidden Initially) -->
+                                <div class="col-12 text-center">
+                                    <button id="quoteButton" hidden onclick="quoteSites()"
+                                        class="btn btn-primary quote-btn"">
+                                        Get Quote
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="ganttTableAvailable" class="row"></div>
@@ -315,10 +347,38 @@
                                             <!-- Table is populated dynamically -->
                                         </div>
                                         <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+
                                             <button type="button" id="createReservation" class="btn btn-primary">Create
                                                 Reservation</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Filter Modal --}}
+
+                            <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="filterModalLabel">Select Sites</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="list-group" id="site-list"
+                                                style="max-height: 400px; overflow-y: auto;">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Close</button>
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary" id="apply-filter"
+                                                data-bs-dismiss="modal">Apply Filter</button>
+
                                         </div>
                                     </div>
                                 </div>
@@ -343,6 +403,8 @@
 
 @push('js')
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
     <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -351,18 +413,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js" crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
 
+
+
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
     <script src="{{ asset('js/reservations/retrievedata.js') }}"></script>
     <script src="{{ asset('js/reservations/reservationmodal.js') }}"></script>
 
     <script>
-        
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+                button.addEventListener("click", function() {
+                    let modal = document.getElementById("quoteModal");
+                    let modalInstance = bootstrap.Modal.getInstance(modal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    setTimeout(() => {
+                        document.body.classList.remove('modal-open');
+                        document.querySelectorAll('.modal-backdrop').forEach(el => el
+                            .remove());
+                    }, 300);
+                });
+            });
+        });
+
         let today = new Date().toISOString().split('T')[0];
         let tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -374,55 +455,6 @@
         let selectedSites = [];
         let nightsCounts = 1;
 
-        function checkAvailable(data) {
-            $('#ganttTableAvailable').attr('hidden', false);
-            console.log('Check available data', data);
-
-            let data_current_sites = data.allCurrentSites || [];
-
-            if (!Array.isArray(data_current_sites) || data_current_sites.length === 0) {
-                console.error('data_current_sites is empty or not an array.');
-                return;
-            }
-
-            // Show filter container
-            $('.filter-container').attr('hidden', false);
-
-            let cardHtml = '';
-            let uniqueIds = new Set(); // ✅ Track unique site IDs
-
-            data_current_sites.forEach((site) => {
-                let siteId = `${site.id}`;
-
-                if (uniqueIds.has(siteId)) return;
-                uniqueIds.add(siteId); // ✅ Add ID to the Set
-
-                let imageUrl = site.image ||
-                    "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
-
-                cardHtml += `
-                    <div class="col-md-3">
-                        <div class="card site-card" data-id="${siteId}" data-price="${site.price || 100}">
-                            <img src="${imageUrl}" class="card-img-top" alt="Site Image">
-                            <div class="card-body text-center">
-                                <h5 class="card-title">${site.siteid || "Unknown"}</h5>
-                                <p class="card-text">${site.siteclass || "Unknown"}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById("ganttTableAvailable").innerHTML = `
-                <div class="row">${cardHtml}</div>
-            `;
-
-            document.querySelectorAll('.site-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    toggleSite(this);
-                });
-            });
-        }
 
         function toggleSite(card) {
             let siteId = card.getAttribute("data-id");
@@ -488,19 +520,19 @@
                         let frequency = nightsCounts === 7 ? "Weekly" : (nightsCounts > 7 ?
                             "Weekly + Extra Nights" : "Nightly");
                         let description = `Booking for ${nightsCounts} ${nightsCounts === 1
-                         ? 'night' : 'nights'} from ${checkinDate} to ${checkoutDate}`;
+                        ? 'night' : 'nights'} from ${checkinDate} to ${checkoutDate}`;
 
                         totalCost += site.rate;
 
                         tableBody += `
-                            <tr>
-                                <td>${checkinDate} - ${checkoutDate}</td>
-                                <td>${site.siteid}</td>
-                                <td id="table-rate" data-rate="${site.rate}">$${site.rate.toFixed(2)}</td>
-                                <td>${frequency}</td>
-                                <td>${description}</td>
+                        <tr>
+                            <td>${checkinDate} - ${checkoutDate}</td>
+                            <td>${site.siteid}</td>
+                            <td id="table-rate" data-rate="${site.rate}">$${site.rate.toFixed(2)}</td>
+                            <td>${frequency}</td>
+                            <td>${description}</td>
                             </tr>
-                        `;
+                            `;
 
                     });
 
@@ -509,36 +541,38 @@
                             <td colspan="2"><strong>Total</strong></td>
                             <td><strong id="totalCost" data-total="${totalCost}">$${totalCost.toFixed(2)}</strong></td>
                             <td colspan="2"></td>
-                        </tr>
-
-                    `;
+                            </tr>
+                            
+                            `;
 
                     $('#quoteModalBody').html(`
-                        <p><strong>Check-in:</strong> ${checkinDate}</p>
-                        <p><strong>Check-out:</strong> ${checkoutDate}</p>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Site</th>
-                                    <th>Rate</th>
-                                    <th>Frequency</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableBody}
-                            </tbody>
-                            <tfoot>
-                                ${tableFooter}
-                            </tfoot>
-                        </table>
-             
-                    `);
+                            <p><strong>Check-in:</strong> ${checkinDate}</p>
+                            <p><strong>Check-out:</strong> ${checkoutDate}</p>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Site</th>
+                                        <th>Rate</th>
+                                        <th>Frequency</th>
+                                        <th>Description</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tableBody}
+                                            </tbody>
+                                            <tfoot>
+                                                ${tableFooter}
+                                                </tfoot>
+                                                </table>
+                                                
+                                                `);
 
                     $('#quoteModal').modal('show');
 
                     $('#createReservation').on('click', function() {
+
+
 
 
                         $.ajax({
@@ -549,12 +583,34 @@
                                 nights: nightsCounts,
                                 checkin: checkinDate,
                                 checkout: checkoutDate,
-                             
+
                                 _token: '{{ csrf_token() }}'
                             },
                             success: function(response_reservation) {
                                 console.log(response_reservation);
-                                window.location.href = "{{ route('reservations.payment.index', ['confirmationNumber' => ':confirmationNumber']) }}".replace(':confirmationNumber', response_reservation.confirmationNumber);
+
+                                $.ajax({
+                                    url: " {{ route('reservations.update-availability') }} ",
+                                    type: "PATCH",
+                                    data: {
+                                        siteIds: siteIds,
+                                        _token: '{{ csrf_token() }}'
+
+                                    },
+                                    success: function(response_availability) {
+                                        console.log('Availability: ',
+                                            response_availability);
+                                    },
+                                    error: function(error) {
+                                        console.log(error);
+                                    }
+
+                                });
+
+                                window.location.href =
+                                    "{{ route('reservations.payment.index', ['confirmationNumber' => ':confirmationNumber']) }}"
+                                    .replace(':confirmationNumber', response_reservation
+                                        .confirmationNumber);
                             },
                             error: function(error) {
                                 console.log(error);
@@ -571,6 +627,174 @@
         }
 
 
+        // function checkAvailable(data) {
+        //     $('#site-list').empty();
+        //     if (data.allCurrentSites && data.allCurrentSites.length > 0) {
+        //         let sitesHTML = data.allCurrentSites
+        //             .filter(site => site.available != 0 && site.availableonline != 0)
+        //             .map(site => `
+    //                 <label class="list-group-item">
+    //                     <input type="checkbox" class="site-checkbox" value="${site.id}">
+    //                     ${site.sitename}
+    //                 </label>
+    //             `)
+        //             .join('');
+
+        //         if (sitesHTML) {
+        //             $('#site-list').append(sitesHTML);
+        //         } else {
+        //             $('#site-list').append('<p>No sites available</p>');
+        //         }
+        //     } else {
+        //         $('#site-list').append('<p>No sites available</p>');
+        //     }
+
+        //     $('#apply-filter').on('click', function() {
+        //         let selectedSites = $('.site-checkbox:checked').map(function() {
+        //             return $(this).val();
+        //         }).get();
+
+        //         console.log('Selected Site IDs:', selectedSites);
+
+        //         $('#selected-filters').html(`Filtered Sites: ${selectedSites.join(', ')}`);
+
+        //         $('#filterModal').modal('hide');
+        //     });
+
+
+
+        //     $('#ganttTableAvailable').attr('hidden', false);
+        //     console.log('Check available data', data);
+
+        //     let data_current_sites = data.allCurrentSites || [];
+
+        //     if (!Array.isArray(data_current_sites) || data_current_sites.length === 0) {
+        //         console.error('data_current_sites is empty or not an array.');
+        //         return;
+        //     }
+
+        //     // Show filter container
+        //     $('.filter-container').attr('hidden', false);
+
+        //     let cardHtml = '';
+        //     let uniqueIds = new Set(); // ✅ Track unique site IDs
+
+        //     data_current_sites.forEach((site) => {
+        //         let siteId = `${site.id}`;
+
+        //         if (uniqueIds.has(siteId)) return;
+        //         uniqueIds.add(siteId); // ✅ Add ID to the Set
+
+        //         let imageUrl = site.image ||
+        //             "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
+
+        //         cardHtml += `
+    //             <div class="col-md-3">
+    //                 <div class="card site-card" data-id="${siteId}" data-price="${site.price || 100}">
+    //                     <img src="${imageUrl}" class="card-img-top" alt="Site Image">
+    //                     <div class="card-body text-center">
+    //                         <h5 class="card-title">${site.siteid || "Unknown"}</h5>
+    //                         <p class="card-text">${site.siteclass || "Unknown"}</p>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         `;
+        //     });
+
+        //     document.getElementById("ganttTableAvailable").innerHTML = `
+    //         <div class="row">${cardHtml}</div>
+    //     `;
+
+        //     document.querySelectorAll('.site-card').forEach(card => {
+        //         card.addEventListener('click', function() {
+        //             toggleSite(this);
+        //         });
+        //     });
+        // }
+
+
+        function checkAvailable(data) {
+            $('#site-list').empty();
+
+            let data_current_sites = data.allCurrentSites || [];
+            if (!Array.isArray(data_current_sites) || data_current_sites.length === 0) {
+                console.error('data_current_sites is empty or not an array.');
+                $('#site-list').append('<p>No sites available</p>');
+                return;
+            }
+
+            let sitesHTML = data_current_sites.map(site => `
+                <label class="list-group-item">
+                    <input type="checkbox" class="site-checkbox" value="${site.id}">
+                    ${site.sitename}
+                </label>
+            `).join('');
+
+            $('#site-list').append(sitesHTML);
+
+            showFilteredCards([], data_current_sites, true);
+
+            $('#apply-filter').off('click').on('click', function() {
+                let selectedSites = $('.site-checkbox:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                console.log('Selected Site IDs:', selectedSites);
+
+                if (selectedSites.length === 0) {
+                    showFilteredCards([], data_current_sites, true);
+                    $('#selected-filters').html('Showing all sites');
+                } else {
+                    showFilteredCards(selectedSites, data_current_sites, false);
+                    $('#selected-filters').html(`Filtered Sites: ${selectedSites.join(', ')}`);
+                }
+                $('#filterModal').modal('hide');
+                $('body').removeClass('modal-open');
+                $('.modal-backdrop').remove();
+
+            });
+
+            $('#ganttTableAvailable').attr('hidden', false);
+            $('.filter-container').attr('hidden', false);
+        }
+
+        function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
+            let filteredSites = showAll ? allSites : allSites.filter(site => selectedSiteIds.includes(String(site.id)));
+
+            let cardHtml = '';
+            let uniqueIds = new Set();
+
+            filteredSites.forEach((site) => {
+                let siteId = `${site.id}`;
+                if (uniqueIds.has(siteId)) return;
+                uniqueIds.add(siteId);
+
+                let imageUrl = site.image ||
+                    "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
+
+                cardHtml += `
+                    <div class="col-md-3">
+                        <div class="card site-card" data-id="${siteId}" data-price="${site.price || 100}">
+                            <img src="${imageUrl}" class="card-img-top" alt="Site Image">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">${site.siteid || "Unknown"}</h5>
+                                <p class="card-text">${site.siteclass || "Unknown"}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById("ganttTableAvailable").innerHTML = `<div class="row">${cardHtml}</div>`;
+
+            document.querySelectorAll('.site-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    toggleSite(this);
+                });
+            });
+        }
+
+
 
         function fetchReservations() {
             $.ajax({
@@ -578,7 +802,13 @@
                 type: "GET",
                 success: function(data) {
                     $('#check-available').on('click', function() {
+
+
+
+
                         checkAvailable(data);
+
+
 
                         // Ensure one set is visible while the other is hidden
                         $('#ganttTable, #ganttReservations').toggle();
@@ -855,6 +1085,6 @@
             });
         }
 
-        fetchReservations();    
+        fetchReservations();
     </script>
 @endpush

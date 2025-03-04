@@ -741,6 +741,25 @@ class NewReservationController extends Controller
         return response()->json($quotes);
     }
 
+    public function patchAvailability(Request $request)
+    {
+        $siteIds = $request->input('siteIds', []);
+
+        $sites = Site::whereIn('id', $siteIds)->get();
+
+        foreach ($sites as $site) {
+            $site->update([
+                'available' => 0,
+                'availableonline' => 0,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Availability updated successfully!',
+        ]);
+    }
+
     public function createReservation(Request $request)
     {
         do {
@@ -775,7 +794,6 @@ class NewReservationController extends Controller
                     $extraNights = $nights - 7;
                     $rate = $rateTier->weeklyrate + $extraNights * $rateTier->flatrate;
                     $description .= " - Weekly rate plus $extraNights extra night(s)";
-                
                 }
             }
 
@@ -806,7 +824,7 @@ class NewReservationController extends Controller
         ]);
     }
 
-    public function lookupCustomer(Request $request) 
+    public function lookupCustomer(Request $request)
     {
         $query = $request->input('search');
 
@@ -817,25 +835,18 @@ class NewReservationController extends Controller
         $customers = Customer::where('first_name', 'LIKE', "%{$query}%")
             ->orWhere('last_name', 'LIKE', "%{$query}%")
             ->orWhere('email', 'LIKE', "%{$query}%")
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'home_phone', 'work_phone', 
-            'customer_number', 'driving_license', 'date_of_birth', 'anniversary', 'age', 
-            'address', 'address_2', 'address_3', 'city', 'state', 'zip', 'country']);
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'home_phone', 'work_phone', 'customer_number', 'driving_license', 'date_of_birth', 'anniversary', 'age', 'address', 'address_2', 'address_3', 'city', 'state', 'zip', 'country']);
 
-        
         return response()->json($customers);
-
-
     }
 
-
-    public function createNewReservation(Request $request) 
+    public function createNewReservation(Request $request)
     {
         $data = $request->json()->all();
-        $rigTypes = RigTypes::where('id', $data['rigtype'])->first();   
+        $rigTypes = RigTypes::where('id', $data['rigtype'])->first();
 
         $cart_reservation = CartReservation::where('cartid', $data['confirmation'])->first();
-    
-        
+
         $customer = null;
 
         if (isset($data['first_name']) || isset($data['last_name']) || isset($data['email'])) {
@@ -852,13 +863,9 @@ class NewReservationController extends Controller
             })->first();
         }
 
-
         foreach ($data['customers'] as $customerData) {
-            $existingCustomer = Customer::where('first_name', $customerData['first_name'])
-                ->where('last_name', $customerData['last_name'])
-                ->where('email', $customerData['email'])
-                ->first();
-        
+            $existingCustomer = Customer::where('first_name', $customerData['first_name'])->where('last_name', $customerData['last_name'])->where('email', $customerData['email'])->first();
+
             if (!$existingCustomer) {
                 Customer::create([
                     'first_name' => $customerData['first_name'],
@@ -879,28 +886,24 @@ class NewReservationController extends Controller
                     'city' => $customerData['city'] ?? null,
                     'state' => $customerData['state'] ?? null,
                     'zip' => $customerData['zip'] ?? null,
-                    'country' => $customerData['country'] ?? null
+                    'country' => $customerData['country'] ?? null,
                 ]);
             }
-
 
             $cart_reservation->update([
                 'customernumber' => $existingCustomer ? $existingCustomer->id : null,
                 'riglength' => $data['length'],
                 'rigtype' => $rigTypes ? $rigTypes->rigtype : null,
                 'sitelock' => $data['site_lock'],
-                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.00,
-                'total' => (!empty($data['subtotal']) ? floatval($data['subtotal']) : 0.00) + ($data['site_lock'] ? 20 : 0),
+                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
+                'total' => (!empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0) + ($data['site_lock'] ? 20 : 0),
                 'number_of_guests' => $data['number_of_guests'],
             ]);
 
             if (!$cart_reservation) {
                 return response()->json(['error' => 'No reservations found'], 400);
             }
-    
-           
-            
-    
+
             $reservation = Reservation::create([
                 'cartid' => $data['confirmation'],
                 'source' => $data['source'],
@@ -914,16 +917,14 @@ class NewReservationController extends Controller
                 'cid' => $cart_reservation->cid,
                 'cod' => $cart_reservation->cod,
                 'total' => $cart_reservation->total,
-                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.00,
+                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
                 'siteclass' => $cart_reservation->siteclass,
                 'nights' => $cart_reservation->nigths,
                 'sitelock' => $cart_reservation->sitelock,
                 'rigtype' => $rigTypes ? $rigTypes->rigtype : null,
                 'xconfnum' => rand(100000, 999999),
-            
             ]);
         }
-       
 
         return response()->json([
             'success' => true,

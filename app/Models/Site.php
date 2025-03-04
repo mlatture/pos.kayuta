@@ -23,7 +23,7 @@ class Site extends Model
         'amenities' => 'array',
     ];
 
-    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid'];
+    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline'];
 
     public static function getIncomePersite($filters = [])
     {
