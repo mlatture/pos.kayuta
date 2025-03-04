@@ -24,3 +24,14 @@ Route::post('upload-receipt-logo', [ReceiptController::class, 'uploadReceiptLogo
 
 Route::get('search-sites', [CheckAvailability::class, 'getSites']);
 Route::get('sites-and-reservations', [CheckAvailability::class, 'getReservAndSites']);
+
+Route::get('/product-image/{filename}', function ($filename) {
+    
+    $path = storage_path("app/public/products/{$filename}");
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return Response::file($path);
+});

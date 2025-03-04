@@ -857,6 +857,6 @@
             });
         }
 
-        fetchReservations();
+        fetchReservations();    
     </script>
 @endpush
