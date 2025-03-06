@@ -139,6 +139,8 @@ function sendPaymentRequest() {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
                         },
                         success: function (data) {
+                            localStorage.setItem('reservation_success', 'false');
+
                             hideLoader();
                             if (data.success) {
                                 toastr.options.timeOut = 3000;
@@ -192,6 +194,8 @@ function sendPaymentRequest() {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             success: function (response) {
+                localStorage.setItem('reservation_success', 'false');
+
                 hideLoader();
                 if (response.success) {
                     toastr.options.timeOut = 3000;

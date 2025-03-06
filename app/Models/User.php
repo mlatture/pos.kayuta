@@ -25,6 +25,7 @@ class User extends Authenticatable
         'l_name'
     ];
 
+    
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -46,6 +47,19 @@ class User extends Authenticatable
     public function getAvatarUrl()
     {
         return Storage::url($this->image);
+    }
+
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'customernumber');
+    }
+
+   
+ 
+    public function receipts()
+    {
+        return $this->hasManyThrough(Receipt::class, Reservation::class, 'customernumber', 'cartid', 'id', 'cartid');
+
     }
 
     public function findUserById($id)

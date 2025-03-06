@@ -26,7 +26,7 @@ use App\Models\Survey;
 use App\Models\PublishSurveyModel;
 use App\Models\SurveysResponseModel;
 use Illuminate\Support\Facades\Route;
-
+use App\Models\User;
 class NewReservationController extends Controller
 {
     protected $reservation;
@@ -827,18 +827,30 @@ class NewReservationController extends Controller
     public function lookupCustomer(Request $request)
     {
         $query = $request->input('search');
-
+    
         if (!isset($query) || empty($query)) {
             return response()->json([]);
         }
-
-        $customers = Customer::where('first_name', 'LIKE', "%{$query}%")
-            ->orWhere('last_name', 'LIKE', "%{$query}%")
+    
+        $users = User::where('f_name', 'LIKE', "%{$query}%")
+            ->orWhere('l_name', 'LIKE', "%{$query}%")
             ->orWhere('email', 'LIKE', "%{$query}%")
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'home_phone', 'work_phone', 'customer_number', 'driving_license', 'date_of_birth', 'anniversary', 'age', 'address', 'address_2', 'address_3', 'city', 'state', 'zip', 'country']);
-
-        return response()->json($customers);
+            ->orWhere('phone', 'LIKE', "%{$query}%")
+            ->orWhere('customer_number', 'LIKE', "%{$query}%")
+            ->get([
+                'id', 'organization_id', 'f_name', 'l_name', 'name', 'phone', 'email', 
+                'date_of_birth', 'anniversary', 'age', 'street_address', 'address_2', 
+                'address_3', 'country', 'city', 'zip', 'state', 'home_phone', 'work_phone', 
+                'customer_number', 'driving_license', 'wallet_balance', 'loyalty_point'
+            ]);
+    
+        $uniqueUsers = $users->unique(function ($user) {
+            return $user->email . '-' . $user->customer_number;
+        })->values();
+    
+        return response()->json($uniqueUsers);
     }
+    
 
     public function createNewReservation(Request $request)
     {
@@ -879,7 +891,7 @@ class NewReservationController extends Controller
                     'driving_license' => $customerData['driving_license'] ?? null,
                     'date_of_birth' => !empty($customerData['date_of_birth']) ? $customerData['date_of_birth'] : null,
                     'anniversary' => !empty($customerData['anniversary']) ? $customerData['anniversary'] : null,
-                    'age' => $customerData['age'] ?? null,
+                   'age' => !empty($customerData['age']) ? intval($customerData['age']) : null,
                     'address' => $customerData['address'] ?? null,
                     'address_2' => $customerData['address_2'] ?? null,
                     'address_3' => $customerData['address_3'] ?? null,
@@ -887,6 +899,7 @@ class NewReservationController extends Controller
                     'state' => $customerData['state'] ?? null,
                     'zip' => $customerData['zip'] ?? null,
                     'country' => $customerData['country'] ?? null,
+                    'user_id' => $customerData['user_id'] ?? null
                 ]);
             }
 

@@ -9,15 +9,17 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
-
-    public function __construct(){
-        $this->middleware('admin_has_permission:'.config('constants.role_modules.list_customers.value'))->only(['index']);
-        $this->middleware('admin_has_permission:'.config('constants.role_modules.create_customers.value'))->only(['create','store']);
-        $this->middleware('admin_has_permission:'.config('constants.role_modules.edit_customers.value'))->only(['edit','update']);
-        $this->middleware('admin_has_permission:'.config('constants.role_modules.delete_customers.value'))->only(['destroy']);
+    public function __construct()
+    {
+        $this->middleware('admin_has_permission:' . config('constants.role_modules.list_customers.value'))->only(['index']);
+        $this->middleware('admin_has_permission:' . config('constants.role_modules.create_customers.value'))->only(['create', 'store']);
+        $this->middleware('admin_has_permission:' . config('constants.role_modules.edit_customers.value'))->only(['edit', 'update']);
+        $this->middleware('admin_has_permission:' . config('constants.role_modules.delete_customers.value'))->only(['destroy']);
     }
 
     /**
@@ -25,20 +27,54 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $usersQuery = User::query();
-        if(auth()->user()->organization_id) {
-            $usersQuery->where('organization_id',auth()->user()->organization_id);
+        if ($request->ajax()) {
+            $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'created_at')
+                ->where('id', '!=', 0)
+                ->latest();
+
+            return DataTables::of($customers)
+                ->addIndexColumn() // Adds serial number
+                ->addColumn('actions', function ($customer) {
+                    $viewButton = '<a href="' . route('customers.show', $customer->id) . '" class="btn btn-info"><i class="fas fa-eye"></i></a>';
+                    $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value'))
+                        ? '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>'
+                        : '';
+
+                    $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value'))
+                        ? '<button class="btn btn-danger btn-delete" data-url="' . route('customers.destroy', $customer->id) . '"><i class="fas fa-trash"></i></button>'
+                        : '';
+
+                    return $viewButton . ' ' . $editButton . ' ' . $deleteButton;
+                })
+                ->editColumn('created_at', function ($customer) {
+                    return Carbon::parse($customer->created_at)->format('F j, Y'); // Format date
+                })
+                ->rawColumns(['actions']) // Ensures buttons render properly
+                ->make(true);
         }
-        if (request()->wantsJson()) {
-            return response(
-                $usersQuery->get()
-            );
-        }
-        $customers = $usersQuery->where('id', '!=', 0)->latest()->get();
-        return view('customers.index')->with('customers', $customers);
+        
+        return view('customers.index');
     }
+
+        /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Customer  $customer
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $customer = User::with(['reservations' => function ($query) {
+            $query->latest();
+        }, 'receipts' => function ($query) {
+            $query->latest();
+        }])->findOrFail($id);
+    
+        return view('customers.show', compact('customer'));
+    }
+    
 
     /**
      * Show the form for creating a new resource.
@@ -61,24 +97,24 @@ class CustomerController extends Controller
         $avatar_path = '';
 
         if ($request->hasFile('avatar')) {
-            $file   =   $request->file('avatar');
+            $file = $request->file('avatar');
             $avatar_path = ImageManager::upload('customers/', $file->getClientOriginalExtension(), $file);
         }
         $password = rand('00000000', '99999999');
 
         $customer = User::create([
             'organization_id' => auth()->user()->organization_id,
-            'name'  =>  $request->first_name.' '.$request->last_name,
+            'name' => $request->first_name . ' ' . $request->last_name,
             'f_name' => $request->first_name,
             'l_name' => $request->last_name,
             'email' => $request->email,
-            'password'  => bcrypt($password),
+            'password' => bcrypt($password),
             'phone' => $request->phone ?? '',
             'street_address' => $request->address,
             'image' => $avatar_path,
             // 'user_id' => $request->user()->id,
         ]);
-        if (isset($request->is_modal)){
+        if (isset($request->is_modal)) {
             if (!$customer) {
                 return response()->json(['status' => 'error', 'message' => 'Sorry, Something went wrong while creating customer.'], 200);
             }
@@ -90,15 +126,7 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Success, New customer has been added successfully!');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Customer $customer)
-    {
-    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -108,7 +136,7 @@ class CustomerController extends Controller
      */
     public function edit(User $customer)
     {
-        if($customer->organization_id == auth()->user()->organization_id || auth()->user()->admin_role_id == 1) {
+        if ($customer->organization_id == auth()->user()->organization_id || auth()->user()->admin_role_id == 1) {
             return view('customers.edit', compact('customer'));
         }
         abort(403);
@@ -144,21 +172,21 @@ class CustomerController extends Controller
     public function destroy(User $customer)
     {
         if ($customer->image) {
-            ImageManager::delete('customers/'.$customer->image);
+            ImageManager::delete('customers/' . $customer->image);
         }
 
         $customer->delete();
 
-       return response()->json([
-           'success' => true
-       ]);
+        return response()->json([
+            'success' => true,
+        ]);
     }
 
     public function customerInfo(Request $request)
     {
         $customer = Customer::where('email', $request->email)->first();
 
-        if($customer){
+        if ($customer) {
             return response()->json([
                 'success' => true,
                 'info' => [
@@ -171,8 +199,7 @@ class CustomerController extends Controller
         } else {
             return response()->json([
                 'success' => false,
-                "message" => "No user found with this email."
-
+                'message' => 'No user found with this email.',
             ]);
         }
     }

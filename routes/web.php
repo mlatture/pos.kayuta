@@ -28,7 +28,7 @@ use App\Http\Controllers\API\CheckAvailability;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PDFController;
 use App\Http\Controllers\SurveyController;
-
+use App\Http\Controllers\CartReservationController;
 
 
 Route::get('/', function () {
@@ -107,6 +107,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('lookup-customer', [NewReservationController::class, 'lookupCustomer'])->name('reservations.lookup-customer');
     Route::post('new-reservation/create', [NewReservationController::class, 'createNewReservation'])->name('reservations.create-new-reservation');
     Route::patch('reservations/update-availability', [NewReservationController::class, 'patchAvailability'])->name('reservations.update-availability');
+
+    //Cart Reservations
+    Route::resource('cart-reservation', CartReservationController::class);
 
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);

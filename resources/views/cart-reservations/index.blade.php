@@ -40,17 +40,8 @@
                         </div>
                     </div> --}}
                     <div class="card-body">
-                        <div class="mb-3 d-flex justify-content-between align-items-center">
-                            <label for="limitSelector" class="form-label">Show:</label>
-                            <select id="limitSelector" class="form-select w-auto">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-
-                        <div style="height: 400px; overflow-y: auto;">
+                     
+                        <div style="">
                             <table class="table table-striped table-hover align-middle mb-0" id="reservationTable">
                                 <thead>
                                     <tr>
@@ -70,10 +61,10 @@
                                         <tr>
                                             <td>
                                                 <a href="{{ route('sites.view', $reservation->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                                <a href="{{ route('sites.edit', $reservation) }}" class="btn btn-primary"><i
+                                                <a href="{{ route('reservations.payment.index', $reservation->cartid) }}" class="btn btn-primary"><i
                                                         class="fas fa-edit"></i></a>
                                                 <a class="btn btn-danger btn-delete"
-                                                    data-url="{{ route('sites.destroy', $reservation) }}"><i
+                                                    data-url="{{ route('cart-reservation.destroy', $reservation->id) }}"><i
                                                         class="fas fa-trash"></i></a>
                                             </td>
                                             <td>{{ \Carbon\Carbon::parse($reservation->cid)->format('M d, Y') }}</td>
@@ -136,4 +127,65 @@
         </div>
     </div>
 
+    <script>
+         $(document).ready(function() {
+            $('.table').DataTable({
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: [
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
+            });
+
+
+            $(document).on('click', '.btn-delete', function() {
+                $this = $(this);
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger'
+                    },
+                    buttonsStyling: false
+                })
+
+                swalWithBootstrapButtons.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to delete this cart reservation?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.value) {
+                        $.post($this.data('url'), {
+                            _method: 'DELETE',
+                            _token: '{{ csrf_token() }}'
+                        }, function(res) {
+                            $this.closest('tr').fadeOut(500, function() {
+                                $(this).remove();
+                            })
+                        })
+                    }
+                })
+            })
+        })
+    </script>
 @endsection

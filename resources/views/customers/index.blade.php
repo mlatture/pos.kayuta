@@ -9,6 +9,7 @@
 @endsection
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
     <style>
         div.dt-top-container {
@@ -61,7 +62,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($customers as $key => $customer)
+                                    {{-- @foreach ($customers as $key => $customer)
                                         <tr>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_customers.value'))
@@ -81,12 +82,12 @@
                                             <td>{{ $customer->street_address }}</td>
                                             <td>{{ $customer->created_at }}</td>
                                         </tr>
-                                    @endforeach
+                                    @endforeach --}}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    {{-- {{ $customers->render() }} --}}
+                    {{-- {{ $customers->links() }} --}}
                 </div>
             </div>
         </div>
@@ -97,28 +98,45 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                responsive: true,
-                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
-                buttons: [
-                    'colvis', 
-                    'copy', 
-                    {
-                        extend: 'csv',
+                    processing: true,
+                    serverSide: true,
+                    ajax: "{{ route('customers.index') }}", // Fetch data via AJAX
+                    columns: [{
+                            data: 'actions',
+                            name: 'actions',
+                            orderable: false,
+                            searchable: false
+                        },
+                        { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                        {
+                            data: 'f_name',
+                            name: 'f_name'
+                        },
+                        {
+                            data: 'email',
+                            name: 'email'
+                        },
+                        {
+                            data: 'phone',
+                            name: 'phone'
+                        },
+                        {
+                            data: 'street_address',
+                            name: 'street_address'
+                        },
+                        {
+                            data: 'created_at',
+                            name: 'created_at'
+                        }
+                    ],
+                    dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                    buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
+                    language: {
+                        search: 'Search: ',
+                        lengthMenu: 'Show _MENU_ entries'
                     },
-                    {
-                        extend: 'excel',
-                    },
-                    {
-                        extend: 'pdf',
-                    },
-               
-                    'print'],
-                language: {
-                    search: 'Search: ',
-                    lengthMenu: 'Show _MENU_ entries',
-                },
-                pageLength: 10
-            });
+                    pageLength: 10
+                });
 
             $(document).on('click', '.btn-delete', function() {
                 $this = $(this);

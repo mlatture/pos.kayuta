@@ -288,6 +288,8 @@
                                         <label for="country" class="form-label">Country</label>
                                         <input type="text" name="country[]" class="form-control">
                                     </div>
+
+                                    <input type="text" name="user_id[]" hidden>
                                 </div>
 
                                 <button type="button" class="btn btn-danger btn-sm mt-2 remove-customer">Remove</button>
@@ -688,7 +690,7 @@
                         response.forEach(customer => {
                             resultsTable.append(`
                         <tr class="customer-row" data-customer='${JSON.stringify(customer)}'>
-                            <td>${customer.first_name} ${customer.last_name}</td>
+                            <td>${customer.f_name} ${customer.l_name}</td>
                             <td>${customer.email}</td>
                         </tr>
                     `);
@@ -704,8 +706,8 @@
             let customerData = $(this).data('customer');
 
             if (selectedContainer) {
-                selectedContainer.find('input[name="first_name[]"]').val(customerData.first_name);
-                selectedContainer.find('input[name="last_name[]"]').val(customerData.last_name);
+               selectedContainer.find('input[name="first_name[]"]').val(customerData.f_name);
+                selectedContainer.find('input[name="last_name[]"]').val(customerData.l_name);
                 selectedContainer.find('input[name="email[]"]').val(customerData.email);
                 selectedContainer.find('input[name="phone[]"]').val(customerData.phone);
                 selectedContainer.find('input[name="home_phone[]"]').val(customerData.home_phone);
@@ -715,13 +717,14 @@
                 selectedContainer.find('input[name="date_of_birth[]"]').val(customerData.date_of_birth);
                 selectedContainer.find('input[name="anniversary[]"]').val(customerData.anniversary);
                 selectedContainer.find('input[name="age[]"]').val(customerData.age);
-                selectedContainer.find('input[name="address[]"]').val(customerData.address);
+                selectedContainer.find('input[name="address[]"]').val(customerData.street_address);
                 selectedContainer.find('input[name="address_2[]"]').val(customerData.address_2);
                 selectedContainer.find('input[name="address_3[]"]').val(customerData.address_3);
                 selectedContainer.find('input[name="city[]"]').val(customerData.city);
                 selectedContainer.find('input[name="state[]"]').val(customerData.state);
                 selectedContainer.find('input[name="zip[]"]').val(customerData.zip);
                 selectedContainer.find('input[name="country[]"]').val(customerData.country);
+                selectedContainer.find('input[name="user_id[]"]').val(customerData.id);
             }
 
             $('#customerResults').hide();
@@ -753,7 +756,8 @@
                     city: $(this).find('input[name="city[]"]').val(),
                     state: $(this).find('input[name="state[]"]').val(),
                     zip: $(this).find('input[name="zip[]"]').val(),
-                    country: $(this).find('input[name="country[]"]').val()
+                    country: $(this).find('input[name="country[]"]').val(),
+                    user_id: $(this).find('input[name="user_id[]"]').val()
                 })
             });
 
@@ -773,7 +777,7 @@
             }
 
             $.ajax({
-                url: ' {{ route('reservations.create-new-reservation') }}',
+                url: "{{ route('reservations.create-new-reservation') }}",
                 type: 'POST',
                 data: JSON.stringify(formData),
                 headers: {
