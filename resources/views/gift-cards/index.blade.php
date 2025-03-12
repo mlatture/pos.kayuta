@@ -49,7 +49,7 @@
                     <thead>
                         <tr>
                             <th>Actions</th>
-                            <th>#</th>
+                            <th>ID</th>
                             <th>User Email</th>
                             <th>Barcode</th>
                             <th>Amount</th>

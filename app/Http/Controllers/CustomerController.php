@@ -35,7 +35,7 @@ class CustomerController extends Controller
                 ->latest();
 
             return DataTables::of($customers)
-                ->addIndexColumn() // Adds serial number
+                ->addIndexColumn() 
                 ->addColumn('actions', function ($customer) {
                     $viewButton = '<a href="' . route('customers.show', $customer->id) . '" class="btn btn-info"><i class="fas fa-eye"></i></a>';
                     $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value'))

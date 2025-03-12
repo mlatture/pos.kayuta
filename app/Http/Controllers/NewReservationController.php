@@ -341,13 +341,13 @@ class NewReservationController extends Controller
         return view('reservations.payment', compact('reservations', 'rigTypes'));
     }
 
-    public function invoice(Request $request, $cartid)
+    public function invoice(Request $request, $confirmationNumber)
     {
-        $payment = Payment::where('cartid', $cartid)->firstOrFail();
-        $cart = CartReservation::where('cartid', $cartid)->firstOrFail();
-        $reservation = Reservation::where('cartid', $payment->cartid)->firstOrFail();
+        $payment = Payment::where('cartid', $confirmationNumber)->firstOrFail();
+        $cart = CartReservation::where('cartid', $confirmationNumber)->firstOrFail();
+        $reservations = Reservation::where('cartid', $payment->cartid)->firstOrFail();
 
-        return view('reservations.payment', compact('payment', 'reservation', 'cart'));
+        return view('reservations.payment', compact('payment', 'reservations', 'cart'));
     }
 
     public function storeInfo(Request $request)

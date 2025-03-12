@@ -99,7 +99,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class,'processPayment']);
     Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
     Route::get('reservations/payment/{confirmationNumber}', [NewReservationController::class, 'paymentIndex'])->name('reservations.payment.index');
-    Route::get('reservations/invoice/{id}', [NewReservationController::class, 'invoice']);
+    Route::get('reservations/invoice/{confirmationNumber}', [NewReservationController::class, 'invoice']);
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
     Route::get('reservation-in-cart', [NewReservationController::class, 'reservationInCart'])->name('reservations.reservation-in-cart');
     Route::get('reservations/quote-site', [NewReservationController::class, 'quoteSite'])->name('reservations.quoteSite');
@@ -110,6 +110,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     //Cart Reservations
     Route::resource('cart-reservation', CartReservationController::class);
+    Route::post('reservation/cancel', [CartReservationController::class, 'cancel'])->name('cancel.reservation');
+
 
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
@@ -142,6 +144,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/registers/create', [StationRegisterController::class, 'create'])->name('registers.create');
     Route::put('/registers/rename', [StationRegisterController::class, 'rename'])->name('registers.rename');
     Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
+    Route::get('/registers/get', [StationRegisterController::class, 'getRegister'])->name('registers.get');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');

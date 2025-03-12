@@ -7,8 +7,9 @@
             <div class="dropdown" id="registerDropdownContainer">
                 <button class="btn btn-dark text-white dropdown-toggle" type="button" id="registerDropdown"
                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Station: {{ session('current_register_name', 'Select Register') }}
+                    Station: <span id="registerName">Select Register</span>
                 </button>
+
                 <div class="dropdown-menu" aria-labelledby="registerDropdown">
                     @foreach ($registers as $register)
                         <a class="dropdown-item" href="#"
@@ -78,9 +79,21 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    $(document).ready(function() {
+        let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
+
+        let userId = {{ auth()->user()->id }};
+
+        let userRegister = registerData.find(entry => entry.current_register_staff_id === userId );
+
+        console.log(userRegister.current_register_name)
+        if (userRegister) {
+            $('#registerName').text(userRegister.current_register_name);
+        }
+    });
     window.setRegister = function(registerId, registerName) {
         $.ajax({
-            url: '{{ route('registers.set') }}',
+            url: "{{ route('registers.set') }}",
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -89,19 +102,33 @@
             },
             success: function() {
                 let registerData = JSON.parse(localStorage.getItem("current_register_data")) || [];
+
                 if (!Array.isArray(registerData)) {
                     registerData = [];
                 }
-                let existingEntry = registerData.find(entry => entry.current_register_staff_id ===
-                    {{ auth()->user()->id }});
 
-                if (!existingEntry) {
+                let userId = {{ auth()->user()->id }};
+
+                let existingEntryIndex = registerData.findIndex(entry => entry
+                    .current_register_staff_id === userId);
+
+                if (existingEntryIndex !== -1) {
+                    registerData[existingEntryIndex] = {
+                        current_register_id: registerId,
+                        current_register_staff_id: userId,
+                        current_register_name: registerName
+                    };
+                } else {
                     registerData.push({
                         current_register_id: registerId,
-                        current_register_staff_id: {{ auth()->user()->id }}
+                        current_register_staff_id: userId,
+                        current_register_name: registerName
                     });
-                    localStorage.setItem("current_register_data", JSON.stringify(registerData));
                 }
+
+                localStorage.setItem("current_register_data", JSON.stringify(registerData));
+
+                // Update UI
                 $('#registerDropdown').text('Station: ' + registerName);
                 $('#myTabContent').show();
             }
@@ -139,7 +166,7 @@
                                     document.querySelectorAll(".dropdown-item").forEach(
                                         item => {
                                             item.addEventListener("click", function() {
-                                              
+
                                                 Swal.close();
                                             });
                                         });

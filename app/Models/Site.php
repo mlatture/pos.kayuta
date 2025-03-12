@@ -13,6 +13,9 @@ class Site extends Model
 {
     use HasFactory;
 
+
+    protected $table = 'sites';
+
     protected $guarded = [];
     private $cit = ' 15:00:00';
     private $cot = ' 10:00:00';

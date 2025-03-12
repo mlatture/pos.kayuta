@@ -159,6 +159,8 @@
                     </div>
                 </div>
 
+                @if (!Request::is('admin/reservations/invoice/*'))
+
                 <!-- Rig Section -->
                 <div class="col-md-4" id="rig-form">
                     <div class="border rounded shadow-sm p-3">
@@ -180,6 +182,8 @@
                         </div>
                     </div>
                 </div>
+
+                @endif
 
                 <div class="col-md-4">
                     <div class="border rounded shadow-sm p-3">
@@ -353,9 +357,16 @@
                     <tbody>
                         @foreach ($reservations as $reservation)
                             <tr class="">
-                                <td>{{ date('D, M d', strtotime($reservation->cid)) }} -
-                                    {{ date('D, M d', strtotime($reservation->cod)) }}</td>
-                                <td>{{ $reservation->siteid }}</td>
+                                <td>
+                                    @if($reservation)
+                                        {{ date('D, M d', strtotime($reservation->cid)) }} -
+                                        {{ date('D, M d', strtotime($reservation->cod)) }}
+                                    @else
+                                        <span class="text-danger">Reservation not found</span>
+                                    @endif
+                                </td>
+                                <td id="site_id" data-siteid='@json($reservations->pluck('siteid')->toArray())'>{{ $reservation->siteid }}
+                                </td>
                                 <td>{{ $reservation->siteclass }}</td>
 
                                 @if (Request::is('admin/reservations/invoice/*'))
@@ -568,11 +579,18 @@
         </div>
 
 
+        <div class="buttons-pymnt d-flex gap-2 float-end mt-2">
+            <button type="button" class="btn btn-danger btn-lg float-end" id="cancel-reservation">
+                <i class="fa-solid fa-ban"></i> Cancel
+            </button>
 
-        <button type="button" class="btn btn-success btn-lg float-end" id="proceed-payment">
-            <i class="fa-solid fa-money-bill-transfer"></i> Payment
-        </button>
 
+
+            <button type="button" class="btn btn-success btn-lg float-end" id="proceed-payment">
+                <i class="fa-solid fa-money-bill-transfer"></i> Payment
+            </button>
+
+        </div>
     </div>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js" crossorigin="anonymous"
@@ -583,31 +601,7 @@
         var checkGiftCart = "{{ route('check.gift-card') }}";
         var deleteAddToCart = "{{ route('reservations.delete.add-to-cart') }}";
 
-        // var pusher = new Pusher('3da072d963b1708b31a3', {
-        //     cluster: 'mt1',
-        // });
 
-
-        // var channel = pusher.subscribe('cart-deletions');
-
-        // channel.bind('pusher:subscription_succeeded', function() {
-        //     console.log('Successfully subscribed to cart-deletions channel!');
-        // });
-
-        // channel.bind('App\\Events\\CartDeleted', function(data) {
-        //     var cartid = data.cartid;
-        //     console.log('Received event: Cart with ID ' + cartid + ' has been deleted.');
-        //     toastr.success("Cart with ID " + cartid + " has been deleted");
-
-        //     setTimeout(function() {
-        //         window.location.href = "/admin/reservations";
-        //     }, 1000);
-        // });
-
-
-        // pusher.connection.bind('error', function(err) {
-        //     console.error('Pusher error:', err);
-        // });
 
         $(document).ready(function() {
             var tasks = [
@@ -706,7 +700,7 @@
             let customerData = $(this).data('customer');
 
             if (selectedContainer) {
-               selectedContainer.find('input[name="first_name[]"]').val(customerData.f_name);
+                selectedContainer.find('input[name="first_name[]"]').val(customerData.f_name);
                 selectedContainer.find('input[name="last_name[]"]').val(customerData.l_name);
                 selectedContainer.find('input[name="email[]"]').val(customerData.email);
                 selectedContainer.find('input[name="phone[]"]').val(customerData.phone);
@@ -772,7 +766,7 @@
                 subtotal: $('#subtotal').val(),
                 rigtype: $('#rigtype').val(),
                 length: $('#length').val(),
-                site_lock: $('#siteLock').prop('checked') ? 1 : 0,
+                site_lock: $('#siteLock').prop('checked') ? 20 : 0,
                 customers: customerData
             }
 
@@ -802,6 +796,73 @@
                 }
             })
         });
+
+
+        $('#cancel-reservation').on('click', function(e) {
+            e.preventDefault();
+
+            let cnNo = $('#confirmation').val();
+            let siteIds = $('#site_id').data('siteid'); 
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you really want to cancel this reservation?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, cancel it!',
+                cancelButtonText: 'No, keep it',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('cancel.reservation') }}",
+                        type: 'POST',
+                        data: {
+                            confirmation: cnNo,
+                            siteid: siteIds, 
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: response.message,
+                                    showConfirmButton: true
+                                }).then(() => {
+                                    if (response.redirect) {
+                                        window.location.href = response
+                                        .redirect; 
+                                    } else {
+                                        window.history
+                                    .back();
+                                        setTimeout(() => {
+                                            location
+                                        .reload(); 
+                                        }, 500);
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.message
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while canceling the reservation'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+
         $(document).ready(function() {
             // Check if reservation was successful
             if (localStorage.getItem('reservation_success') === 'true') {

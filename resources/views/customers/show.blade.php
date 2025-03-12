@@ -6,9 +6,13 @@
 @section('content')
 <div class="container">
     <div class="card">
-        <div class="card-header">
-            <h3>{{ $customer->f_name }} {{ $customer->l_name }}</h3>
+        <div class="card-header d-flex align-items-center">
+            <h3 class="mb-0">{{ $customer->f_name }} {{ $customer->l_name }}</h3>
+            <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-primary ms-auto">
+                <i class="fas fa-edit"></i> Edit Customer
+            </a>
         </div>
+        
         <div class="card-body">
             <p><strong>Email:</strong> {{ $customer->email }}</p>
             <p><strong>Phone:</strong> {{ $customer->phone }}</p>
@@ -24,19 +28,19 @@
                         <th>ID</th>
                         <th>Site</th>
                         <th>Date</th>
-                        {{-- <th>Actions</th> --}}
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($customer->reservations as $reservation)
+                    @foreach($customer->reservations->sortByDesc('date') as $reservation)
                     <tr>
                         <td>{{ $reservation->id }}</td>
                         <td>{{ $reservation->siteid }}</td>
                         <td>{{ \Carbon\Carbon::parse($reservation->date)->format('F j, Y') }}</td>
-                        {{-- <td>
-                            <a href="{{ route('reservations.show', $reservation->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('reservations.edit', $reservation->id) }}" class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                        </td> --}}
+                        <td>
+                            <a href="{{ route('reservations.show', $reservation->id) }}" class="btn btn-info"><i class="fas fa-eye"></i> View</a>
+                            <a href="{{ route('reservations.edit', $reservation->id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Edit</a>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -49,21 +53,19 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        {{-- <th>Total</th> --}}
                         <th>Date</th>
-                        {{-- <th>Actions</th> --}}
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($customer->receipts as $receipt)
+                    @foreach($customer->receipts->sortByDesc('date') as $receipt)
                     <tr>
                         <td>{{ $receipt->id }}</td>
-                        {{-- <td>${{ number_format($receipt->total, 2) }}</td> --}}
                         <td>{{ \Carbon\Carbon::parse($receipt->date)->format('F j, Y') }}</td>
-                        {{-- <td>
-                            <a href="{{ route('receipts.show', $receipt->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('receipts.edit', $receipt->id) }}" class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                        </td> --}}
+                        <td>
+                            {{-- <a href="{{ route('receipts.show', $receipt->id) }}" class="btn btn-info"><i class="fas fa-eye"></i> View</a> --}}
+                            {{-- <a href="{{ route('receipts.edit', $receipt->id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Edit</a> --}}
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -71,7 +73,7 @@
 
             <hr>
 
-            <a href="{{ route('customers.index') }}" class="btn btn-secondary">Back to List</a>
+            <a href="{{ route('customers.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to List</a>
         </div>
     </div>
 </div>

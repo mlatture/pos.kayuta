@@ -32,7 +32,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                  
                                     @foreach ($admins as $admin)
+                                   
                                         <tr>
                                             <td>
                                                 <a href="{{ route('admins.edit', $admin->id) }}" class="btn btn-primary"><i
@@ -48,7 +50,7 @@
                                             <td><span class="name">{{ $admin->name }}</span></td>
                                             <td><span class="phone">{{ $admin->phone }}</span></td>
                                             <td><span class="address_2">{{ $admin->email }}</span></td>
-                                            <td><span class="admin-role">{{ $admin->role }}</span></td>
+                                            <td><span class="admin-role">{{ $admin->role->name ?? 'No Role Assigned' }}</span></td>
 
                                             <td>
                                                 <span

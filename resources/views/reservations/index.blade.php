@@ -310,7 +310,7 @@
                                 <!-- Nights Display -->
                                 <div class="col-md-4">
                                     <label>Nights:</label>
-                                    <input type="text" id="nights" class="form-control" value="1" readonly>
+                                    <input type="text" id="nights" value="1" class="form-control" readonly>
                                 </div>
 
                                 <!-- Site Availability Button -->
@@ -483,9 +483,9 @@
 
             if (!isNaN(checkin.getTime()) && !isNaN(checkout.getTime())) {
                 let timeDiff = checkout.getTime() - checkin.getTime();
-                nightsCounts = timeDiff / (1000 * 3600 * 24); // ✅ Update global variable
+                nightsCounts = timeDiff / (1000 * 3600 * 24);
 
-                $("#nights").text(`Nights: ${nightsCounts}`);
+                $("#nights").val(`${nightsCounts}`);
                 console.log(`Global Nights Count Updated: ${nightsCounts}`); // ✅ Debugging
             }
         }

@@ -7,15 +7,27 @@ use App\Models\AdminRole;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Auth;
 class AdminController extends Controller
 {
     public function index()
     {
-        $data['admins'] = Admin::where('admin_role_id','!=',1)->get();
-        return view('admin.index',$data);
-    }
+        $admins = Admin::with('role')
+            ->whereKeyNot(auth()->id()) 
+            ->get();
 
+        foreach ($admins as $admin) {
+            if (!$admin->relationLoaded('role')) {
+                dd('Role not loaded', $admin);
+            }
+        }
+
+        return view('admin.index', compact('admins'));
+    }
+    
+    
+    
+  
     public function create()
     {
         $data['organizations'] = Organization::get();

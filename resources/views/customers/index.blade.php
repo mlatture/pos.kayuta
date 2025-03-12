@@ -100,7 +100,7 @@
             $('.table').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('customers.index') }}", // Fetch data via AJAX
+                    ajax: "{{ route('customers.index') }}", 
                     columns: [{
                             data: 'actions',
                             name: 'actions',
@@ -129,6 +129,7 @@
                             name: 'created_at'
                         }
                     ],
+                    responsive: true,
                     dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                     buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
                     language: {
