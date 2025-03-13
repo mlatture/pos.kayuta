@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Site Management')
-@section('content-header', 'Site Management')
+@section('title', 'Rate Tier Management')
+@section('content-header', 'Rate Tier Management')
 @section('content-actions')
     {{--    @hasPermission(config('constants.role_modules.create_sites_management.value')) --}}
     {{--    <a href="{{ route('sites.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Site</a> --}}
@@ -27,7 +27,6 @@
                                         <li class="breadcrumb-item active"  aria-current="page"><a  style="text-decoration: none"href="{{ route('sites.index') }}"> Sites </a></li>
                                         <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('sites.rate_tiers') }}">Rate Tier</a></li>
                                         <li class="breadcrumb-item"> <a style="text-decoration: none" href="{{ route('addons.index') }}">Add Ons</a></li>
-                                        
                                     </ol>
                                 </nav>
                             </div>
@@ -38,76 +37,57 @@
                                 <thead>
                                     <tr><!-- Log on to codeastro.com for more projects -->
                                         <th>Actions</th>
-                                        <th> SL </th>
-                                        <th> Site ID </th>
-                                        <th> Site Name </th>
-                                        <th> Site Class </th>
-                                        <th> Available </th>
-                                        <th> Max Length </th>
-                                        <th> Min Length </th>
-                                        <th> Right Type </th>
-                                        <th> Class </th>
-                                        <th> Attributes </th>
-                                        <th> Amenities </th>
-                                        {{-- <th> Ratetier </th> --}}
-                                        {{-- <th> Action </th> --}}
+                                        <th> # </th>
+                                        <th> Tier </th>
+                                        <th> Minimum Stay </th>
+                                        <th> Use Flat Rate </th>
+                                        <th> Flat Rate </th>
+                                        <th> Weekly Rate </th>
+                                        <th> Monthly Rate </th>
+                                        <th> Seasonal Rate </th>
+                                       
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($sites as $k => $site)
+                                    @foreach ($rate_tiers as $k => $tiers)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                            <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
+                                            <a href="{{ route('sites.view', $tiers->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
+                                            <a href="{{ route('sites.edit', $tiers) }}" class="btn btn-primary"><i
                                                     class="fas fa-edit"></i></a>
                                             <a class="btn btn-danger btn-delete"
-                                                data-url="{{ route('sites.destroy', $site) }}"><i
+                                                data-url="{{ route('sites.destroy', $tiers) }}"><i
                                                     class="fas fa-trash"></i></a>
                                         </td>
                                         <td>{{ ++$k }}</td>
                                             <td>
-                                                {{ $site->siteid ?? 'N/A' }}
+                                                {{ $tiers->tier ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {!! Str::limit($site->sitename, 20) !!}
+                                                {{ $tiers->minimumstay ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {!! Str::limit($site->siteclass, 20) !!}
+                                                {{ $tiers->useflatrate ? 'Yes' : 'No'}}
                                             </td>
 
                                             <td>
-                                                {{ $site->available ? 'Available' : 'Not Available' }}
+                                                {{  $tiers->flatrate ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {{ $site->maxlength ?? 'N/A' }}
+                                                {{ $tiers->weeklyrate ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {{ $site->minlength ?? 'N/A' }}
+                                                {{ $tiers->monthlyrate ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {{ Str::limit(is_array($site->rigtypes) ? implode(',', $site->rigtypes) : 'No Rigtypes', 20) }}
+                                                {{ $tiers->seasonalrate ?? 'N/A' }}
                                             </td>
 
-                                            <td>
-                                                {!! Str::limit($site->class, 20) !!}
-                                            </td>
-
-                                            <td>
-                                                {!! Str::limit($site->attributes, 20) !!}
-                                            </td>
-
-                                            <td>
-                                                {{ Str::limit(is_array($site->amenities) ? implode(',', $site->amenities) : 'No Amenities', 20) }}
-                                            </td>
-
-                                            {{-- <td>
-                                                {{ $site->ratetier ?? 'N/A' }}
-                                            </td> --}}
 
 
                                         </tr>

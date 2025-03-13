@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Site Management')
-@section('content-header', 'Site Management')
+@section('title', 'Add Ons Management')
+@section('content-header', 'Add Ons Management')
 @section('content-actions')
     {{--    @hasPermission(config('constants.role_modules.create_sites_management.value')) --}}
     {{--    <a href="{{ route('sites.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Site</a> --}}
@@ -27,7 +27,6 @@
                                         <li class="breadcrumb-item active"  aria-current="page"><a  style="text-decoration: none"href="{{ route('sites.index') }}"> Sites </a></li>
                                         <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('sites.rate_tiers') }}">Rate Tier</a></li>
                                         <li class="breadcrumb-item"> <a style="text-decoration: none" href="{{ route('addons.index') }}">Add Ons</a></li>
-                                        
                                     </ol>
                                 </nav>
                             </div>
@@ -38,76 +37,40 @@
                                 <thead>
                                     <tr><!-- Log on to codeastro.com for more projects -->
                                         <th>Actions</th>
-                                        <th> SL </th>
-                                        <th> Site ID </th>
-                                        <th> Site Name </th>
-                                        <th> Site Class </th>
-                                        <th> Available </th>
-                                        <th> Max Length </th>
-                                        <th> Min Length </th>
-                                        <th> Right Type </th>
-                                        <th> Class </th>
-                                        <th> Attributes </th>
-                                        <th> Amenities </th>
-                                        {{-- <th> Ratetier </th> --}}
-                                        {{-- <th> Action </th> --}}
+                                        <th> # </th>
+                                        <th> Add On Name </th>
+                                        <th>  Price </th>
+                                        <th> Add On Type </th>
+                                        <th> Capacity </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($sites as $k => $site)
+                                    @foreach ($addons as $k => $add)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                            <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
+                                            {{-- <a href="{{ route('sites.view', $add->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a> --}}
+                                            <a href="{{ route('addons.edit', $add->id) }}" class="btn btn-primary"><i
                                                     class="fas fa-edit"></i></a>
                                             <a class="btn btn-danger btn-delete"
-                                                data-url="{{ route('sites.destroy', $site) }}"><i
+                                                data-url="{{ route('addons.destroy', $add) }}"><i
                                                     class="fas fa-trash"></i></a>
                                         </td>
                                         <td>{{ ++$k }}</td>
                                             <td>
-                                                {{ $site->siteid ?? 'N/A' }}
+                                                {{ $add->addon_name ?? 'N/A' }}
                                             </td>
 
                                             <td>
-                                                {!! Str::limit($site->sitename, 20) !!}
+                                                {{ number_format($add->price, 2) ?? 0.0  }}
                                             </td>
 
                                             <td>
-                                                {!! Str::limit($site->siteclass, 20) !!}
+                                                {{ $add->addon_type }}
                                             </td>
 
                                             <td>
-                                                {{ $site->available ? 'Available' : 'Not Available' }}
+                                                {{ $add->capacity ?? 'N/A' }}
                                             </td>
-
-                                            <td>
-                                                {{ $site->maxlength ?? 'N/A' }}
-                                            </td>
-
-                                            <td>
-                                                {{ $site->minlength ?? 'N/A' }}
-                                            </td>
-
-                                            <td>
-                                                {{ Str::limit(is_array($site->rigtypes) ? implode(',', $site->rigtypes) : 'No Rigtypes', 20) }}
-                                            </td>
-
-                                            <td>
-                                                {!! Str::limit($site->class, 20) !!}
-                                            </td>
-
-                                            <td>
-                                                {!! Str::limit($site->attributes, 20) !!}
-                                            </td>
-
-                                            <td>
-                                                {{ Str::limit(is_array($site->amenities) ? implode(',', $site->amenities) : 'No Amenities', 20) }}
-                                            </td>
-
-                                            {{-- <td>
-                                                {{ $site->ratetier ?? 'N/A' }}
-                                            </td> --}}
 
 
                                         </tr>
@@ -165,7 +128,7 @@
 
                 swalWithBootstrapButtons.fire({
                     title: 'Are you sure?',
-                    text: "Do you really want to delete this product?",
+                    text: "Do you really want to delete this addon?",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, delete it!',

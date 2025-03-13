@@ -29,8 +29,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PDFController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\CartReservationController;
-
-
+use App\Http\Controllers\RateTierController;
+use App\Http\Controllers\AddOnsController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -53,6 +53,17 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
+    
+
+    Route::get('/rate-tier' , [RateTierController::class, 'index'])->name('sites.rate_tiers');
+    
+    
+    // Route::get('/add-ons', [AddOnsController::class, 'index'])->name('addons.index');
+    // Route::get('/add-ons/edit/{id}', [AddOnsController::class, 'edit'])->name('addons.edit');
+    // Route::put('/add-ons/update/{id}', [AddOnsController::class, 'update'])->name('addons.update');
+    // Route::delete('/add-ons/delete/{id}', [AddOnsController::class, 'destroy'])->name('addons.destroy');
+    Route::resource('addons', AddOnsController::class);
+
     Route::get('sites/view/{site}', [SiteController::class, 'view'])->name('sites.view');
     Route::resource('customers', CustomerController::class);
     Route::group(['middleware' => 'master_admin'],function(){

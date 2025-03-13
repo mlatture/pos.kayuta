@@ -165,6 +165,7 @@
                             <span>Sites</span>
                         </a></li>
                 @endHasPermission
+              
             </ul>
 
         </li>
@@ -252,11 +253,11 @@
                         </a></li>
                 @endHasPermission
                 @hasPermission(config('constants.role_modules.reservation_in_cart.value'))
-                <li><a class="dropdown-item" href="{{ route('reservations.reservation-in-cart') }}">
-                        <i class="nav-icon fas fa-cart-shopping"></i>
-                        <span>Reservation in Cart</span>
-                    </a></li>
-            @endHasPermission
+                    <li><a class="dropdown-item" href="{{ route('reservations.reservation-in-cart') }}">
+                            <i class="nav-icon fas fa-cart-shopping"></i>
+                            <span>Reservation in Cart</span>
+                        </a></li>
+                @endHasPermission
 
             </ul>
         </li>
