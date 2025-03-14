@@ -101,7 +101,7 @@ function sendPaymentRequest() {
     var reservationId = $('input[name="id"]').val();
     var paymentType = $("#paymentType").val();
     var amount = $("#xAmount").val();
-
+    var confirmationNumber = $("#confirmation").val(); 
     
     if (paymentType === "Terminal") {
         showLoader();
@@ -141,6 +141,7 @@ function sendPaymentRequest() {
                         success: function (data) {
                             localStorage.setItem('reservation_success', 'false');
 
+                            deleteReservation(confirmationNumber);
                             hideLoader();
                             if (data.success) {
                                 toastr.options.timeOut = 3000;
@@ -194,7 +195,7 @@ function sendPaymentRequest() {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             success: function (response) {
-                localStorage.setItem('reservation_success', 'false');
+                deleteReservation(confirmationNumber);
 
                 hideLoader();
                 if (response.success) {
@@ -214,6 +215,23 @@ function sendPaymentRequest() {
         });
     }
 }
+
+function deleteReservation(confirmationNumber) {
+    let storedData = JSON.parse(localStorage.getItem('reservationData')) || [];
+
+    let updatedData = storedData.filter(reservation => reservation.confirmation !== confirmationNumber);
+
+    if (updatedData.length > 0) {
+        localStorage.setItem('reservationData', JSON.stringify(updatedData));
+    } else {
+        localStorage.removeItem('reservationData');
+    }
+
+    localStorage.removeItem('reservation_success');
+
+    console.log(`Reservation ${confirmationNumber} deleted successfully.`);
+}
+
 
 function sendPaymentBalanceRequest() {
     var formDataPayment = new FormData($("#paymentchoices")[0]);

@@ -54,6 +54,10 @@ class User extends Authenticatable
         return $this->hasMany(Reservation::class, 'customernumber');
     }
 
+    public function cartReservations()
+    {
+        return $this->hasMany(CartReservation::class, 'customernumber');
+    }
    
  
     public function receipts()
@@ -73,4 +77,6 @@ class User extends Authenticatable
         }
         return $this->f_name.' '.$this->l_name;
     }
+
+    
 }

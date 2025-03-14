@@ -38,11 +38,13 @@ class CartReservation extends Model
         'holduntil',
         'description',
     ];
+
+    protected $dates = ['holduntil'];
     protected $guarded = [];
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class, 'customernumber', 'id');
+        return $this->belongsTo(User::class, 'customernumber', 'id');
     }
 
     public static function calculateRate($fromDate, $toDate, $tier, $request)

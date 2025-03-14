@@ -160,29 +160,27 @@
                 </div>
 
                 @if (!Request::is('admin/reservations/invoice/*'))
-
-                <!-- Rig Section -->
-                <div class="col-md-4" id="rig-form">
-                    <div class="border rounded shadow-sm p-3">
-                        <h4 class="mb-3">Rig</h4>
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <label for="rigtype" class="form-label fw-semibold">Rig Type</label>
-                                <select name="rigtype" id="rigtype" class="form-select">
-                                    @foreach ($rigTypes as $rigType)
-                                        <option value="{{ $rigType->id }}">{{ $rigType->rigtype }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label for="length" class="form-label fw-semibold">Length</label>
-                                <input type="number" name="length" id="length" class="form-control"
-                                    value="{{ $reservations->first()->length ?? '' }}" min="0">
+                    <!-- Rig Section -->
+                    <div class="col-md-4" id="rig-form">
+                        <div class="border rounded shadow-sm p-3">
+                            <h4 class="mb-3">Rig</h4>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label for="rigtype" class="form-label fw-semibold">Rig Type</label>
+                                    <select name="rigtype" id="rigtype" class="form-select">
+                                        @foreach ($rigTypes as $rigType)
+                                            <option value="{{ $rigType->id }}">{{ $rigType->rigtype }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="length" class="form-label fw-semibold">Length</label>
+                                    <input type="number" name="length" id="length" class="form-control"
+                                        value="{{ $reservations->first()->length ?? '' }}" min="0">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
                 @endif
 
                 <div class="col-md-4">
@@ -358,7 +356,7 @@
                         @foreach ($reservations as $reservation)
                             <tr class="">
                                 <td>
-                                    @if($reservation)
+                                    @if ($reservation)
                                         {{ date('D, M d', strtotime($reservation->cid)) }} -
                                         {{ date('D, M d', strtotime($reservation->cod)) }}
                                     @else
@@ -706,7 +704,7 @@
                 selectedContainer.find('input[name="phone[]"]').val(customerData.phone);
                 selectedContainer.find('input[name="home_phone[]"]').val(customerData.home_phone);
                 selectedContainer.find('input[name="work_phone[]"]').val(customerData.work_phone);
-                selectedContainer.find('input[name="customer_number[]"]').val(customerData.customer_number);
+                selectedContainer.find('input[name="customer_number[]"]').val(customerData.id);
                 selectedContainer.find('input[name="driving_license[]"]').val(customerData.driving_license);
                 selectedContainer.find('input[name="date_of_birth[]"]').val(customerData.date_of_birth);
                 selectedContainer.find('input[name="anniversary[]"]').val(customerData.anniversary);
@@ -779,7 +777,19 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        localStorage.setItem('reservation_success', 'true');
+                        let existingData = JSON.parse(localStorage.getItem('reservationData')) || [];
+
+                        let newReservation = {
+                            confirmation: $('#confirmation').val(),
+                            reservation_success: true
+                        };
+
+                        if (!Array.isArray(existingData)) {
+                            existingData = [];
+                        }
+                        existingData.push(newReservation);
+
+                        localStorage.setItem('reservationData', JSON.stringify(existingData));
 
                         $('#invoice-table').attr('hidden', false);
                         $('#reservation-form').attr('hidden', true);
@@ -802,7 +812,7 @@
             e.preventDefault();
 
             let cnNo = $('#confirmation').val();
-            let siteIds = $('#site_id').data('siteid'); 
+            let siteIds = $('#site_id').data('siteid');
 
             Swal.fire({
                 title: 'Are you sure?',
@@ -819,7 +829,7 @@
                         type: 'POST',
                         data: {
                             confirmation: cnNo,
-                            siteid: siteIds, 
+                            siteid: siteIds,
                             _token: $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(response) {
@@ -832,13 +842,13 @@
                                 }).then(() => {
                                     if (response.redirect) {
                                         window.location.href = response
-                                        .redirect; 
+                                            .redirect;
                                     } else {
                                         window.history
-                                    .back();
+                                            .back();
                                         setTimeout(() => {
                                             location
-                                        .reload(); 
+                                                .reload();
                                         }, 500);
                                     }
                                 });
@@ -861,11 +871,13 @@
                 }
             });
         });
-
-
         $(document).ready(function() {
-            // Check if reservation was successful
-            if (localStorage.getItem('reservation_success') === 'true') {
+            let storedData = JSON.parse(localStorage.getItem('reservationData')) || [];
+
+            let inputConfirmation = $('#confirmation').val();
+            let matchedReservation = storedData.find(reservation => reservation.confirmation === inputConfirmation);
+
+            if (matchedReservation && matchedReservation.reservation_success === true) {
                 $('#invoice-table').attr('hidden', false);
                 $('#payment-form').attr('hidden', false);
                 $('#reservation-form').attr('hidden', true);
@@ -873,6 +885,9 @@
                 $('#guests-form').attr('hidden', true);
                 $('#customer-form').attr('hidden', true);
                 $('#proceed-payment').attr('hidden', true);
+
+            } else {
+                console.log("No matching confirmation number found.");
             }
         });
     </script>

@@ -25,7 +25,7 @@
                                 <nav aria-label="breadcrumb">
                                     <ol class="breadcrumb bg-light p-3 rounded">
                                         <li class="breadcrumb-item active"  aria-current="page"><a  style="text-decoration: none"href="{{ route('sites.index') }}"> Sites </a></li>
-                                        <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('sites.rate_tiers') }}">Rate Tier</a></li>
+                                        <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('rate-tier.index') }}">Rate Tier</a></li>
                                         <li class="breadcrumb-item"> <a style="text-decoration: none" href="{{ route('addons.index') }}">Add Ons</a></li>
                                     </ol>
                                 </nav>

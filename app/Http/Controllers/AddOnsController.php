@@ -43,7 +43,7 @@ class AddOnsController extends Controller
     
         $validatedData = $request->validate([
             'addon_name' => 'required|string|max:255',
-            'price' => 'required|integer',
+            'price' => 'required|integer' ,
             'addon_type' => 'required|string|max:255',
             'capacity' => 'required|integer',
         ]);

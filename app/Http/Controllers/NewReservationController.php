@@ -700,10 +700,10 @@ class NewReservationController extends Controller
 
     public function reservationInCart()
     {
-        $customer = Customer::pluck('id', 'first_name', 'last_name');
-        $reservations = CartReservation::with('customer')->get();
-        return view('cart-reservations.index', compact('reservations', 'customer'));
+        $reservations = CartReservation::with('user')->get();
+        return view('cart-reservations.index', compact('reservations'));
     }
+    
 
     public function quoteSite(Request $request)
     {
@@ -876,7 +876,7 @@ class NewReservationController extends Controller
         }
 
         foreach ($data['customers'] as $customerData) {
-            $existingCustomer = Customer::where('first_name', $customerData['first_name'])->where('last_name', $customerData['last_name'])->where('email', $customerData['email'])->first();
+            $existingCustomer = User::where('f_name', $customerData['first_name'])->where('l_name', $customerData['last_name'])->where('email', $customerData['email'])->first();
 
             if (!$existingCustomer) {
                 Customer::create([
@@ -942,6 +942,18 @@ class NewReservationController extends Controller
         return response()->json([
             'success' => true,
             'reservation_id' => $reservation->id,
+        ]);
+    }
+
+    public function clearAbandoned()
+    {
+        $now = Carbon::now();
+
+        CartReservation::where('holduntil', '<', $now)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All abandoned cart reservations have been cleared.'
         ]);
     }
 }

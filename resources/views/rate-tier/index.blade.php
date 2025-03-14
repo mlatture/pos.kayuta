@@ -22,10 +22,10 @@
                     <div class="row">
                         <div class="row">
                             <div class="col-12">
-                                <nav aria-label="breadcrumb">
+                                <nav aria-label="breadcrumb"> 
                                     <ol class="breadcrumb bg-light p-3 rounded">
                                         <li class="breadcrumb-item active"  aria-current="page"><a  style="text-decoration: none"href="{{ route('sites.index') }}"> Sites </a></li>
-                                        <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('sites.rate_tiers') }}">Rate Tier</a></li>
+                                        <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('rate-tier.index') }}">Rate Tier</a></li>
                                         <li class="breadcrumb-item"> <a style="text-decoration: none" href="{{ route('addons.index') }}">Add Ons</a></li>
                                     </ol>
                                 </nav>
@@ -52,11 +52,11 @@
                                     @foreach ($rate_tiers as $k => $tiers)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('sites.view', $tiers->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                            <a href="{{ route('sites.edit', $tiers) }}" class="btn btn-primary"><i
+                                            {{-- <a href="{{ route('sites.view', $tiers->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a> --}}
+                                            <a href="{{ route('rate-tier.edit', $tiers->id) }}" class="btn btn-primary"><i
                                                     class="fas fa-edit"></i></a>
                                             <a class="btn btn-danger btn-delete"
-                                                data-url="{{ route('sites.destroy', $tiers) }}"><i
+                                                data-url="{{ route('rate-tier.destroy', $tiers) }}"><i
                                                     class="fas fa-trash"></i></a>
                                         </td>
                                         <td>{{ ++$k }}</td>

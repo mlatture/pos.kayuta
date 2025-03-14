@@ -12,6 +12,7 @@ class RateTier extends Model
     protected $guarded = [];
 
     protected $fillable = [
+      'tier', 'flatrate', 'useflatrate', 'usedynamic', 'minimumstay',
         'monthlyrate', 'weeklyrate', 'sundayrate', 'mondayrate', 'tuesdayrate', 
         'wednesdayrate', 'thursdayrate', 'fridayrate', 'saturdayrate'
     ];

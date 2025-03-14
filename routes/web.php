@@ -55,7 +55,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('sites', SiteController::class);
     
 
-    Route::get('/rate-tier' , [RateTierController::class, 'index'])->name('sites.rate_tiers');
+    Route::resource('rate-tier' , RateTierController::class);
     
     
     // Route::get('/add-ons', [AddOnsController::class, 'index'])->name('addons.index');
@@ -113,6 +113,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('reservations/invoice/{confirmationNumber}', [NewReservationController::class, 'invoice']);
     Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
     Route::get('reservation-in-cart', [NewReservationController::class, 'reservationInCart'])->name('reservations.reservation-in-cart');
+    Route::delete('reservation-in-cart', [NewReservationController::class, 'clearAbandoned'])->name('cart-reservation.clear-abandoned');
     Route::get('reservations/quote-site', [NewReservationController::class, 'quoteSite'])->name('reservations.quoteSite');
     Route::get('reservations/create-reservation', [NewReservationController::class, 'createReservation'])->name('reservations.create-reservation');
     Route::get('lookup-customer', [NewReservationController::class, 'lookupCustomer'])->name('reservations.lookup-customer');
