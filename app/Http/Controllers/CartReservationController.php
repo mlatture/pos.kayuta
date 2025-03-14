@@ -124,8 +124,15 @@ class CartReservationController extends Controller
      */
     public function show($id)
     {
-        //
+        $cartReservation = CartReservation::with('user')->where('cartid', $id)->first(); 
+    
+        if (!$cartReservation) {
+            return redirect()->back()->with('error', 'Reservation not found.');
+        }
+    
+        return view('cart-reservations.show', compact('cartReservation'));
     }
+    
 
     /**
      * Show the form for editing the specified resource.

@@ -34,6 +34,8 @@
                                     @foreach ($reservations as $key => $reservation)
                                         <tr>
                                             <td>
+                                                <a href="{{ route('cart-reservation.show', $reservation->cartid) }}"
+                                                    class="btn btn-info"><i class="fas fa-eye"></i></a>
                                                 <a href="{{ route('reservations.payment.index', $reservation->cartid) }}"
                                                     class="btn btn-primary"><i class="fas fa-edit"></i></a>
                                                 <a class="btn btn-danger btn-delete"

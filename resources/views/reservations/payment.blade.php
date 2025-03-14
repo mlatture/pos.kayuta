@@ -582,6 +582,12 @@
                 <i class="fa-solid fa-ban"></i> Cancel
             </button>
 
+            <button type="button" class="btn btn-info btn-lg float-end" id="add-to-cart">
+                <i class="fa-solid fa-store"></i> Add To Cart
+            </button>
+
+
+
 
 
             <button type="button" class="btn btn-success btn-lg float-end" id="proceed-payment">
@@ -890,5 +896,11 @@
                 console.log("No matching confirmation number found.");
             }
         });
+
+        $('#add-to-cart').on('click', function(e){
+            e.preventDefault();
+
+            window.location.href = "{{ route('reservations.reservation-in-cart') }}";
+        }) 
     </script>
 @endsection

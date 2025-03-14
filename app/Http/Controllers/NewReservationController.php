@@ -218,17 +218,6 @@ class NewReservationController extends Controller
             $site->totalDays = $totalDays;
         }
 
-        // $reservations = new Reservation();
-
-        // if ($request->end_date) {
-        //     $reservations = $reservations->whereDate('created_at', '<=', $request->end_date);
-        // }
-
-        // $reservations = $reservations->latest()->simplePaginate(10);
-
-        // $total = $reservations->map(function ($reservation) {
-        //     return $reservation->total;
-        // })->sum();
         $allReservations = Reservation::orderBy('id', 'desc')->get();
         $allCurrentSites = Site::orderBy('id', 'desc')->get();
         $payments = $this->payment::whereIn('cartid', $allReservations->pluck('cartid')->toArray())->get();
@@ -242,7 +231,6 @@ class NewReservationController extends Controller
             'payments' => $payments,
             'customers' => $customers,
         ]);
-        // return view('reservations.index', compact('sites', 'calendar', 'allSites', 'allReservations', 'allCurrentSites'));
     }
 
     public function noCart(Request $request)
