@@ -121,9 +121,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::patch('reservations/update-availability', [NewReservationController::class, 'patchAvailability'])->name('reservations.update-availability');
 
     //Cart Reservations
+    Route::get('reservaitons-details', [ReservationController::class, 'details'])->name('reservations.details');
     Route::resource('cart-reservation', CartReservationController::class);
     Route::post('reservation/cancel', [CartReservationController::class, 'cancel'])->name('cancel.reservation');
-
+    Route::get('/reservations/load-more-dates', [ReservationController::class, 'loadMoreDates'])
+        ->name('reservations.load-more-dates');
 
     Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
     Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);

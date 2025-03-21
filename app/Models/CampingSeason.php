@@ -11,6 +11,8 @@ class CampingSeason extends Model
 
     protected $guarded = [];
 
+    protected $table = 'camping_seasons';
+
     public function getAllPaginate()
     {
         return self::orderBy('id', 'DESC')->paginate(10);

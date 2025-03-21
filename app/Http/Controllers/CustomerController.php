@@ -66,11 +66,17 @@ class CustomerController extends Controller
      */
     public function show($id)
     {
-        $customer = User::with(['reservations' => function ($query) {
-            $query->latest();
-        }, 'receipts' => function ($query) {
-            $query->latest();
-        }])->findOrFail($id);
+        $customer = User::with([
+            'reservations' => function ($query) {
+                $query->latest();
+            },
+            'receipts' => function ($query) {
+                $query->latest();
+            },
+            'cardsOnFile' => function ($query) {
+                $query->latest();
+            }
+        ])->findOrFail($id);
     
         return view('customers.show', compact('customer'));
     }

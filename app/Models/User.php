@@ -54,6 +54,11 @@ class User extends Authenticatable
         return $this->hasMany(Reservation::class, 'customernumber');
     }
 
+    public function cardsOnFile()
+    {
+        return $this->hasMany(CardsOnFile::class, 'customernumber');
+    }
+
     public function cartReservations()
     {
         return $this->hasMany(CartReservation::class, 'customernumber');
