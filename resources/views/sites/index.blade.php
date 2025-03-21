@@ -57,6 +57,7 @@
                                     @foreach ($sites as $k => $site)
                                     <tr>
                                         <td>
+                                            <a href="#" class="btn btn-outline-primary"><i class="fa-regular fa-images"></i></a>
                                             <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
                                             <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
                                                     class="fas fa-edit"></i></a>

@@ -162,7 +162,7 @@
                 @hasPermission(config('constants.role_modules.list_sites_management.value'))
                     <li><a class="dropdown-item" href="{{ route('sites.index') }}">
                             <i class="nav-icon fas fa-globe"></i>
-                            <span>Sites</span>
+                            <span>Sites / Rate Tier / Add Ons</span>
                         </a></li>
                 @endHasPermission
               
