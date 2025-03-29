@@ -482,8 +482,8 @@
                                     <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" data-id="${item.cartid}" id="action1">
                                         <div class="card-body d-flex justify-content-center align-items-center">
                                             <h6 class="card-title text-center">
-                                                <i class="fa-solid fa-calendar"></i> Reschedule /
-                                                <i class="fa-solid fa-location-arrow"></i> Relocate
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                Edit Reservations
                                             </h6>
                                         </div>
                                     </div>
@@ -514,7 +514,7 @@
 
         $(document).on("click", "#action1", function() {
             const id = $(this).data("id");
-            url = "reservations/relocate/" + id;
+            url = "reservations/edit/" + id;
             window.location = url;
         });
 

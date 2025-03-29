@@ -7,6 +7,8 @@ use App\Models\Payment;
 use App\Models\SiteClass;
 use App\Models\SiteHookup;
 use App\Models\Reservation;
+use App\Models\RigTypes;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CalendarReservationController extends Controller
@@ -31,6 +33,16 @@ class CalendarReservationController extends Controller
             'hookups' => $getHookup,
             'paidAmount' => $getPaidAmount
         ]);
+    }
+
+    public function editReservations($id)
+    {
+        $reservations = Reservation::where('cartid', $id)->with('payment')->get();
+        $rigTypes = RigTypes::all();
+        $payment = Payment::where('cartid', $id)->get();
+
+        $user = User::where('id', $reservations->first()->customernumber)->first();
+        return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment']));
     }
 
     public function getUnavailableDates($id)

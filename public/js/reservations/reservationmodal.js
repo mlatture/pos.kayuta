@@ -344,7 +344,7 @@ $(document).on("click", ".actionsbtn", function () {
 
 $(document).on("click", "#action1", function () {
     const id = $(this).data("id");
-    url = "reservations/relocate/" + id;
+    url = "reservations/edit/" + id;
     window.location = url;
 });
 

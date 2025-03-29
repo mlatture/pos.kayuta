@@ -20,6 +20,9 @@ class Payment extends Model
         'customernumber',
         'email',
         'payment',
+        'transaction_type',
+        'cancellation_fee',
+        'refunded_amount'
     ];
 
     protected $casts = [

@@ -53,8 +53,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
-    
-
+    Route::get('sites/add-image/{id}', [SiteController::class, 'addImage'])->name('sites.add-image');    
+    Route::post('sites/upload-image/{id}', [SiteController::class, 'uploadImages'])->name('sites.upload.images');
     Route::resource('rate-tier' , RateTierController::class);
     
     
@@ -119,7 +119,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('lookup-customer', [NewReservationController::class, 'lookupCustomer'])->name('reservations.lookup-customer');
     Route::post('new-reservation/create', [NewReservationController::class, 'createNewReservation'])->name('reservations.create-new-reservation');
     Route::patch('reservations/update-availability', [NewReservationController::class, 'patchAvailability'])->name('reservations.update-availability');
-
+    Route::get('reservations/history/{id}', [NewReservationController::class, 'reservationHistory'])->name('reservations.history');
+    Route::patch('reservations/refund', [NewReservationController::class, 'refund']);
     //Cart Reservations
     Route::get('reservaitons-details', [ReservationController::class, 'details'])->name('reservations.details');
     Route::resource('cart-reservation', CartReservationController::class);
@@ -160,6 +161,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
     Route::get('/registers/get', [StationRegisterController::class, 'getRegister'])->name('registers.get');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
+    Route::get('reservations/edit/{id}', [CalendarReservationController::class, 'editReservations']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 

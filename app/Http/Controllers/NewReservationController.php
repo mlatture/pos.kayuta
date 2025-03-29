@@ -27,6 +27,8 @@ use App\Models\PublishSurveyModel;
 use App\Models\SurveysResponseModel;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
+use Yajra\DataTables\Facades\DataTables;
+
 class NewReservationController extends Controller
 {
     protected $reservation;
@@ -47,6 +49,19 @@ class NewReservationController extends Controller
         $this->cartReservation = $cartReservation;
         $this->siteClass = $siteClass;
         $this->siteHookup = $siteHookup;
+    }
+
+    public function reservationHistory(Request $request, $id)
+    {
+        $reservations = $this->reservation->where('customernumber', $id)->select(['cid', 'cod', 'siteid', 'cartid', 'status', 'rigtype', 'riglength']);
+        return DataTables::of($reservations)
+            ->editColumn('cid', function ($reservation) {
+                return Carbon::parse($reservation->cid)->format('M d, Y');
+            })
+            ->editColumn('cod', function ($reservation) {
+                return Carbon::parse($reservation->cod)->format('M d, Y');
+            })
+            ->make(true);
     }
 
     public function index($id)
@@ -691,7 +706,6 @@ class NewReservationController extends Controller
         $reservations = CartReservation::with('user')->get();
         return view('cart-reservations.index', compact('reservations'));
     }
-    
 
     public function quoteSite(Request $request)
     {
@@ -815,30 +829,26 @@ class NewReservationController extends Controller
     public function lookupCustomer(Request $request)
     {
         $query = $request->input('search');
-    
+
         if (!isset($query) || empty($query)) {
             return response()->json([]);
         }
-    
+
         $users = User::where('f_name', 'LIKE', "%{$query}%")
             ->orWhere('l_name', 'LIKE', "%{$query}%")
             ->orWhere('email', 'LIKE', "%{$query}%")
             ->orWhere('phone', 'LIKE', "%{$query}%")
             ->orWhere('customer_number', 'LIKE', "%{$query}%")
-            ->get([
-                'id', 'organization_id', 'f_name', 'l_name', 'name', 'phone', 'email', 
-                'date_of_birth', 'anniversary', 'age', 'street_address', 'address_2', 
-                'address_3', 'country', 'city', 'zip', 'state', 'home_phone', 'work_phone', 
-                'customer_number', 'driving_license', 'wallet_balance', 'loyalty_point'
-            ]);
-    
-        $uniqueUsers = $users->unique(function ($user) {
-            return $user->email . '-' . $user->customer_number;
-        })->values();
-    
+            ->get(['id', 'organization_id', 'f_name', 'l_name', 'name', 'phone', 'email', 'date_of_birth', 'anniversary', 'age', 'street_address', 'address_2', 'address_3', 'country', 'city', 'zip', 'state', 'home_phone', 'work_phone', 'customer_number', 'driving_license', 'wallet_balance', 'loyalty_point']);
+
+        $uniqueUsers = $users
+            ->unique(function ($user) {
+                return $user->email . '-' . $user->customer_number;
+            })
+            ->values();
+
         return response()->json($uniqueUsers);
     }
-    
 
     public function createNewReservation(Request $request)
     {
@@ -879,7 +889,7 @@ class NewReservationController extends Controller
                     'driving_license' => $customerData['driving_license'] ?? null,
                     'date_of_birth' => !empty($customerData['date_of_birth']) ? $customerData['date_of_birth'] : null,
                     'anniversary' => !empty($customerData['anniversary']) ? $customerData['anniversary'] : null,
-                   'age' => !empty($customerData['age']) ? intval($customerData['age']) : null,
+                    'age' => !empty($customerData['age']) ? intval($customerData['age']) : null,
                     'address' => $customerData['address'] ?? null,
                     'address_2' => $customerData['address_2'] ?? null,
                     'address_3' => $customerData['address_3'] ?? null,
@@ -887,7 +897,7 @@ class NewReservationController extends Controller
                     'state' => $customerData['state'] ?? null,
                     'zip' => $customerData['zip'] ?? null,
                     'country' => $customerData['country'] ?? null,
-                    'user_id' => $customerData['user_id'] ?? null
+                    'user_id' => $customerData['user_id'] ?? null,
                 ]);
             }
 
@@ -909,6 +919,7 @@ class NewReservationController extends Controller
                 'cartid' => $data['confirmation'],
                 'source' => $data['source'],
                 'email' => $existingCustomer ? $existingCustomer->email : null,
+                'status' => $data['status'],
                 'createdate' => $data['created_on'],
                 'createdby' => $data['created_by'],
                 'fname' => $existingCustomer ? $existingCustomer->first_name : null,
@@ -941,7 +952,28 @@ class NewReservationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'All abandoned cart reservations have been cleared.'
+            'message' => 'All abandoned cart reservations have been cleared.',
         ]);
+    }
+
+    public function refund(Request $request)
+    {
+        $request->validate([
+            'cartid' => 'required|exists:reservations,cartid',
+            'reason' => 'nullable|string',
+        ]);
+
+        Payment::where('cartid', $request->cartid)->update([
+            'transaction_type' => 'REFUND',
+            'cancellation_fee' => $request->cancellation_fee,
+            'refunded_amount' => $request->refunded_amount,
+        ]);
+
+        Reservation::where('cartid', $request->cartid)->update([
+            'status' => 'Cancelled',
+            'reason' => $request->reason,
+        ]);
+
+        return response()->json(['message' => 'Reservation cancelled.']);
     }
 }

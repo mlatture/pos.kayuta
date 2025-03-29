@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class SiteController extends Controller
 {
@@ -207,5 +209,37 @@ class SiteController extends Controller
         $site = Site::find($id);
 
         return view('sites.view')->with('site', $site);
+    }
+
+    public function addImage($id)
+    {
+        $site = Site::find($id);
+
+        return view('sites.add-image')->with('site', $site);
+    }
+
+    public function uploadImages(Request $request, Site $site)
+    {
+        $uploadedImages = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                if ($file->isValid()) {
+                    $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/sites'), $filename);
+                    $uploadedImages[] = $filename;
+                }
+            }
+        }
+
+        $existing = $site->images;
+        $existing = !empty($existing) ? json_decode($existing, true) : [];
+        $existing = is_array($existing) ? $existing : [];
+
+        $allImages = array_merge($existing, $uploadedImages);
+        $site->images = json_encode($allImages);
+        $site->save();
+
+        return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
 }

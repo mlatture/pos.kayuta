@@ -13,20 +13,20 @@ class Site extends Model
 {
     use HasFactory;
 
-
     protected $table = 'sites';
 
     protected $guarded = [];
     private $cit = ' 15:00:00';
     private $cot = ' 10:00:00';
 
+    
     protected $casts = [
         'images' => 'array',
         'rigtypes' => 'array',
         'amenities' => 'array',
     ];
 
-    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline'];
+    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline', 'images'];
 
     public static function getIncomePersite($filters = [])
     {
@@ -49,11 +49,10 @@ class Site extends Model
         $dateColumn = 'reservations.created_at';
 
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
-           
             $dateMapping = [
                 'arrival_date' => 'reservations.checkedin',
-                'transaction_date' => 'reservations.created_at', 
-                'checkin_date' => 'reservations.cod', 
+                'transaction_date' => 'reservations.created_at',
+                'checkin_date' => 'reservations.cod',
             ];
 
             if ($filters['date_to_use'] === 'stay_on') {

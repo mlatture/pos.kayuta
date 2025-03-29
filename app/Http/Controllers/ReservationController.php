@@ -59,49 +59,47 @@ class ReservationController extends Controller
         }
         $siteIds = array_unique($siteIds);
 
-        // Fetch the latest camping season based on `created_at`
+        // Get the latest season
         $latestSeason = CampingSeason::orderBy('created_at', 'desc')->first();
         if (!$latestSeason) {
             return redirect()->back()->with('error', 'No camping season data available.');
         }
 
+        // Dynamically extend the season end if there are future reservations
+        $latestReservationEnd = Reservation::max('cod');
         $filters['startDate'] = $latestSeason->opening_day;
-        $filters['endDate'] = $latestSeason->closing_day;
+        $filters['endDate'] = $latestReservationEnd && $latestReservationEnd > $latestSeason->closing_day ? $latestReservationEnd : $latestSeason->closing_day;
 
-        $allSites = Site::all();
-        $sites = collect();
+        // Optionally pad extra days
+        $filters['endDate'] = \Carbon\Carbon::parse($filters['endDate'])->addDays(7)->toDateString();
 
-        if ($siteIds) {
-            $sites = Site::all();
-        } else {
-            $sites = $allSites;
-        }
+        // Load sites
+        $allSites = Site::with(['reservations'])->get();
+        $sites = $siteIds ? $allSites->whereIn('siteid', $siteIds) : $allSites;
 
+        // Generate calendar dates
         $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
 
+        // Get previous season & reservations
         $previousSeason = CampingSeason::where('created_at', '<', $latestSeason->created_at)->orderBy('created_at', 'desc')->first();
 
         $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
-
         $previousReservations = $previousSeason ? Reservation::whereBetween('cid', [$previousSeason->opening_day, $previousSeason->closing_day])->get() : collect();
 
+        // Enrich site data
         foreach ($sites as $site) {
             $site->totalDays = $site->reservations->sum(function ($reservation) {
                 return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
             });
 
             $site->isUnavailable = $previousSeason ? !$previousReservations->where('site_id', $site->id)->count() : false;
-
             $site->isVacant = !$reservations->where('site_id', $site->id)->count();
         }
 
-        $siteId = $site->siteid;
-        $seasonStart = $latestSeason->opening_day;
-        $seasonEnd = $latestSeason->closing_day;
-
-        $availableDates = $this->getAvailableDatesForSite($siteId, $seasonStart, $seasonEnd);
-
-        // dd($availableDates); die();
+        // Show availability for one site only (used for quick quote)
+        $site = $sites->first(); // just to get a sample site for availableDates
+        $siteId = $site ? $site->siteid : null;
+        $availableDates = $siteId ? $this->getAvailableDatesForSite($siteId, $filters['startDate'], $filters['endDate']) : [];
 
         return view('reservations.index', compact('availableDates', 'sites', 'calendar', 'allSites', 'reservations'));
     }
@@ -116,6 +114,7 @@ class ReservationController extends Controller
             $calendar[] = $currentDate->format('Y-m-d');
             $currentDate->addDay();
         }
+
         return $calendar;
     }
 
@@ -124,7 +123,6 @@ class ReservationController extends Controller
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
 
-        // Step 1: Get all reservations for this site
         $reservations = Reservation::where('siteid', $siteId)
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('cid', [$start, $end])
@@ -135,7 +133,6 @@ class ReservationController extends Controller
             })
             ->get();
 
-        // Step 2: Generate all dates in the range
         $allDates = collect();
         $current = $start->copy();
         while ($current <= $end) {
@@ -143,7 +140,6 @@ class ReservationController extends Controller
             $current->addDay();
         }
 
-        // Step 3: Remove dates that fall in a reservation period
         foreach ($reservations as $res) {
             $resStart = Carbon::parse($res->cid);
             $resEnd = Carbon::parse($res->cod)->subDay(); // exclusive cod
@@ -156,7 +152,6 @@ class ReservationController extends Controller
             $allDates = $allDates->diff($range);
         }
 
-        // Step 4: Exclude past dates
         return $allDates
             ->filter(function ($date) {
                 return Carbon::parse($date)->gte(Carbon::today());

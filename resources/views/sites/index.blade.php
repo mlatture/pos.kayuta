@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
 
-   
+
 @endsection
 @section('content')
-   
+
     <div class="row animated fadeInUp">
         <div class="col-12">
             <div class="card">
@@ -22,14 +22,8 @@
                     <div class="row">
                         <div class="row">
                             <div class="col-12">
-                                <nav aria-label="breadcrumb">
-                                    <ol class="breadcrumb bg-light p-3 rounded">
-                                        <li class="breadcrumb-item active"  aria-current="page"><a  style="text-decoration: none"href="{{ route('sites.index') }}"> Sites </a></li>
-                                        <li class="breadcrumb-item"><a style="text-decoration: none" href="{{ route('rate-tier.index') }}">Rate Tier</a></li>
-                                        <li class="breadcrumb-item"> <a style="text-decoration: none" href="{{ route('addons.index') }}">Add Ons</a></li>
-                                        
-                                    </ol>
-                                </nav>
+                                @include('sites.nav-sites')
+
                             </div>
                         </div>
                         <div class="table-responsive m-t-40 p-0">
@@ -55,17 +49,19 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($sites as $k => $site)
-                                    <tr>
-                                        <td>
-                                            <a href="#" class="btn btn-outline-primary"><i class="fa-regular fa-images"></i></a>
-                                            <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                            <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
-                                                    class="fas fa-edit"></i></a>
-                                            <a class="btn btn-danger btn-delete"
-                                                data-url="{{ route('sites.destroy', $site) }}"><i
-                                                    class="fas fa-trash"></i></a>
-                                        </td>
-                                        <td>{{ ++$k }}</td>
+                                        <tr>
+                                            <td>
+                                                <a href="{{ route('sites.add-image', $site->id) }}" class="btn btn-outline-primary"><i
+                                                        class="fa-regular fa-images" ></i></a>
+                                                <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i
+                                                        class="fas fa-eye"></i></a>
+                                                <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
+                                                        class="fas fa-edit"></i></a>
+                                                <a class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('sites.destroy', $site) }}"><i
+                                                        class="fas fa-trash"></i></a>
+                                            </td>
+                                            <td>{{ ++$k }}</td>
                                             <td>
                                                 {{ $site->siteid ?? 'N/A' }}
                                             </td>

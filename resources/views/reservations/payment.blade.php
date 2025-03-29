@@ -95,7 +95,33 @@
     @php
         use Illuminate\Support\Facades\Request;
     @endphp
+    <nav class="main-header navbar navbar-expand  d-flex justify-content-between sticky-top "
+        style="background-color: #77898d; width: 30%;   border-bottom-left-radius: 5px; ">
 
+
+        <ul class="navbar-nav ms-auto  d-flex flex-row">
+
+            <div class="buttons-pymnt d-flex gap-2 float-end mt-2 ">
+
+                {{-- <button type="button" class="btn btn border-info btn-sm float-end text-white" id="lookup-history">
+                    <i class="fa-solid fa-book"></i> History
+                </button> --}}
+                <button type="button" class="btn btn border-danger btn-sm float-end text-white" id="cancel-reservation">
+                    <i class="fa-solid fa-ban"></i> Cancel
+                </button>
+
+                <button type="button" class="btn btn border-warning btn-sm float-end text-white" id="add-to-cart">
+                    <i class="fa-solid fa-store"></i> Add To Cart
+                </button>
+
+                <button type="button" class="btn btn border-success btn-sm float-end text-white" id="proceed-payment">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Payment
+                </button>
+
+
+            </div>
+        </ul>
+    </nav>
     <div class="overflow-auto ">
 
 
@@ -108,6 +134,15 @@
                     <select name="Source" id="Source" class="form-select">
                         <option value="Phone">Phone</option>
                         <option value="Office">Office</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="Source" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="Prepaid">Prepaid</option>
+                        <option value="Not Confirmed">Not Confirmed</option>
+                        <option value="Confirmed">Confirmed</option>
                     </select>
                 </div>
 
@@ -187,8 +222,8 @@
                     <div class="border rounded shadow-sm p-3">
                         <label for="siteLock" class="form-label fw-semibold">Site Lock Fee ($20)</label>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="siteLock" name="siteLock"
-                                {{ $reservations->first()->siteLock ? 'checked' : '' }}>
+                            <input class="form-check-input" type="checkbox" role="switch" id="siteLock"
+                                name="siteLock" {{ $reservations->first()->siteLock ? 'checked' : '' }}>
                         </div>
                     </div>
                 </div>
@@ -406,14 +441,12 @@
                             <td>${{ number_format($subtotal, 2) }}</td>
                         </tr>
 
-                        @if (Request::is('admin/reservations/invoice/*'))
-                            @php    $balance = $reservation->total - $payment->payment; @endphp
-                            <tr class="total-row">
-                                <td colspan="4"></td>
-                                <td class="text-end">Balance </td>
-                                <td>${{ number_format($balance, 2) }}</td>
-                            </tr>
-                        @endif
+                        @php    $balance = $reservation->total - $payment->payment; @endphp
+                        <tr class="total-row">
+                            <td colspan="4"></td>
+                            <td class="text-end">Balance </td>
+                            <td>${{ number_format($balance, 2) }}</td>
+                        </tr>
 
                     </tbody>
                 </table>
@@ -576,25 +609,9 @@
             </form>
         </div>
 
-
-        <div class="buttons-pymnt d-flex gap-2 float-end mt-2">
-            <button type="button" class="btn btn-danger btn-lg float-end" id="cancel-reservation">
-                <i class="fa-solid fa-ban"></i> Cancel
-            </button>
-
-            <button type="button" class="btn btn-info btn-lg float-end" id="add-to-cart">
-                <i class="fa-solid fa-store"></i> Add To Cart
-            </button>
+        {{-- @include('reservations.modals.history'); --}}
 
 
-
-
-
-            <button type="button" class="btn btn-success btn-lg float-end" id="proceed-payment">
-                <i class="fa-solid fa-money-bill-transfer"></i> Payment
-            </button>
-
-        </div>
     </div>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js" crossorigin="anonymous"
@@ -602,6 +619,48 @@
 
 
     <script>
+        // $('#lookup-history').on('click', function() {
+        //     $('#historyModal').modal('show');
+        //     let customerId = $(this).data('customer');
+        //     let url = `/reservations/history/${customerId}`;
+
+        //     if (!$.fn.DataTable.isDataTable('#reservation-history-table')) {
+        //         $('#reservation-history-table').DataTable({
+        //             processing: true,
+        //             serverSide: true,
+        //             ajax: url,
+        //             columns: [{
+        //                     data: 'cid',
+        //                     name: 'cid'
+        //                 },
+        //                 {
+        //                     data: 'cod',
+        //                     name: 'cod'
+        //                 },
+        //                 {
+        //                     data: 'siteid',
+        //                     name: 'siteid'
+        //                 },
+        //                 {
+        //                     data: 'cartid',
+        //                     name: 'cartid'
+        //                 },
+        //                 {
+        //                     data: 'status',
+        //                     name: 'status'
+        //                 } {
+        //                     data: 'rigtype',
+        //                     name: 'rigtype'
+        //                 } {
+        //                     data: 'riglength',
+        //                     name: 'riglength'
+        //                 }
+        //             ]
+        //         });
+        //     }
+
+        // });
+
         var checkGiftCart = "{{ route('check.gift-card') }}";
         var deleteAddToCart = "{{ route('reservations.delete.add-to-cart') }}";
 
@@ -760,6 +819,7 @@
             });
 
             let formData = {
+                status: $('#status').val(),
                 source: $('#Source').val(),
                 created_on: $('#createdon').val(),
                 confirmation: $('#confirmation').val(),
@@ -897,10 +957,10 @@
             }
         });
 
-        $('#add-to-cart').on('click', function(e){
+        $('#add-to-cart').on('click', function(e) {
             e.preventDefault();
 
             window.location.href = "{{ route('reservations.reservation-in-cart') }}";
-        }) 
+        })
     </script>
 @endsection
