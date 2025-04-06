@@ -53,7 +53,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
-    Route::get('sites/add-image/{id}', [SiteController::class, 'addImage'])->name('sites.add-image');    
+    Route::get('sites/add-image/{id}', [SiteController::class, 'addImage'])->name('sites.add-image');  
+    Route::delete('/sites/{site}/images/{filename}', [SiteController::class, 'deleteImage'])->name('sites.delete.image');
     Route::post('sites/upload-image/{id}', [SiteController::class, 'uploadImages'])->name('sites.upload.images');
     Route::resource('rate-tier' , RateTierController::class);
     

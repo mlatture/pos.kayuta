@@ -242,4 +242,21 @@ class SiteController extends Controller
 
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
+
+    public function deleteImage($siteId, $filename)
+    {
+        $site = Site::findOrFail($siteId);
+        $images = is_array($site->images) ? $site->images : json_decode($site->images, true);
+
+        $imagePath = public_path('shared_storage/sites/' . $filename);
+        if (File::exists($imagePath)) {
+            File::delete($imagePath);
+        }
+
+        $images = array_filter($images, fn($img) => $img !== $filename);
+        $site->images = json_encode(array_values($images));
+        $site->save();
+
+        return response()->json(['success' => true, 'message' => 'Image deleted successfully.']);
+    }
 }

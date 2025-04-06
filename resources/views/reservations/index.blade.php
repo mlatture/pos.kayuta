@@ -199,9 +199,9 @@
             </thead>
             <tbody>
                 @foreach ($sites as $index => $site)
-                    <tr style="display: none">
+                    <tr @if ($index >= 20) style="display: none" @endif>
                         <td class="sticky-col bg__sky">{{ $site->siteid }}</td>
-                        <td class="sticky-col bg__sky">{{ $site->siteclass }}</td>
+                        <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
 
                         @php
                             $calendarCount = count($calendar);

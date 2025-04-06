@@ -78,6 +78,11 @@ class CustomerController extends Controller
             }
         ])->findOrFail($id);
     
+        $customer->setRelation(
+            'cardsOnFile',
+            collect($customer->cardsOnFile)->unique('xmaskedcardnumber')
+        );
+        
         return view('customers.show', compact('customer'));
     }
     
