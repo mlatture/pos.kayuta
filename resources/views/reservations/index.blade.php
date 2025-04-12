@@ -527,24 +527,42 @@
             $('.filter-container').attr('hidden', false);
         }
 
-        function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
-            const storageBaseUrl = "{{ asset('storage/sites') }}";
+        const storageBaseUrl = "{{ asset('storage/sites') }}";
+        const fallbackImage = "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
 
+        function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
             let filteredSites = showAll
                 ? allSites
                 : allSites.filter(site => selectedSiteIds.includes(String(site.id)));
 
-            let cardHtml = filteredSites.map(site => {
-                let images = Array.isArray(site.images) ? site.images : [];
+            let cardHtml = '';
+            const imageRotationData = [];
 
-                let imageUrl = images.length > 0
-                    ? `${storageBaseUrl}/${images[0]}`
-                    : "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
+            filteredSites.forEach(site => {
+                let images = [];
 
-                return `
-                    <div class="col-md-3">
+                if (Array.isArray(site.images)) {
+                    images = site.images;
+                } else if (typeof site.images === 'string') {
+                    try {
+                        let parsed = JSON.parse(site.images);
+                        images = Array.isArray(parsed) ? parsed : [parsed];
+                    } catch (e) {
+                        images = [];
+                    }
+                }
+
+                images = images.map(img => `${storageBaseUrl}/${img}`);
+                if (!images.length) images = [fallbackImage];
+
+                const imgId = `img-${site.id}-${Math.floor(Math.random() * 10000)}`;
+
+                cardHtml += `
+                    <div class="col-md-3 mb-3">
                         <div class="card site-card" data-id="${site.id}" data-price="${site.price || 100}">
-                            <img src="${imageUrl}" class="card-img-top" alt="Site Image" style="max-height: 200px; object-fit: cover;">
+                            <img id="${imgId}" src="${images[0]}" class="card-img-top" alt="Site Image"
+                                style="max-height: 200px; object-fit: cover;"
+                                onerror="this.onerror=null; this.src='${fallbackImage}'">
                             <div class="card-body text-center">
                                 <h5 class="card-title">${site.siteid}</h5>
                                 <p class="card-text">${site.siteclass}</p>
@@ -552,7 +570,11 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+
+                if (images.length > 1) {
+                    imageRotationData.push({ imgId, images });
+                }
+            });
 
             document.getElementById("ganttTableAvailable").innerHTML = `<div class="row">${cardHtml}</div>`;
 
@@ -560,6 +582,15 @@
                 card.addEventListener('click', function () {
                     toggleSite(this);
                 });
+            });
+
+            imageRotationData.forEach(({ imgId, images }) => {
+                let index = 0;
+                setInterval(() => {
+                    index = (index + 1) % images.length;
+                    const imgEl = document.getElementById(imgId);
+                    if (imgEl) imgEl.src = images[index];
+                }, 3000);
             });
         }
 
