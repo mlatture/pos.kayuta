@@ -441,8 +441,10 @@
                             <td>${{ number_format($subtotal, 2) }}</td>
                         </tr>
 
-                        @php    $balance = $reservation->total - $payment->payment; @endphp
-                        <tr class="total-row">
+                        @php
+                        $balance = $reservation->total - ($reservation->payment->payment ?? 0);
+                    @endphp
+                                            <tr class="total-row">
                             <td colspan="4"></td>
                             <td class="text-end">Balance </td>
                             <td>${{ number_format($balance, 2) }}</td>

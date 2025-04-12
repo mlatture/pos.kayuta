@@ -48,60 +48,117 @@ class ReservationController extends Controller
         $this->payment = $payment;
     }
 
+    // public function index(Request $request)
+    // {
+    //     $siteIds = [];
+    //     if ($request->site_names) {
+    //         $siteIds = array_merge($siteIds, explode(',', $request->site_names));
+    //     }
+    //     if ($request->site_classes) {
+    //         $siteIds = array_merge($siteIds, explode(',', $request->site_classes));
+    //     }
+    //     $siteIds = array_unique($siteIds);
+
+    //     // Get the latest season
+    //     $latestSeason = CampingSeason::orderBy('created_at', 'desc')->first();
+    //     if (!$latestSeason) {
+    //         return redirect()->back()->with('error', 'No camping season data available.');
+    //     }
+
+    //     // Dynamically extend the season end if there are future reservations
+    //     $latestReservationEnd = Reservation::max('cod');
+    //     $filters['startDate'] = $latestSeason->opening_day;
+    //     $filters['endDate'] = $latestReservationEnd && $latestReservationEnd > $latestSeason->closing_day ? $latestReservationEnd : $latestSeason->closing_day;
+
+    //     // Optionally pad extra days
+    //     $filters['endDate'] = \Carbon\Carbon::parse($filters['endDate'])->addDays(7)->toDateString();
+
+    //     // Load sites
+    //     $allSites = Site::with(['reservations'])->get();
+    //     $sites = $siteIds ? $allSites->whereIn('siteid', $siteIds) : $allSites;
+
+    //     // Generate calendar dates
+    //     $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
+
+    //     // Get previous season & reservations
+    //     $previousSeason = CampingSeason::where('created_at', '<', $latestSeason->created_at)->orderBy('created_at', 'desc')->first();
+
+    //     $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
+    //     $previousReservations = $previousSeason ? Reservation::whereBetween('cid', [$previousSeason->opening_day, $previousSeason->closing_day])->get() : collect();
+
+    //     // Enrich site data
+    //     foreach ($sites as $site) {
+    //         $site->totalDays = $site->reservations->sum(function ($reservation) {
+    //             return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
+    //         });
+
+    //         $site->isUnavailable = $previousSeason ? !$previousReservations->where('site_id', $site->id)->count() : false;
+    //         $site->isVacant = !$reservations->where('site_id', $site->id)->count();
+    //     }
+
+    //     // Show availability for one site only (used for quick quote)
+    //     $site = $sites->first(); // just to get a sample site for availableDates
+    //     $siteId = $site ? $site->siteid : null;
+    //     $availableDates = $siteId ? $this->getAvailableDatesForSite($siteId, $filters['startDate'], $filters['endDate']) : [];
+
+    //     return view('reservations.index', compact('availableDates', 'sites', 'calendar', 'allSites', 'reservations'));
+    // }
+
     public function index(Request $request)
     {
-        $siteIds = [];
-        if ($request->site_names) {
-            $siteIds = array_merge($siteIds, explode(',', $request->site_names));
-        }
-        if ($request->site_classes) {
-            $siteIds = array_merge($siteIds, explode(',', $request->site_classes));
-        }
-        $siteIds = array_unique($siteIds);
+        $query = Site::with(['reservations.payment']);
 
-        // Get the latest season
-        $latestSeason = CampingSeason::orderBy('created_at', 'desc')->first();
-        if (!$latestSeason) {
-            return redirect()->back()->with('error', 'No camping season data available.');
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('siteid', 'LIKE', "%{$search}%")
+                  ->orWhere('ratetier', 'LIKE', "%{$search}%")
+                  ->orWhereHas('reservations', function ($resQ) use ($search) {
+                      $resQ->where('fname', 'LIKE', "%{$search}%")
+                           ->orWhere('lname', 'LIKE', "%{$search}%");
+                  });
+            });
+            
         }
 
-        // Dynamically extend the season end if there are future reservations
+        if ($request->sitename || $request->ratetier) {
+            $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
+            $query->whereIn('siteid', $siteIds);
+        }
+
+        $perPage = 20;
+        $sites = $query->paginate($perPage);
+
+        $latestSeason = CampingSeason::latest()->first();
         $latestReservationEnd = Reservation::max('cod');
         $filters['startDate'] = $latestSeason->opening_day;
         $filters['endDate'] = $latestReservationEnd && $latestReservationEnd > $latestSeason->closing_day ? $latestReservationEnd : $latestSeason->closing_day;
+        $filters['endDate'] = Carbon::parse($filters['endDate'])->addDays(7)->toDateString();
 
-        // Optionally pad extra days
-        $filters['endDate'] = \Carbon\Carbon::parse($filters['endDate'])->addDays(7)->toDateString();
-
-        // Load sites
-        $allSites = Site::with(['reservations'])->get();
-        $sites = $siteIds ? $allSites->whereIn('siteid', $siteIds) : $allSites;
-
-        // Generate calendar dates
         $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
-
-        // Get previous season & reservations
-        $previousSeason = CampingSeason::where('created_at', '<', $latestSeason->created_at)->orderBy('created_at', 'desc')->first();
-
         $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
-        $previousReservations = $previousSeason ? Reservation::whereBetween('cid', [$previousSeason->opening_day, $previousSeason->closing_day])->get() : collect();
 
-        // Enrich site data
         foreach ($sites as $site) {
             $site->totalDays = $site->reservations->sum(function ($reservation) {
                 return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
             });
-
-            $site->isUnavailable = $previousSeason ? !$previousReservations->where('site_id', $site->id)->count() : false;
             $site->isVacant = !$reservations->where('site_id', $site->id)->count();
         }
 
-        // Show availability for one site only (used for quick quote)
-        $site = $sites->first(); // just to get a sample site for availableDates
-        $siteId = $site ? $site->siteid : null;
-        $availableDates = $siteId ? $this->getAvailableDatesForSite($siteId, $filters['startDate'], $filters['endDate']) : [];
+        if ($request->ajax()) {
+            $html = view('reservations.components._site_rows_list', [
+                'sites' => $sites,
+                'calendar' => $calendar,
+            ])->render();
 
-        return view('reservations.index', compact('availableDates', 'sites', 'calendar', 'allSites', 'reservations'));
+            return response()->json([
+                'sites' => $html,
+                'next_page_url' => $sites->nextPageUrl(),
+            ]);
+        }
+
+        // Normal page load
+        return view('reservations.index', compact('sites', 'calendar', 'filters'));
     }
 
     private function generateSeasonCalendar($startDate, $endDate)

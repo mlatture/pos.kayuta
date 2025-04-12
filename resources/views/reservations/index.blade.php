@@ -111,40 +111,54 @@
     </header>
     <div
         class="table-actions d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between pe-2 pt-md-3 pt-2">
-        <div class="d-flex align-items-center action__links">
+        <div class="d-flex align-items-center action__links gap-2">
             <a href="javascript:void(0)" id="check-available" class="border text-decoration-none p-2 text-dark">
                 <img src="{{ asset('images/add-ico.svg') }}" alt="" class="me-2" />
                 Multiple Sites
             </a>
-            {{-- <a href="#" class="border text-decoration-none p-2 text-dark">
-                <img src="{{ asset('images/search-ico.svg') }}" alt="" class="me-2" />
-                Search
-            </a> --}}
-            {{-- <a href="javascript:void(0)" onclick="openReservationModal()" class="border text-decoration-none p-2 text-dark">
-                <img src="{{ asset('images/track-ico.svg') }}" alt="" class="me-2" />
-                Arrivals & Departures
-            </a> --}}
-            {{-- <a href="javascript:void(0)" onclick="openReservationSiteModal()"
-                class="border text-decoration-none p-2 text-dark">
-                <img src="{{ asset('images/return-ico.svg') }}" alt="" class="me-2" />
-                Relocate
-            </a> --}}
-            {{-- <a href="#" class="border text-decoration-none p-2 text-dark">
-                <img src="{{ asset('images/drop-ico.svg') }}" alt="" class="me-2" />
-                Theme
-            </a> --}}
+
+            <a href="javascript:void(0)" id="loadMoreSitesBtn" class="border text-decoration-none p-2 text-dark">
+                <i class="fa-solid fa-spinner"></i>
+                Load More <span class="spinner-border spinner-border-sm d-none"></span>
+            </a>
+
+            <a class="border text-decoration-none p-2 text-dark" data-bs-toggle="collapse" href="#collapseExample"
+                role="button" aria-expanded="false" aria-controls="collapseExample">
+                <i class="fa-brands fa-searchengin"></i> Search
+            </a>
+
+
+
+
+
+
+
+            <div class="collapse" id="collapseExample">
+                <div class="card card-body">
+                    <div class="input-group">
+                        <input type="text" id="searchBox" class="form-control" placeholder="Search...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                            🔍
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+
         </div>
+
 
 
 
     </div>
     <input type="hidden" id="initialSiteCount" value="20">
     <input type="hidden" id="totalSites" value="{{ $sites->count() }}">
+
     <div class="text-center my-2 position-sticky bottom-0 z-3" style="background: white;">
-        <button id="loadMoreSitesBtn" class="btn btn-secondary d-none">
-            <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
-            Load More Sites
-        </button>
+        <input type="hidden" id="nextPageUrl" value="{{ $sites->nextPageUrl() }}">
+
     </div>
 
 
@@ -197,90 +211,14 @@
                     @endforeach
                 </tr>
             </thead>
-            <tbody>
-                @foreach ($sites as $index => $site)
-                    <tr @if ($index >= 20) style="display: none" @endif>
-                        <td class="sticky-col bg__sky">{{ $site->siteid }}</td>
-                        <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
-
-                        @php
-                            $calendarCount = count($calendar);
-                            $i = 0;
-                        @endphp
-
-                        @while ($i < $calendarCount)
-                            @php
-                                $currentDate = $calendar[$i];
-                                $highlightToday = $currentDate == now()->format('Y-m-d') ? 'border border-warning' : '';
-
-                                $reservationFound = null;
-                                foreach ($site->reservations as $reservation) {
-                                    $resStart = \Carbon\Carbon::parse($reservation->cid)->format('Y-m-d');
-                                    $resEnd = \Carbon\Carbon::parse($reservation->cod)->format('Y-m-d');
-
-                                    if ($currentDate >= $resStart && $currentDate < $resEnd) {
-                                        $reservationFound = $reservation;
-                                        break;
-                                    }
-                                }
-                            @endphp
-
-                            @if ($reservationFound)
-                                @php
-                                    $resStart = \Carbon\Carbon::parse($reservationFound->cid);
-                                    $resEnd = \Carbon\Carbon::parse($reservationFound->cod);
-                                    $reservationColSpan = $resStart->diffInDays($resEnd);
-                                    $i += $reservationColSpan;
-                                @endphp
-                                <td colspan="{{ $reservationColSpan }}" style="cursor: pointer"
-                                    class="reservation-details rounded text-center bg-success text-white {{ $highlightToday }}"
-                                    data-reservation-id="{{ $reservationFound->id }}"
-                                    data-start-date="{{ $reservationFound->cid }}"
-                                    data-end-date="{{ $reservationFound->cod }}">
-                                    {{ $reservationFound->user->f_name ?? 'Guest' }}
-                                </td>
-                            @else
-                                @php
-                                    $availableColSpan = 0;
-                                    $startIndex = $i;
-                                    $today = \Carbon\Carbon::today();
-
-                                    if (\Carbon\Carbon::parse($calendar[$i])->lt($today)) {
-                                        $i++;
-                                        continue;
-                                    }
-
-                                    while (
-                                        $i + $availableColSpan < $calendarCount &&
-                                        \Carbon\Carbon::parse($calendar[$i + $availableColSpan])->gte($today) &&
-                                        !$site->reservations->some(function ($r) use (
-                                            $calendar,
-                                            $i,
-                                            $availableColSpan,
-                                        ) {
-                                            $checkDate = $calendar[$i + $availableColSpan];
-                                            $resStart = \Carbon\Carbon::parse($r->cid)->format('Y-m-d');
-                                            $resEnd = \Carbon\Carbon::parse($r->cod)->format('Y-m-d');
-                                            return $checkDate >= $resStart && $checkDate < $resEnd;
-                                        })
-                                    ) {
-                                        $availableColSpan++;
-                                    }
-
-                                    $i += $availableColSpan;
-                                @endphp
-
-                                @if ($availableColSpan > 0)
-                                    <td colspan="{{ $availableColSpan }}"
-                                        class="text-center bg-info text-white {{ $highlightToday }}" style="opacity: 50%">
-                                        Available
-                                    </td>
-                                @endif
-                            @endif
-                        @endwhile
-                    </tr>
-                @endforeach
+            <tbody id="siteTableBody">
+                @include('reservations.components._site_rows_list', [
+                    'sites' => $sites,
+                    'calendar' => $calendar,
+                ])
             </tbody>
+
+
 
 
 
@@ -520,10 +458,23 @@
 
 
         $('#check-available').on('click', function() {
-            let isAvailableHidden = $('#ganttTableAvailable').is(':hidden');
+            const isHidden = $('#ganttTableAvailable').is(':hidden');
 
-            if (isAvailableHidden) {
-                checkAvailable({!! $sites->toJson() !!});
+            if (isHidden) {
+                const sitesFromTable = [];
+
+                $('#siteTableBody tr').each(function() {
+                    const $row = $(this);
+
+                    sitesFromTable.push({
+                        id: $row.data('site-id'),
+                        siteid: $row.data('site-siteid'),
+                        siteclass: $row.data('site-siteclass'),
+                        price: parseFloat($row.data('site-price')) || 100,
+                    });
+                });
+
+                checkAvailable(sitesFromTable); // 🔥 now based on visible table
                 $('.management-table').hide();
                 $('#ganttTableAvailable').show();
                 $('.filter-container').removeAttr('hidden');
@@ -533,6 +484,7 @@
                 $('.filter-container').attr('hidden', true);
             }
         });
+
 
 
         function checkAvailable(data) {
@@ -545,7 +497,6 @@
                 return;
             }
 
-            // Verify property names first, then adjust accordingly
             let sitesHTML = data.map(site => `
                 <label class="list-group-item">
                     <input type="checkbox" class="site-checkbox" value="${site.id}">
@@ -801,59 +752,69 @@
             }
         }
 
+
+
         $(document).ready(function() {
-            const $tableWrapper = $('.table-responsive');
-            const $loadMoreSitesBtn = $('#loadMoreSitesBtn');
-            const initialCount = parseInt($('#initialSiteCount').val());
-            const totalCount = parseInt($('#totalSites').val());
-            let visibleCount = initialCount;
+            const $loadMoreBtn = $('#loadMoreSitesBtn');
+            const $spinner = $loadMoreBtn.find('.spinner-border');
+            const $siteTableBody = $('#siteTableBody');
+            const $nextPageUrl = $('#nextPageUrl');
+            const $searchBox = $('#searchBox');
+            const $searchBtn = $('#searchBtn');
 
-            const rows = $('.management-table tbody tr');
+            let currentSearch = '';
 
-            // Initially show only first 20 rows
-            rows.each(function(index, row) {
-                if (index < visibleCount) {
-                    $(row).show();
-                }
-            });
+            // Load more pagination
+            $loadMoreBtn.on('click', function() {
+                const nextUrl = $nextPageUrl.val();
+                if (!nextUrl) return;
 
-            // Show button when scrolled to bottom
-            $tableWrapper.on('scroll', function() {
-                const scrollTop = $tableWrapper.scrollTop();
-                const scrollHeight = $tableWrapper[0].scrollHeight;
-                const clientHeight = $tableWrapper[0].clientHeight;
-
-                if (scrollTop + clientHeight >= scrollHeight - 5 && visibleCount < totalCount) {
-                    $loadMoreSitesBtn.removeClass('d-none');
-                } else {
-                    $loadMoreSitesBtn.addClass('d-none');
-                }
-            });
-
-            // On "Load More" click
-            $loadMoreSitesBtn.on('click', function() {
-                const $spinner = $(this).find('.spinner-border');
-                $(this).attr('disabled', true);
+                $loadMoreBtn.attr('disabled', true);
                 $spinner.removeClass('d-none');
 
-                setTimeout(function() {
-                    visibleCount += 20;
+                $.get(nextUrl, {
+                    search: currentSearch
+                }, function(response) {
+                    $siteTableBody.append(response.sites);
+                    $nextPageUrl.val(response.next_page_url);
 
-                    rows.each(function(index, row) {
-                        if (index < visibleCount) {
-                            $(row).show();
-                        }
-                    });
-
-                    $spinner.addClass('d-none');
-                    $loadMoreSitesBtn.removeAttr('disabled');
-
-                    if (visibleCount >= totalCount) {
-                        $loadMoreSitesBtn.hide();
+                    if (!response.next_page_url) {
+                        $loadMoreBtn.hide();
+                    } else {
+                        $loadMoreBtn.removeAttr('disabled');
                     }
-                }, 500);
+                }).always(function() {
+                    $spinner.addClass('d-none');
+                });
+            });
+
+            // Trigger search on button click
+            $searchBtn.on('click', function() {
+                currentSearch = $searchBox.val();
+                const url = `{{ route('reservations.index') }}`;
+
+                $.get(url, {
+                    search: currentSearch
+                }, function(response) {
+                    $siteTableBody.html(response.sites);
+                    $nextPageUrl.val(response.next_page_url);
+
+                    if (!response.next_page_url) {
+                        $loadMoreBtn.hide();
+                    } else {
+                        $loadMoreBtn.show();
+                    }
+                });
+            });
+
+            // Also trigger search on Enter key
+            $searchBox.on('keypress', function(e) {
+                if (e.which == 13) {
+                    $searchBtn.click();
+                }
             });
         });
+
 
         $(document).ready(function() {
             $('#sitename').select2();
@@ -898,20 +859,6 @@
                 }
             ]
         });
-
-        function searchSites() {
-            $('.btn--apply').attr('disabled', true);
-            let siteNames = $('#sitename').val();
-            let siteClasses = $('#siteclass').val();
-            const currentUrl = window.location.href;
-            const url = new URL(currentUrl);
-            const searchParams = url.searchParams;
-            searchParams.set('site_names', siteNames.length > 0 ? siteNames : '');
-            searchParams.set('site_classes', siteClasses.length > 0 ? siteClasses : '');
-            const getUrl = `${window.location.pathname}?${searchParams.toString()}`;
-            window.location.href = getUrl;
-
-        }
 
         function openReservationModal() {
             $('.res-cid').val('');

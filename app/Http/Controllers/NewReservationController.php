@@ -64,11 +64,6 @@ class NewReservationController extends Controller
             ->make(true);
     }
 
-    public function index($id)
-    {
-        return view('reservations.index');
-    }
-
     public function updateReservation(Request $request, $id)
     {
         $reservation = Reservation::findOrFail($id);
@@ -451,6 +446,7 @@ class NewReservationController extends Controller
             'customernumber' => $cart_reservation->customernumber,
             'email' => $cart_reservation->email,
             'payment' => number_format(floatval($request->xAmount), 2, '.', ''),
+            'transaction_type' => $request->status,
         ]);
 
         // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
@@ -463,8 +459,7 @@ class NewReservationController extends Controller
 
     public function storePayment(Request $request, $id)
     {
-        $cart_reservation = CartReservation::findOrFail($id);
-        $customer = Customer::find($cart_reservation->customernumber);
+        $cart_reservation = CartReservation::where('cartid', $id)->firstOrFail();
         $randomReceiptID = rand(1000, 9999);
         $apiKey = config('services.cardknox.api_key');
         $paymentType = $request->paymentType;
@@ -484,7 +479,7 @@ class NewReservationController extends Controller
         switch ($paymentType) {
             case 'Cash':
             case 'Other':
-                $this->handleCashOrOtherPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType);
+                $this->handleCashOrOtherPayment($cart_reservation, $request, $randomReceiptID, $paymentType);
                 break;
 
             case 'Check':
@@ -492,18 +487,18 @@ class NewReservationController extends Controller
                 $data['xAccount'] = $request->input('xAccount');
                 $data['xRouting'] = $request->input('xRouting');
                 $data['xName'] = $request->input('xName');
-                return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
+                return $this->handleCardknoxPayment($data, $cart_reservation, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
 
             case 'Manual':
                 $data['xCommand'] = 'cc:sale';
                 $data['xCardNum'] = $request->input('xCardNum');
                 $data['xExp'] = str_replace('/', '', $request->input('xExp'));
-                return $this->handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
+                return $this->handleCardknoxPayment($data, $cart_reservation, $request, $randomReceiptID, $paymentType, $uniqueTransactionId);
 
             case 'Gift Card':
                 $amount = $request->input('xAmount');
                 $barcode = $request->input('xBarcode');
-                $this->handleGiftCardPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $barcode, $amount);
+                $this->handleGiftCardPayment($cart_reservation, $request, $randomReceiptID, $paymentType, $barcode, $amount);
                 break;
 
             default:
@@ -549,7 +544,7 @@ class NewReservationController extends Controller
         // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
     }
 
-    private function handleCardknoxPayment($data, $cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $uniqueTransactionId)
+    private function handleCardknoxPayment($data, $cart_reservation, $request, $randomReceiptID, $paymentType, $uniqueTransactionId)
     {
         $ch = curl_init('https://x1.cardknox.com/gateway');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -565,6 +560,7 @@ class NewReservationController extends Controller
         }
 
         parse_str($responseContent, $responseArray);
+        Log::info('Cardknox Response:', $responseArray);
 
         if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
             $payment = new Payment([
@@ -574,12 +570,14 @@ class NewReservationController extends Controller
                 'customernumber' => $cart_reservation->customernumber,
                 'email' => $cart_reservation->email,
                 'payment' => $request->xAmount,
+                'transaction_type' => $request->status,
+                'x_ref_num' => $responseArray['xRefNum'] ?? null,
             ]);
             $payment->save();
 
-            // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+            $this->saveReservation($cart_reservation, $randomReceiptID, $request);
             if ($paymentType === 'Manual') {
-                $this->saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId);
+                $this->saveCardonFiles($cart_reservation, $randomReceiptID, $request, $uniqueTransactionId);
             }
             return response()->json(['success' => true]);
         } else {
@@ -587,14 +585,15 @@ class NewReservationController extends Controller
         }
     }
 
-    private function saveReservation($cart_reservation, $customer, $randomReceiptID, $request)
+    private function saveReservation($cart_reservation, $randomReceiptID, $request)
     {
+        $customer = User::where('id', $cart_reservation->customernumber)->first();
         $reservation = new Reservation([
             'cartid' => $request->cartid,
             'source' => 'Reservation',
             'email' => $cart_reservation->email,
-            'fname' => $customer->first_name,
-            'lname' => $customer->last_name,
+            'fname' => $customer->f_name,
+            'lname' => $customer->l_name,
             'customernumber' => $cart_reservation->customernumber,
             'siteid' => $cart_reservation->siteid,
             'cid' => $cart_reservation->cid,
@@ -618,30 +617,19 @@ class NewReservationController extends Controller
         $reservation->save();
     }
 
-    private function saveCardonFiles($cart_reservation, $customer, $randomReceiptID, $request, $uniqueTransactionId)
+    private function saveCardonFiles($cart_reservation, $randomReceiptID, $request, $uniqueTransactionId)
     {
         $fullCardNumber = $request->xCardNum;
         $maskedCardNumber = substr($fullCardNumber, 0, 1) . str_repeat('*', strlen($fullCardNumber) - 1) . substr($fullCardNumber, -3);
         $cardType = $this->getCardType($fullCardNumber);
 
-        Log::info('Saving card on file', [
-            'customernumber' => $customer->id,
-            'cartid' => $cart_reservation->cartid,
-            'method' => $cardType,
-            'receipt' => $randomReceiptID,
-            'email' => $customer->email,
-            'maskedCardNumber' => $maskedCardNumber,
-            'xToken' => $uniqueTransactionId,
-            'gateway_response' => $request->gateway_response,
-        ]);
-
         try {
             $cardonFiles = new CardsOnFile([
-                'customernumber' => $customer->id,
+                'customernumber' => $cart_reservation->cartid,
                 'cartid' => $cart_reservation->cartid,
                 'method' => $cardType,
                 'receipt' => $randomReceiptID,
-                'email' => $customer->email,
+                'email' => $cart_reservation->email,
                 'xmaskedcardnumber' => $maskedCardNumber,
                 'xToken' => $uniqueTransactionId,
                 'gateway_response' => json_encode($request->gateway_response),
@@ -946,34 +934,100 @@ class NewReservationController extends Controller
 
     public function clearAbandoned()
     {
-        $now = Carbon::now();
-
+        $now = Carbon::now('America/New_York');
+    
         CartReservation::where('holduntil', '<', $now)->delete();
-
+    
         return response()->json([
             'success' => true,
             'message' => 'All abandoned cart reservations have been cleared.',
         ]);
     }
+    
 
     public function refund(Request $request)
     {
         $request->validate([
             'cartid' => 'required|exists:reservations,cartid',
             'reason' => 'nullable|string',
+            'refunded_amount' => 'required|numeric|min:0.01',
+            'cancellation_fee' => 'nullable|numeric',
         ]);
 
-        Payment::where('cartid', $request->cartid)->update([
-            'transaction_type' => 'REFUND',
-            'cancellation_fee' => $request->cancellation_fee,
-            'refunded_amount' => $request->refunded_amount,
+        $payment = Payment::where('cartid', $request->cartid)
+            ->where(function ($q) {
+                $q->whereNull('transaction_type')->orWhere('transaction_type', '!=', 'REFUND');
+            })
+            ->whereNotNull('x_ref_num')
+            ->latest()
+            ->first();
+
+        Log::info('Refund Request Received:', $request->all());
+
+        Log::info('Retrieved Payment for Refund:', [
+            'payment' => $payment,
+            'x_ref_num' => optional($payment)->x_ref_num,
         ]);
 
-        Reservation::where('cartid', $request->cartid)->update([
-            'status' => 'Cancelled',
-            'reason' => $request->reason,
-        ]);
+        if (!$payment || !$payment->x_ref_num) {
+            Log::warning('Refund failed: Original payment not found or x_ref_num is missing.', [
+                'cartid' => $request->cartid,
+                'payment' => $payment,
+            ]);
 
-        return response()->json(['message' => 'Reservation cancelled.']);
+            return response()->json(['message' => 'Original payment reference not found.'], 404);
+        }
+
+        $payload = [
+            'xKey' => config('services.cardknox.api_key'),
+            'xVersion' => '5.0.0',
+            'xSoftwareName' => 'KayutaLake',
+            'xSoftwareVersion' => '1.0',
+            'xCommand' => 'cc:refund',
+            'xRefNum' => $payment->x_ref_num,
+            'xAmount' => $request->refunded_amount,
+        ];
+
+        Log::info('Sending refund payload to Cardknox:', $payload);
+
+        $response = Http::asForm()
+            ->withHeaders([
+                'X-Recurring-Api-Version' => '1.0',
+            ])
+            ->post('https://x1.cardknox.com/gateway', $payload);
+
+        parse_str($response->body(), $responseArray);
+        Log::info('Cardknox Refund Response:', $responseArray);
+
+        if (($responseArray['xStatus'] ?? '') === 'Approved') {
+            $payment->update([
+                'transaction_type' => 'REFUND',
+                'x_ref_num' => $responseArray['xRefNum'] ?? null,
+                'cancellation_fee' => $request->cancellation_fee,
+                'refunded_amount' => $request->refunded_amount,
+            ]);
+            
+
+            Reservation::where('cartid', $request->cartid)->update([
+                'status' => 'Cancelled',
+                'reason' => $request->reason,
+            ]);
+
+            Log::info('Refund successful and saved in DB.', [
+                'cartid' => $request->cartid,
+                'refunded_amount' => $request->refunded_amount,
+            ]);
+
+            return response()->json(['message' => 'Refund processed successfully.']);
+        } else {
+            Log::error('Refund failed at Cardknox:', $responseArray);
+
+            return response()->json(
+                [
+                    'message' => 'Refund failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+                ],
+                400,
+            );
+        }
     }
 }

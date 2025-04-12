@@ -185,7 +185,7 @@ function sendPaymentRequest() {
     } else {
         $.ajax({
             url:
-                "/admin/reservations/payment/" + reservationId + "/postpayment",
+                "/admin/reservations/payment/" + confirmationNumber + "/postpayment",
             type: "POST",
             data: formDataPayment,
             contentType: false,

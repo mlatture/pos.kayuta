@@ -22,7 +22,8 @@ class Payment extends Model
         'payment',
         'transaction_type',
         'cancellation_fee',
-        'refunded_amount'
+        'refunded_amount',
+        'x_ref_num',
     ];
 
     protected $casts = [

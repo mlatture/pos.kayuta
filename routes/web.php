@@ -162,7 +162,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
     Route::get('/registers/get', [StationRegisterController::class, 'getRegister'])->name('registers.get');
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
-    Route::get('reservations/edit/{id}', [CalendarReservationController::class, 'editReservations']);
+    Route::get('reservations/edit/{id}', [CalendarReservationController::class, 'editReservations'])->name('reservations.edit');
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
