@@ -28,7 +28,7 @@
 
 
                                     <!-- Image display -->
-                                    <img src="{{ asset('shared_storage/sites/' . $filename) }}"
+                                    <img src="{{ asset('storage/sites/' . $filename) }}"
                                         onerror="this.onerror=null; this.src='https://www.cams-it.com/wp-content/uploads/2015/05/default-placeholder-300x200.png'"
                                         class="card-img-top" alt="Site Image" style="max-height: 200px; object-fit: cover;">
 
