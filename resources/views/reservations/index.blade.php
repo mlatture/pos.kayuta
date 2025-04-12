@@ -528,6 +528,8 @@
         }
 
         function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
+            const storageBaseUrl = "{{ asset('storage/sites') }}";
+
             let filteredSites = showAll
                 ? allSites
                 : allSites.filter(site => selectedSiteIds.includes(String(site.id)));
@@ -535,9 +537,8 @@
             let cardHtml = filteredSites.map(site => {
                 let images = Array.isArray(site.images) ? site.images : [];
 
-                // Use first image if available, otherwise use a placeholder
                 let imageUrl = images.length > 0
-                    ? `/storage/sites/${images[0]}`
+                    ? `${storageBaseUrl}/${images[0]}`
                     : "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
 
                 return `
