@@ -470,7 +470,8 @@
                         id: $row.data('site-id'),
                         siteid: $row.data('site-siteid'),
                         siteclass: $row.data('site-siteclass'),
-                        price: parseFloat($row.data('site-price')) || 100,
+                        images: $row.data('site-images'),
+                        price: parseFloat($row.data('site-price')),
                     });
                 });
 
@@ -528,12 +529,14 @@
         }
 
         const storageBaseUrl = "{{ asset('storage/sites') }}";
-        const fallbackImage = "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
+        const fallbackImage =
+            "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
 
         function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
-            let filteredSites = showAll
-                ? allSites
-                : allSites.filter(site => selectedSiteIds.includes(String(site.id)));
+            console.log('all sites', allSites);
+            let filteredSites = showAll ?
+                allSites :
+                allSites.filter(site => selectedSiteIds.includes(String(site.id)));
 
             let cardHtml = '';
             const imageRotationData = [];
@@ -556,6 +559,8 @@
                 if (!images.length) images = [fallbackImage];
 
                 const imgId = `img-${site.id}-${Math.floor(Math.random() * 10000)}`;
+                console.log('Site:', site);
+                console.log('Parsed images:', images);
 
                 cardHtml += `
                     <div class="col-md-3 mb-3">
@@ -572,19 +577,25 @@
                 `;
 
                 if (images.length > 1) {
-                    imageRotationData.push({ imgId, images });
+                    imageRotationData.push({
+                        imgId,
+                        images
+                    });
                 }
             });
 
             document.getElementById("ganttTableAvailable").innerHTML = `<div class="row">${cardHtml}</div>`;
 
             document.querySelectorAll('.site-card').forEach(card => {
-                card.addEventListener('click', function () {
+                card.addEventListener('click', function() {
                     toggleSite(this);
                 });
             });
 
-            imageRotationData.forEach(({ imgId, images }) => {
+            imageRotationData.forEach(({
+                imgId,
+                images
+            }) => {
                 let index = 0;
                 setInterval(() => {
                     index = (index + 1) % images.length;

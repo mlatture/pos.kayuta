@@ -3,7 +3,8 @@
     data-site-siteid="{{ $site->siteid }}"
     data-site-siteclass="{{ $site->siteclass }}"
     data-site-price="{{ $site->price ?? 100 }}"
->
+    data-site-images='@json($site->images ?? [])'
+    >
 
     <td class="sticky-col bg__sky">{{ $site->siteid }}</td>
     <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
