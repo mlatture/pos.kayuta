@@ -474,7 +474,7 @@
                     });
                 });
 
-                checkAvailable(sitesFromTable); // 🔥 now based on visible table
+                checkAvailable(sitesFromTable);
                 $('.management-table').hide();
                 $('#ganttTableAvailable').show();
                 $('.filter-container').removeAttr('hidden');
@@ -528,31 +528,40 @@
         }
 
         function showFilteredCards(selectedSiteIds, allSites, showAll = false) {
-            let filteredSites = showAll ?
-                allSites :
-                allSites.filter(site => selectedSiteIds.includes(String(site.id)));
+            let filteredSites = showAll
+                ? allSites
+                : allSites.filter(site => selectedSiteIds.includes(String(site.id)));
 
-            let cardHtml = filteredSites.map(site => `
-                <div class="col-md-3">
-                    <div class="card site-card" data-id="${site.id}" data-price="${site.price || 100}">
-                        <img src="${site.image || "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png"}"
-                            class="card-img-top" alt="Site Image">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">${site.siteid}</h5>
-                            <p class="card-text">${site.siteclass}</p>
+            let cardHtml = filteredSites.map(site => {
+                let images = Array.isArray(site.images) ? site.images : [];
+
+                // Use first image if available, otherwise use a placeholder
+                let imageUrl = images.length > 0
+                    ? `/storage/sites/${images[0]}`
+                    : "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
+
+                return `
+                    <div class="col-md-3">
+                        <div class="card site-card" data-id="${site.id}" data-price="${site.price || 100}">
+                            <img src="${imageUrl}" class="card-img-top" alt="Site Image" style="max-height: 200px; object-fit: cover;">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">${site.siteid}</h5>
+                                <p class="card-text">${site.siteclass}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             document.getElementById("ganttTableAvailable").innerHTML = `<div class="row">${cardHtml}</div>`;
 
             document.querySelectorAll('.site-card').forEach(card => {
-                card.addEventListener('click', function() {
+                card.addEventListener('click', function () {
                     toggleSite(this);
                 });
             });
-        };
+        }
+
 
 
         function quoteSites() {
