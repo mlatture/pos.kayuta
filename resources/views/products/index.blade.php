@@ -56,7 +56,7 @@
                                             <td>{{ Str::limit($product->name, 20) }}</td>
                                             <td>
                                                 <img class="product-img img-thumbnail"
-                                                src="{{ asset('storage/products/' . $product->image) ?? asset('images/product-thumbnail.jpg') }}"
+                                                src="{{ file_exists(public_path('assets/products/' . $product->image)) ? asset('assets/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
 
                                                 width="60px" height="60px" alt="{{ $product->name }}">
                                             </td>
