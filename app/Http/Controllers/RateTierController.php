@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\RateTier;
 use Illuminate\Support\Str;
 
-
 class RateTierController extends Controller
 {
     protected $rate_tiers;
@@ -77,8 +76,14 @@ class RateTierController extends Controller
         return view('rate-tier.add-image')->with('rate_tiers', $rate_tiers);
     }
 
-    public function uploadImage(Request $request, RateTier $rate_tier)
+    public function uploadImage(Request $request, $id)
     {
+        $rate_tier = RateTier::find($id);
+
+        if (!$rate_tier) {
+            return redirect()->back()->with('error', 'Rate Tier not found.');
+        }
+
         $uploadedImages = [];
 
         if ($request->hasFile('images')) {
@@ -98,11 +103,14 @@ class RateTierController extends Controller
         $existing = is_array($existing) ? $existing : [];
 
         $allImages = array_merge($existing, $uploadedImages);
-        $$rate_tier->images = json_encode($allImages);
-        $$rate_tier->save();
+
+        $rate_tier->images = json_encode($allImages);
+
+        $rate_tier->save();
 
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
+
     public function deleteImage($rate_tiersId, $filename)
     {
         $rate_tiers = RateTier::find($rate_tiersId);
