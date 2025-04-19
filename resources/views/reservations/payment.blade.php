@@ -79,6 +79,15 @@
 
             .gantt .bar-progress {
                 fill: #4CAF50 !important;
+                pointer-events: none !important;
+                cursor: not-allowed !important;
+
+            }
+
+            .gantt .bar {
+                pointer-events: none !important;
+                cursor: not-allowed !important;
+
             }
 
             .gantt .grid-background {
@@ -89,6 +98,11 @@
                 fill: #77898d !important;
                 stroke: #e0e0e0;
                 stroke-width: 1.4;
+            }
+
+            .gantt-task-wrapper {
+                pointer-events: none !important;
+                cursor: not-allowed !important;
             }
         </style>
     @endpush
@@ -242,91 +256,117 @@
                                 <div class="row g-2">
                                     <div class="col-4">
                                         <label for="first_name" class="form-label fw-semibold">First Name *</label>
-                                        <input type="text" name="first_name[]" class="form-control" required>
+                                        <input type="text" value="{{ $customers->f_name }}" name="first_name[]"
+                                            class="form-control" required>
                                     </div>
                                     <div class="col-4">
                                         <label for="last_name" class="form-label fw-semibold">Last Name *</label>
-                                        <input type="text" name="last_name[]" class="form-control" required>
+                                        <input type="text" value="{{ $customers->l_name }}" name="last_name[]"
+                                            class="form-control" required>
                                     </div>
                                     <div class="col-4">
                                         <label for="email" class="form-label fw-semibold">Email *</label>
-                                        <input type="email" name="email[]" class="form-control" required>
+                                        <input type="email" value="{{ $customers->email }}" name="email[]"
+                                            class="form-control" required>
                                     </div>
                                     <div class="col-4">
                                         <label for="discovery_method" class="form-label fw-semibold">Discovery Method
                                             *</label>
                                         <select name="discovery_method[]" class="form-select" required>
                                             <option value="">Select Method</option>
-                                            <option value="Online">Online</option>
-                                            <option value="Referral">Referral</option>
-                                            <option value="Advertisement">Advertisement</option>
-                                            <option value="Other">Other</option>
+                                            <option value="Online"
+                                                {{ $customers->discovery_method == 'Online' ? 'selected' : '' }}>Online
+                                            </option>
+                                            <option value="Referral"
+                                                {{ $customers->discovery_method == 'Referral' ? 'selected' : '' }}>Referral
+                                            </option>
+                                            <option value="Advertisement"
+                                                {{ $customers->discovery_method == 'Advertisement' ? 'selected' : '' }}>
+                                                Advertisement</option>
+                                            <option value="Other"
+                                                {{ $customers->discovery_method == 'Other' ? 'selected' : '' }}>Other
+                                            </option>
                                         </select>
                                     </div>
 
                                     <!-- Optional Fields -->
                                     <div class="col-4">
                                         <label for="phone" class="form-label">Phone</label>
-                                        <input type="text" name="phone[]" class="form-control">
+                                        <input type="text" value="{{ $customers->phone }}" name="phone[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="work_phone" class="form-label">Work Phone</label>
-                                        <input type="text" name="work_phone[]" class="form-control">
+                                        <input type="text" value="{{ $customers->work_phone }}" name="work_phone[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="home_phone" class="form-label">Home Phone</label>
-                                        <input type="text" name="home_phone[]" class="form-control">
+                                        <input type="text" value="{{ $customers->home_phone }}" name="home_phone[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="customer_number" class="form-label">Customer Number</label>
-                                        <input type="text" name="customer_number[]" class="form-control">
+                                        <input type="text" value="{{ $customers->customer_number }}"
+                                            name="customer_number[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="driving_license" class="form-label">Driving License</label>
-                                        <input type="text" name="driving_license[]" class="form-control">
+                                        <input type="text" value="{{ $customers->driving_license }}"
+                                            name="driving_license[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="date_of_birth" class="form-label">Date of Birth</label>
-                                        <input type="date" name="date_of_birth[]" class="form-control">
+                                        <input type="date" value="{{ $customers->date_of_birth }}"
+                                            name="date_of_birth[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="anniversary" class="form-label">Anniversary</label>
-                                        <input type="date" name="anniversary[]" class="form-control">
+                                        <input type="date" value="{{ $customers->anniversary }}" name="anniversary[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="age" class="form-label">Age</label>
-                                        <input type="number" name="age[]" class="form-control" min="0">
+                                        <input type="number" value="{{ $customers->age }}" name="age[]"
+                                            class="form-control" min="0">
                                     </div>
                                     <div class="col-4">
                                         <label for="address" class="form-label">Address</label>
-                                        <input type="text" name="address[]" class="form-control">
+                                        <input type="text" value="{{ $customers->street_address }}" name="address[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="address_2" class="form-label">Address 2</label>
-                                        <input type="text" name="address_2[]" class="form-control">
+                                        <input type="text" value="{{ $customers->address_2 }}" name="address_2[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="address_3" class="form-label">Address 3</label>
-                                        <input type="text" name="address_3[]" class="form-control">
+                                        <input type="text" value="{{ $customers->address_3 }}" name="address_3[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="city" class="form-label">City</label>
-                                        <input type="text" name="city[]" class="form-control">
+                                        <input type="text" value="{{ $customers->city }}" name="city[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="state" class="form-label">State</label>
-                                        <input type="text" name="state[]" class="form-control">
+                                        <input type="text" value="{{ $customers->state }}" name="state[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="zip" class="form-label">Zip Code</label>
-                                        <input type="text" name="zip[]" class="form-control">
+                                        <input type="text" value="{{ $customers->zip }}" name="zip[]"
+                                            class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="country" class="form-label">Country</label>
-                                        <input type="text" name="country[]" class="form-control">
+                                        <input type="text" value="{{ $customers->country }}" name="country[]"
+                                            class="form-control">
                                     </div>
 
-                                    <input type="text" name="user_id[]" hidden>
+                                    <input type="text" value="{{ $customers->id }}" name="user_id[]" hidden>
                                 </div>
 
                                 <button type="button" class="btn btn-danger btn-sm mt-2 remove-customer">Remove</button>
@@ -337,7 +377,6 @@
                             Customer Info</button>
                     </div>
                 </div>
-
 
                 <div class="col-md-4">
                     <div class="border rounded shadow-sm p-3">
@@ -359,8 +398,6 @@
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
 
@@ -442,13 +479,16 @@
                         </tr>
 
                         @php
-                        $balance = $reservation->total - ($reservation->payment->payment ?? 0);
-                    @endphp
-                                            <tr class="total-row">
-                            <td colspan="4"></td>
-                            <td class="text-end">Balance </td>
-                            <td>${{ number_format($balance, 2) }}</td>
-                        </tr>
+                            $balance = $reservation->total - ($reservation->payment->payment ?? 0);
+                        @endphp
+
+                        @if ($balance !== 0)
+                            <tr class="total-row">
+                                <td colspan="4"></td>
+                                <td class="text-end">Balance </td>
+                                <td>${{ number_format($balance, 2) }}</td>
+                            </tr>
+                        @endif
 
                     </tbody>
                 </table>
@@ -673,7 +713,7 @@
                 @foreach ($reservations as $reservation)
                     {
                         id: "Reservation-{{ $reservation->id }}",
-                        name: "{{ $reservation->siteclass }} - {{ $reservation->siteid }}",
+                        name: "{{ $reservation->siteid }}",
                         start: "{{ date('Y-m-d', strtotime($reservation->cid)) }}",
                         end: "{{ date('Y-m-d', strtotime($reservation->cod)) }}",
                         progress: 100,
@@ -683,13 +723,28 @@
                         ,
                     @endif
                 @endforeach
-            ]
+            ];
 
             var gantt = new Gantt("#gantt", tasks, {
                 view_mode: "Day",
                 language: "en",
-                draggable: false
+                draggable: false, // Try to ensure it's disabled
+                drag_mode: "none" // Try to prevent dragging mode
             });
+            document.querySelectorAll('.bar-progress').forEach(function(bar) {
+                bar.addEventListener('mousedown', function(event) {
+                    event.preventDefault(); // Prevent drag start on mousedown
+                });
+                bar.addEventListener('mousemove', function(event) {
+                    event.preventDefault(); // Prevent dragging during mouse move
+                });
+                bar.addEventListener('mouseup', function(event) {
+                    event.preventDefault(); // Prevent drop or any mouse-up action
+                });
+            });
+
+
+
 
 
             // Add more customer info
@@ -760,35 +815,34 @@
                 }
             });
         });
-
         $(document).on('click', '.customer-row', function() {
             let customerData = $(this).data('customer');
 
-            if (selectedContainer) {
-                selectedContainer.find('input[name="first_name[]"]').val(customerData.f_name);
-                selectedContainer.find('input[name="last_name[]"]').val(customerData.l_name);
-                selectedContainer.find('input[name="email[]"]').val(customerData.email);
-                selectedContainer.find('input[name="phone[]"]').val(customerData.phone);
-                selectedContainer.find('input[name="home_phone[]"]').val(customerData.home_phone);
-                selectedContainer.find('input[name="work_phone[]"]').val(customerData.work_phone);
-                selectedContainer.find('input[name="customer_number[]"]').val(customerData.id);
-                selectedContainer.find('input[name="driving_license[]"]').val(customerData.driving_license);
-                selectedContainer.find('input[name="date_of_birth[]"]').val(customerData.date_of_birth);
-                selectedContainer.find('input[name="anniversary[]"]').val(customerData.anniversary);
-                selectedContainer.find('input[name="age[]"]').val(customerData.age);
-                selectedContainer.find('input[name="address[]"]').val(customerData.street_address);
-                selectedContainer.find('input[name="address_2[]"]').val(customerData.address_2);
-                selectedContainer.find('input[name="address_3[]"]').val(customerData.address_3);
-                selectedContainer.find('input[name="city[]"]').val(customerData.city);
-                selectedContainer.find('input[name="state[]"]').val(customerData.state);
-                selectedContainer.find('input[name="zip[]"]').val(customerData.zip);
-                selectedContainer.find('input[name="country[]"]').val(customerData.country);
-                selectedContainer.find('input[name="user_id[]"]').val(customerData.id);
-            }
+            // Use $('#customer-form') to target the form, then find the input elements
+            $('#customer-form').find('input[name="first_name[]"]').val(customerData.f_name);
+            $('#customer-form').find('input[name="last_name[]"]').val(customerData.l_name);
+            $('#customer-form').find('input[name="email[]"]').val(customerData.email);
+            $('#customer-form').find('input[name="phone[]"]').val(customerData.phone);
+            $('#customer-form').find('input[name="home_phone[]"]').val(customerData.home_phone);
+            $('#customer-form').find('input[name="work_phone[]"]').val(customerData.work_phone);
+            $('#customer-form').find('input[name="customer_number[]"]').val(customerData.id);
+            $('#customer-form').find('input[name="driving_license[]"]').val(customerData.driving_license);
+            $('#customer-form').find('input[name="date_of_birth[]"]').val(customerData.date_of_birth);
+            $('#customer-form').find('input[name="anniversary[]"]').val(customerData.anniversary);
+            $('#customer-form').find('input[name="age[]"]').val(customerData.age);
+            $('#customer-form').find('input[name="address[]"]').val(customerData.street_address);
+            $('#customer-form').find('input[name="address_2[]"]').val(customerData.address_2);
+            $('#customer-form').find('input[name="address_3[]"]').val(customerData.address_3);
+            $('#customer-form').find('input[name="city[]"]').val(customerData.city);
+            $('#customer-form').find('input[name="state[]"]').val(customerData.state);
+            $('#customer-form').find('input[name="zip[]"]').val(customerData.zip);
+            $('#customer-form').find('input[name="country[]"]').val(customerData.country);
+            $('#customer-form').find('input[name="user_id[]"]').val(customerData.id);
 
             $('#customerResults').hide();
             $('#customerSearch').val('');
         });
+
 
         $('#proceed-payment').on('click', function(e) {
             e.preventDefault();

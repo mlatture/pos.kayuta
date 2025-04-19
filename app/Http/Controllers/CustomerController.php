@@ -30,21 +30,15 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'created_at')
-                ->where('id', '!=', 0)
-                ->latest();
+            $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'created_at')->where('id', '!=', 0)->latest();
 
             return DataTables::of($customers)
-                ->addIndexColumn() 
+                ->addIndexColumn()
                 ->addColumn('actions', function ($customer) {
                     $viewButton = '<a href="' . route('customers.show', $customer->id) . '" class="btn btn-info"><i class="fas fa-eye"></i></a>';
-                    $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value'))
-                        ? '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>'
-                        : '';
+                    $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value')) ? '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>' : '';
 
-                    $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value'))
-                        ? '<button class="btn btn-danger btn-delete" data-url="' . route('customers.destroy', $customer->id) . '"><i class="fas fa-trash"></i></button>'
-                        : '';
+                    $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value')) ? '<button class="btn btn-danger btn-delete" data-url="' . route('customers.destroy', $customer->id) . '"><i class="fas fa-trash"></i></button>' : '';
 
                     return $viewButton . ' ' . $editButton . ' ' . $deleteButton;
                 })
@@ -54,11 +48,11 @@ class CustomerController extends Controller
                 ->rawColumns(['actions']) // Ensures buttons render properly
                 ->make(true);
         }
-        
+
         return view('customers.index');
     }
 
-        /**
+    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Customer  $customer
@@ -70,22 +64,28 @@ class CustomerController extends Controller
             'reservations' => function ($query) {
                 $query->latest();
             },
+            'cart_reservations' => function ($query) {
+                $query->latest();
+            },
             'receipts' => function ($query) {
                 $query->latest();
             },
             'cardsOnFile' => function ($query) {
                 $query->latest();
-            }
+            },
         ])->findOrFail($id);
+
+        $groupedReservations = $customer->reservations->groupBy('cartid');
+
+        $groupedCartReservations = $customer->cart_reservations->groupBy('cartid')->map(function ($group) {
+            $sites = $group->pluck('siteid')->unique()->implode(', ');
+            return $sites;
+        });
     
-        $customer->setRelation(
-            'cardsOnFile',
-            collect($customer->cardsOnFile)->unique('xmaskedcardnumber')
-        );
-        
-        return view('customers.show', compact('customer'));
+            $customer->setRelation('cardsOnFile', collect($customer->cardsOnFile)->unique('xmaskedcardnumber'));
+
+        return view('customers.show', compact('customer', 'groupedReservations', 'groupedCartReservations'));
     }
-    
 
     /**
      * Show the form for creating a new resource.
@@ -136,8 +136,6 @@ class CustomerController extends Controller
         }
         return redirect()->route('customers.index')->with('success', 'Success, New customer has been added successfully!');
     }
-
-
 
     /**
      * Show the form for editing the specified resource.

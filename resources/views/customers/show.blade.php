@@ -41,7 +41,7 @@
                         </thead>
                         <tbody>
                             @foreach ($customer->reservations->sortByDesc('date')->groupBy('cartid') as $cartid => $group)
-                            @foreach ($group as $index => $reservation)
+                                @foreach ($group as $index => $reservation)
                                     <tr @if ($index === 0) class="table-primary" @endif>
                                         <td>
                                             <button class="btn btn-info btn-sm" data-bs-toggle="modal"
@@ -62,21 +62,6 @@
                                         <td>{{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }} To
                                             {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}</td>
                                     </tr>
-                                    {{-- <tr>
-                                    <td>
-                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#reservationModal{{ $reservation->id }}">
-                                            <i class="fas fa-info-circle"></i> View
-                                        </button>
-                                        <a href="{{ route('reservations.edit', $reservation->cartid) }}"
-                                            class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
-
-                                    </td>
-                                    <td>{{ $reservation->id }}</td>
-                                    <td>{{ $reservation->siteid }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }} To
-                                        {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}</td>
-                                </tr> --}}
 
                                     <div class="modal fade" id="reservationModal{{ $reservation->id }}" tabindex="-1"
                                         aria-labelledby="reservationModalLabel{{ $reservation->id }}" aria-hidden="true">
@@ -178,6 +163,81 @@
                     </table>
                 </div>
 
+                <h4 class="mt-4">Cart Reservation</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Actions</th>
+                                <th>ID</th>
+                                <th>Site</th>
+                                <th>Staying</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($groupedCartReservations as $cartid => $sites)
+                                <tr>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#cartReservationModal{{ $cartid }}">
+                                            <i class="fas fa-info-circle"></i> View
+                                        </button>
+                                        <a href="{{ route('reservations.payment.index', $cartid) }}"
+                                            class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                                    </td>
+                                    <td>Booking #{{ $cartid }}</td>
+                                    <td>{{ $sites }}</td>
+                                    <td>
+                                        @foreach ($customer->cart_reservations->where('cartid', $cartid)->take(1) as $reservation)
+                                            {{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }} To
+                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}
+                                        @endforeach
+                                    </td>
+                                </tr>
+
+                                <!-- Modal for Cart Reservation Details -->
+                                <div class="modal fade" id="cartReservationModal{{ $cartid }}" tabindex="-1"
+                                    aria-labelledby="cartReservationModalLabel{{ $cartid }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-secondary text-white">
+                                                <h5 class="modal-title" id="cartReservationModalLabel{{ $cartid }}">
+                                                    Cart Reservation #{{ $cartid }} Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row row-cols-1 row-cols-md-2">
+                                                    <div class="col"><strong>Cart ID:</strong> {{ $cartid }}
+                                                    </div>
+                                                    <div class="col"><strong>Site(s):</strong> {{ $sites }}
+                                                    </div>
+                                                    <div class="col"><strong>Check-in:</strong>
+                                                        @foreach ($customer->cart_reservations->where('cartid', $cartid)->take(1) as $reservation)
+                                                            {{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }}
+                                                        @endforeach
+                                                    </div>
+                                                    <div class="col"><strong>Check-out:</strong>
+                                                        @foreach ($customer->cart_reservations->where('cartid', $cartid)->take(1) as $reservation)
+                                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}
+                                                        @endforeach
+                                                    </div>
+                                                    <!-- Add more details for the modal as needed -->
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+
                 <hr>
 
                 <h4 class="mt-4">Receipts</h4>
@@ -231,7 +291,8 @@
 
                 <hr>
 
-                <a href="{{ route('customers.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back
+                <a href="{{ route('customers.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
+                    Back
                     to List</a>
             </div>
         </div>

@@ -115,6 +115,11 @@
             #invoice-table {
                 position: relative;
             }
+            .gantt .bar {
+                pointer-events: none !important;
+                cursor: not-allowed !important;
+
+            }
         </style>
     @endpush
     @php
@@ -135,14 +140,14 @@
                     id="cancel-reservation-edit">
                     <i class="fa-solid fa-ban"></i> Cancel
                 </button>
-
+{{-- 
                 <button type="button" class="btn btn border-warning btn-sm float-end text-white" id="add-to-cart">
                     <i class="fa-solid fa-store"></i> Add To Cart
-                </button>
+                </button> --}}
 
-                <button type="button" class="btn btn border-success btn-sm float-end text-white" id="proceed-payment">
+                {{-- <button type="button" class="btn btn border-success btn-sm float-end text-white" id="proceed-payment">
                     <i class="fa-solid fa-money-bill-transfer"></i> Payment
-                </button>
+                </button> --}}
 
 
             </div>
@@ -461,37 +466,45 @@
                             <td>{{ number_format($reservation->payment->payment, 2) }} </td>
                         </tr>
 
-                        <tr class="total-row">
-                            <td colspan="3"></td>
-                            <td class="text-end text-danger">Cancellation Fee (15%)</td>
-                            <td class="text-danger">- ${{ number_format($cancellationFee, 2) }}</td>
-                        </tr>
+                        @if (
+                            $firstReservation &&
+                                $firstReservation->payment &&
+                                $firstReservation->payment->transaction_type &&
+                                $firstReservation->payment->cancellation_fee !== null &&
+                                $firstReservation->payment->payment !== null)
+                            <tr class="total-row">
+                                <td colspan="3"></td>
+                                <td class="text-end text-danger">Cancellation Fee (15%)</td>
+                                <td class="text-danger">- ${{ number_format($cancellationFee, 2) }}</td>
+                            </tr>
 
-                        <tr class="total-row">
-                            <td colspan="3"></td>
-                            <td class="text-end fw-bold">Total After Fee</td>
-                            <td class="fw-bold">${{ number_format($totalAfterFee, 2) }}</td>
-                        </tr>
+                            <tr class="total-row">
+                                <td colspan="3"></td>
+                                <td class="text-end fw-bold">Total After Fee</td>
+                                <td class="fw-bold">${{ number_format($totalAfterFee, 2) }}</td>
+                            </tr>
 
-                        <tr class="total-row">
-                            <td>
-                                Transaction Type
-                            </td>
-                            <td>
-                                REFUND
-                            </td>
-                            <td colspan="3"></td>
-                        </tr>
-                        <tr class="total-row">
-                            <td>
-                                Payment Type
-                            </td>
-                            <td>
-                                {{ $reservation->payment->method }}
-                            </td>
-                            <td colspan="3"></td>
+                            <tr class="total-row">
+                                <td>
+                                    Transaction Type
+                                </td>
+                                <td>
+                                    REFUND
+                                </td>
+                                <td colspan="3"></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>
+                                    Payment Type
+                                </td>
+                                <td>
+                                    {{ $reservation->payment->method }}
+                                </td>
+                                <td colspan="3"></td>
 
-                        </tr>
+                            </tr>
+                        @endif
+
 
 
 
@@ -591,7 +604,8 @@
             var gantt = new Gantt("#gantt", tasks, {
                 view_mode: "Day",
                 language: "en",
-                draggable: false
+                draggable: false,
+                drag_mode: "none"
             });
 
 

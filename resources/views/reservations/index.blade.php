@@ -7,6 +7,7 @@
         <a href="{{ route('cart.index') }}" class="btn btn-success">Open POS</a>
     @endHasPermission
 @endsection
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
 
 @section('content')
@@ -82,6 +83,37 @@
             border-radius: 50px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
+
+        #siteFilter,
+        #typeFilter {
+            width: 100%;
+            margin-top: 5px;
+            padding: 5px 10px;
+            border-radius: 0.25rem;
+            background-color: #f8f9fa;
+            /* Light background for better visibility */
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+
+            #siteFilter,
+            #typeFilter {
+                width: 100%;
+                /* Full width on smaller screens */
+            }
+        }
+
+        /* Optional: Make the Select2 dropdown look consistent */
+        .select2-container {
+            width: 100% !important;
+        }
+
+        /* Optional: Customize the dropdown arrow */
+        .select2-container .select2-selection__arrow {
+            border-color: #007bff;
+            /* Change arrow color if needed */
+        }
     </style>
 
     <header class="reservation__head bg-dark py-2">
@@ -127,6 +159,27 @@
                 <i class="fa-brands fa-searchengin"></i> Search
             </a>
 
+            {{-- <div class="filter-container row g-3 align-items-end mb-3">
+                <!-- Check-in Date -->
+                <div class="col-md-4">
+                    <label for="checkin">Check-in:</label>
+                    <input type="date" id="checkin" class="form-control" value="{{ now()->format('Y-m-d') }}"
+                        onchange="applyDateFilter()">
+                </div>
+
+                <!-- Check-out Date -->
+                <div class="col-md-4">
+                    <label for="checkout">Check-out:</label>
+                    <input type="date" id="checkout" class="form-control" value="{{ now()->addDay()->format('Y-m-d') }}"
+                        onchange="applyDateFilter()">
+                </div>
+
+                <!-- Apply Filter Button -->
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-primary w-100" onclick="applyDateFilter()">Apply Date
+                        Filter</button>
+                </div>
+            </div> --}}
 
 
 
@@ -167,9 +220,27 @@
 
             <thead>
                 <tr class="t__head">
+                    <th class="sticky-col bg-dark text-white" rowspan="2">
+                        <div class="d-flex flex-column justify-content-between align-items-start">
+                            <span class="me-2">Site</span>
+                            <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
+                                @foreach ($sites as $site)
+                                    <option value="{{ $site->siteid }}">{{ $site->siteid }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </th>
+                    <th class="sticky-col bg-dark text-white" rowspan="2">
+                        <div class="d-flex flex-column justify-content-between align-items-start">
+                            <span class="me-2">Type</span>
+                            <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
+                                @foreach ($sites as $rateTier)
+                                    <option value="{{ $rateTier->ratetier }}">{{ $rateTier->ratetier }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </th>
 
-                    <th class="sticky-col  bg-dark text-white" rowspan="2">Site</th>
-                    <th class="sticky-col bg-dark text-white" rowspan="2">Type</th>
                     @php
                         $recurringMonth = '';
                         $colspan = 0;
@@ -211,6 +282,8 @@
                     @endforeach
                 </tr>
             </thead>
+
+
             <tbody id="siteTableBody">
                 @include('reservations.components._site_rows_list', [
                     'sites' => $sites,
@@ -244,8 +317,8 @@
             <!-- Check-out Date -->
             <div class="col-md-4">
                 <label for="checkout">Check-out:</label>
-                <input type="date" id="checkout" class="form-control" value="{{ now()->addDay()->format('Y-m-d') }}"
-                    onchange="calculateNights()">
+                <input type="date" id="checkout" class="form-control"
+                    value="{{ now()->addDay()->format('Y-m-d') }}" onchange="calculateNights()">
             </div>
 
             <!-- Nights Display -->
@@ -347,7 +420,57 @@
 @endsection
 
 @push('js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
     <script>
+        $(document).ready(function() {
+            // Initialize Select2 for multi-select dropdowns
+            $('#siteFilter').select2({
+                placeholder: "",
+                width: '100%',
+            });
+
+            $('#typeFilter').select2({
+                placeholder: "",
+                width: '100%',
+            });
+
+            // Event listeners for filters change
+            $('#siteFilter, #typeFilter').on('change', function() {
+                filterTable();
+            });
+        });
+
+        function filterTable() {
+            const selectedSites = $('#siteFilter').val();
+            const selectedTypes = $('#typeFilter').val();
+
+            const rows = document.querySelectorAll('#siteTableBody tr');
+
+            rows.forEach(row => {
+                const siteId = row.dataset.siteid;
+                const siteTier = row.dataset.ratetier;
+
+                let showRow = true;
+
+                console.log('Filtering row:', row);
+
+                if (selectedSites.length > 0 && !selectedSites.includes(siteId)) {
+                    showRow = false;
+                }
+
+                if (selectedTypes.length > 0 && !selectedTypes.includes(siteTier)) {
+                    showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+
+
+
+
         $(document).on('click', '.reservation-details', function() {
             let reservationId = $(this).data('reservation-id');
             fetchReservationDetails(reservationId);

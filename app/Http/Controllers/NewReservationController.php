@@ -331,12 +331,15 @@ class NewReservationController extends Controller
     {
         $reservations = CartReservation::where('cartid', $confirmationNumber)->get();
         $rigTypes = RigTypes::all();
-
         if ($reservations->isEmpty()) {
             abort(404, 'No reservations found.');
         }
 
-        return view('reservations.payment', compact('reservations', 'rigTypes'));
+        $customerNumber = $reservations->first()->customernumber;
+
+        $customers = User::where('id', $customerNumber)->first();
+
+        return view('reservations.payment', compact('reservations', 'rigTypes', 'customers'));
     }
 
     public function invoice(Request $request, $confirmationNumber)
@@ -891,12 +894,12 @@ class NewReservationController extends Controller
 
             $cart_reservation->update([
                 'customernumber' => $existingCustomer ? $existingCustomer->id : null,
-                'riglength' => $data['length'],
+                'riglength' => !empty($data['length']) ? (int) $data['length'] : 0,
                 'rigtype' => $rigTypes ? $rigTypes->rigtype : null,
                 'sitelock' => $data['site_lock'],
                 'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
                 'total' => (!empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0) + ($data['site_lock'] ? 20 : 0),
-                'number_of_guests' => $data['number_of_guests'],
+                'number_of_guests' => !empty($data['number_of_guests']) ? (int) $data['number_of_guests'] : 0,
             ]);
 
             if (!$cart_reservation) {
@@ -935,20 +938,20 @@ class NewReservationController extends Controller
     public function clearAbandoned()
     {
         $now = Carbon::now('America/New_York');
-    
+
         CartReservation::where('holduntil', '<', $now)->delete();
-    
+
         return response()->json([
             'success' => true,
             'message' => 'All abandoned cart reservations have been cleared.',
         ]);
     }
-    
 
     public function refund(Request $request)
     {
         $request->validate([
             'cartid' => 'required|exists:reservations,cartid',
+            'siteid.*' => 'exists:reservations,siteid',
             'reason' => 'nullable|string',
             'refunded_amount' => 'required|numeric|min:0.01',
             'cancellation_fee' => 'nullable|numeric',
@@ -962,72 +965,53 @@ class NewReservationController extends Controller
             ->latest()
             ->first();
 
-        Log::info('Refund Request Received:', $request->all());
-
-        Log::info('Retrieved Payment for Refund:', [
-            'payment' => $payment,
-            'x_ref_num' => optional($payment)->x_ref_num,
-        ]);
-
         if (!$payment || !$payment->x_ref_num) {
-            Log::warning('Refund failed: Original payment not found or x_ref_num is missing.', [
-                'cartid' => $request->cartid,
-                'payment' => $payment,
-            ]);
-
-            return response()->json(['message' => 'Original payment reference not found.'], 404);
+            return response()->json(['message' => 'Original payment reference not found or x_ref_num is missing.'], 404);
         }
 
-        $payload = [
-            'xKey' => config('services.cardknox.api_key'),
-            'xVersion' => '5.0.0',
-            'xSoftwareName' => 'KayutaLake',
-            'xSoftwareVersion' => '1.0',
-            'xCommand' => 'cc:refund',
-            'xRefNum' => $payment->x_ref_num,
-            'xAmount' => $request->refunded_amount,
-        ];
+        foreach ($request->siteid as $siteid) {
+            $payload = [
+                'xKey' => config('services.cardknox.api_key'),
+                'xVersion' => '5.0.0',
+                'xSoftwareName' => 'KayutaLake',
+                'xSoftwareVersion' => '1.0',
+                'xCommand' => 'cc:refund',
+                'xRefNum' => $payment->x_ref_num,
+                'xAmount' => $request->refunded_amount,
+            ];
 
-        Log::info('Sending refund payload to Cardknox:', $payload);
+            $response = Http::asForm()
+                ->withHeaders([
+                    'X-Recurring-Api-Version' => '1.0',
+                ])
+                ->post('https://x1.cardknox.com/gateway', $payload);
 
-        $response = Http::asForm()
-            ->withHeaders([
-                'X-Recurring-Api-Version' => '1.0',
-            ])
-            ->post('https://x1.cardknox.com/gateway', $payload);
+            parse_str($response->body(), $responseArray);
 
-        parse_str($response->body(), $responseArray);
-        Log::info('Cardknox Refund Response:', $responseArray);
+            if (($responseArray['xStatus'] ?? '') !== 'Approved') {
+                return response()->json(
+                    [
+                        'message' => 'Refund failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+                    ],
+                    400,
+                );
+            }
 
-        if (($responseArray['xStatus'] ?? '') === 'Approved') {
             $payment->update([
                 'transaction_type' => 'REFUND',
                 'x_ref_num' => $responseArray['xRefNum'] ?? null,
                 'cancellation_fee' => $request->cancellation_fee,
                 'refunded_amount' => $request->refunded_amount,
             ]);
-            
 
-            Reservation::where('cartid', $request->cartid)->update([
-                'status' => 'Cancelled',
-                'reason' => $request->reason,
-            ]);
-
-            Log::info('Refund successful and saved in DB.', [
-                'cartid' => $request->cartid,
-                'refunded_amount' => $request->refunded_amount,
-            ]);
-
-            return response()->json(['message' => 'Refund processed successfully.']);
-        } else {
-            Log::error('Refund failed at Cardknox:', $responseArray);
-
-            return response()->json(
-                [
-                    'message' => 'Refund failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
-                ],
-                400,
-            );
+            Reservation::where('cartid', $request->cartid)
+                ->where('siteid', $siteid)
+                ->update([
+                    'status' => 'Cancelled',
+                    'reason' => $request->reason,
+                ]);
         }
+
+        return response()->json(['message' => 'Refund processed successfully for selected sites.']);
     }
 }

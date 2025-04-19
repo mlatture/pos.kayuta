@@ -1,12 +1,11 @@
 <tr 
     data-site-id="{{ $site->id }}"
     data-site-siteid="{{ $site->siteid }}"
+    data-site-ratetier="{{ $site->ratetier }}"
     data-site-siteclass="{{ $site->siteclass }}"
-    data-site-price="{{ $site->price ?? 100 }}"
-    data-site-images='@json($site->images ?? [])'
-    >
-
-    <td class="sticky-col bg__sky">{{ $site->siteid }}</td>
+    data-site-price="{{ $site->price ?? 0.0 }}"
+    data-site-images='@json($site->images ?? [])'>
+    <td class="sticky-col bg__sky text-center">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {{ $site->siteid }}<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
     <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
 
     @php
