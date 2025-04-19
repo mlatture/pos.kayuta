@@ -57,8 +57,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/sites/{site}/images/{filename}', [SiteController::class, 'deleteImage'])->name('sites.delete.image');
     Route::post('sites/upload-image/{id}', [SiteController::class, 'uploadImages'])->name('sites.upload.images');
     Route::resource('rate-tier' , RateTierController::class);
-    
-    
+    Route::get('rate-tier/add-image/{id}', [RateTierController::class, 'addImage'])->name('rate-tier.add-image');
+    Route::post('rate-tier/upload-image/{id}', [RateTierController::class, 'uploadImage'])->name('rate-tier.upload.images');
+    Route::delete('rate_tiers/{id}/images/{filename}', [RateTierController::class, 'deleteImage'])->name('rate_tier.delete.image');
+
     // Route::get('/add-ons', [AddOnsController::class, 'index'])->name('addons.index');
     // Route::get('/add-ons/edit/{id}', [AddOnsController::class, 'edit'])->name('addons.edit');
     // Route::put('/add-ons/update/{id}', [AddOnsController::class, 'update'])->name('addons.update');

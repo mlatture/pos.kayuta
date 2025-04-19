@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
 
-   
+
 @endsection
 @section('content')
-   
+
     <div class="row animated fadeInUp">
         <div class="col-12">
             <div class="card">
@@ -40,21 +40,22 @@
                                         <th> Weekly Rate </th>
                                         <th> Monthly Rate </th>
                                         <th> Seasonal Rate </th>
-                                       
+
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($rate_tiers as $k => $tiers)
-                                    <tr>
-                                        <td>
-                                            {{-- <a href="{{ route('sites.view', $tiers->id) }}" class="btn btn-info"><i class="fas fa-eye"></i></a> --}}
-                                            <a href="{{ route('rate-tier.edit', $tiers->id) }}" class="btn btn-primary"><i
-                                                    class="fas fa-edit"></i></a>
-                                            <a class="btn btn-danger btn-delete"
-                                                data-url="{{ route('rate-tier.destroy', $tiers) }}"><i
-                                                    class="fas fa-trash"></i></a>
-                                        </td>
-                                        <td>{{ ++$k }}</td>
+                                        <tr>
+                                            <td>
+                                                <a href="{{ route('rate-tier.add-image', $tiers->id) }}"
+                                                    class="btn btn-outline-primary"><i class="fa-regular fa-images"></i></a>
+                                                <a href="{{ route('rate-tier.edit', $tiers->id) }}"
+                                                    class="btn btn-primary"><i class="fas fa-edit"></i></a>
+                                                <a class="btn btn-danger btn-delete"
+                                                    data-url="{{ route('rate-tier.destroy', $tiers) }}"><i
+                                                        class="fas fa-trash"></i></a>
+                                            </td>
+                                            <td>{{ ++$k }}</td>
                                             <td>
                                                 {{ $tiers->tier ?? 'N/A' }}
                                             </td>
@@ -64,11 +65,11 @@
                                             </td>
 
                                             <td>
-                                                {{ $tiers->useflatrate ? 'Yes' : 'No'}}
+                                                {{ $tiers->useflatrate ? 'Yes' : 'No' }}
                                             </td>
 
                                             <td>
-                                                {{  $tiers->flatrate ?? 'N/A' }}
+                                                {{ $tiers->flatrate ?? 'N/A' }}
                                             </td>
 
                                             <td>

@@ -168,16 +168,24 @@ class SiteController extends Controller
 
             if ($request->hasFile('image')) {
                 if ($site->image) {
-                    Storage::disk('public')->delete($site->image);
+                    $oldImagePath = public_path('storage/sites/' . basename($site->image));
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
                 }
-
-                $imagePath = $request->file('image')->store('sites', 'public');
-                $site->image = $imagePath;
+            
+                $filename = Str::uuid() . '.' . $request->file('image')->getClientOriginalExtension();
+            
+                $imagePath = $request->file('image')->move(public_path('storage/sites'), $filename);
+            
+                $site->image = 'storage/sites/' . $filename;
             }
-
+            
+            // Save the site model
             if (!$site->save()) {
                 return redirect()->back()->with('error', 'Sorry, something went wrong while updating the site.');
             }
+            
 
             return redirect()->route('sites.index')->with('success', 'Success, site has been updated.');
         } catch (Exception $e) {
@@ -217,7 +225,6 @@ class SiteController extends Controller
 
         return view('sites.add-image')->with('site', $site);
     }
-
     public function uploadImages(Request $request, Site $site)
     {
         $uploadedImages = [];
@@ -226,7 +233,9 @@ class SiteController extends Controller
             foreach ($request->file('images') as $file) {
                 if ($file->isValid()) {
                     $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs('public/sites', $filename);
+    
+                    $path = $file->move(public_path('storage/sites'), $filename);
+    
                     $uploadedImages[] = $filename;
                 }
             }
@@ -242,7 +251,7 @@ class SiteController extends Controller
     
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
-
+    
     public function deleteImage($siteId, $filename)
     {
         $site = Site::findOrFail($siteId);
