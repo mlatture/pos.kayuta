@@ -55,8 +55,8 @@
                                             <td>{{ $product->id }}</td>
                                             <td>{{ Str::limit($product->name, 20) }}</td>
                                             <td>
-                                                <img class="product-img img-thumbnail"
-                                                    src="{{ $product->image && file_exists(public_path('images/products/' . $product->image)) ? asset('images/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
+                                                <img class="product-img img-thumbnail"product
+                                                    src="{{ $product->image && file_exists(base_path('shared_storage/products/' . $->image)) ? asset('shared_storage/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
                                                     width="60px" height="60px" alt="{{ $product->name }}">
                                             </td>
 

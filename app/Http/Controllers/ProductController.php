@@ -124,7 +124,7 @@ class ProductController extends Controller
             ]);
             $filename = time() . '_' . $image->getClientOriginalName();
 
-            $image->move(public_path('images/products'), $filename);
+            $image->move(base_path('shared_storage/products'), $filename);
 
         }
         
@@ -216,7 +216,7 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('images/products'), $filename);
+            $image->move(base_path('shared_storage/products'), $filename);
             $product->image =  $filename;
         }
     
