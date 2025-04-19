@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Upload Images Site')
-@section('content-header', 'Upload Images Site')
+@section('title', 'Upload Images Rate Tier')
+@section('content-header', 'Upload Images Rate Tier')
 
 @section('content')
     <div class="card shadow-lg border-0">
