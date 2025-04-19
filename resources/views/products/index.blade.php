@@ -56,8 +56,8 @@
                                             <td>{{ Str::limit($product->name, 20) }}</td>
                                             <td>
                                                 <img class="product-img img-thumbnail"product
-                                                    src="{{ $product->image && file_exists(base_path('shared_storage/products/' . $product->image)) ? asset('shared_storage/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
-                                                    width="60px" height="60px" alt="{{ $product->name }}">
+                                                src="{{ $product->image && file_exists(base_path('shared_storage/products/' . $product->image)) ? url('shared_storage/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
+                                                width="60px" height="60px" alt="{{ $product->name }}">
                                             </td>
 
                                             <td>{{ $product->barcode }}</td>
