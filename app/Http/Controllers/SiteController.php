@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 
-
 class SiteController extends Controller
 {
     public function __construct()
@@ -226,8 +225,9 @@ class SiteController extends Controller
 
         return view('sites.add-image')->with('site', $site);
     }
-    public function uploadImages(Request $request, Site $site)
+    public function uploadImages(Request $request, $id)
     {
+        $site = Site::findOrFail($id);
         $uploadedImages = [];
     
         if ($request->hasFile('images')) {
@@ -236,22 +236,27 @@ class SiteController extends Controller
                     $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     
                     $image = app('image')->resize($file);
-            
+
                     $path = public_path('storage/sites/' . $filename);
+                    
                     app('image')->save($image, $path);
-                
+
                     $uploadedImages[] = $filename;
                 }
             }
         }
     
         $existing = $site->images;
-        $existing = !empty($existing) ? json_decode($existing, true) : [];
+
+        if (is_string($existing)) {
+            $existing = json_decode($existing, true);
+        }
         $existing = is_array($existing) ? $existing : [];
     
         $allImages = array_merge($existing, $uploadedImages);
         $site->images = json_encode($allImages);
         $site->save();
+        $site->refresh();
     
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }

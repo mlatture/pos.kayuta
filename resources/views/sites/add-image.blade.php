@@ -14,12 +14,12 @@
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
+
                 @if (!empty($site->images))
                     <div class="row mt-4">
                         @php
                             $images = is_string($site->images) ? json_decode($site->images, true) : $site->images;
                         @endphp
-
                         @foreach ($images as $filename)
                             <div class="col-md-3 mb-3 position-relative">
                                 <div class="card shadow-sm">
@@ -31,7 +31,6 @@
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
 
-                                    {{ $filename }}
 
                                     <!-- Image display -->
                                     <img src="{{ asset('storage/sites/' . $filename) }}"
