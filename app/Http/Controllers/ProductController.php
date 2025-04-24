@@ -113,7 +113,7 @@ class ProductController extends Controller
 
             $image = app('image')->resize($imageFile);
 
-            $filename = time() . '_' . $imageFile->getCleientOriginalName();
+            $filename = time() . '_' . $imageFile->getClientOriginalName();
             $path = public_path('storage/products/' . $filename);
             app('image')->save($image, $path);
 
