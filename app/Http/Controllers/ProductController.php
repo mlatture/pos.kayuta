@@ -106,18 +106,21 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request)
     {
-        $filename = '';
+        $filename = ''; 
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10048',
-            ]);
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $imageFile = $request->file('image');
 
-            $image->move(base_path('shared_storage/products'), $filename);
+            $image = app('image')->resize($imageFile);
+
+            $filename = time() . '_' . $imageFile->getCleientOriginalName();
+            $path = public_path('storage/products/' . $filename);
+            app('image')->save($image, $path);
+
+            
         }
 
+   
         $quantity = $request->quantity === '*' ? -1 : $request->quantity;
 
         $product = Product::create([
