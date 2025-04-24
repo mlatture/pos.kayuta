@@ -1,13 +1,20 @@
 @extends('layouts.admin')
 
 @section('title', 'Upload Images Site')
-@section('content-header', 'Upload Images Site')
+@section('content-header', 'Upload Images: ' . $site->siteid . ' ' . $site->sitename)
 
 @section('content')
+    @if (session('success'))
+        <script>
+            window.onload = function() {
+                location.reload();
+            }
+        </script>
+    @endif 
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
-
+                {{ $site }}
                 @if (!empty($site->images))
                     <div class="row mt-4">
                         @php
@@ -125,7 +132,7 @@
                                     } else {
                                         Swal.fire('Error', data.message ||
                                             'Something went wrong.', 'error'
-                                            );
+                                        );
                                     }
                                 },
                                 error: function() {
