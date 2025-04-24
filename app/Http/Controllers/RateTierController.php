@@ -91,15 +91,21 @@ class RateTierController extends Controller
                 if ($file->isValid()) {
                     $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
 
-                    $path = $file->move(public_path('storage/rate_tiers'), $filename);
+                    $image = app('image')->resize($file);
 
+                    $path = $file->move(public_path('storage/rate_tiers'), $filename);
+                    app('image')->save($image, $path);
                     $uploadedImages[] = $filename;
                 }
             }
         }
 
         $existing = $rate_tier->images;
-        $existing = !empty($existing) ? json_decode($existing, true) : [];
+
+        if (is_string($existing)) {
+            $existing = json_decode($existing, true);
+        }
+
         $existing = is_array($existing) ? $existing : [];
 
         $allImages = array_merge($existing, $uploadedImages);
@@ -107,7 +113,7 @@ class RateTierController extends Controller
         $rate_tier->images = json_encode($allImages);
 
         $rate_tier->save();
-
+        $rate_tier->refresh();
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
 

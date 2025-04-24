@@ -4,6 +4,15 @@
 @section('content-header', 'Upload Images Rate Tier')
 
 @section('content')
+    @if (session('success'))
+        <script>
+            window.onload = function() {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            }
+        </script>
+    @endif
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
@@ -11,7 +20,9 @@
                 @if (!empty($rate_tiers->images))
                     <div class="row mt-4">
                         @php
-                            $images = is_string($rate_tiers->images) ? json_decode($rate_tiers->images, true) : $rate_tiers->images;
+                            $images = is_string($rate_tiers->images)
+                                ? json_decode($rate_tiers->images, true)
+                                : $rate_tiers->images;
                         @endphp
 
                         @foreach ($images as $filename)
@@ -41,7 +52,8 @@
                 @endif
 
 
-                <form method="POST" action="{{ route('rate-tier.upload.images', $rate_tiers->id) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('rate-tier.upload.images', $rate_tiers->id) }}"
+                    enctype="multipart/form-data">
                     @csrf
 
                     <div class="card mb-3 border border-dashed p-3">
@@ -125,7 +137,7 @@
                                     } else {
                                         Swal.fire('Error', data.message ||
                                             'Something went wrong.', 'error'
-                                            );
+                                        );
                                     }
                                 },
                                 error: function() {
