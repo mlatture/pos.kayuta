@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Upload Images Rate Tier')
-@section('content-header', 'Upload Images Rate Tier')
+@section('content-header', 'Upload Images: ' . $rate_tiers->tier )
 
 @section('content')
     @if (session('success'))
