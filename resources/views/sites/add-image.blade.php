@@ -31,7 +31,7 @@
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
 
-
+                                    {{ $filename }}
 
                                     <!-- Image display -->
                                     <img src="{{ asset('storage/sites/' . $filename) }}"
