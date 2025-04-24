@@ -17,7 +17,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\Facades\Image as Image;
 class SiteController extends Controller
 {
     public function __construct()
