@@ -4,13 +4,13 @@
 @section('content-header', 'Upload Images: ' . $site->siteid . ' ' . $site->sitename)
 
 @section('content')
-    @if (session('success'))
+    {{-- @if (session('success'))
         <script>
             window.onload = function() {
                 location.reload();
             }
         </script>
-    @endif 
+    @endif  --}}
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
