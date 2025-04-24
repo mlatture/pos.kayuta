@@ -4,13 +4,15 @@
 @section('content-header', 'Upload Images: ' . $site->siteid . ' ' . $site->sitename)
 
 @section('content')
-    {{-- @if (session('success'))
+    @if (session('success'))
         <script>
             window.onload = function() {
-                location.reload();
+               setTimeout(() => {
+                    window.location.reload();
+               }, 3000);
             }
         </script>
-    @endif  --}}
+    @endif 
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
