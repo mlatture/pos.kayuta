@@ -17,7 +17,8 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image as Image;
+
+
 class SiteController extends Controller
 {
     public function __construct()
@@ -234,14 +235,11 @@ class SiteController extends Controller
                 if ($file->isValid()) {
                     $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
                     
-                    $image = Image::make($file);
-                    $image->resize(800, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-
-                    $path = public_path('storage/sites' . $filename);
-                    $image->save($path);
+                    $image = app('image')->resize($file);
+            
+                    $path = public_path('storage/sites/' . $filename);
+                    app('image')->save($image, $path);
+                
                     $uploadedImages[] = $filename;
                 }
             }

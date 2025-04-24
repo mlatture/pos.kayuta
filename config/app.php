@@ -177,10 +177,12 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+
+        // App Imagine Provider to access globally
+        App\Providers\ImageServiceProvider::class,
         
         Yajra\DataTables\DataTablesServiceProvider::class,
         
-        Intervention\Image\ImageServiceProvider::class,
 
     ],
 
