@@ -14,7 +14,6 @@
     <div class="card shadow-lg border-0">
         <div class="card-body">
             <div class="container">
-                {{ $site }}
                 @if (!empty($site->images))
                     <div class="row mt-4">
                         @php
