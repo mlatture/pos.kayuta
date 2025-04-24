@@ -93,7 +93,7 @@ class RateTierController extends Controller
 
                     $image = app('image')->resize($file);
 
-                    $path = $file->move(public_path('storage/rate_tiers'), $filename);
+                    $path = public_path('storage/rate_tiers/' . $filename);
                     app('image')->save($image, $path);
                     $uploadedImages[] = $filename;
                 }
