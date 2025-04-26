@@ -234,9 +234,10 @@
                         <div class="d-flex flex-column justify-content-between align-items-start">
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($sites as $rateTier)
-                                    <option value="{{ $rateTier->ratetier }}">{{ $rateTier->ratetier }}</option>
+                                @foreach ($sites->pluck('ratetier')->unique() as $rateTier)
+                                    <option value="{{ $rateTier }}">{{ $rateTier }}</option>
                                 @endforeach
+
                             </select>
                         </div>
                     </th>

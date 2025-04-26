@@ -297,4 +297,36 @@
             </div>
         </div>
     </div>
+
+
+@endsection
+@section('js')
+    <script>
+        $(document).ready(function() {
+            $('.table').DataTable({
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: [
+                    'colvis',
+                    'copy',
+                    {
+                        extend: 'csv',
+                    },
+                    {
+                        extend: 'excel',
+                    },
+                    {
+                        extend: 'pdf',
+                    },
+
+                    'print'
+                ],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
+            });
+        })
+    </script>
 @endsection
