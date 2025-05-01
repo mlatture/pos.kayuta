@@ -45,6 +45,15 @@ class Reservation extends Model
         return $this->hasOne(Payment::class, 'cartid', 'cartid');
     }
 
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class, 'reservations_id', 'id');
+    }
+    public function cart_reservation()
+    {
+        return $this->hasMany(CartReservation::class, 'cartid', 'cartid');
+    }
+
     public function site()
     {
         return $this->hasOne(Site::class, 'siteid', 'siteid');

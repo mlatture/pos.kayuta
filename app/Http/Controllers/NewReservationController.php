@@ -28,6 +28,11 @@ use App\Models\SurveysResponseModel;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\AccountCredit;
+use App\Models\Refund;
+use App\Mail\ReservationCancelled;
+use Illuminate\Support\Facades\Mail;
+
 
 class NewReservationController extends Controller
 {
@@ -339,6 +344,7 @@ class NewReservationController extends Controller
 
         $customers = User::where('id', $customerNumber)->first();
 
+        // dd([$customers, $customerNumber]); die();
         return view('reservations.payment', compact('reservations', 'rigTypes', 'customers'));
     }
 
@@ -346,9 +352,13 @@ class NewReservationController extends Controller
     {
         $payment = Payment::where('cartid', $confirmationNumber)->firstOrFail();
         $cart = CartReservation::where('cartid', $confirmationNumber)->firstOrFail();
-        $reservations = Reservation::where('cartid', $payment->cartid)->firstOrFail();
+        $reservations = Reservation::where('cartid', $confirmationNumber)->get();
 
-        return view('reservations.payment', compact('payment', 'reservations', 'cart'));
+        $customerNumber = $reservations->first()->customernumber;
+
+        $customers = User::where('id', $customerNumber)->first();
+
+        return view('reservations.payment', compact('payment', 'reservations', 'cart', 'customers'));
     }
 
     public function storeInfo(Request $request)
@@ -449,10 +459,9 @@ class NewReservationController extends Controller
             'customernumber' => $cart_reservation->customernumber,
             'email' => $cart_reservation->email,
             'payment' => number_format(floatval($request->xAmount), 2, '.', ''),
-            'transaction_type' => $request->status,
         ]);
 
-        // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+        $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
 
         return response()->json([
             'success' => true,
@@ -462,7 +471,7 @@ class NewReservationController extends Controller
 
     public function storePayment(Request $request, $id)
     {
-        $cart_reservation = CartReservation::where('cartid', $id)->firstOrFail();
+        $cart_reservation = CartReservation::where('cartid', $id)->get();
         $randomReceiptID = rand(1000, 9999);
         $apiKey = config('services.cardknox.api_key');
         $paymentType = $request->paymentType;
@@ -511,7 +520,7 @@ class NewReservationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    private function handleGiftCardPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType, $barcode, $amount)
+    private function handleGiftCardPayment($cart_reservation, $request, $randomReceiptID, $paymentType, $barcode, $amount)
     {
         $giftcard = GiftCard::where('barcode', $barcode)->firstOrFail();
         $giftcard->amount -= $amount;
@@ -529,26 +538,30 @@ class NewReservationController extends Controller
 
         $payment->save();
 
-        // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+        $this->saveReservation($cart_reservation, $randomReceiptID, $request);
     }
 
-    private function handleCashOrOtherPayment($cart_reservation, $customer, $request, $randomReceiptID, $paymentType)
+    private function handleCashOrOtherPayment($cart_reservations, $request, $randomReceiptID, $paymentType)
     {
+        $firstReservation = $cart_reservations->first();
+
         $payment = new Payment([
             'cartid' => $request->cartid,
             'receipt' => $randomReceiptID,
             'method' => $paymentType,
-            'customernumber' => $cart_reservation->customernumber,
-            'email' => $cart_reservation->email,
+            'customernumber' => $firstReservation->customernumber,
+            'email' => $firstReservation->email,
             'payment' => $request->xCash,
         ]);
         $payment->save();
 
-        // $this->saveReservation($cart_reservation, $customer, $randomReceiptID, $request);
+        $this->saveReservation($cart_reservations, $randomReceiptID, $request);
     }
 
     private function handleCardknoxPayment($data, $cart_reservation, $request, $randomReceiptID, $paymentType, $uniqueTransactionId)
     {
+        $firstReservation = $cart_reservation->first();
+        $user = User::where('id', $firstReservation->customernumber)->first();
         $ch = curl_init('https://x1.cardknox.com/gateway');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
@@ -563,17 +576,15 @@ class NewReservationController extends Controller
         }
 
         parse_str($responseContent, $responseArray);
-        Log::info('Cardknox Response:', $responseArray);
 
         if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
             $payment = new Payment([
                 'cartid' => $request->cartid,
                 'receipt' => $randomReceiptID,
                 'method' => $paymentType,
-                'customernumber' => $cart_reservation->customernumber,
-                'email' => $cart_reservation->email,
+                'customernumber' => $firstReservation->customernumber,
+                'email' => $user->email,
                 'payment' => $request->xAmount,
-                'transaction_type' => $request->status,
                 'x_ref_num' => $responseArray['xRefNum'] ?? null,
             ]);
             $payment->save();
@@ -588,36 +599,40 @@ class NewReservationController extends Controller
         }
     }
 
-    private function saveReservation($cart_reservation, $randomReceiptID, $request)
+    private function saveReservation($cartReservations, $randomReceiptID, $request)
     {
-        $customer = User::where('id', $cart_reservation->customernumber)->first();
-        $reservation = new Reservation([
-            'cartid' => $request->cartid,
-            'source' => 'Reservation',
-            'email' => $cart_reservation->email,
-            'fname' => $customer->f_name,
-            'lname' => $customer->l_name,
-            'customernumber' => $cart_reservation->customernumber,
-            'siteid' => $cart_reservation->siteid,
-            'cid' => $cart_reservation->cid,
-            'cod' => $cart_reservation->cod,
-            'total' => $cart_reservation->total,
-            'subtotal' => $cart_reservation->subtotal,
-            'taxrate' => $cart_reservation->taxrate,
-            'totaltax' => $cart_reservation->totaltax,
-            'siteclass' => $cart_reservation->siteclass,
-            'nights' => $cart_reservation->nights,
-            'base' => $cart_reservation->base,
-            'sitelock' => $cart_reservation->sitelock,
-            'rigtype' => $cart_reservation->hookups,
-            'riglength' => $cart_reservation->riglength,
-            'xconfnum' => $request->xconfnum ?? '123',
-            'createdby' => auth()->user()->name,
-            'receipt' => $randomReceiptID,
-            'rateadjustment' => 0,
-            'rid' => 'uc',
-        ]);
-        $reservation->save();
+        foreach ($cartReservations as $cart_reservation) {
+            $customer = User::where('id', $cart_reservation->customernumber)->first();
+
+            $reservation = new Reservation([
+                'cartid' => $request->cartid,
+                'source' => 'Reservation',
+                'email' => $customer->email,
+                'fname' => $customer->f_name ?? '',
+                'lname' => $customer->l_name ?? '',
+                'customernumber' => $cart_reservation->customernumber,
+                'siteid' => $cart_reservation->siteid,
+                'cid' => $cart_reservation->cid,
+                'cod' => $cart_reservation->cod,
+                'total' => $cart_reservation->total,
+                'subtotal' => $cart_reservation->subtotal,
+                'taxrate' => $cart_reservation->taxrate,
+                'totaltax' => $cart_reservation->totaltax,
+                'siteclass' => $cart_reservation->siteclass,
+                'nights' => $cart_reservation->nights,
+                'base' => $cart_reservation->base,
+                'sitelock' => $cart_reservation->sitelock,
+                'rigtype' => $cart_reservation->hookups,
+                'riglength' => $cart_reservation->riglength,
+                'xconfnum' => $request->xconfnum ?? '123',
+                'createdby' => auth()->user()->name ?? 'system',
+                'receipt' => $randomReceiptID,
+                'rateadjustment' => 0,
+                'rid' => 'uc',
+            ]);
+
+            $reservation->save();
+        }
     }
 
     private function saveCardonFiles($cart_reservation, $randomReceiptID, $request, $uniqueTransactionId)
@@ -844,43 +859,69 @@ class NewReservationController extends Controller
     public function createNewReservation(Request $request)
     {
         $data = $request->json()->all();
-        $rigTypes = RigTypes::where('id', $data['rigtype'])->first();
+        $rigTypes = RigTypes::find($data['rigtype']);
+        $cart_reservations = CartReservation::where('cartid', $data['confirmation'])->get();
 
-        $cart_reservation = CartReservation::where('cartid', $data['confirmation'])->first();
-
-        $customer = null;
-
-        if (isset($data['first_name']) || isset($data['last_name']) || isset($data['email'])) {
-            $customer = Customer::where(function ($query) use ($data) {
-                if (isset($data['first_name'])) {
-                    $query->orWhere('first_name', $data['first_name']);
-                }
-                if (isset($data['last_name'])) {
-                    $query->orWhere('last_name', $data['last_name']);
-                }
-                if (isset($data['email'])) {
-                    $query->orWhere('email', $data['email']);
-                }
-            })->first();
+        if ($cart_reservations->isEmpty()) {
+            return response()->json(['error' => 'No reservations found'], 400);
         }
 
         foreach ($data['customers'] as $customerData) {
-            $existingCustomer = User::where('f_name', $customerData['first_name'])->where('l_name', $customerData['last_name'])->where('email', $customerData['email'])->first();
+            $existingUser = User::where('f_name', $customerData['first_name'])->where('l_name', $customerData['last_name'])->where('email', $customerData['email'])->first();
 
-            if (!$existingCustomer) {
+            if (!$existingUser) {
+                $user = User::create([
+                    'organization_id' => $customerData['organization_id'] ?? null,
+                    'f_name' => $customerData['first_name'],
+                    'l_name' => $customerData['last_name'],
+                    'name' => $customerData['first_name'] . ' ' . $customerData['last_name'],
+                    'phone' => $customerData['phone'] ?? null,
+                    'home_phone' => $customerData['home_phone'] ?? null,
+                    'work_phone' => $customerData['work_phone'] ?? null,
+                    'email' => $customerData['email'],
+                    'password' => bcrypt('user123'),
+                    'image' => $customerData['image'] ?? 'default.png',
+                    'street_address' => $customerData['address'] ?? null,
+                    'address_2' => $customerData['address_2'] ?? null,
+                    'address_3' => $customerData['address_3'] ?? null,
+                    'country' => $customerData['country'] ?? null,
+                    'state' => $customerData['state'] ?? 'NY',
+                    'city' => $customerData['city'] ?? null,
+                    'zip' => $customerData['zip'] ?? null,
+                    'house_no' => $customerData['house_no'] ?? null,
+                    'apartment_no' => $customerData['apartment_no'] ?? null,
+                    'discovery_method' => $customerData['discovery_method'] ?? null,
+                    'date_of_birth' => $customerData['date_of_birth'] ?? null,
+                    'anniversary' => $customerData['anniversary'] ?? null,
+                    'age' => isset($customerData['age']) ? intval($customerData['age']) : null,
+                    'probation' => $customerData['probation'] ?? '0',
+                    'is_active' => 1,
+                    'is_phone_verified' => 0,
+                    'is_email_verified' => 0,
+                    'payment_card_last_four' => $customerData['card_last_four'] ?? null,
+                    'payment_card_brand' => $customerData['card_brand'] ?? null,
+                    'payment_card_fawry_token' => $customerData['card_token'] ?? null,
+                    'login_medium' => $customerData['login_medium'] ?? null,
+                    'social_id' => $customerData['social_id'] ?? null,
+                    'facebook_id' => $customerData['facebook_id'] ?? null,
+                    'google_id' => $customerData['google_id'] ?? null,
+                    'temporary_token' => $customerData['temporary_token'] ?? null,
+                    'cm_firebase_token' => $customerData['firebase_token'] ?? null,
+                    'wallet_balance' => $customerData['wallet_balance'] ?? 0.0,
+                    'loyalty_point' => $customerData['loyalty_point'] ?? 0.0,
+                    'stripe_customer_id' => $customerData['stripe_customer_id'] ?? null,
+                    'liabilty_path' => $customerData['liabilty_path'] ?? null,
+                    'text_on_phone' => $customerData['text_on_phone'] ?? 'yes',
+                    'ip_address' => $request->ip(),
+                ]);
+
                 Customer::create([
                     'first_name' => $customerData['first_name'],
                     'last_name' => $customerData['last_name'],
                     'email' => $customerData['email'],
-                    'discovery_method' => $customerData['discovery_method'] ?? null,
                     'phone' => $customerData['phone'] ?? null,
-                    'work_phone' => $customerData['work_phone'] ?? null,
                     'home_phone' => $customerData['home_phone'] ?? null,
-                    'customer_number' => $customerData['customer_number'] ?? null,
-                    'driving_license' => $customerData['driving_license'] ?? null,
-                    'date_of_birth' => !empty($customerData['date_of_birth']) ? $customerData['date_of_birth'] : null,
-                    'anniversary' => !empty($customerData['anniversary']) ? $customerData['anniversary'] : null,
-                    'age' => !empty($customerData['age']) ? intval($customerData['age']) : null,
+                    'work_phone' => $customerData['work_phone'] ?? null,
                     'address' => $customerData['address'] ?? null,
                     'address_2' => $customerData['address_2'] ?? null,
                     'address_3' => $customerData['address_3'] ?? null,
@@ -888,50 +929,37 @@ class NewReservationController extends Controller
                     'state' => $customerData['state'] ?? null,
                     'zip' => $customerData['zip'] ?? null,
                     'country' => $customerData['country'] ?? null,
-                    'user_id' => $customerData['user_id'] ?? null,
+                    'discovery_method' => $customerData['discovery_method'] ?? null,
+                    'date_of_birth' => $customerData['date_of_birth'] ?? null,
+                    'anniversary' => $customerData['anniversary'] ?? null,
+                    'age' => !empty($customerData['age']) ? (int) $customerData['age'] : null,
+                    'avatar' => $customerData['avatar'] ?? null,
+                    'user_id' => $user->id,
+                    'customer_number' => $customerData['customer_number'] ?? null,
+                    'driving_license' => $customerData['driving_license'] ?? null,
+                ]);
+
+                $userId = $user->id;
+            } else {
+                $userId = $existingUser->id;
+            }
+
+            foreach ($cart_reservations as $cart_reservation) {
+                $cart_reservation->update([
+                    'customernumber' => $userId,
+                    'riglength' => !empty($data['length']) ? (int) $data['length'] : 0,
+                    'hookups' => $rigTypes->rigtype ?? null,
+                    'sitelock' => $data['site_lock'] ?? 0,
+                    'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
+                    'total' => (!empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0) + ($data['site_lock'] ?? 0 ? 20 : 0),
+                    'number_of_guests' => !empty($data['number_of_guests']) ? (int) $data['number_of_guests'] : 0,
                 ]);
             }
-
-            $cart_reservation->update([
-                'customernumber' => $existingCustomer ? $existingCustomer->id : null,
-                'riglength' => !empty($data['length']) ? (int) $data['length'] : 0,
-                'rigtype' => $rigTypes ? $rigTypes->rigtype : null,
-                'sitelock' => $data['site_lock'],
-                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
-                'total' => (!empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0) + ($data['site_lock'] ? 20 : 0),
-                'number_of_guests' => !empty($data['number_of_guests']) ? (int) $data['number_of_guests'] : 0,
-            ]);
-
-            if (!$cart_reservation) {
-                return response()->json(['error' => 'No reservations found'], 400);
-            }
-
-            $reservation = Reservation::create([
-                'cartid' => $data['confirmation'],
-                'source' => $data['source'],
-                'email' => $existingCustomer ? $existingCustomer->email : null,
-                'status' => $data['status'],
-                'createdate' => $data['created_on'],
-                'createdby' => $data['created_by'],
-                'fname' => $existingCustomer ? $existingCustomer->first_name : null,
-                'lname' => $existingCustomer ? $existingCustomer->last_name : null,
-                'customernumber' => $existingCustomer ? $existingCustomer->id : null,
-                'siteid' => $cart_reservation->siteid,
-                'cid' => $cart_reservation->cid,
-                'cod' => $cart_reservation->cod,
-                'total' => $cart_reservation->total,
-                'subtotal' => !empty($data['subtotal']) ? floatval($data['subtotal']) : 0.0,
-                'siteclass' => $cart_reservation->siteclass,
-                'nights' => $cart_reservation->nigths,
-                'sitelock' => $cart_reservation->sitelock,
-                'rigtype' => $rigTypes ? $rigTypes->rigtype : null,
-                'xconfnum' => rand(100000, 999999),
-            ]);
         }
 
         return response()->json([
             'success' => true,
-            'reservation_id' => $reservation->id,
+            'message' => 'Cart reservations updated successfully.',
         ]);
     }
 
@@ -951,67 +979,109 @@ class NewReservationController extends Controller
     {
         $request->validate([
             'cartid' => 'required|exists:reservations,cartid',
-            'siteid.*' => 'exists:reservations,siteid',
+            'sites' => 'required|array',
+            'sites.*.siteid' => 'required|exists:reservations,siteid',
+            'sites.*.base' => 'required|numeric|min:0.01',
             'reason' => 'nullable|string',
-            'refunded_amount' => 'required|numeric|min:0.01',
-            'cancellation_fee' => 'nullable|numeric',
+            'refund_method' => 'required|string',
+            'apply_fee' => 'boolean',
+            'gift_card_code' => 'nullable|string',
         ]);
 
-        $payment = Payment::where('cartid', $request->cartid)
-            ->where(function ($q) {
-                $q->whereNull('transaction_type')->orWhere('transaction_type', '!=', 'REFUND');
-            })
-            ->whereNotNull('x_ref_num')
-            ->latest()
-            ->first();
+        $cartid = $request->cartid;
+        $refundMethod = $request->refund_method;
+        $reason = $request->reason;
+        $applyFee = $request->apply_fee;
+        $cancellationFeeRate = $applyFee ? 0.15 : 0.0;
+        
+        $customerNumber = Reservation::where('cartid', $cartid)->value('customernumber');
+        $userEmail = User::where('id', $customerNumber)->value('email');
 
-        if (!$payment || !$payment->x_ref_num) {
-            return response()->json(['message' => 'Original payment reference not found or x_ref_num is missing.'], 404);
-        }
+        if ($refundMethod === 'credit-card') {
+            $payment = Payment::where('cartid', $cartid)->whereNotNull('x_ref_num')->latest()->first();
 
-        foreach ($request->siteid as $siteid) {
-            $payload = [
-                'xKey' => config('services.cardknox.api_key'),
-                'xVersion' => '5.0.0',
-                'xSoftwareName' => 'KayutaLake',
-                'xSoftwareVersion' => '1.0',
-                'xCommand' => 'cc:refund',
-                'xRefNum' => $payment->x_ref_num,
-                'xAmount' => $request->refunded_amount,
-            ];
-
-            $response = Http::asForm()
-                ->withHeaders([
-                    'X-Recurring-Api-Version' => '1.0',
-                ])
-                ->post('https://x1.cardknox.com/gateway', $payload);
-
-            parse_str($response->body(), $responseArray);
-
-            if (($responseArray['xStatus'] ?? '') !== 'Approved') {
-                return response()->json(
-                    [
-                        'message' => 'Refund failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
-                    ],
-                    400,
-                );
+            if (!$payment || !$payment->x_ref_num) {
+                return response()->json(['message' => 'Original payment reference not found.'], 404);
             }
 
-            $payment->update([
-                'transaction_type' => 'REFUND',
-                'x_ref_num' => $responseArray['xRefNum'] ?? null,
-                'cancellation_fee' => $request->cancellation_fee,
-                'refunded_amount' => $request->refunded_amount,
-            ]);
+            foreach ($request->sites as $site) {
+                $refundedAmount = round($site['base'] * (1 - $cancellationFeeRate), 2);
 
-            Reservation::where('cartid', $request->cartid)
-                ->where('siteid', $siteid)
-                ->update([
-                    'status' => 'Cancelled',
-                    'reason' => $request->reason,
-                ]);
+                $payload = [
+                    'xKey' => config('services.cardknox.api_key'),
+                    'xVersion' => '5.0.0',
+                    'xSoftwareName' => 'KayutaLake',
+                    'xSoftwareVersion' => '1.0',
+                    'xCommand' => 'cc:refund',
+                    'xRefNum' => $payment->x_ref_num,
+                    'xAmount' => $refundedAmount,
+                    'xAllowDuplicate' => 'true',
+
+                ];
+
+                $response = Http::asForm()->post('https://x1.cardknox.com/gateway', $payload);
+                parse_str($response->body(), $responseArray);
+
+                if (($responseArray['xStatus'] ?? '') !== 'Approved') {
+                    return response()->json(
+                        [
+                            'message' => 'Refund failed: ' . ($responseArray['xError'] ?? 'Unknown error'),
+                        ],
+                        400,
+                    );
+                }
+            }
         }
 
-        return response()->json(['message' => 'Refund processed successfully for selected sites.']);
+        if ($refundMethod === 'gift-card' && $request->gift_card_code) {
+            foreach ($request->sites as $site) {
+                GiftCard::updateOrCreate(['barcode' => $request->gift_card_code], ['amount' => DB::raw('amount + ' . round($site['base'] * (1 - $cancellationFeeRate), 2))]);
+            }
+        }
+
+        if ($refundMethod === 'account-credit' && $customerEmail) {
+            foreach ($request->sites as $site) {
+                $refundedAmount = round($site['base'] * (1 - $cancellationFeeRate), 2);
+
+                AccountCredit::updateOrCreate(['email' => $customerEmail], ['credit' => DB::raw("credit + {$refundedAmount}")]);
+            }
+        }
+
+        foreach ($request->sites as $site) {
+            $siteId = $site['siteid'];
+            $baseAmount = $site['base'];
+            $cancellationFee = round($baseAmount * $cancellationFeeRate, 2);
+            $refundedAmount = round($baseAmount - $cancellationFee, 2);
+
+            $reservationId = Reservation::where('cartid', $cartid)->where('siteid', $siteId)->value('id');
+
+            if (!$reservationId) {
+                continue;
+            }
+
+            Refund::create([
+                'cartid' => $cartid,
+                'amount' => $refundedAmount,
+                'cancellation_fee' => $cancellationFee,
+                'reservations_id' => $reservationId,
+                'reason' => $reason,
+                'method' => $refundMethod,
+            ]);
+
+            Reservation::where('id', $reservationId)->update([
+                'status' => 'Cancelled',
+                'reason' => $reason,
+            ]);
+        }
+
+
+        try {
+            Mail::to($userEmail)->send(new ReservationCancelled($cartid, $request->sites, $refundMethod));
+        } catch (\Exception $e) {
+            Log::error('Mail sending failed: ' . $e->getMessage());
+        }
+        
+
+        return response()->json(['message' => 'Refund processed successfully.']);
     }
 }

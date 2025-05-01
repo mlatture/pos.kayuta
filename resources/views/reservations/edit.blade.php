@@ -115,6 +115,7 @@
             #invoice-table {
                 position: relative;
             }
+
             .gantt .bar {
                 pointer-events: none !important;
                 cursor: not-allowed !important;
@@ -140,7 +141,7 @@
                     id="cancel-reservation-edit">
                     <i class="fa-solid fa-ban"></i> Cancel
                 </button>
-{{-- 
+                {{-- 
                 <button type="button" class="btn btn border-warning btn-sm float-end text-white" id="add-to-cart">
                     <i class="fa-solid fa-store"></i> Add To Cart
                 </button> --}}
@@ -378,14 +379,10 @@
                 $firstReservation = $reservations->first();
             @endphp
 
-            @if (
-                $firstReservation &&
-                    $firstReservation->payment &&
-                    $firstReservation->payment->transaction_type &&
-                    $firstReservation->payment->cancellation_fee !== null &&
-                    $firstReservation->payment->payment !== null)
+            @if ($allRefunded)
                 <div class="refund-stamp">REFUNDED</div>
             @endif
+
 
 
             <div class="table-responsive">
@@ -412,12 +409,20 @@
                                 </td>
                                 <td id="site_id" data-siteid='@json($reservations->pluck('siteid')->toArray())'>{{ $reservation->siteid }}
                                 </td>
-                                <td>{{ $reservation->siteclass }}</td>
+                                <td>
+                                    {{ collect(explode(',', $reservation->siteclass))->map(fn($s) => str_replace('_', ' ', $s))->implode(', ') }}
+                                </td>
 
                                 @if (Request::is('admin/reservations/invoice/*'))
                                     <td>{{ $cart->description }}</td>
                                 @else
-                                    <td>{{ $reservation->description }}</td>
+                                    <td>
+                                        @if ($reservation->cart_reservation->isNotEmpty())
+                                            {{ optional($reservation->cart_reservation->firstWhere('siteid', $reservation->siteid))->description ?? '-' }}
+                                        @else
+                                            <span class="text-muted">No description</span>
+                                        @endif
+                                    </td>
                                 @endif
                                 <td>${{ number_format($reservation->base, 2) }}</td>
                             </tr>
@@ -459,6 +464,15 @@
                             <td></td>
 
                         </tr>
+                        <tr class="total-row">
+                            <td>
+                                Payment Type
+                            </td>
+                            <td>
+                                {{ $reservation->payment->method }}
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
 
                         <tr class="total-row">
                             <td colspan="3"></td>
@@ -466,12 +480,13 @@
                             <td>{{ number_format($reservation->payment->payment, 2) }} </td>
                         </tr>
 
-                        @if (
-                            $firstReservation &&
-                                $firstReservation->payment &&
-                                $firstReservation->payment->transaction_type &&
-                                $firstReservation->payment->cancellation_fee !== null &&
-                                $firstReservation->payment->payment !== null)
+                        <tr class="total-row">
+                            <td colspan="3"></td>
+                            <td></td>
+                            <td></td>
+
+                        </tr>
+                        @if ($firstReservation)
                             <tr class="total-row">
                                 <td colspan="3"></td>
                                 <td class="text-end text-danger">Cancellation Fee (15%)</td>
@@ -493,16 +508,20 @@
                                 </td>
                                 <td colspan="3"></td>
                             </tr>
-                            <tr class="total-row">
-                                <td>
-                                    Payment Type
-                                </td>
-                                <td>
-                                    {{ $reservation->payment->method }}
-                                </td>
-                                <td colspan="3"></td>
 
-                            </tr>
+
+                            @foreach ($reservations as $reservation)
+                                @foreach ($reservation->refunds as $refund)
+                                    <tr class="total-row">
+                                        <td>
+                                            Cancelled Site
+                                        </td>
+                                        <td colspan="4">{{ $reservation->siteid }} (Refund:
+                                            ${{ number_format($refund->amount, 2) }},
+                                            {{ ucfirst(str_replace('-', ' ', $refund->method)) }})</td>
+                                    </tr>
+                                @endforeach
+                            @endforeach
                         @endif
 
 
@@ -589,7 +608,7 @@
                 @foreach ($reservations as $reservation)
                     {
                         id: "Reservation-{{ $reservation->id }}",
-                        name: "{{ $reservation->siteclass }} - {{ $reservation->siteid }}",
+                        name: "{{ $reservation->siteid }}",
                         start: "{{ date('Y-m-d', strtotime($reservation->cid)) }}",
                         end: "{{ date('Y-m-d', strtotime($reservation->cod)) }}",
                         progress: 100,

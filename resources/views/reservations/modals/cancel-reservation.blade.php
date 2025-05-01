@@ -5,6 +5,13 @@
                 <h5 class="modal-title" id="cancellationModalLabel">Cancel Reservation</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div id="cancelLoader" class="text-center my-3" style="display: none;">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Processing...</span>
+                </div>
+                <p class="mt-2 text-danger fw-semibold">Processing cancellation...</p>
+            </div>
+
             <div class="modal-body">
                 <p>
                     Are you sure you want to cancel this reservation? Note: This will cancel all selected sites.
@@ -17,19 +24,28 @@
                     <label for="site_select" class="form-label">Select Sites for Refund</label>
                     <div id="site_select">
                         @foreach ($reservations as $reservation)
-                            <div class="form-check">
-                                <input class="form-check-input site-checkbox" type="checkbox"
-                                    value="{{ $reservation->siteid }}" id="site_{{ $reservation->siteid }}"
-                                    name="siteid[]" data-subtotal="{{ $reservation->subtotal }}">
-                                <label class="form-check-label" for="site_{{ $reservation->siteid }}">
-                                    {{ str_replace('_', ' ', $reservation->siteid) }}
-                                    ({{ str_replace('_', ' ', $reservation->siteclass) }} ${{ $reservation->subtotal }})
-                                </label>
-                            </div>
+                            @if ($reservation->refunds->isEmpty())
+                                <div class="form-check">
+                                    <input class="form-check-input site-checkbox" type="checkbox"
+                                        value="{{ $reservation->siteid }}" id="site_{{ $reservation->siteid }}"
+                                        name="siteid[]" data-subtotal="{{ $reservation->base }}">
+                                    <label class="form-check-label" for="site_{{ $reservation->siteid }}">
+                                        {{ str_replace('_', ' ', $reservation->siteid) }}
+                                        ({{ str_replace('_', ' ', $reservation->siteclass) }} ${{ $reservation->base }})
+                                    </label>
+                                </div>
+                            @endif
                         @endforeach
-
                     </div>
                 </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="applyCancellationFee" checked>
+                    <label class="form-check-label" for="applyCancellationFee">
+                        Apply 15% Cancellation Fee
+                    </label>
+                </div>
+
                 <div class="mb-3">
                     <label for="site_select" class="form-label">Refund total $<span id="refund-total">____</span>
                         (Calculate from checboxes)</label>
@@ -40,21 +56,41 @@
                                 <input class="form-check-input refund-method-radio" type="radio" name="refund_method"
                                     id="credit-card" value="credit-card">
                                 <label class="form-check-label" for="credit-card">
-                                    Credit Card (Minus 15% Cancellation Fee)
+                                    Credit Card
                                 </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input refund-method-radio" type="radio" name="refund_method"
+                                    id="gift-card" value="gift-card">
+                                <label class="form-check-label" for="gift-card">
+                                    Gift Card
+                                </label>
+                                <div id="giftCardCodeContainer" style="display:none;" class="mt-2">
+                                    {{-- <label for="giftCardCode" class="form-label">Gift Card Code</label> --}}
+                                    <input type="text" id="giftCardCode" class="form-control w-50"
+                                        placeholder="Enter gift card code">
+                                </div>
+
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input refund-method-radio" type="radio" name="refund_method"
                                     id="account-credit" value="account-credit">
                                 <label class="form-check-label" for="account-credit">
-                                    Account Credit (Minus 15% Cancellation Fee)
+                                    Account Credit
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input refund-method-radio" type="radio" name="refund_method"
-                                    id="cash-check" value="cash-check">
-                                <label class="form-check-label" for="cash-check">
-                                    Cash/Credit (Minus 15% Cancellation Fee)
+                                    id="cash-check" value="cash">
+                                <label class="form-check-label" for="cash">
+                                    Cash
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input refund-method-radio" type="radio" name="refund_method"
+                                    id="check" value="check">
+                                <label class="form-check-label" for="check">
+                                    Check
                                 </label>
                             </div>
                         </div>
@@ -82,61 +118,81 @@
         $(document).ready(function() {
             function updateRefundTotal() {
                 let total = 0;
+                let applyFee = $('#applyCancellationFee').is(':checked');
+
                 $('.site-checkbox:checked').each(function() {
-                    total += parseFloat($(this).data('subtotal'));
+                    let base = parseFloat($(this).data('subtotal'));
+                    total += applyFee ? base * 0.85 : base;
                 });
-
-                let applyFee = $('.refund-method-radio:checked').length > 0;
-
-                if (applyFee && total > 0) {
-                    total = total * 0.85; // Subtract 15%
-                }
 
                 $('#refund-total').text(total.toFixed(2));
             }
 
-            $(document).on('change', '.site-checkbox, .refund-method-radio', updateRefundTotal);
-
-            updateRefundTotal();
-        });
-
-
-        $('#yes-cancellation').on('click', function() {
-            let cancellationFee = {{ $cancellationFee ?? 0 }};
-            let refundedAmount = {{ $totalAfterFee ?? 0 }};
-            let reason = $('#cancellation_reason').val();
-
-            let cartid = $('#confirmation').val();
-
-            let selectedSiteIds = [];
-            $('input[name="siteid[]"]:checked').each(function() {
-                selectedSiteIds.push($(this).val());
+            $('.refund-method-radio').on('change', function() {
+                if ($('#gift-card').is(':checked')) {
+                    $('#giftCardCodeContainer').show();
+                } else {
+                    $('#giftCardCodeContainer').hide();
+                }
             });
 
-            if (selectedSiteIds.length === 0) {
-                alert("Please select at least one site for refund.");
-                return;
-            }
+            $(document).on('change', '.site-checkbox, .refund-method-radio', updateRefundTotal);
+            updateRefundTotal();
 
-            $.ajax({
-                url: '/admin/reservations/refund',
-                method: 'PATCH',
-                data: {
+            $('#yes-cancellation').on('click', function() {
+                const reason = $('#cancellation_reason').val();
+                const cartid = $('#confirmation').val();
+                const refundMethod = $('.refund-method-radio:checked').val();
+
+                let selectedSites = [];
+                $('.site-checkbox:checked').each(function() {
+                    selectedSites.push({
+                        siteid: $(this).val(),
+                        base: parseFloat($(this).data('subtotal'))
+                    });
+                });
+
+                if (selectedSites.length === 0) {
+                    alert("Please select at least one site for refund.");
+                    return;
+                }
+
+                if (!refundMethod) {
+                    alert("Please select a refund method.");
+                    return;
+                }
+
+                const postData = {
                     cartid: cartid,
                     reason: reason,
-                    cancellation_fee: cancellationFee,
-                    refunded_amount: refundedAmount,
-                    siteid: selectedSiteIds,
+                    refund_method: refundMethod,
+                    sites: selectedSites,
+                    apply_fee: $('#applyCancellationFee').is(':checked') ? '1' : '0',
+                    gift_card_code: $('#giftCardCode').val() || null,
                     _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    alert('Reservation cancelled successfully!');
-                    $('#cancellationModal').modal('hide');
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('Something went wrong: ' + xhr.responseText);
-                }
+                };
+
+                $('#cancelLoader').show();
+                $('#yes-cancellation').prop('disabled', true).text('Processing...');
+
+
+
+                $.ajax({
+                    url: '/admin/reservations/refund',
+                    method: 'PATCH',
+                    data: postData,
+                    success: function(response) {
+                        $('#cancelLoader').hide();
+                        $('#yes-cancellation').prop('disabled', false).text('Yes');
+                        alert('Reservation cancelled successfully!');
+                        $('#cancellationModal').modal('hide');
+                        location.reload();
+
+                    },
+                    error: function(xhr) {
+                        alert('Something went wrong: ' + xhr.responseText);
+                    }
+                });
             });
         });
     </script>

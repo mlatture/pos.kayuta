@@ -19,11 +19,16 @@ class User extends Authenticatable
     protected $guarded  =   [];
 
     protected $table = 'users';
-    protected $fillable = [ 
-        'id',
-        'f_name',
-        'l_name'
+    protected $fillable = [
+        'organization_id', 'f_name', 'l_name', 'name', 'phone', 'home_phone', 'work_phone', 'email',
+        'password', 'image', 'street_address', 'address_2', 'address_3', 'country', 'state', 'city',
+        'zip', 'house_no', 'apartment_no', 'discovery_method', 'date_of_birth', 'anniversary', 'age',
+        'probation', 'is_active', 'is_phone_verified', 'is_email_verified', 'payment_card_last_four',
+        'payment_card_brand', 'payment_card_fawry_token', 'login_medium', 'social_id', 'facebook_id',
+        'google_id', 'temporary_token', 'cm_firebase_token', 'wallet_balance', 'loyalty_point',
+        'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address',
     ];
+    
 
     
     /**

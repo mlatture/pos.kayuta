@@ -108,7 +108,10 @@
     @endpush
     @php
         use Illuminate\Support\Facades\Request;
+        $isPaymentPage = Route::currentRouteName() === 'reservations.payment.index';
+
     @endphp
+    
     <nav class="main-header navbar navbar-expand  d-flex justify-content-between sticky-top "
         style="background-color: #77898d; width: 30%;   border-bottom-left-radius: 5px; ">
 
@@ -245,6 +248,7 @@
             </div>
         </div>
 
+       
         <div class="container-invoice mt-3" id="customer-form">
             <div class="row g-3">
                 <div class="col-md-8">
@@ -256,17 +260,20 @@
                                 <div class="row g-2">
                                     <div class="col-4">
                                         <label for="first_name" class="form-label fw-semibold">First Name *</label>
-                                        <input type="text" value="{{ $customers->f_name }}" name="first_name[]"
-                                            class="form-control" required>
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->f_name ?? '' }}"
+                                            name="first_name[]" class="form-control" required>
                                     </div>
                                     <div class="col-4">
                                         <label for="last_name" class="form-label fw-semibold">Last Name *</label>
-                                        <input type="text" value="{{ $customers->l_name }}" name="last_name[]"
-                                            class="form-control" required>
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->l_name ?? '' }}"
+                                            name="last_name[]" class="form-control" required>
                                     </div>
                                     <div class="col-4">
                                         <label for="email" class="form-label fw-semibold">Email *</label>
-                                        <input type="email" value="{{ $customers->email }}" name="email[]"
+                                        <input type="email"
+                                            value="{{ $isPaymentPage ? '' : $customers->email ?? '' }}" name="email[]"
                                             class="form-control" required>
                                     </div>
                                     <div class="col-4">
@@ -275,16 +282,19 @@
                                         <select name="discovery_method[]" class="form-select" required>
                                             <option value="">Select Method</option>
                                             <option value="Online"
-                                                {{ $customers->discovery_method == 'Online' ? 'selected' : '' }}>Online
+                                                {{ !$isPaymentPage && $customers->discovery_method == 'Online' ? 'selected' : '' }}>
+                                                Online
                                             </option>
                                             <option value="Referral"
-                                                {{ $customers->discovery_method == 'Referral' ? 'selected' : '' }}>Referral
+                                                {{ !$isPaymentPage && $customers->discovery_method == 'Referral' ? 'selected' : '' }}>
+                                                Referral
                                             </option>
                                             <option value="Advertisement"
-                                                {{ $customers->discovery_method == 'Advertisement' ? 'selected' : '' }}>
+                                                {{ !$isPaymentPage && $customers->discovery_method == 'Advertisement' ? 'selected' : '' }}>
                                                 Advertisement</option>
                                             <option value="Other"
-                                                {{ $customers->discovery_method == 'Other' ? 'selected' : '' }}>Other
+                                                {{ !$isPaymentPage && $customers->discovery_method == 'Other' ? 'selected' : '' }}>
+                                                Other
                                             </option>
                                         </select>
                                     </div>
@@ -292,81 +302,93 @@
                                     <!-- Optional Fields -->
                                     <div class="col-4">
                                         <label for="phone" class="form-label">Phone</label>
-                                        <input type="text" value="{{ $customers->phone }}" name="phone[]"
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->phone ?? '' }}" name="phone[]"
                                             class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="work_phone" class="form-label">Work Phone</label>
-                                        <input type="text" value="{{ $customers->work_phone }}" name="work_phone[]"
-                                            class="form-control">
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->work_phone ?? '' }}"
+                                            name="work_phone[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="home_phone" class="form-label">Home Phone</label>
-                                        <input type="text" value="{{ $customers->home_phone }}" name="home_phone[]"
-                                            class="form-control">
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->home_phone ?? '' }}"
+                                            name="home_phone[]" class="form-control">
                                     </div>
-                                    <div class="col-4">
+                                    <div class="col-4 d-none" >
                                         <label for="customer_number" class="form-label">Customer Number</label>
-                                        <input type="text" value="{{ $customers->customer_number }}"
+                                        <input type="hidden"
+                                            value="{{ $isPaymentPage ? '' : $customers->customer_number ?? '' }}"
                                             name="customer_number[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="driving_license" class="form-label">Driving License</label>
-                                        <input type="text" value="{{ $customers->driving_license }}"
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->driving_license ?? '' }}"
                                             name="driving_license[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="date_of_birth" class="form-label">Date of Birth</label>
-                                        <input type="date" value="{{ $customers->date_of_birth }}"
+                                        <input type="date"
+                                            value="{{ $isPaymentPage ? '' : $customers->date_of_birth ?? '' }}"
                                             name="date_of_birth[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="anniversary" class="form-label">Anniversary</label>
-                                        <input type="date" value="{{ $customers->anniversary }}" name="anniversary[]"
-                                            class="form-control">
+                                        <input type="date"
+                                            value="{{ $isPaymentPage ? '' : $customers->anniversary ?? '' }}"
+                                            name="anniversary[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="age" class="form-label">Age</label>
-                                        <input type="number" value="{{ $customers->age }}" name="age[]"
-                                            class="form-control" min="0">
+                                        <input type="number" value="{{ $isPaymentPage ? '' : $customers->age ?? '' }}"
+                                            name="age[]" class="form-control" min="0">
                                     </div>
                                     <div class="col-4">
                                         <label for="address" class="form-label">Address</label>
-                                        <input type="text" value="{{ $customers->street_address }}" name="address[]"
-                                            class="form-control">
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->street_address ?? '' }}"
+                                            name="address[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="address_2" class="form-label">Address 2</label>
-                                        <input type="text" value="{{ $customers->address_2 }}" name="address_2[]"
-                                            class="form-control">
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->address_2 ?? '' }}"
+                                            name="address_2[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="address_3" class="form-label">Address 3</label>
-                                        <input type="text" value="{{ $customers->address_3 }}" name="address_3[]"
-                                            class="form-control">
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->address_3 ?? '' }}"
+                                            name="address_3[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="city" class="form-label">City</label>
-                                        <input type="text" value="{{ $customers->city }}" name="city[]"
-                                            class="form-control">
+                                        <input type="text" value="{{ $isPaymentPage ? '' : $customers->city ?? '' }}"
+                                            name="city[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="state" class="form-label">State</label>
-                                        <input type="text" value="{{ $customers->state }}" name="state[]"
-                                            class="form-control">
+                                        <input type="text" value="{{ $isPaymentPage ? '' : $customers->state ?? '' }}"
+                                            name="state[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="zip" class="form-label">Zip Code</label>
-                                        <input type="text" value="{{ $customers->zip }}" name="zip[]"
-                                            class="form-control">
+                                        <input type="text" value="{{ $isPaymentPage ? '' : $customers->zip ?? '' }}"
+                                            name="zip[]" class="form-control">
                                     </div>
                                     <div class="col-4">
                                         <label for="country" class="form-label">Country</label>
-                                        <input type="text" value="{{ $customers->country }}" name="country[]"
+                                        <input type="text"
+                                            value="{{ $isPaymentPage ? '' : $customers->country ?? '' }}" name="country[]"
                                             class="form-control">
                                     </div>
 
-                                    <input type="text" value="{{ $customers->id }}" name="user_id[]" hidden>
+                                    <input type="text" value="{{ $isPaymentPage ? '' : $customers->id ?? '' }}"
+                                        name="user_id[]" hidden>
                                 </div>
 
                                 <button type="button" class="btn btn-danger btn-sm mt-2 remove-customer">Remove</button>
@@ -482,7 +504,7 @@
                             $balance = $reservation->total - ($reservation->payment->payment ?? 0);
                         @endphp
 
-                        @if ($balance !== 0)
+                        @if (!$isPaymentPage && $balance !== 0)
                             <tr class="total-row">
                                 <td colspan="4"></td>
                                 <td class="text-end">Balance </td>

@@ -37,12 +37,19 @@ class CalendarReservationController extends Controller
 
     public function editReservations($id)
     {
-        $reservations = Reservation::where('cartid', $id)->with('payment')->get();
+        $reservations = Reservation::where('cartid', $id)->with(['payment', 'cart_reservation', 'refunds'])->get();
         $rigTypes = RigTypes::all();
         $payment = Payment::where('cartid', $id)->get();
 
+
+
         $user = User::where('id', $reservations->first()->customernumber)->first();
-        return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment']));
+
+        $allRefunded = $reservations->every(function ($reservation) {
+            return $reservation->refunds->isNotEmpty();
+        });
+
+        return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment', 'allRefunded']));
     }
 
     public function getUnavailableDates($id)
