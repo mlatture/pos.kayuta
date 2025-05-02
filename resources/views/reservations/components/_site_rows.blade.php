@@ -4,7 +4,9 @@
     data-site-ratetier="{{ $site->ratetier }}"
     data-site-siteclass="{{ $site->siteclass }}"
     data-site-price="{{ $site->price ?? 0.0 }}"
-    data-site-images='@json($site->images ?? [])'>
+    data-site-images='@json($site->images ?? [])'
+    data-site-seasonal="{{ $site->seasonal ? '1' : '0' }}"
+    data-site-available="{{ $site->available ? '1' : '0' }}">
     <td class="sticky-col bg__sky text-center">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {{ $site->siteid }}<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
     <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
 

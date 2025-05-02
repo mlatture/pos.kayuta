@@ -107,10 +107,7 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         // Load only non-seasonal and available sites
-        $query = Site::with(['reservations.payment'])
-            ->where('seasonal', false)
-            ->where('available', true);
-    
+        $query = Site::with(['reservations.payment']);    
         // Optional: Handle search filters
         if ($request->search) {
             $search = $request->search;

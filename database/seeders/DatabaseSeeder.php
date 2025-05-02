@@ -94,5 +94,7 @@ class DatabaseSeeder extends Seeder
         $this->call(VirtualTourOfBearsSeeder::class);
         $this->call(VirtualTourOfSitesSeeder::class);
         $this->call(JobsTableSeeder::class);
+        $this->call(CategoriesTableSeeder::class);
+
     }
 }

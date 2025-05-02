@@ -159,32 +159,14 @@
                 <i class="fa-brands fa-searchengin"></i> Search
             </a>
 
-            {{-- <div class="filter-container row g-3 align-items-end mb-3">
-                <!-- Check-in Date -->
-                <div class="col-md-4">
-                    <label for="checkin">Check-in:</label>
-                    <input type="date" id="checkin" class="form-control" value="{{ now()->format('Y-m-d') }}"
-                        onchange="applyDateFilter()">
-                </div>
-
-                <!-- Check-out Date -->
-                <div class="col-md-4">
-                    <label for="checkout">Check-out:</label>
-                    <input type="date" id="checkout" class="form-control" value="{{ now()->addDay()->format('Y-m-d') }}"
-                        onchange="applyDateFilter()">
-                </div>
-
-                <!-- Apply Filter Button -->
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-outline-primary w-100" onclick="applyDateFilter()">Apply Date
-                        Filter</button>
-                </div>
-            </div> --}}
-
-
-
-
-
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="seasonalFilter">
+                <label class="form-check-label" for="seasonalFilter">Hide Seasonal Sites</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="availableSitesFilter">
+                <label class="form-check-label" for="availableSitesFilter">Available Sites</label>
+            </div>
 
             <div class="collapse" id="collapseExample">
                 <div class="card card-body">
@@ -442,19 +424,32 @@
             });
         });
 
+        $('#seasonalFilter').on('change', function() {
+            filterTable();
+        });
+
+        $('#availableSitesFilter').on('change', function() {
+            filterTable();
+        })
+
         function filterTable() {
+            let hideSeasonal = $('#seasonalFilter').is(':checked');
+            let showAvailableSites = $('#availableSitesFilter').is(':checked');
             const selectedSites = $('#siteFilter').val();
             const selectedTypes = $('#typeFilter').val();
 
             const rows = document.querySelectorAll('#siteTableBody tr');
 
             rows.forEach(row => {
-                const siteId = row.dataset.siteid;
-                const siteTier = row.dataset.ratetier;
-
+                const siteId = row.dataset.siteSiteid;
+                const siteTier = row.dataset.siteRatetier;
+                const isSeasonal = row.dataset.siteSeasonal === '1';
+                const isAvailable = row.dataset.siteAvailable === '1';
                 let showRow = true;
-
-                console.log('Filtering row:', row);
+                
+                console.log('testing', showAvailableSites, isAvailable);
+                if (hideSeasonal && isSeasonal) showRow = false;
+                if (showAvailableSites && !isAvailable) showRow = false;
 
                 if (selectedSites.length > 0 && !selectedSites.includes(siteId)) {
                     showRow = false;
@@ -467,7 +462,6 @@
                 row.style.display = showRow ? '' : 'none';
             });
         }
-
 
 
 

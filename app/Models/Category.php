@@ -10,4 +10,13 @@ class Category extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected $table = 'categories';
+    protected $fillable = [
+        'name',
+        'quick_books_account_name',
+        'account_type',
+        'notes',
+        'status'  
+    ];
 }
