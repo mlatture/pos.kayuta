@@ -14,6 +14,9 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ProductImport;
+
 
 class ProductController extends Controller
 {
@@ -34,24 +37,29 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::query();
+        $products = Product::query()->with(['category', 'taxType']);
+    
         if (auth()->user()->organization_id) {
             $products->where('organization_id', auth()->user()->organization_id);
         }
+    
         if ($request->search) {
-            $products = $products->with(['taxType'])->where('name', 'LIKE', "%{$request->search}%");
+            $products->where('name', 'LIKE', "%{$request->search}%");
         }
-
+    
         if ($request->category_id) {
-            $products = $products->where('category_id', $request->category_id);
+            $products->where('category_id', $request->category_id);
         }
+    
         $products = $products->latest()->get();
-        if (request()->wantsJson()) {
+    
+        if ($request->wantsJson()) {
             return ProductResource::collection($products);
         }
-        return view('products.index')->with('products', $products);
+    
+        return view('products.index', compact('products'));
     }
-
+    
     public function categoryProducts(Request $request)
     {
         try {
@@ -268,4 +276,60 @@ class ProductController extends Controller
             'message' => 'Suggested Add-on status updated successfully!',
         ]);
     }
+    public function import(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+    
+        $collection = \Maatwebsite\Excel\Facades\Excel::toCollection(null, $request->file('excel_file'))[0];
+    
+        foreach ($collection->skip(1) as $row) {
+            if (!isset($row[3]) || empty($row[3])) continue; // Ensure "Name" is present
+    
+            $categoryName = isset($row[2]) && trim($row[2]) ? trim($row[2]) : 'Other';
+    
+            $category = \App\Models\Category::firstOrCreate(
+                ['name' => $categoryName],
+                [
+                    'status' => 1,
+                    'organization_id' => auth()->user()->organization_id
+                ]
+            );
+    
+            Product::updateOrCreate(
+                ['barcode' => $row[5] ?? null], // UPC
+                [
+                    'category_id' => $category->id,
+                    'name' => $row[3] ?? null,                // Name
+                    'description' => $row[4] ?? null,         // Description
+                    'barcode' => $row[5] ?? null,             // UPC
+                    'account' => $row[6] ?? null,             // Account
+                    'price' => is_numeric($row[7]) ? $row[7] : 0, // Price
+                    'cost' => is_numeric($row[8]) ? $row[8] : 0,  // Cost
+                    'markup' => $row[9] ?? null,              // Markup %
+                    'profit' => $row[10] ?? null,             // Profit
+                    'quantity' => is_numeric($row[11]) ? $row[11] : 0, // Quantity
+                    'status' => isset($row[12]) && strtolower($row[12]) == 'true' ? 1 : 0, // IsActive
+                    'suggested_addon' => 0,
+                    'organization_id' => auth()->user()->organization_id
+                ]
+            );
+        }
+    
+        return redirect()->back()->with('success', 'Products imported successfully.');
+    }
+    
+    public function toggleStatus(Product $product) 
+    {
+        $product->status = !$product->status;
+        $product->save();
+
+        return response()->json([
+            'success' => true,
+            'status' => $product->status,
+            'message' => 'Product status updated successfully.'
+
+        ]);
+    }    
 }

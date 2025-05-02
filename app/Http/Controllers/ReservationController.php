@@ -106,76 +106,70 @@ class ReservationController extends Controller
 
     public function index(Request $request)
     {
-        // Load only non-seasonal and available sites
-        $query = Site::with(['reservations.payment']);    
-        // Optional: Handle search filters
+        $query = Site::with(['reservations.payment']);
+
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('siteid', 'LIKE', "%{$search}%")
-                  ->orWhere('ratetier', 'LIKE', "%{$search}%")
-                  ->orWhereHas('reservations', function ($resQ) use ($search) {
-                      $resQ->where('fname', 'LIKE', "%{$search}%")
-                           ->orWhere('lname', 'LIKE', "%{$search}%");
-                  });
+                    ->orWhere('ratetier', 'LIKE', "%{$search}%")
+                    ->orWhereHas('reservations', function ($resQ) use ($search) {
+                        $resQ->where('fname', 'LIKE', "%{$search}%")->orWhere('lname', 'LIKE', "%{$search}%");
+                    });
             });
         }
-    
+
         if ($request->sitename || $request->ratetier) {
-            $siteIds = array_unique(array_merge(
-                $request->sitename ? explode(',', $request->sitename) : [],
-                $request->ratetier ? explode(',', $request->ratetier) : []
-            ));
+            $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
             $query->whereIn('siteid', $siteIds);
         }
-    
-        $perPage = 20;
-        $sites = $query->paginate($perPage);
-    
-        // Get latest season and reservation range
+
+        // If seasonal checkbox is checked, load all seasonal sites without pagination
+        if ($request->has('seasonal') && $request->seasonal == 1) {
+            $query->where('seasonal', 1);
+            $sites = $query->get();
+        } else {
+            $perPage = 20;
+            $sites = $query->paginate($perPage);
+        }
+
         $latestSeason = CampingSeason::latest()->first();
         $latestReservationEnd = Reservation::max('cod');
-    
-        // Set date range: 60 days from today or opening day (whichever is later)
+
         $today = Carbon::today();
         $seasonStart = Carbon::parse($latestSeason->opening_day);
         $startDate = $today->gte($seasonStart) ? $today : $seasonStart;
-    
+
         $filters['startDate'] = $request->startDate ?? $startDate->toDateString();
         $filters['endDate'] = $request->endDate ?? $startDate->copy()->addDays(60)->toDateString();
-    
-        // Generate calendar range
+
         $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
-    
-        // Get reservations in that 60-day range
+
         $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
-    
-        // Determine vacancy status and total reservation days per site
+
         foreach ($sites as $site) {
             $site->totalDays = $site->reservations->sum(function ($reservation) {
                 return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
             });
-    
+
             $site->isVacant = !$reservations->where('site_id', $site->id)->count();
         }
-    
-        // Handle AJAX request (infinite scroll or filters)
+
         if ($request->ajax()) {
             $html = view('reservations.components._site_rows_list', [
                 'sites' => $sites,
                 'calendar' => $calendar,
             ])->render();
-    
+
             return response()->json([
                 'sites' => $html,
-                'next_page_url' => $sites->nextPageUrl(),
+                'next_page_url' => method_exists($sites, 'nextPageUrl') ? $sites->nextPageUrl() : null,
             ]);
         }
-    
-        // Regular page load
+
         return view('reservations.index', compact('sites', 'calendar', 'filters'));
     }
-    
+
     private function generateSeasonCalendar($startDate, $endDate)
     {
         $calendar = [];

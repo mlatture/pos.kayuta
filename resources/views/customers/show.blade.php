@@ -41,124 +41,57 @@
                         </thead>
                         <tbody>
                             @foreach ($customer->reservations->sortByDesc('date')->groupBy('cartid') as $cartid => $group)
-                                @foreach ($group as $index => $reservation)
-                                    <tr @if ($index === 0) class="table-primary" @endif>
-                                        <td>
-                                            <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                                data-bs-target="#reservationModal{{ $reservation->id }}">
-                                                <i class="fas fa-info-circle"></i> View
-                                            </button>
-                                            <a href="{{ route('reservations.edit', $reservation->cartid) }}"
-                                                class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
-                                        </td>
-                                        <td>
-                                            @if ($index === 0)
-                                                Booking #{{ $reservation->cartid }}
-                                            @else
-                                                <span class="ms-3 text-muted">#{{ $reservation->id }}</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $reservation->siteid }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }} To
-                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}</td>
-                                    </tr>
+                                @php $firstReservation = $group->first(); @endphp
+                                <tr class="table-primary">
+                                    <td>
+                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#reservationModal{{ $firstReservation->id }}">
+                                            <i class="fas fa-info-circle"></i> View
+                                        </button>
+                                        <a href="{{ route('reservations.edit', $firstReservation->cartid) }}"
+                                            class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                                    </td>
+                                    <td>Booking #{{ $firstReservation->cartid }}</td>
+                                    <td>{{ $groupedReservations[$cartid] ?? 'N/A' }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($firstReservation->cid)->format('F j, Y') }} To
+                                        {{ \Carbon\Carbon::parse($firstReservation->cod)->format('F j, Y') }}</td>
+                                </tr>
 
-                                    <div class="modal fade" id="reservationModal{{ $reservation->id }}" tabindex="-1"
-                                        aria-labelledby="reservationModalLabel{{ $reservation->id }}" aria-hidden="true">
-                                        <div class="modal-dialog modal-lg">
-                                            <div class="modal-content">
-                                                <div class="modal-header bg-secondary text-white">
-                                                    <h5 class="modal-title"
-                                                        id="reservationModalLabel{{ $reservation->id }}">
-                                                        Reservation #{{ $reservation->id }} Details</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
+                                <div class="modal fade" id="reservationModal{{ $firstReservation->id }}" tabindex="-1"
+                                    aria-labelledby="reservationModalLabel{{ $firstReservation->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-secondary text-white">
+                                                <h5 class="modal-title"
+                                                    id="reservationModalLabel{{ $firstReservation->id }}">
+                                                    Reservation Group #{{ $cartid }} Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    @foreach ($group as $reservation)
+                                                        <div class="col-12 mb-3 border-bottom pb-2">
+                                                            <strong>Site:</strong> {{ $reservation->siteid }}<br>
+                                                            <strong>Class:</strong> {{ $reservation->siteclass }}<br>
+                                                            <strong>Check-in:</strong>
+                                                            {{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }}<br>
+                                                            <strong>Check-out:</strong>
+                                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}<br>
+                                                            <strong>Status:</strong> {{ $reservation->status }}
+                                                        </div>
+                                                    @endforeach
                                                 </div>
-                                                <div class="modal-body">
-                                                    <div class="row row-cols-1 row-cols-md-2">
-                                                        <div class="col"><strong>Cart ID:</strong>
-                                                            {{ $reservation->cartid ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Site ID:</strong>
-                                                            {{ $reservation->siteid ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Site Class:</strong>
-                                                            {{ $reservation->siteclass ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Check-in:</strong>
-                                                            {{ $reservation->cid ? \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Check-out:</strong>
-                                                            {{ $reservation->cod ? \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Status:</strong>
-                                                            {{ $reservation->status ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Reason:</strong>
-                                                            {{ $reservation->reason ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Total:</strong>
-                                                            {{ $reservation->total ? '$' . number_format($reservation->total, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Subtotal:</strong>
-                                                            {{ $reservation->subtotal ? '$' . number_format($reservation->subtotal, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Tax Rate:</strong>
-                                                            {{ $reservation->taxrate ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Total Tax:</strong>
-                                                            {{ $reservation->totaltax ? '$' . number_format($reservation->totaltax, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Extra Charge:</strong>
-                                                            {{ $reservation->extracharge ? '$' . number_format($reservation->extracharge, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Base Rate:</strong>
-                                                            {{ $reservation->base ? '$' . number_format($reservation->base, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Rate Adjustment:</strong>
-                                                            {{ $reservation->rateadjustment ? '$' . number_format($reservation->rateadjustment, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Discount Code:</strong>
-                                                            {{ $reservation->discountcode ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Discount:</strong>
-                                                            {{ $reservation->discount ? '$' . number_format($reservation->discount, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Total Charges:</strong>
-                                                            {{ $reservation->totalcharges ? '$' . number_format($reservation->totalcharges, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Total Payments:</strong>
-                                                            {{ $reservation->totalpayments ? '$' . number_format($reservation->totalpayments, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Balance:</strong>
-                                                            {{ $reservation->balance ? '$' . number_format($reservation->balance, 2) : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Adults:</strong>
-                                                            {{ $reservation->adults ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Children:</strong>
-                                                            {{ $reservation->children ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Pets:</strong>
-                                                            {{ $reservation->pets ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Rig Type:</strong>
-                                                            {{ $reservation->rigtype ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Rig Length:</strong>
-                                                            {{ $reservation->riglength ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Comments:</strong>
-                                                            {{ $reservation->comments ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Confirmation #:</strong>
-                                                            {{ $reservation->xconfnum ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Receipt:</strong>
-                                                            {{ $reservation->receipt ?? 'N/A' }}</div>
-                                                        <div class="col"><strong>Created Date:</strong>
-                                                            {{ $reservation->createdate ? \Carbon\Carbon::parse($reservation->createdate)->format('F j, Y') : 'N/A' }}
-                                                        </div>
-                                                        <div class="col"><strong>Last Modified:</strong>
-                                                            {{ $reservation->lastmodified ? \Carbon\Carbon::parse($reservation->lastmodified)->format('F j, Y g:i A') : 'N/A' }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-outline-secondary"
-                                                        data-bs-dismiss="modal">Close</button>
-                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
                                             </div>
                                         </div>
                                     </div>
-                                @endforeach
+                                </div>
                             @endforeach
+
                         </tbody>
                     </table>
                 </div>

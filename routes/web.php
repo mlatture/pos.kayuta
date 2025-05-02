@@ -51,6 +51,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/toggle-suggested-addon', [ProductController::class, 'toggleSuggestedAddon'])
     ->name('products.toggle-suggested-addon');    Route::resource('categories', CategoryController::class);
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
+    Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
+    Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggleStatus');
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
     Route::resource('sites', SiteController::class);
     Route::get('sites/add-image/{id}', [SiteController::class, 'addImage'])->name('sites.add-image');  

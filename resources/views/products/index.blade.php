@@ -4,13 +4,28 @@
 @section('content-header', 'Product Management')
 @section('content-actions')
     @hasPermission(config('constants.role_modules.create_products.value'))
-        <a href="{{ route('products.create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add New Product</a>
+        <a href="{{ route('products.create') }}" class="btn btn-success mb-2 me-2">
+            <i class="fas fa-plus"></i> Add New Product
+        </a>
+    @endHasPermission
+
+    @hasPermission(config('constants.role_modules.create_products.value'))
+        <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data" class="d-inline-block">
+            @csrf
+            <div class="input-group">
+                <input type="file" name="excel_file" class="form-control form-control-sm" required>
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-file-import"></i> Import Excel
+                </button>
+            </div>
+        </form>
     @endHasPermission
 @endsection
+
 @section('css')
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.1/css/buttons.dataTables.css">
-   
+
 @endsection
 @section('content')
     <div class="row animated fadeInUp">
@@ -24,67 +39,83 @@
                                 <thead>
                                     <tr>
                                         <th>Actions</th>
-                                        <th>ID</th>
-                                        <th>Name</th>
                                         <th>Image</th>
-                                        <th>Barcode</th>
-                                        <th>Item Cost</th>
-                                        <th>Item Price</th>
-                                        <th>Quantity</th>
+                                        <th>ID</th>
+                                        <th>Category</th>
+                                        <th>Tax Type</th>
+                                        <th>Name</th>
                                         <th>Status</th>
-
-                                        <th>Suggested Add On</th>
+                                        <th>Description</th>
+                                        <th>Barcode</th>
+                                        <th>Account</th>
+                                        <th>Markup</th>
+                                        <th>Profit</th>
+                                        <th>Price</th>
+                                        <th>Cost</th>
+                                        <th>Quantity</th>
+                                        <th>Type</th>
+                                        <th>Discount Type</th>
+                                        <th>Discount</th>
+                                        <th>Organization</th>
+                                        <th>Vendor</th>
+                                        <th>Suggested Addon</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($products as $k => $product)
+                                    @foreach ($products as $product)
                                         <tr>
                                             <td>
-                                                @hasPermission(config('constants.role_modules.edit_products.value'))
-                                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-primary"><i
-                                                            class="fas fa-edit"></i></a>
-                                                @endHasPermission
-                                                @hasPermission(config('constants.role_modules.delete_products.value'))
-                                                    <button class="btn btn-danger btn-delete"
-                                                        data-url="{{ route('products.destroy', $product) }}"><i
-                                                            class="fas fa-trash"></i></button>
-                                                @endHasPermission
+                                                <a href="{{ route('products.edit', $product) }}"
+                                                    class="btn btn-primary btn-sm"><i class="fas fa-edit"></i></a>
+                                                <button class="btn btn-danger btn-sm btn-delete"
+                                                    data-url="{{ route('products.destroy', $product) }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <img src="{{ $product->image ? asset('storage/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
+                                                    width="50" class="img-thumbnail" alt="{{ $product->name }}">
                                             </td>
                                             <td>{{ $product->id }}</td>
-                                            <td>{{ Str::limit($product->name, 20) }}</td>
+                                            <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                            <td>{{ $product->taxType->name ?? 'N/A' }}</td>
+                                            <td>{{ $product->name }}</td>
                                             <td>
-                                                <img class="product-img img-thumbnail"product
-                                                src="{{ file_exists(public_path('storage/products/' . $product->image)) ? asset('storage/products/' . $product->image) : asset('images/product-thumbnail.jpg') }}"
-                                                width="60px" height="60px" alt="{{ $product->name }}">
-                                            </td>
-
-                                            <td>{{ $product->barcode }}</td>
-                                            <td>{{ config('settings.currency_symbol') }}{{ $product->cost }}</td>
-                                            <td>{{ config('settings.currency_symbol') }}{{ $product->price }}</td>
-                                            <td>{{ $product->quantity }}</td>
-                                            <td>
-                                                <span class="badge badge-{{ $product->status ? 'success' : 'danger' }}">
+                                                <span class="badge status-toggle bg-{{ $product->status ? 'success' : 'danger' }}" data-id={{ $product->id }} style="cursor:pointer">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
-
+                                            <td>{{ Str::limit($product->description, 50) }}</td>
+                                            <td>{{ $product->barcode }}</td>
+                                            <td>{{ $product->account ?? 'N/A' }}</td>
+                                            <td>{{ $product->markup }}</td>
+                                            <td>{{ $product->profit }}</td>
+                                            <td>{{ config('settings.currency_symbol') . number_format($product->price, 2) }}
+                                            </td>
+                                            <td>{{ config('settings.currency_symbol') . number_format($product->cost, 2) }}
+                                            </td>
+                                            <td>{{ $product->quantity }}</td>
+                                            <td>{{ $product->type ?? 'N/A' }}</td>
+                                            <td>{{ $product->discount_type }}</td>
+                                            <td>{{ $product->discount }}</td>
+                                            <td>{{ $product->organization_id ?? 'N/A' }}</td>
+                                            <td>{{ $product->vendor->name ?? 'N/A' }}</td>
                                             <td>
-
                                                 <span
-                                                    class="suggested-addon-badge badge badge-{{ $product->suggested_addon ? 'success' : 'secondary' }}"
-                                                    data-id="{{ $product->id }}">
+                                                    class="badge bg-{{ $product->suggested_addon ? 'success' : 'secondary' }}">
                                                     {{ $product->suggested_addon ? 'Yes' : 'No' }}
                                                 </span>
                                             </td>
-
-
-                                            <td>{{ $product->created_at }}</td>
-                                            <td>{{ $product->updated_at }}</td>
+                                            <td>{{ $product->created_at ? $product->created_at->format('Y-m-d') : 'N/A' }}
+                                            </td>
+                                            <td>{{ $product->updated_at ? $product->updated_at->format('Y-m-d') : 'N/A' }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+
 
 
                             </table>
@@ -100,30 +131,52 @@
 @section('js')
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
+
+        $(document).on('click', '.status-toggle', function() {
+            const badge = $(this);
+            const productId = badge.data('id');
+
+            $.ajax({
+                url: `/admin/products/${productId}/toggle-status`,
+                method: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const newStatus = response.status ? 'Active' : 'Inactive';
+                        const newClass = response.status ? 'success' : 'danger';
+
+                        badge.removeClass('bg-success bg-danger').addClass(`bg-${newClass}`).text(newStatus);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Failed to update status.');
+                }
+            })
+        })
         $(document).ready(function() {
+
+
             $('.table').DataTable({
                 responsive: true,
+                stateSave: true,
+
                 dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'colvis',
-                    'copy',
-                    {
-                        extend: 'csv',
-                    },
-                    {
-                        extend: 'excel',
-                    },
-                    {
-                        extend: 'pdf',
-                    },
-
-                    'print'
+                    'colvis', 'copy', 'csv', 'excel', 'pdf', 'print'
                 ],
                 language: {
                     search: 'Search: ',
                     lengthMenu: 'Show _MENU_ entries',
                 },
-                pageLength: 10
+                pageLength: 10,
+                columnDefs: [{
+                    targets: Array.from({
+                        length: 9
+                    }, (_, i) => i).filter(i => i > 5),
+                    visible: false
+                }]
             });
 
             $(document).on('click', '.btn-delete', function() {

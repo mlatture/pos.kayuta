@@ -136,7 +136,9 @@
                 }
             });
 
-            $(document).on('change', '.site-checkbox, .refund-method-radio', updateRefundTotal);
+
+
+            $(document).on('change', '.site-checkbox, .refund-method-radio, #applyCancellationFee', updateRefundTotal);
             updateRefundTotal();
 
             $('#yes-cancellation').on('click', function() {

@@ -75,14 +75,17 @@ class CustomerController extends Controller
             },
         ])->findOrFail($id);
 
-        $groupedReservations = $customer->reservations->groupBy('cartid');
+        $groupedReservations = $customer->reservations->groupBy('cartid')->map(function ($groupRes) {
+            $siteId = $groupRes->pluck('siteid')->unique()->implode(', ');
+            return $siteId;
+        });
 
         $groupedCartReservations = $customer->cart_reservations->groupBy('cartid')->map(function ($group) {
             $sites = $group->pluck('siteid')->unique()->implode(', ');
             return $sites;
         });
-    
-            $customer->setRelation('cardsOnFile', collect($customer->cardsOnFile)->unique('xmaskedcardnumber'));
+
+        $customer->setRelation('cardsOnFile', collect($customer->cardsOnFile)->unique('xmaskedcardnumber'));
 
         return view('customers.show', compact('customer', 'groupedReservations', 'groupedCartReservations'));
     }

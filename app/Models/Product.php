@@ -10,38 +10,22 @@ class Product extends Model
 {
     protected $guarded = [];
 
-    protected $fillable = [
-        'suggested_addon',
-        'category_id',
-        'tax_type_id',
-        'name',
-        'description',
-        'image',
-        'barcode',
-        'price',
-        'quantity',
-        'discount_type',
-        'discount',
-        'status',
-        'product_vendoer_id',
-        'cost',
-        'dni',
-        'last_checked_date',
-        'category',
-        
-
-    ];
+    protected $fillable = ['suggested_addon', 'category_id', 'tax_type_id', 'name', 'description', 'image', 'barcode', 'price', 'quantity', 'discount_type', 'discount', 'status', 'product_vendoer_id', 'cost', 'dni', 'last_checked_date', 'category', 'account', 'markup', 'profit'];
 
     public function taxType()
     {
         return $this->belongsTo(TaxType::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
     }
-
 
     public function getImageUrlAttribute()
     {
@@ -50,6 +34,6 @@ class Product extends Model
 
     public function productVendor(): BelongsTo
     {
-        return $this->belongsTo(ProductVendor::class,'product_vendor_id','id');
+        return $this->belongsTo(ProductVendor::class, 'product_vendor_id', 'id');
     }
 }

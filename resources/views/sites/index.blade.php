@@ -43,16 +43,29 @@
                                         <th> Class </th>
                                         <th> Attributes </th>
                                         <th> Amenities </th>
-                                        {{-- <th> Ratetier </th> --}}
-                                        {{-- <th> Action </th> --}}
+                                        <th> Hookup </th>
+                                        <th> Seasonal </th>
+                                        <th> Description </th>
+                                        <th> Tax </th>
+                                        <th> Coordinates </th>
+                                        <th> Section </th>
+                                        <th> Rate Tier </th>
+                                        <th> Minimum Stay </th>
+                                        <th> YouTube </th>
+                                        <th> 360 Photo </th>
+                                        <th> Virtual Tour </th>
+                                        <th> Last Meter Reading </th>
+                                        <th> Last Modified </th>
+                                        <th> Created At </th>
+
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($sites as $k => $site)
                                         <tr>
                                             <td>
-                                                <a href="{{ route('sites.add-image', $site->id) }}" class="btn btn-outline-primary"><i
-                                                        class="fa-regular fa-images" ></i></a>
+                                                <a href="{{ route('sites.add-image', $site->id) }}"
+                                                    class="btn btn-outline-primary"><i class="fa-regular fa-images"></i></a>
                                                 <a href="{{ route('sites.view', $site->id) }}" class="btn btn-info"><i
                                                         class="fas fa-eye"></i></a>
                                                 <a href="{{ route('sites.edit', $site) }}" class="btn btn-primary"><i
@@ -71,7 +84,7 @@
                                             </td>
 
                                             <td>
-                                                {!! Str::limit($site->siteclass, 20) !!}
+                                                {!! Str::limit(str_replace('-', ' ', $site->siteclass), 20) !!}
                                             </td>
 
                                             <td>
@@ -101,11 +114,20 @@
                                             <td>
                                                 {{ Str::limit(is_array($site->amenities) ? implode(',', $site->amenities) : 'No Amenities', 20) }}
                                             </td>
-
-                                            {{-- <td>
-                                                {{ $site->ratetier ?? 'N/A' }}
-                                            </td> --}}
-
+                                            <td>{{ $site->hookup ?? 'N/A' }}</td>
+                                            <td>{{ $site->seasonal ? 'Yes' : 'No' }}</td>
+                                            <td>{{ Str::limit($site->description, 30) }}</td>
+                                            <td>{{ $site->tax ?? 'N/A' }}</td>
+                                            <td>{{ $site->coordinates ?? 'N/A' }}</td>
+                                            <td>{{ $site->sitesection ?? 'N/A' }}</td>
+                                            <td>{{ $site->ratetier ?? 'N/A' }}</td>
+                                            <td>{{ $site->minimumstay ?? 'N/A' }}</td>
+                                            <td>{{ $site->youtube ?? 'N/A' }}</td>
+                                            <td>{{ $site->photo_360_url ?? 'N/A' }}</td>
+                                            <td>{{ $site->virtual_link ?? 'N/A' }}</td>
+                                            <td>{{ $site->lastmeterreading ?? 'N/A' }}</td>
+                                            <td>{{ $site->lastmodified ?? 'N/A' }}</td>
+                                            <td>{{ $site->created_at ? $site->created_at->format('F j, Y') : 'N/A' }}</td>
 
                                         </tr>
                                     @endforeach
@@ -126,21 +148,17 @@
         $(document).ready(function() {
             $('.table').DataTable({
                 responsive: true,
+                stateSave: true,
                 dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
                     'colvis',
-                    'copy',
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columnDefs: [
                     {
-                        extend: 'csv',
+                        targets: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+                        visible: false
                     },
-                    {
-                        extend: 'excel',
-                    },
-                    {
-                        extend: 'pdf',
-                    },
-
-                    'print'
                 ],
                 language: {
                     search: 'Search: ',

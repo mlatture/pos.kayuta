@@ -115,7 +115,7 @@
             /* Change arrow color if needed */
         }
     </style>
-
+{{-- 
     <header class="reservation__head bg-dark py-2">
         <div
             class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
@@ -140,7 +140,7 @@
                 </a>
             </div>
         </div>
-    </header>
+    </header> --}}
     <div
         class="table-actions d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between pe-2 pt-md-3 pt-2">
         <div class="d-flex align-items-center action__links gap-2">
@@ -160,13 +160,13 @@
             </a>
 
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="seasonalFilter">
-                <label class="form-check-label" for="seasonalFilter">Hide Seasonal Sites</label>
+                <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter" checked>
+                <label class="form-check-label" for="seasonalFilter">Show Seasonal Sites</label>
             </div>
-            <div class="form-check">
+            {{-- <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="availableSitesFilter">
                 <label class="form-check-label" for="availableSitesFilter">Available Sites</label>
-            </div>
+            </div> --}}
 
             <div class="collapse" id="collapseExample">
                 <div class="card card-body">
@@ -444,12 +444,11 @@
                 const siteId = row.dataset.siteSiteid;
                 const siteTier = row.dataset.siteRatetier;
                 const isSeasonal = row.dataset.siteSeasonal === '1';
-                const isAvailable = row.dataset.siteAvailable === '1';
+                // const isAvailable = row.dataset.siteAvailable === '1';
                 let showRow = true;
                 
-                console.log('testing', showAvailableSites, isAvailable);
-                if (hideSeasonal && isSeasonal) showRow = false;
-                if (showAvailableSites && !isAvailable) showRow = false;
+                if (hideSeasonal && !isSeasonal) showRow = false;
+                // if (showAvailableSites && !isAvailable) showRow = false;
 
                 if (selectedSites.length > 0 && !selectedSites.includes(siteId)) {
                     showRow = false;
@@ -931,6 +930,7 @@
             const $nextPageUrl = $('#nextPageUrl');
             const $searchBox = $('#searchBox');
             const $searchBtn = $('#searchBtn');
+            
 
             let currentSearch = '';
 
@@ -943,7 +943,8 @@
                 $spinner.removeClass('d-none');
 
                 $.get(nextUrl, {
-                    search: currentSearch
+                    search: currentSearch,
+                    seasonal: $('#seasonalFilter').is(':checked') ? 1 : 0,
                 }, function(response) {
                     $siteTableBody.append(response.sites);
                     $nextPageUrl.val(response.next_page_url);
@@ -953,6 +954,7 @@
                     } else {
                         $loadMoreBtn.removeAttr('disabled');
                     }
+                    filterTable();
                 }).always(function() {
                     $spinner.addClass('d-none');
                 });

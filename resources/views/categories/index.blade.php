@@ -25,6 +25,9 @@
                                         <th>Actions</th>
                                         <th>ID</th>
                                         <th>Name</th>
+                                        <th>QuickBooks Account Name</th>
+                                        <th>Account Type</th>
+                                        <th>Notes</th>
                                         <th>Status</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
@@ -35,17 +38,20 @@
                                         <tr>
                                             <td>
                                                 @hasPermission(config('constants.role_modules.edit_categories.value'))
-                                                <a href="{{ route('categories.edit', $category) }}"
-                                                   class="btn btn-primary"><i class="fas fa-edit"></i></a>
+                                                    <a href="{{ route('categories.edit', $category) }}"
+                                                        class="btn btn-primary"><i class="fas fa-edit"></i></a>
                                                 @endHasPermission
                                                 @hasPermission(config('constants.role_modules.delete_categories.value'))
-                                                <button class="btn btn-danger btn-delete"
-                                                    data-url="{{ route('categories.destroy', $category) }}"><i
-                                                        class="fas fa-trash"></i></button>
+                                                    <button class="btn btn-danger btn-delete"
+                                                        data-url="{{ route('categories.destroy', $category) }}"><i
+                                                            class="fas fa-trash"></i></button>
                                                 @endHasPermission
                                             </td>
                                             <td>{{ $category->id }}</td>
                                             <td>{{ $category->name }}</td>
+                                            <td>{{ $category->quick_books_account_name }}</td>
+                                            <td>{{ $category->account_type }}</td>
+                                            <td>{{ $category->notes }}</td>
                                             <td>
                                                 <span
                                                     class="right badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span>
@@ -70,28 +76,25 @@
         $(document).ready(function() {
             $('.table').DataTable({
                 responsive: true,
+                stateSave: true,
+
                 dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
-                    'colvis',
-                    'copy',
-                    {
-                        extend: 'csv',
-                    },
-                    {
-                        extend: 'excel',
-                    },
-                    {
-                        extend: 'pdf',
-                    },
-
-                    'print'
+                    'colvis', 'copy', 'csv', 'excel', 'pdf', 'print'
                 ],
                 language: {
                     search: 'Search: ',
                     lengthMenu: 'Show _MENU_ entries',
                 },
-                pageLength: 10
+                pageLength: 10,
+                columnDefs: [{
+                    targets: Array.from({
+                        length: 9
+                    }, (_, i) => i).filter(i => i > 3),
+                    visible: false
+                }]
             });
+
             $(document).on('click', '.btn-delete', function() {
                 $this = $(this);
                 const swalWithBootstrapButtons = Swal.mixin({

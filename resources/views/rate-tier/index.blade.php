@@ -30,19 +30,38 @@
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
                                 width="100%">
                                 <thead>
-                                    <tr><!-- Log on to codeastro.com for more projects -->
+                                    <tr>
                                         <th>Actions</th>
-                                        <th> # </th>
-                                        <th> Tier </th>
-                                        <th> Minimum Stay </th>
-                                        <th> Use Flat Rate </th>
-                                        <th> Flat Rate </th>
-                                        <th> Weekly Rate </th>
-                                        <th> Monthly Rate </th>
-                                        <th> Seasonal Rate </th>
-
+                                        <th>#</th>
+                                        <th>Tier</th>
+                                        <th>Minimum Stay</th>
+                                        <th>Use Flat Rate</th>
+                                        <th>Flat Rate</th>
+                                        <th>Weekly Rate</th>
+                                        <th>Monthly Rate</th>
+                                        <th>Seasonal Rate</th>
+                                        <th>Use Dynamic</th>
+                                        <th>Dyn. Increase</th>
+                                        <th>Dyn. Increase %</th>
+                                        <th>Dyn. Decrease</th>
+                                        <th>Dyn. Decrease %</th>
+                                        <th>Last-Min Increase</th>
+                                        <th>Last-Min Days</th>
+                                        <th>Early Booking Increase</th>
+                                        <th>Early Booking Days</th>
+                                        <th>Sun</th>
+                                        <th>Mon</th>
+                                        <th>Tue</th>
+                                        <th>Wed</th>
+                                        <th>Thu</th>
+                                        <th>Fri</th>
+                                        <th>Sat</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Last Modified</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     @foreach ($rate_tiers as $k => $tiers)
                                         <tr>
@@ -83,7 +102,26 @@
                                             <td>
                                                 {{ $tiers->seasonalrate ?? 'N/A' }}
                                             </td>
-
+                                            <td>{{ $tiers->usedynamic ? 'Yes' : 'No' }}</td>
+                                            <td>{{ $tiers->dynamicincrease ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->dynamicincreasepercent ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->dynamicdecrease ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->dynamicdecreasepercent ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->lastminuteincrease ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->lastminutedays ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->earlybookingincrease ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->earlybookingdays ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->sundayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->mondayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->tuesdayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->wednesdayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->thursdayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->fridayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->saturdayrate ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->check_in ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->check_out ?? 'N/A' }}</td>
+                                            <td>{{ $tiers->lastmodified ?? 'N/A' }}</td>
+                                            
 
 
                                         </tr>
@@ -105,21 +143,17 @@
         $(document).ready(function() {
             $('.table').DataTable({
                 responsive: true,
+                stateSave: true,
                 dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
                 buttons: [
                     'colvis',
-                    'copy',
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columnDefs: [
                     {
-                        extend: 'csv',
+                        targets: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+                        visible: false
                     },
-                    {
-                        extend: 'excel',
-                    },
-                    {
-                        extend: 'pdf',
-                    },
-
-                    'print'
                 ],
                 language: {
                     search: 'Search: ',

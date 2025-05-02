@@ -471,14 +471,13 @@
                             <td>
                                 {{ $reservation->payment->method }}
                             </td>
-                            <td colspan="3"></td>
+                            <td colspan="2"> </td>
+                            <td>
+                                ${{ number_format($reservation->payment->payment, 2) }}
+                            </td>
                         </tr>
 
-                        <tr class="total-row">
-                            <td colspan="3"></td>
-                            <td class="text-end">Pay</td>
-                            <td>{{ number_format($reservation->payment->payment, 2) }} </td>
-                        </tr>
+
 
                         <tr class="total-row">
                             <td colspan="3"></td>
@@ -487,45 +486,51 @@
 
                         </tr>
                         @if ($firstReservation)
-                            <tr class="total-row">
+                            {{-- <tr class="total-row">
                                 <td colspan="3"></td>
                                 <td class="text-end text-danger">Cancellation Fee (15%)</td>
                                 <td class="text-danger">- ${{ number_format($cancellationFee, 2) }}</td>
-                            </tr>
+                            </tr> --}}
 
-                            <tr class="total-row">
+                            {{-- <tr class="total-row">
                                 <td colspan="3"></td>
                                 <td class="text-end fw-bold">Total After Fee</td>
                                 <td class="fw-bold">${{ number_format($totalAfterFee, 2) }}</td>
-                            </tr>
+                            </tr> --}}
 
-                            <tr class="total-row">
-                                <td>
-                                    Transaction Type
-                                </td>
-                                <td>
-                                    REFUND
-                                </td>
-                                <td colspan="3"></td>
-                            </tr>
+                            @php
+                                $hasRefunds = $reservations->flatMap->refunds->isNotEmpty();
+                            @endphp
 
+                            @if ($hasRefunds)
+                                <tr class="total-row">
+                                    <td>Transaction Type</td>
+                                    <td>REFUND</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            @endif
 
                             @foreach ($reservations as $reservation)
                                 @foreach ($reservation->refunds as $refund)
                                     <tr class="total-row">
-                                        <td>
-                                            Cancelled Site
+                                        <td>Cancelled Site</td>
+
+                                        @if ($refund->cancellation_fee > 0)
+                                            <td class="text-end text-danger">Cancellation Fee (15%)</td>
+                                            <td class="text-danger">- ${{ number_format($refund->cancellation_fee, 2) }}
+                                            </td>
+                                        @else
+                                            <td colspan="2">No Cancellation Fee</td>
+                                        @endif
+
+                                        <td colspan="4">
+                                            {{ $reservation->siteid }} (Refund: ${{ number_format($refund->amount, 2) }},
+                                            {{ ucfirst(str_replace('-', ' ', $refund->method)) }})
                                         </td>
-                                        <td colspan="4">{{ $reservation->siteid }} (Refund:
-                                            ${{ number_format($refund->amount, 2) }},
-                                            {{ ucfirst(str_replace('-', ' ', $refund->method)) }})</td>
                                     </tr>
                                 @endforeach
                             @endforeach
                         @endif
-
-
-
 
                     </tbody>
                 </table>
