@@ -115,7 +115,7 @@
             /* Change arrow color if needed */
         }
     </style>
-{{-- 
+    {{-- 
     <header class="reservation__head bg-dark py-2">
         <div
             class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
@@ -149,52 +149,40 @@
                 Multiple Sites
             </a>
 
-            <a href="javascript:void(0)" id="loadMoreSitesBtn" class="border text-decoration-none p-2 text-dark">
-                <i class="fa-solid fa-spinner"></i>
-                Load More <span class="spinner-border spinner-border-sm d-none"></span>
-            </a>
-
             <a class="border text-decoration-none p-2 text-dark" data-bs-toggle="collapse" href="#collapseExample"
                 role="button" aria-expanded="false" aria-controls="collapseExample">
                 <i class="fa-brands fa-searchengin"></i> Search
             </a>
 
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter" checked>
+                <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter"
+                    {{ request('seasonal') == 1 ? 'checked' : '' }}>
                 <label class="form-check-label" for="seasonalFilter">Show Seasonal Sites</label>
             </div>
-            {{-- <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="availableSitesFilter">
-                <label class="form-check-label" for="availableSitesFilter">Available Sites</label>
-            </div> --}}
 
             <div class="collapse" id="collapseExample">
                 <div class="card card-body">
                     <div class="input-group">
                         <input type="text" id="searchBox" class="form-control" placeholder="Search...">
-                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                            🔍
-                        </button>
+                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">🔍</button>
                     </div>
                 </div>
             </div>
-
-
-
-
         </div>
 
-
-
-
+        {{-- Move this to float end --}}
+        <div class="d-flex align-items-center mb-3 ms-md-auto mt-2 mt-md-0">
+            <button class="btn btn-outline-secondary me-2" id="prev30">&larr;</button>
+            <input type="date" id="startDatePicker" value="{{ $filters['startDate'] }}" class="form-control w-auto">
+            <button class="btn btn-outline-secondary ms-2" id="next30">&rarr;</button>
+        </div>
     </div>
-    <input type="hidden" id="initialSiteCount" value="20">
-    <input type="hidden" id="totalSites" value="{{ $sites->count() }}">
 
-    <div class="text-center my-2 position-sticky bottom-0 z-3" style="background: white;">
+
+    {{-- <div class="text-center my-2 position-sticky bottom-0 z-3" style="background: white;">
         <input type="hidden" id="nextPageUrl" value="{{ $sites->nextPageUrl() }}">
 
-    </div>
+    </div> --}}
 
 
     <div class="table-responsive" style="max-height: 60vh !important; max-width: 100%">
@@ -300,8 +288,8 @@
             <!-- Check-out Date -->
             <div class="col-md-4">
                 <label for="checkout">Check-out:</label>
-                <input type="date" id="checkout" class="form-control"
-                    value="{{ now()->addDay()->format('Y-m-d') }}" onchange="calculateNights()">
+                <input type="date" id="checkout" class="form-control" value="{{ now()->addDay()->format('Y-m-d') }}"
+                    onchange="calculateNights()">
             </div>
 
             <!-- Nights Display -->
@@ -406,6 +394,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
     <script>
+        document.getElementById('startDatePicker').addEventListener('change', function() {
+            const startDate = this.value;
+            const seasonal = document.getElementById('seasonalFilter').checked ? 1 : 0;
+            window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
+        });
+
+        document.getElementById('prev30').addEventListener('click', function() {
+            const current = new Date(document.getElementById('startDatePicker').value);
+            current.setDate(current.getDate() - 30);
+            document.getElementById('startDatePicker').value = current.toISOString().split('T')[0];
+            document.getElementById('startDatePicker').dispatchEvent(new Event('change'));
+        });
+
+        document.getElementById('next30').addEventListener('click', function() {
+            const current = new Date(document.getElementById('startDatePicker').value);
+            current.setDate(current.getDate() + 30);
+            document.getElementById('startDatePicker').value = current.toISOString().split('T')[0];
+            document.getElementById('startDatePicker').dispatchEvent(new Event('change'));
+        });
+
         $(document).ready(function() {
             // Initialize Select2 for multi-select dropdowns
             $('#siteFilter').select2({
@@ -446,7 +454,7 @@
                 const isSeasonal = row.dataset.siteSeasonal === '1';
                 // const isAvailable = row.dataset.siteAvailable === '1';
                 let showRow = true;
-                
+
                 if (hideSeasonal && !isSeasonal) showRow = false;
                 // if (showAvailableSites && !isAvailable) showRow = false;
 
@@ -930,7 +938,7 @@
             const $nextPageUrl = $('#nextPageUrl');
             const $searchBox = $('#searchBox');
             const $searchBtn = $('#searchBtn');
-            
+
 
             let currentSearch = '';
 
