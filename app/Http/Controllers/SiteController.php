@@ -197,15 +197,13 @@ class SiteController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Product  $product
+     * @param  \App\Models\Site  $site
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy(Site $site)
     {
-        if ($product->image) {
-            Storage::delete($product->image);
-        }
-        $product->delete();
+       
+        $site->delete();
 
         return response()->json([
             'success' => true,

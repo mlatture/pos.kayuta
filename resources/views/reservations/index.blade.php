@@ -114,6 +114,10 @@
             border-color: #007bff;
             /* Change arrow color if needed */
         }
+
+        .hold-transition  {
+            overflow: hidden !important;
+        }
     </style>
     {{-- 
     <header class="reservation__head bg-dark py-2">
@@ -204,7 +208,7 @@
                         <div class="d-flex flex-column justify-content-between align-items-start">
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($sites->pluck('ratetier')->unique() as $rateTier)
+                                @foreach ($sites->pluck('ratetier')->unique()->sort() as $rateTier)
                                     <option value="{{ $rateTier }}">{{ $rateTier }}</option>
                                 @endforeach
 
@@ -436,15 +440,17 @@
             filterTable();
         });
 
-        $('#availableSitesFilter').on('change', function() {
-            filterTable();
-        })
+        $('#seasonalFilter').on('change', function() {
+            const seasonal = $(this).is(':checked') ? 1 : 0;
+            const startDate = $('#startDatePicker').val();
+            window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
+        });
+
 
         function filterTable() {
-            let hideSeasonal = $('#seasonalFilter').is(':checked');
-            let showAvailableSites = $('#availableSitesFilter').is(':checked');
-            const selectedSites = $('#siteFilter').val();
-            const selectedTypes = $('#typeFilter').val();
+            const hideSeasonal = !$('#seasonalFilter').is(':checked'); // Invert logic: unchecked means hide seasonal
+            const selectedSites = $('#siteFilter').val() || [];
+            const selectedTypes = $('#typeFilter').val() || [];
 
             const rows = document.querySelectorAll('#siteTableBody tr');
 
@@ -452,11 +458,10 @@
                 const siteId = row.dataset.siteSiteid;
                 const siteTier = row.dataset.siteRatetier;
                 const isSeasonal = row.dataset.siteSeasonal === '1';
-                // const isAvailable = row.dataset.siteAvailable === '1';
+
                 let showRow = true;
 
-                if (hideSeasonal && !isSeasonal) showRow = false;
-                // if (showAvailableSites && !isAvailable) showRow = false;
+                if (hideSeasonal && isSeasonal) showRow = false;
 
                 if (selectedSites.length > 0 && !selectedSites.includes(siteId)) {
                     showRow = false;
