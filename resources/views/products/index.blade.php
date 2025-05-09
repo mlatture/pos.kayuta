@@ -88,6 +88,13 @@
                                             <td>{{ $product->name }}</td>
                                             <td>
                                                 <span
+                                                    class="badge quick-pick-toggle bg-{{ $product->quick_pick ? 'success' : 'secondary' }}"
+                                                    data-id="{{ $product->id }}" style="cursor:pointer">
+                                                    {{ $product->quick_pick ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
                                                     class="badge show-category-toggle bg-{{ $product->show_in_category ? 'success' : 'secondary' }}"
                                                     data-id="{{ $product->id }}" style="cursor:pointer">
                                                     {{ $product->show_in_category ? 'Yes' : 'No' }}
@@ -122,13 +129,7 @@
                                             <td>{{ $product->discount }}</td>
                                             <td>{{ $product->organization_id ?? 'N/A' }}</td>
                                             <td>{{ $product->vendor->name ?? 'N/A' }}</td>
-                                            <td>
-                                                <span
-                                                    class="badge quick-pick-toggle bg-{{ $product->quick_pick ? 'success' : 'secondary' }}"
-                                                    data-id="{{ $product->id }}" style="cursor:pointer">
-                                                    {{ $product->quick_pick ? 'Yes' : 'No' }}
-                                                </span>
-                                            </td>
+                                           
                                            
                                             <td>{{ $product->created_at ? $product->created_at->format('Y-m-d') : 'N/A' }}
                                             </td>
