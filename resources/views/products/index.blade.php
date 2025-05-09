@@ -46,7 +46,6 @@
                                         <th>Name</th>
                                         <th>Quick Pick</th>
                                         <th>Show in Category</th>
-
                                         <th>Status</th>
                                         <th>Description</th>
                                         <th>Barcode</th>
@@ -100,13 +99,6 @@
                                                     {{ $product->show_in_category ? 'Yes' : 'No' }}
                                                 </span>
                                             </td>
-
-                                            <td>
-                                                <span
-                                                    class="badge bg-{{ $product->suggested_addon ? 'success' : 'secondary' }}">
-                                                    {{ $product->suggested_addon ? 'Yes' : 'No' }}
-                                                </span>
-                                            </td>
                                             <td>
                                                 <span
                                                     class="badge status-toggle bg-{{ $product->status ? 'success' : 'danger' }}"
@@ -114,6 +106,8 @@
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
+                                            
+                                         
                                             <td>{{ Str::limit($product->description, 50) }}</td>
                                             <td>{{ $product->barcode }}</td>
                                             <td>{{ $product->account ?? 'N/A' }}</td>
@@ -129,7 +123,12 @@
                                             <td>{{ $product->discount }}</td>
                                             <td>{{ $product->organization_id ?? 'N/A' }}</td>
                                             <td>{{ $product->vendor->name ?? 'N/A' }}</td>
-                                           
+                                            <td>
+                                                <span
+                                                    class="badge bg-{{ $product->suggested_addon ? 'success' : 'secondary' }}">
+                                                    {{ $product->suggested_addon ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
                                            
                                             <td>{{ $product->created_at ? $product->created_at->format('Y-m-d') : 'N/A' }}
                                             </td>
