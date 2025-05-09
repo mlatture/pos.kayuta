@@ -44,6 +44,9 @@
                                         <th>Category</th>
                                         <th>Tax Type</th>
                                         <th>Name</th>
+                                        <th>Quick Pick</th>
+                                        <th>Show in Category</th>
+
                                         <th>Status</th>
                                         <th>Description</th>
                                         <th>Barcode</th>
@@ -58,6 +61,7 @@
                                         <th>Discount</th>
                                         <th>Organization</th>
                                         <th>Vendor</th>
+                                    
                                         <th>Suggested Addon</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
@@ -83,7 +87,23 @@
                                             <td>{{ $product->taxType->name ?? 'N/A' }}</td>
                                             <td>{{ $product->name }}</td>
                                             <td>
-                                                <span class="badge status-toggle bg-{{ $product->status ? 'success' : 'danger' }}" data-id={{ $product->id }} style="cursor:pointer">
+                                                <span
+                                                    class="badge show-category-toggle bg-{{ $product->show_in_category ? 'success' : 'secondary' }}"
+                                                    data-id="{{ $product->id }}" style="cursor:pointer">
+                                                    {{ $product->show_in_category ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span
+                                                    class="badge bg-{{ $product->suggested_addon ? 'success' : 'secondary' }}">
+                                                    {{ $product->suggested_addon ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    class="badge status-toggle bg-{{ $product->status ? 'success' : 'danger' }}"
+                                                    data-id={{ $product->id }} style="cursor:pointer">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
@@ -104,10 +124,12 @@
                                             <td>{{ $product->vendor->name ?? 'N/A' }}</td>
                                             <td>
                                                 <span
-                                                    class="badge bg-{{ $product->suggested_addon ? 'success' : 'secondary' }}">
-                                                    {{ $product->suggested_addon ? 'Yes' : 'No' }}
+                                                    class="badge quick-pick-toggle bg-{{ $product->quick_pick ? 'success' : 'secondary' }}"
+                                                    data-id="{{ $product->id }}" style="cursor:pointer">
+                                                    {{ $product->quick_pick ? 'Yes' : 'No' }}
                                                 </span>
                                             </td>
+                                           
                                             <td>{{ $product->created_at ? $product->created_at->format('Y-m-d') : 'N/A' }}
                                             </td>
                                             <td>{{ $product->updated_at ? $product->updated_at->format('Y-m-d') : 'N/A' }}
@@ -131,7 +153,6 @@
 @section('js')
     <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
-
         $(document).on('click', '.status-toggle', function() {
             const badge = $(this);
             const productId = badge.data('id');
@@ -147,7 +168,8 @@
                         const newStatus = response.status ? 'Active' : 'Inactive';
                         const newClass = response.status ? 'success' : 'danger';
 
-                        badge.removeClass('bg-success bg-danger').addClass(`bg-${newClass}`).text(newStatus);
+                        badge.removeClass('bg-success bg-danger').addClass(`bg-${newClass}`).text(
+                            newStatus);
                     }
                 },
                 error: function(xhr) {
@@ -210,6 +232,50 @@
                     }
                 })
             })
+        });
+
+        $(document).on('click', '.quick-pick-toggle', function() {
+            const badge = $(this);
+            const id = badge.data('id');
+
+            $.ajax({
+                url: `/admin/products/${id}/toggle-quick-pick`,
+                method: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    const status = response.quick_pick;
+                    const label = status ? 'Yes' : 'No';
+                    const color = status ? 'success' : 'secondary';
+                    badge.removeClass('bg-success bg-secondary').addClass(`bg-${color}`).text(label);
+                },
+                error: function() {
+                    alert('Failed to update Quick Pick.');
+                }
+            });
+        });
+
+        $(document).on('click', '.show-category-toggle', function() {
+            const badge = $(this);
+            const id = badge.data('id');
+
+            $.ajax({
+                url: `/admin/products/${id}/toggle-show-category`,
+                method: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    const status = response.show_in_category;
+                    const label = status ? 'Yes' : 'No';
+                    const color = status ? 'success' : 'secondary';
+                    badge.removeClass('bg-success bg-secondary').addClass(`bg-${color}`).text(label);
+                },
+                error: function() {
+                    alert('Failed to update Show in Category.');
+                }
+            });
         });
     </script>
 @endsection

@@ -25,10 +25,11 @@
                                         <th>Actions</th>
                                         <th>ID</th>
                                         <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Show in POS</th>
                                         <th>QuickBooks Account Name</th>
                                         <th>Account Type</th>
                                         <th>Notes</th>
-                                        <th>Status</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
                                     </tr>
@@ -49,13 +50,21 @@
                                             </td>
                                             <td>{{ $category->id }}</td>
                                             <td>{{ $category->name }}</td>
-                                            <td>{{ $category->quick_books_account_name }}</td>
-                                            <td>{{ $category->account_type }}</td>
-                                            <td>{{ $category->notes }}</td>
                                             <td>
                                                 <span
                                                     class="right badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span>
                                             </td>
+                                            <td>
+                                                <span
+                                                    class="badge show-in-pos-toggle bg-{{ $category->show_in_pos ? 'success' : 'secondary' }}"
+                                                    data-id="{{ $category->id }}" style="cursor:pointer">
+                                                    {{ $category->show_in_pos ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
+
+                                            <td>{{ $category->quick_books_account_name }}</td>
+                                            <td>{{ $category->account_type }}</td>
+                                            <td>{{ $category->notes }}</td>
                                             <td>{{ $category->created_at }}</td>
                                             <td>{{ $category->updated_at }}</td>
                                         </tr>
@@ -126,6 +135,29 @@
                     }
                 })
             })
-        })
+        });
+
+
+        $(document).on('click', '.show-in-pos-toggle', function() {
+            const badge = $(this);
+            const id = badge.data('id');
+
+            $.ajax({
+                url: `/admin/categories/${id}/toggle-show-in-pos`,
+                method: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    const status = response.show_in_pos;
+                    const label = status ? 'Yes' : 'No';
+                    const color = status ? 'success' : 'secondary';
+                    badge.removeClass('bg-success bg-secondary').addClass(`bg-${color}`).text(label);
+                },
+                error: function() {
+                    alert('Failed to update Show in POS.');
+                }
+            });
+        });
     </script>
 @endsection

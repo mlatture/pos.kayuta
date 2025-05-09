@@ -17,11 +17,11 @@ class ImageServiceProvider extends ServiceProvider
     {
         $this->app->singleton('image', function() {
             return new class {
-                public function resize($file, $width = 800, $height = 600)
+                public function resize($file, $width = 1000, $height = 600)
                 {
                     $imagine = new Imagine();
                     $image = $imagine->open($file);
-                    $image->resize(new Box(800, 600));
+                    $image->resize(new Box(1000, 600));
                     
                     return $image;
                 }

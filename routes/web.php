@@ -54,7 +54,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/products/update', [ProductController::class, 'update'])->name('products.update');
     Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
     Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggleStatus');
+    Route::patch('/products/{product}/toggle-quick-pick', [ProductController::class, 'toggleQuickPick']);
+    Route::patch('/products/{product}/toggle-show-category', [ProductController::class, 'toggleShowCategory']);
+
+
     Route::get('get-categories', [CategoryController::class, 'getAllCategories'])->name('category.all');
+    Route::patch('/categories/{category}/toggle-show-in-pos', [CategoryController::class, 'toggleShowInPOS']);
     Route::resource('sites', SiteController::class);
     Route::get('sites/add-image/{id}', [SiteController::class, 'addImage'])->name('sites.add-image');  
     Route::delete('/sites/{site}/images/{filename}', [SiteController::class, 'deleteImage'])->name('sites.delete.image');
@@ -198,7 +203,9 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
     Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
-    Route::get('business-settings/index', [BusinessSettingController::Class, 'index'])->name('admin.business-settings.index');
+    Route::get('business-settings/index', [BusinessSettingController::class, 'index'])->name('admin.business-settings.index');
+    Route::post('general-settings/update', [BusinessSettingController::class, 'generalUpdate'])->name('admin.general-settings.update');
+    Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');

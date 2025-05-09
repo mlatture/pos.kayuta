@@ -332,4 +332,25 @@ class ProductController extends Controller
 
         ]);
     }    
+    public function toggleQuickPick(Product $product)
+    {
+        $product->quick_pick = !$product->quick_pick;
+        $product->save();
+
+        return response()->json([
+            'success' => true, 
+            'quick_pick' => $product->quick_pick
+        ]);
+    }
+
+    public function toggleShowCategory(Product $product)
+    {
+        $product->show_in_category = !$product->show_in_category;
+        $product->save();
+
+        return response()->json([
+            'success' => true,
+            'show_in_category' => $product->show_in_category
+        ]);
+    }
 }

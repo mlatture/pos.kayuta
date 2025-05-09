@@ -10,7 +10,7 @@ class Product extends Model
 {
     protected $guarded = [];
 
-    protected $fillable = ['suggested_addon', 'category_id', 'tax_type_id', 'name', 'description', 'image', 'barcode', 'price', 'quantity', 'discount_type', 'discount', 'status', 'product_vendoer_id', 'cost', 'dni', 'last_checked_date', 'category', 'account', 'markup', 'profit'];
+    protected $fillable = ['suggested_addon', 'category_id', 'tax_type_id', 'name', 'description', 'image', 'barcode', 'price', 'quantity', 'discount_type', 'discount', 'status', 'product_vendoer_id', 'cost', 'dni', 'last_checked_date', 'category', 'account', 'markup', 'profit', 'quick_pick', 'show_in_category'];
 
     public function taxType()
     {

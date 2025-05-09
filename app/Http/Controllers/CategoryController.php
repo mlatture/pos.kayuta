@@ -148,4 +148,16 @@ class CategoryController extends Controller
             'success' => true
         ]);
     }
+    
+    public function toggleShowInPOS(Category $category)
+    {
+        
+        $category->show_in_pos = !$category->show_in_pos;
+        $category->save();
+
+        return response()->json([
+            'success' => true,
+            'show_in_pos' => $category->show_in_pos
+        ]);
+    }
 }

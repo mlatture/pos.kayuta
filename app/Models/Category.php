@@ -17,6 +17,7 @@ class Category extends Model
         'quick_books_account_name',
         'account_type',
         'notes',
-        'status'  
+        'status',
+        'show_in_pos'
     ];
 }

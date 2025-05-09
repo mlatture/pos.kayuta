@@ -201,54 +201,42 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on("click", ".category-item", function (e) {
-        e.preventDefault();
-        var category_id = $(this).data("id");
-        console.log(category_id);
-
+    $(document).on("change", "#categoryDropdown", function () {
+        var category_id = $(this).val(); // selected value
+        if (!category_id) {
+            $("#category-products").html('');
+            return;
+        }
+    
         $.ajax({
             url: cartCategoryUrl,
             type: "GET",
+            data: { category_id: category_id },
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
-            data: {
-                category_id: category_id,
-            },
             success: function (response) {
                 let products = response.data;
-
                 let html = "";
-
+    
                 if (products.length > 0) {
-                    html += '<div class="row">';
-
                     $.each(products, function (key, val) {
-                        if (val.quantity <= 0) {
-                            return true;
-                        } else {
-                        }
-                        let truncatedName =
-                            val.name.length > 10
-                                ? val.name.substring(0, 10) + "..."
-                                : val.name;
-
-                        let imagePath = `/images/products/${val.image}`;
+                        if (!val.show_in_category || val.quantity <= 0) return;
+    
+                        let truncatedName = val.name.length > 10
+                            ? val.name.substring(0, 10) + "..."
+                            : val.name;
+    
+                        let imagePath = `/storage/products/${val.image}`;
                         let fallbackImageUrl = "/images/product-thumbnail.jpg";
-                        let imageUrl = imagePath;
-
+    
                         html += `<div class="col-md-3">
-                            <div class="card product-item" data-barcode="${
-                                val.barcode
-                            }" data-id="${
-                            val.id
-                        }" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="Product Name: ${
-                            val.name
-                        }">
+                            <div class="card product-item" data-barcode="${val.barcode}" data-id="${val.id}" title="Product Name: ${val.name}">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                     ${val.quantity < 0 ? 0 : val.quantity}
                                 </span>
-                                <img src="${imageUrl}" class="rounded mx-auto d-block img-fluid" alt="Product Image" onError="this.onerror=null; this.src='${fallbackImageUrl}';">
+                                <img src="${imagePath}" class="rounded mx-auto d-block img-fluid"
+                                    onerror="this.onerror=null; this.src='${fallbackImageUrl}';">
                                 <div class="card-body">
                                     <div class="btn-products-container">
                                         <p class="card-text">${truncatedName}</p>
@@ -257,67 +245,30 @@ $(document).ready(function () {
                             </div>
                         </div>`;
                     });
-
-                    html += "</div>";
-
-                    $(".category-section").html(html);
                 } else {
-                    html = `<div class="col-md-6">
-                                <h2 class="font-weight-lighter">
-                                    No Products
-                                </h2>
+                    html = `<div class="col-md-6 text-muted">
+                                <h5>No Products</h5>
                             </div>`;
-                    $(".category-section").html(html);
                 }
-
+    
+                $("#category-products").html(html);
                 $('[data-bs-toggle="tooltip"]').tooltip();
             },
-
             error: function (reject) {
-                if (reject.status === 422) {
-                    var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function (key, val) {
-                        $.toast({
-                            heading: "Error",
-                            text: val,
-                            position: "top-right",
-                            loaderBg: "#a94442",
-                            icon: "error",
-                            hideAfter: 4000,
-                            stack: 6,
-                        });
-                    });
-                }
-                if (reject.status === 401) {
-                    var errors = $.parseJSON(reject.responseText);
-                    $.toast({
-                        heading: "Error",
-                        text: errors.message,
-                        position: "top-right",
-                        loaderBg: "#a94442",
-                        icon: "error",
-                        hideAfter: 4000,
-                        stack: 6,
-                    });
-                }
-
-                if (reject.status === 400) {
-                    var errors = $.parseJSON(reject.responseText);
-                    $.each(errors.errors, function (key, val) {
-                        $.toast({
-                            heading: "Error",
-                            text: val,
-                            position: "top-right",
-                            loaderBg: "#a94442",
-                            icon: "error",
-                            hideAfter: 4000,
-                            stack: 6,
-                        });
-                    });
-                }
+                let message = reject.responseJSON?.message ?? "Error occurred.";
+                $.toast({
+                    heading: "Error",
+                    text: message,
+                    position: "top-right",
+                    loaderBg: "#a94442",
+                    icon: "error",
+                    hideAfter: 4000,
+                    stack: 6,
+                });
             },
         });
     });
+    
 
     $("#search-product").on("input", function () {
         let searchTerm = $(this).val();
