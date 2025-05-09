@@ -9,7 +9,7 @@ class BusinessSettings extends Model
 {
     use HasFactory;
 
-    protected $table = 'business_Settings';
+    protected $table = 'business_settings';
     protected $fillable = [
         'type',
         'value'
