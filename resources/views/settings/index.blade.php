@@ -2,7 +2,15 @@
 
 @section('title', 'Business Settings')
 @section('content-header', 'Business Settings')
+<style>
+    .preview-image {
+        display: block;
+        margin: 0 auto;
+        max-width: 100px;
+        border: none !important;
+    }
 
+</style>
 @section('content')
     <div class="card">
         <ul class="nav nav-tabs">
@@ -156,7 +164,7 @@
                                 <input type="file" class="form-control" name="company_web_logo">
                                 @if (!empty($settings['company_web_logo']))
                                     <img src="{{ asset('storage/company/' . $settings['company_web_logo']) }}" alt="Header Logo"
-                                        class="img-thumbnail mt-2" width="100">
+                                        class="preview-image mt-2" width="100">
                                 @endif
                             </div>
                         </div>
@@ -173,7 +181,7 @@
                                 <input type="file" class="form-control" name="company_footer_logo">
                                 @if (!empty($settings['company_footer_logo']))
                                     <img src="{{ asset('storage/company/' . $settings['company_footer_logo']) }}"
-                                        alt="Footer Logo" class="img-thumbnail mt-2" width="100">
+                                        alt="Footer Logo" class="preview-image mt-2" width="100">
                                 @endif
                             </div>
                         </div>
@@ -193,7 +201,7 @@
                                 <input type="file" class="form-control" name="company_fav_icon">
                                 @if (!empty($settings['company_fav_icon']))
                                     <img src="{{ asset('storage/company/' . $settings['company_fav_icon']) }}" alt="Favicon"
-                                        class="img-thumbnail mt-2" width="100">
+                                        class="preview-image mt-2" width="100">
                                 @endif
                             </div>
                         </div>
@@ -210,7 +218,7 @@
                                 <input type="file" class="form-control" name="loader_gif">
                                 @if (!empty($settings['loader_gif']))
                                     <img src="{{ asset('storage/company/' . $settings['loader_gif']) }}" alt="Loading Gif"
-                                        class="img-thumbnail mt-2" width="100">
+                                        class="preview-image mt-2" width="100">
                                 @endif
                             </div>
                         </div>
@@ -226,7 +234,7 @@
                                 <input type="file" class="form-control" name="company_mobile_logo">
                                 @if (!empty($settings['company_mobile_logo']))
                                     <img src="{{ asset('storage/company/' . $settings['company_mobile_logo']) }}"
-                                        alt="Mobile Logo" class="img-thumbnail mt-2" width="100">
+                                        alt="Mobile Logo" class="preview-image mt-2" width="100">
                                 @endif
                             </div>
                         </div>
