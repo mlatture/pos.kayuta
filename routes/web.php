@@ -31,6 +31,7 @@ use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\CartReservationController;
 use App\Http\Controllers\RateTierController;
 use App\Http\Controllers\AddOnsController;
+use App\Http\Controllers\BusinessSettingController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -197,7 +198,7 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
 
     Route::get('whitelist', [DynamicTableController::class, 'whitelist'])->name('admin.whitelist');
     Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
-    
+    Route::get('business-settings/index', [BusinessSettingController::Class, 'index'])->name('admin.business-settings.index');
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');

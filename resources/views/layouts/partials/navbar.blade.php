@@ -165,7 +165,7 @@
                             <span>Sites / Rate Tier / Add Ons</span>
                         </a></li>
                 @endHasPermission
-              
+
             </ul>
 
         </li>
@@ -258,6 +258,13 @@
                             <span>Reservation in Cart</span>
                         </a></li>
                 @endHasPermission
+
+                @hasPermission(config('constants.role_modules.business_settings.value'))
+                    <li><a class="dropdown-item" href="{{ route('admin.business-settings.index') }}">
+                            <i class="fa-solid fa-bars-progress"></i> <span>Business Settings</span>
+                        </a></li>
+                @endHasPermission
+
 
             </ul>
         </li>

@@ -205,6 +205,12 @@ return [
         'reservation_in_cart' => [
             'name' => 'Reservation in Cart',
             'value' => 'reservation_in_cart'
+        ],
+        'business_settings' => [
+            'name' => 'Business Settings',
+            'value' => 'business_settings'
         ]
+
+
     ]
 ];
