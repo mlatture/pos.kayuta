@@ -20,9 +20,9 @@
             <li class="nav-item">
                 <a class="nav-link active text-dark" id="general-tab" data-bs-toggle="tab" href="#general" role="tab">General</a>
             </li>
-            <li class="nav-item">
+            {{-- <li class="nav-item">
                 <a class="nav-link text-dark" id="cookie-tab" data-bs-toggle="tab" href="#cookie" role="tab">Cookie Settings</a>
-            </li>
+            </li> --}}
             <li class="nav-item">
                 <a class="nav-link text-dark" id="search-tab" data-bs-toggle="tab" href="#search" role="tab">Search Settings</a>
             </li>
@@ -41,7 +41,7 @@
 
         <div class="card-body tab-content" style="max-height: 75vh; overflow-y: auto;">
             @include('settings.components.general')
-            @include('settings.components.cookie')
+            {{-- @include('settings.components.cookie') --}}
             @include('settings.components.search')
             @include('settings.components.cart')
             {{-- @include('settings.components.email-templates') --}}

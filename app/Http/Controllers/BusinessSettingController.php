@@ -11,22 +11,22 @@ class BusinessSettingController extends Controller
 
     public function index()
     {
-        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cookie_setting', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN'];
+        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon',  'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN'];
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
         $settings = $rawSettings->toArray();
-        
+
         $location = json_decode($settings['default_location'] ?? '{}', true);
         $colors = json_decode($settings['colors'] ?? '{}', true);
-        $cookie = json_decode($settings['cookie_setting'] ?? '{}', true);
+        // $cookie = json_decode($settings['cookie_setting'] ?? '{}', true);
 
         $settings['latitude'] = $location['lat'] ?? '';
         $settings['longitude'] = $location['lng'] ?? '';
         $settings['primaryColor'] = $colors['primary'] ?? '';
         $settings['secondaryColor'] = $colors['secondary'] ?? '';
-        $settings['cookie_status'] = $cookie['status'] ?? 0;
-        $settings['cookie_text'] = $cookie['cookie_text'] ?? '';
+        // $settings['cookie_status'] = $cookie['status'] ?? 0;
+        // $settings['cookie_text'] = $cookie['cookie_text'] ?? '';
 
         $settingsKeys2 = ['is_grid_view', 'golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show'];
 
