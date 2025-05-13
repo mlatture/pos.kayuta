@@ -2,9 +2,10 @@
     <form method="POST" action="{{ route('admin.general-settings.update') }}" enctype="multipart/form-data">
         @csrf
         <div class="card mb-4">
+
             @php
                 $maintenance = $settings['maintenance_mode'] ?? false;
-
+                dd($settings); die();
             @endphp
             <div class="card-body rounded  d-flex justify-content-between align-items-center"
                 style="padding: 1.25rem; border: 1px solid {{ $settings['primaryColor'] }}">
