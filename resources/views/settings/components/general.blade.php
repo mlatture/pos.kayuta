@@ -236,6 +236,33 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fab fa-facebook"></i> Facebook Pixel
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Set your Facebook pixel ID here. Don't forget to also set the Facebook Authorization token.
+                    </p>
+
+                    @php
+                        $fbPixelId = $settings['FB_PIXEL_ID'] ?? '';
+                        $fbAccToken = $settings['FB_ACCESS_TOKEN'] ?? '';
+                    @endphp
+
+                    <div class="mb-3">
+                        <label for="fb_pixel_id" class="form-label">Facebook Pixel ID</label>
+                        <input type="text" name="FB_PIXEL_ID" id="fb_pixel_id" class="form-control"
+                            value="{{ old('FB_PIXEL_ID', $fbPixelId) }}" placeholder="Enter Facebook Pixel ID">
+
+                        <label for="fb_access_token" class="form-label mt-2">Facebook Access Token</label>
+                        <input type="text" name="FB_ACCESS_TOKEN" id="fb_access_token" class="form-control"
+                            value="{{ old('FB_ACCESS_TOKEN', $fbAccToken) }}" placeholder="Enter Facebook Access Token">
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <button type="submit" class="btn btn-primary float-end">Save Settings</button>

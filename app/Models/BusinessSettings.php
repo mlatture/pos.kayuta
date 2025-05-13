@@ -16,6 +16,8 @@ class BusinessSettings extends Model
         'value'
     ];
 
+    
+
     public static function set($key, $value)
     {
         if (is_null($value)) return;

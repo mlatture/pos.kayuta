@@ -23,15 +23,15 @@
             <li class="nav-item">
                 <a class="nav-link text-dark" id="cookie-tab" data-bs-toggle="tab" href="#cookie" role="tab">Cookie Settings</a>
             </li>
-            {{-- <li class="nav-item">
+            <li class="nav-item">
                 <a class="nav-link text-dark" id="search-tab" data-bs-toggle="tab" href="#search" role="tab">Search Settings</a>
-            </li> --}}
+            </li>
             <li class="nav-item">
                 <a class="nav-link text-dark" id="cart-tab" data-bs-toggle="tab" href="#cart" role="tab">Cart Settings</a>
             </li>
-            <li class="nav-item">
+            {{-- <li class="nav-item">
                 <a class="nav-link text-dark" id="email-tab" data-bs-toggle="tab" href="#email" role="tab">Email Templates</a>
-            </li>
+            </li> --}}
             <li class="nav-item">
                 <a class="nav-link text-dark" id="pricing-tab" data-bs-toggle="tab" href="#pricing" role="tab">Use Dynamic
                     Pricing</a>
@@ -42,9 +42,9 @@
         <div class="card-body tab-content" style="max-height: 75vh; overflow-y: auto;">
             @include('settings.components.general')
             @include('settings.components.cookie')
-            {{-- @include('settings.components.search') --}}
+            @include('settings.components.search')
             @include('settings.components.cart')
-            @include('settings.components.email-templates')
+            {{-- @include('settings.components.email-templates') --}}
             @include('settings.components.use-dynamic-pricing')
 
         </div>

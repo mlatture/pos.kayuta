@@ -205,6 +205,9 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
     Route::post('/admin/update-column-order', [DynamicTableController::class, 'updateColumnOrder'])->name('admin.update-column-order');
     Route::get('business-settings/index', [BusinessSettingController::class, 'index'])->name('admin.business-settings.index');
     Route::post('general-settings/update', [BusinessSettingController::class, 'generalUpdate'])->name('admin.general-settings.update');
+    Route::post('search-settings/update', [BusinessSettingController::class, 'searchUpdate'])->name('admin.search-settings.update');
+    Route::post('cart-settings/update', [BusinessSettingController::class, 'cartUpdate'])->name('admin.cart-settings.update');
+    Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
     Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');

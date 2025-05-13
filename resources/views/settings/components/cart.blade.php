@@ -1,220 +1,66 @@
 <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="cart-tab">
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('admin.cart-settings.update') }}" enctype="multipart/form-data">
         @csrf
 
-        {{-- Company Information --}}
         <div class="card mb-4">
             <div class="card-header">
-                <i class="fa-solid fa-building"></i> Company Information
+                <i class="fa-solid fa-puzzle-piece"></i> Addons Listing
             </div>
             <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Company Name</label>
-                        <input type="text" class="form-control" name="company_name"
-                            value="{{ $settings['company_name'] ?? '' }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Phone</label>
-                        <input type="text" class="form-control" name="company_phone"
-                            value="{{ $settings['company_phone'] ?? '' }}">
-                    </div>
-                </div>
+                <p><strong>Shopping Cart timeout in minutes</strong> (you can update the cart timer on the cart page of
+                    the frontend)</p>
+
+
+                @php
+                    $selectedTime = $settings['cart_hold_time'] ?? 15;
+                @endphp
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label>Email</label>
-                        <input type="email" class="form-control" name="company_email"
-                            value="{{ $settings['company_email'] ?? '' }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Company Address</label>
-                        <input type="text" class="form-control" name="company_address"
-                            value="{{ $settings['company_address'] ?? '' }}">
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Map URL</label>
-                        <input type="text" class="form-control" name="map_url"
-                            value="{{ $settings['map_url'] ?? '' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Latitude</label>
-                        <input type="text" class="form-control" name="latitude"
-                            value="{{ $settings['latitude'] ?? '' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Longitude</label>
-                        <input type="text" class="form-control" name="longitude"
-                            value="{{ $settings['longitude'] ?? '' }}">
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Time Zone</label>
-                        <select name="timezone" class="form-select">
-                            <option value="US/Eastern"
-                                {{ ($settings['timezone'] ?? '') == 'US/Eastern' ? 'selected' : '' }}>
-                                (GMT-05:00) Eastern Time
-                            </option>
+                        <label>Select Cart Timer</label>
+                        <select name="cart_hold_time" class="form-select">
+                            <option value="15" {{ $selectedTime == 15 ? 'selected' : '' }}>15 Minutes</option>
+                            <option value="30" {{ $selectedTime == 30 ? 'selected' : '' }}>30 Minutes</option>
+                            <option value="60" {{ $selectedTime == 60 ? 'selected' : '' }}>60 Minutes</option>
+                            <option value="120" {{ $selectedTime == 120 ? 'selected' : '' }}>120 Minutes</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label>Country</label>
-                        <input type="text" class="form-control" name="country"
-                            value="{{ $settings['country'] ?? 'United States' }}">
-                    </div>
                 </div>
+
+                <p><strong>Toggle the options below to show or hide specific listing</strong></p>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="golfToggle" name="golf_listing"
+                    {{ $settings2['golf_listing_show'] == '1' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="golfToggle">Enable Golf Cart Suggestion</label>
+
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="gridViewToggle" name="boat_listing"
+                    {{ $settings2['boat_listing_show'] == '1' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="gridViewToggle">Enable Boat Slip Suggestion</label>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="gridViewToggle" name="pool_listing"
+                    {{ $settings2['pool_listing_show'] == '1' ? 'checked' : '' }}
+                    <label class="form-check-label" for="gridViewToggle">Enable Pool Cabana Suggestion</label>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="gridViewToggle" name="product_listing"
+                    {{ $settings2['product_listing_show'] == '1' ? 'checked' : '' }}
+                    <label class="form-check-label" for="gridViewToggle">Enable Suggested Product</label>
+                </div>
+
+
+
+
             </div>
         </div>
 
-        {{-- Business Information --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fa-solid fa-briefcase"></i> Business Information
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Company Copyright Text</label>
-                        <input type="text" class="form-control" name="company_copyright_text"
-                            value="{{ $settings['company_copyright_text'] ?? '' }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label>Digit After Decimal Point (Ex: 0.00)</label>
-                        <input type="text" class="form-control" name="decimal_point_settings"
-                            value="{{ $settings['decimal_point_settings'] ?? '' }}">
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        {{-- Website Color and Logos in Grid --}}
-        <div class="d-grid gap-3 mb-4" style="grid-template-columns: repeat(3, 1fr);">
-            {{-- Website Color --}}
-            <div class="card h-100">
-                <div class="card-header">
-                    <i class="fa-solid fa-palette"></i> Website Color
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <label class="fw-semibold">Primary Color</label>
-                            <div class="d-flex flex-column align-items-center mt-2">
-                                <input type="color" name="primaryColor"
-                                    value="{{ $settings['primaryColor'] ?? '#1b7fed' }}"
-                                    class="border-0 rounded shadow-sm"
-                                    style="width: 80px; height: 80px; cursor: pointer;">
-                                <span
-                                    class="mt-2 text-muted small">{{ $settings['primaryColor'] ?? '#1b7fed' }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <label class="fw-semibold">Secondary Color</label>
-                            <div class="d-flex flex-column align-items-center mt-2">
-                                <input type="color" name="secondaryColor"
-                                    value="{{ $settings['secondaryColor'] ?? '#000000' }}"
-                                    class="border-0 rounded shadow-sm"
-                                    style="width: 80px; height: 80px; cursor: pointer;">
-                                <span
-                                    class="mt-2 text-muted small">{{ $settings['secondaryColor'] ?? '#000000' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            {{-- Header Logo --}}
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-image"></i> Website Header Logo
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label>Upload Header Logo</label>
-                        <input type="file" class="form-control" name="company_web_logo">
-                        @if (!empty($settings['company_web_logo']))
-                            <img src="{{ asset('storage/company/' . $settings['company_web_logo']) }}"
-                                alt="Header Logo" class="preview-image mt-2" width="100">
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- Footer Logo --}}
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-image"></i> Website Footer Logo
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label>Upload Footer Logo</label>
-                        <input type="file" class="form-control" name="company_footer_logo">
-                        @if (!empty($settings['company_footer_logo']))
-                            <img src="{{ asset('storage/company/' . $settings['company_footer_logo']) }}"
-                                alt="Footer Logo" class="preview-image mt-2" width="100">
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Website Favicon, Loading Gif, App Logo  --}}
-        <div class="d-grid gap-3 mb-4" style="grid-template-columns: repeat(3, 1fr);">
-            {{-- Website Favicon --}}
-            <div class="card h-100">
-                <div class="card-header">
-                    <i class="fa-solid fa-image"></i> Website Favicon
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label>Upload Favicon</label>
-                        <input type="file" class="form-control" name="company_fav_icon">
-                        @if (!empty($settings['company_fav_icon']))
-                            <img src="{{ asset('storage/company/' . $settings['company_fav_icon']) }}"
-                                alt="Favicon" class="preview-image mt-2" width="100">
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-image"></i> Loading Gif
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label>Upload Gif</label>
-                        <input type="file" class="form-control" name="loader_gif">
-                        @if (!empty($settings['loader_gif']))
-                            <img src="{{ asset('storage/company/' . $settings['loader_gif']) }}"
-                                alt="Loading Gif" class="preview-image mt-2" width="100">
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-image"></i> App Logo
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label>Upload App Logo</label>
-                        <input type="file" class="form-control" name="company_mobile_logo">
-                        @if (!empty($settings['company_mobile_logo']))
-                            <img src="{{ asset('storage/company/' . $settings['company_mobile_logo']) }}"
-                                alt="Mobile Logo" class="preview-image mt-2" width="100">
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <button type="submit" class="btn btn-primary float-end">Save Settings</button>
     </form>
