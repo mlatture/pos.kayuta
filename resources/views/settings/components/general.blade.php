@@ -1,28 +1,30 @@
 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-    <form method="POST" action="{{ route('admin.general-settings.update') }}" enctype="multipart/form-data">
-        @csrf
-        <div class="card mb-4">
+    <div class="card mb-4">
 
-            @php
-                $maintenance = $settings['maintenance_mode'] ?? false;
-                // dd($settings); die();
-            @endphp
-            <div class="card-body rounded  d-flex justify-content-between align-items-center"
-                style="padding: 1.25rem; border: 1px solid {{ $settings['primaryColor'] }}">
-                <div>
-                    <h5 class="mb-1">Maintenance mode</h5>
-                    <small class="text-muted">
-                        *By turning on maintenance mode, all your app and customer-facing website will be disabled.
-                        Only the admin and seller panels will remain functional.
-                    </small>
-                </div>
+        @php
+            $maintenance = $settings['maintenance_mode'] ?? false;
+        @endphp
+        <div class="card-body rounded  d-flex justify-content-between align-items-center"
+            style="padding: 1.25rem; border: 1px solid {{ $settings['primaryColor'] }}">
+            <div>
+                <h5 class="mb-1">Maintenance mode</h5>
+                <small class="text-muted">
+                    *By turning on maintenance mode, all your app and customer-facing website will be disabled.
+                    Only the admin and seller panels will remain functional.
+                </small>
+            </div>
 
-                <div class="form-check form-switch" style="margin-left: auto;">
-                    <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode"
-                        value="1" {{ $maintenance ? 'checked' : '' }}>
-                </div>
+            <div class="form-check form-switch" style="margin-left: auto;">
+                <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode"
+                value="1" data-url="{{ route('admin.settings.toggle-maintenance') }}"
+                {{ $maintenance ? 'checked' : '' }}>
+            
             </div>
         </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.general-settings.update') }}" enctype="multipart/form-data">
+        @csrf
 
         {{-- Company Information --}}
         <div class="card mb-4">
@@ -259,7 +261,8 @@
 
                         <label for="fb_access_token" class="form-label mt-2">Facebook Access Token</label>
                         <input type="text" name="FB_ACCESS_TOKEN" id="fb_access_token" class="form-control"
-                            value="{{ old('FB_ACCESS_TOKEN', $fbAccToken) }}" placeholder="Enter Facebook Access Token">
+                            value="{{ old('FB_ACCESS_TOKEN', $fbAccToken) }}"
+                            placeholder="Enter Facebook Access Token">
                     </div>
                 </div>
             </div>
@@ -269,3 +272,39 @@
         <button type="submit" class="btn btn-primary float-end">Save Settings</button>
     </form>
 </div>
+
+@push('js')
+<script>
+    $(document).ready(function () {
+        $('#maintenance_mode').on('change', function () {
+            const isEnabled = $(this).is(':checked') ? 1 : 0;
+            const url = $(this).data('url');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    maintenance_mode: isEnabled,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    if (response.success) {
+                        console.log('Maintenance mode updated');
+                        toastr.options = {
+                            "positionClass": "toast-bottom-left",
+                            "timeOut": 3000,
+                        };
+                        toastr.success('Maintenance mode has been updated.');
+                    } else {
+                        alert('Failed to update setting');
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error:', xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+@endpush
+

@@ -209,6 +209,8 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
     Route::post('cart-settings/update', [BusinessSettingController::class, 'cartUpdate'])->name('admin.cart-settings.update');
     Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
     Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
+    Route::post('settings/toggle-maintenance', [BusinessSettingController::class, 'toggleMaintenance'])
+    ->name('admin.settings.toggle-maintenance');
     Route::controller(DynamicTableController::class)->group(static function() {
         Route::get('edit-table/{table}', 'edit_table')->name('admin.edit-table');
         Route::put('edit-table/{table}', 'update_table')->name('admin.update-table');

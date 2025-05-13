@@ -11,7 +11,7 @@ class BusinessSettingController extends Controller
 
     public function index()
     {
-        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon',  'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN'];
+        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN'];
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
@@ -120,5 +120,14 @@ class BusinessSettingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Cart Settings updated Successfully.');
+    }
+
+    public function toggleMaintenance(Request $request)
+    {
+        $enabled = $request->input('maintenance_mode') == 1 ? '1' : '0';
+
+        BusinessSettings::set('maintenance_mode', $enabled);
+
+        return response()->json(['success' => true]);
     }
 }
