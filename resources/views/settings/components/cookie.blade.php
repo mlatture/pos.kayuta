@@ -12,7 +12,7 @@
                     <input class="form-check-input" type="checkbox" role="switch" id="cookieToggle"
                         name="enable_cookies" {{ $settings['cookie_status'] == 1 ? 'checked' : '' }}>
                     <label class="form-check-label"
-                        for="cookieToggle">{{ $settings['cookie_status'] ?? false ? 'Disable' : 'Enable' }} </label>
+                        for="cookieToggle">{{ $settings['cookie_status'] == 1 ? 'Disable' : 'Enable' }} </label>
                 </div>
             </div>
 
