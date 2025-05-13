@@ -15,42 +15,31 @@ class BusinessSettingController extends Controller
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
-      
         $settings = $rawSettings->toArray();
-        if (isset($settings['default_location']) && isset($settings['colors'])) {
-            $location = json_decode($settings['default_location'], true);
-            $colors = json_decode($settings['colors'], true);
-            $cookie = json_decode($settings['cookie_setting'], true);
-            $settings['latitude'] = $location['lat'] ?? '';
-            $settings['longitude'] = $location['lng'] ?? '';
-
-            $settings['primaryColor'] = $colors['primary'] ?? '';
-            $settings['secondaryColor'] = $colors['secondary'] ?? '';
-
-            $settings['cookie_status'] = $cookie['status'] ?? 0;
-            $settings['cookie_text'] = $cookie['cookie_text'] ?? '';
-        }
-
-        $settingsKeys2 = [
-            'is_grid_view',
-            'golf_listing_show',
-            'boat_listing_show',
-            'pool_listing_show',
-            'product_listing_show'
-        ];
         
-        
+        $location = json_decode($settings['default_location'] ?? '{}', true);
+        $colors = json_decode($settings['colors'] ?? '{}', true);
+        $cookie = json_decode($settings['cookie_setting'] ?? '{}', true);
+
+        $settings['latitude'] = $location['lat'] ?? '';
+        $settings['longitude'] = $location['lng'] ?? '';
+        $settings['primaryColor'] = $colors['primary'] ?? '';
+        $settings['secondaryColor'] = $colors['secondary'] ?? '';
+        $settings['cookie_status'] = $cookie['status'] ?? 0;
+        $settings['cookie_text'] = $cookie['cookie_text'] ?? '';
+
+        $settingsKeys2 = ['is_grid_view', 'golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show'];
+
         $rawSettings = Setting::whereIn('key', $settingsKeys2)->get();
 
         $settings2 = [];
 
-        
         foreach ($rawSettings as $row) {
             $key = $row->key;
-        
+
             $settings2[$key] = $row->$key ?? null;
-        };
-        
+        }
+
         return view('settings.index', compact('settings', 'settings2'));
     }
 
@@ -120,7 +109,6 @@ class BusinessSettingController extends Controller
             'boat_listing_show' => 'boat_listing',
             'pool_listing_show' => 'pool_listing',
             'product_listing_show' => 'product_listing',
-    
         ];
 
         foreach ($toggles as $dbColumn => $inputName) {
@@ -128,9 +116,7 @@ class BusinessSettingController extends Controller
             if ($setting) {
                 $setting->$dbColumn = $request->has($inputName) ? 1 : 0;
                 $setting->save();
-            }            
-
-
+            }
         }
 
         return redirect()->back()->with('success', 'Cart Settings updated Successfully.');
