@@ -17,7 +17,7 @@ class BusinessSettingController extends Controller
 
       
         $settings = $rawSettings->toArray();
-        if (isset($settings['default_location']) && isset($settings['colors']) && isset($settings['cookie_setting'])) {
+        if (isset($settings['default_location']) && isset($settings['colors'])) {
             $location = json_decode($settings['default_location'], true);
             $colors = json_decode($settings['colors'], true);
             $cookie = json_decode($settings['cookie_setting'], true);

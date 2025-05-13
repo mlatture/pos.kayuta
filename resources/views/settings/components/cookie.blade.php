@@ -2,7 +2,6 @@
     <form method="POST" action="{{ route('admin.cookie-settings.update') }}" enctype="multipart/form-data">
         @csrf
 
-        {{-- Company Information --}}
         <div class="card mb-4" style="max-width: 20vw">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>

@@ -5,7 +5,7 @@
         {{-- Company Information --}}
         <div class="card mb-4">
             <div class="card-header">
-                <i class="fa-solid fa-building"></i> Company Information
+                <i class="fa-solid fa-building"></i> Dynamic Pricing
             </div>
             <div class="card-body">
                 <p><strong>If Dynamic Pricing is off, it will not use api of dynamic pricing on site detail page</strong></p>
