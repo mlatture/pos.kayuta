@@ -195,7 +195,7 @@ class ProductController extends Controller
         $product = Product::findOrFail($request->id);
 
         $request->validate([
-            'name' => 'required|string|max:15',
+            'name' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
