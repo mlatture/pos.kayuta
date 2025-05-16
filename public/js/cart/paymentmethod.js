@@ -744,13 +744,23 @@ $(document).ready(function () {
     $("#remainingBalance").text(totalAmount.toFixed(2));
 
     if (!$('#paymentHistory').length) {
-        $("#offcanvasOrder .offcanvas-body").append(`
-            <div id="paymentHistory" class="mt-3">
-                <h6>Payments Made</h6>
-                <ul class="list-group" id="paymentList"></ul>
+        const paymentHtml = `
+            <div id="paymentHistory" class="col-sm-12 border-top">
+                <div class="row pt-2">
+                    <div class="col-6">
+                        <p><b>Payments Made</b></p>
+                    </div>
+                    <div class="col-6">
+                        <ul class="list-group mb-0" id="paymentList"></ul>
+                    </div>
+                </div>
             </div>
-        `);
+        `;
+    
+        // Insert after the "Total" row
+        $("#displayTotalAmount").closest('.col-sm-12').after(paymentHtml);
     }
+    
 });
 
 
