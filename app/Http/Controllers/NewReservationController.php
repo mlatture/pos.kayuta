@@ -31,8 +31,8 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Models\AccountCredit;
 use App\Models\Refund;
 use App\Mail\ReservationCancelled;
+use App\Models\BusinessSettings;
 use Illuminate\Support\Facades\Mail;
-
 
 class NewReservationController extends Controller
 {
@@ -988,12 +988,16 @@ class NewReservationController extends Controller
             'gift_card_code' => 'nullable|string',
         ]);
 
+        $business_settings = BusinessSettings::where('type', 'cancellation')->first();
+        $cancellation = $business_settings ? json_decode($business_settings->value, true) : [];
+
+        
         $cartid = $request->cartid;
         $refundMethod = $request->refund_method;
         $reason = $request->reason;
         $applyFee = $request->apply_fee;
-        $cancellationFeeRate = $applyFee ? 0.15 : 0.0;
-        
+        $cancellationFeeRate = $applyFee && isset($cancellation['cancellation_fee']) ? floatval($cancellation['cancellation_fee']) / 100 : 0.0;
+
         $customerNumber = Reservation::where('cartid', $cartid)->value('customernumber');
         $userEmail = User::where('id', $customerNumber)->value('email');
 
@@ -1016,7 +1020,6 @@ class NewReservationController extends Controller
                     'xRefNum' => $payment->x_ref_num,
                     'xAmount' => $refundedAmount,
                     'xAllowDuplicate' => 'true',
-
                 ];
 
                 $response = Http::asForm()->post('https://x1.cardknox.com/gateway', $payload);
@@ -1074,13 +1077,11 @@ class NewReservationController extends Controller
             ]);
         }
 
-
         try {
             Mail::to($userEmail)->send(new ReservationCancelled($cartid, $request->sites, $refundMethod));
         } catch (\Exception $e) {
             Log::error('Mail sending failed: ' . $e->getMessage());
         }
-        
 
         return response()->json(['message' => 'Refund processed successfully.']);
     }

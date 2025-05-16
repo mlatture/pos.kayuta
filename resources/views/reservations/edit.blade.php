@@ -434,7 +434,7 @@
                                 $subtotal += $reservation->base;
                             }
 
-                            $cancellationFee = $reservation->payment->payment * 0.15;
+                            $cancellationFee = $reservation->payment->payment * $cancellation['cancellation_fee'];
                             $totalAfterFee = $reservation->payment->payment - $cancellationFee;
                         @endphp
 
@@ -516,7 +516,7 @@
                                         <td>Cancelled Site</td>
 
                                         @if ($refund->cancellation_fee > 0)
-                                            <td class="text-end text-danger">Cancellation Fee (15%)</td>
+                                            <td class="text-end text-danger">Cancellation Fee ({{$cancellation['cancellation_fee']}}%)</td>
                                             <td class="text-danger">- ${{ number_format($refund->cancellation_fee, 2) }}
                                             </td>
                                         @else

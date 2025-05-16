@@ -44,7 +44,10 @@ class CartController extends Controller
         $cart = $request->user()->cart()->get();
         $customersQuery = User::query();
         $productsQuery = Product::where('status', '=', 1)->orWhere('quick_pick', '=', 1);
-        $categoriesQuery = Category::where('status', '=', 1)->orWhere('show_in_pos', '=', 1);
+        $categoriesQuery = Category::where('show_in_pos', 1)
+            ->whereHas('products', function ($query) {
+                $query->where('show_in_category', 1);
+            });
       
         $customers = $customersQuery->get();
         $products = $productsQuery->get();

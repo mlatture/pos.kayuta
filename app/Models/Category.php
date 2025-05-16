@@ -20,4 +20,9 @@ class Category extends Model
         'status',
         'show_in_pos'
     ];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
 }

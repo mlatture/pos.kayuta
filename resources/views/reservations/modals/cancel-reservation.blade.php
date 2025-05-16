@@ -19,6 +19,7 @@
                         reservation, click the "Remove Site" button instead.)</span>
                 </p>
 
+
                 <!-- Checkboxes for selecting multiple sites -->
                 <div class="mb-3">
                     <label for="site_select" class="form-label">Select Sites for Refund</label>
@@ -39,13 +40,14 @@
                     </div>
                 </div>
 
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="applyCancellationFee" checked>
-                    <label class="form-check-label" for="applyCancellationFee">
-                        Apply 15% Cancellation Fee
-                    </label>
-                </div>
-
+                @if (!empty($cancellation['require_cancellation_fee']) && $cancellation['require_cancellation_fee'])
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="applyCancellationFee" checked>
+                        <label class="form-check-label" for="applyCancellationFee">
+                            Apply {{ $cancellation['cancellation_fee'] }}% Cancellation Fee
+                        </label>
+                    </div>
+                @endif
                 <div class="mb-3">
                     <label for="site_select" class="form-label">Refund total $<span id="refund-total">____</span>
                         (Calculate from checboxes)</label>
@@ -115,18 +117,22 @@
 
 
     <script>
+        const cancellationFeePercent = {{ $cancellation['cancellation_fee'] ?? 0 }};
+
         $(document).ready(function() {
             function updateRefundTotal() {
                 let total = 0;
                 let applyFee = $('#applyCancellationFee').is(':checked');
+                let feeMultiplier = (100 - cancellationFeePercent) / 100;
 
                 $('.site-checkbox:checked').each(function() {
                     let base = parseFloat($(this).data('subtotal'));
-                    total += applyFee ? base * 0.85 : base;
+                    total += applyFee ? base * feeMultiplier : base;
                 });
 
                 $('#refund-total').text(total.toFixed(2));
             }
+
 
             $('.refund-method-radio').on('change', function() {
                 if ($('#gift-card').is(':checked')) {
@@ -138,7 +144,8 @@
 
 
 
-            $(document).on('change', '.site-checkbox, .refund-method-radio, #applyCancellationFee', updateRefundTotal);
+            $(document).on('change', '.site-checkbox, .refund-method-radio, #applyCancellationFee',
+                updateRefundTotal);
             updateRefundTotal();
 
             $('#yes-cancellation').on('click', function() {

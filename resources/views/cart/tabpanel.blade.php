@@ -37,10 +37,10 @@
 
             {{-- Category Buttons --}}
             <div class="mb-3">
-                <label class="form-label d-block">Select Category</label>
+                {{-- <label class="form-label d-block">Select Category</label> --}}
                 <div id="categoryButtons" class="d-flex flex-wrap gap-2">
                     @foreach ($categories as $category)
-                        @if ($category->show_in_pos)
+                        @if ($category->show_in_pos && $category->products->where('show_in_category', true)->isNotEmpty())
                             <button type="button" class="btn btn-outline-primary category-btn"
                                 data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}">
                                 {{ $category->name }}

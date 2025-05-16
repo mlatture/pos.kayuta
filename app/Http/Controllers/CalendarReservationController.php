@@ -9,6 +9,7 @@ use App\Models\SiteHookup;
 use App\Models\Reservation;
 use App\Models\RigTypes;
 use App\Models\User;
+use App\Models\BusinessSettings;
 use Illuminate\Http\Request;
 
 class CalendarReservationController extends Controller
@@ -40,8 +41,8 @@ class CalendarReservationController extends Controller
         $reservations = Reservation::where('cartid', $id)->with(['payment', 'cart_reservation', 'refunds'])->get();
         $rigTypes = RigTypes::all();
         $payment = Payment::where('cartid', $id)->get();
-
-
+        $business_settings = BusinessSettings::where('type', 'cancellation')->first();
+        $cancellation = $business_settings ? json_decode($business_settings->value, true) : [];
 
         $user = User::where('id', $reservations->first()->customernumber)->first();
 
@@ -49,7 +50,7 @@ class CalendarReservationController extends Controller
             return $reservation->refunds->isNotEmpty();
         });
 
-        return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment', 'allRefunded']));
+        return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment', 'allRefunded', 'cancellation']));
     }
 
     public function getUnavailableDates($id)
