@@ -10,7 +10,7 @@
                                 data-bs-html="true" title="Product Name: {{ $product->name }}">
                                 <span
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ $product->quantity < 0 ? '*' : $product->quantity }}
+                                    {{ ($product->quantity < 0 || $product->quantity === 0) ? '*' : $product->quantity }}
 
                                 </span>
 

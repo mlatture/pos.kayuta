@@ -43,12 +43,12 @@ class CartController extends Controller
         }
         $cart = $request->user()->cart()->get();
         $customersQuery = User::query();
-        $productsQuery = Product::where('status', '=', 1)->where('quantity', '!=', 0);
-        $categoriesQuery = Category::where('show_in_pos', '=', 1);
+        $productsQuery = Product::where('status', '=', 1)->orWhere('quick_pick', '=', 1);
+        $categoriesQuery = Category::where('status', '=', 1)->orWhere('show_in_pos', '=', 1);
       
         $customers = $customersQuery->get();
         $products = $productsQuery->get();
-        $categories = $categoriesQuery->get();
+        $categories = $categoriesQuery->get(); 
         return view('cart.index', compact('customers', 'cart', 'products', 'categories', 'registers'));
     }
 
@@ -111,9 +111,9 @@ class CartController extends Controller
 
             if ($cart) {
                 // Check if the product has limited stock (non-negative) and if the cart quantity exceeds available stock
-                if ($product->quantity >= 0 && $product->quantity <= $cart->pivot->quantity) {
-                    return $this->object->respondBadRequest(['error' => 'Product available only: ' . $product->quantity]);
-                }
+                // if ($product->quantity >= 0 && $product->quantity <= $cart->pivot->quantity) {
+                //     return $this->object->respondBadRequest(['error' => 'Product available only: ' . $product->quantity]);
+                // }
 
                 // Handle discount
                 if ($product->discount_type == 'fixed_amount') {
@@ -135,10 +135,10 @@ class CartController extends Controller
                 $cart->pivot->quantity += 1;
                 $cart->pivot->save();
             } else {
-                // Check if product is out of stock (ignore negative quantities for unlimited stock)
-                if ($product->quantity >= 0 && $product->quantity < 1) {
-                    return $this->object->respondBadRequest(['error' => 'Product out of stock']);
-                }
+                // // Check if product is out of stock (ignore negative quantities for unlimited stock)
+                // if ($product->quantity >= 0 && $product->quantity < 1) {
+                //     return $this->object->respondBadRequest(['error' => 'Product out of stock']);
+                // }
 
                 // Handle discount
                 $discount = 0;
