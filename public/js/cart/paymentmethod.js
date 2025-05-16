@@ -41,6 +41,146 @@ $(document).ready(function () {
         $(this).closest("label").addClass("active");
     });
 
+    function appendToPaymentHistory(method, amount) {
+        if (!$('#paymentList').length) {
+            $('#paymentHistory').append(`<ul class="list-group" id="paymentList"></ul>`);
+        }
+        $("#paymentList").append(`
+            <li class="list-group-item d-flex justify-content-between">
+                <span>${method}</span>
+                <span>$${parseFloat(amount).toFixed(2)}</span>
+            </li>
+        `);
+    }
+
+    function handlePayment(
+        customer_id,
+        amount,
+        change,
+        paymentMethod,
+        number,
+        x_ref_num,
+        totalAmount,
+        isPartial,
+        orderId,
+        customer_email,
+        jsonResponse,
+    ) {
+        let remainingBalance =
+            parseFloat($("#remainingBalance").text()) || totalAmount;
+        let firstRemainingBalance = remainingBalance - amount;
+        $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
+        Swal.fire({
+            title:
+                change >= 0
+                    ? `Change is: $${change.toFixed(
+                          2
+                      )}. Do you want to proceed?`
+                    : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
+                          2
+                      )}`,
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            cancelButtonText: `Don't save`,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return new Promise((resolve) => {
+                    $.ajax({
+                        url: isPartial ? cartOrderUpdateUrl : cartOrderStoreUrl,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                "content"
+                            ),
+                        },
+                        data: {
+                            order_id: orderId,
+                            amount: amount,
+                            customer_id: customer_id ?? 0,
+                            payment_method: paymentMethod,
+                            acc_number: number,
+                            x_ref_num: x_ref_num,
+                        },
+                        success: function (response) {
+                            resolve(response);
+                            appendToPaymentHistory(paymentMethod, amount);
+
+                            if (!isPartial) {
+                                orderId = response.order_id;
+                                $("#order_id").val(orderId);
+                                $("#orderAmountInput").val("");
+                                $("#giftcardno").val("");
+                                $('input[name="payment_method"]:checked').prop(
+                                    "checked",
+                                    false
+                                );
+
+                                handleCardsOnFiles(
+                                    customer_id,
+                                    orderId,
+                                    jsonResponse.xInvoice,
+                                    customer_email,
+                                    jsonResponse.xMaskedCardNumber,
+                                    jsonResponse.xCardType,
+                                    jsonResponse.xToken,
+                                    jsonResponse.xResult,
+                                    jsonResponse.xStatus,
+                                    jsonResponse.xErrorCode,
+                                    jsonResponse.xName,
+                                   
+                                );
+
+                            } else {
+                                $("#orderAmountInput").val("");
+                                $("#giftcardno").val("");
+                                $('input[name="payment_method"]:checked').prop(
+                                    "checked",
+                                    false
+                                );
+                                orderId = response.OrderItem.order_id;
+                                $("#order_id").val(orderId);
+
+                                handleCardsOnFiles(
+                                    customer_id,
+                                    orderId,
+                                    jsonResponse.xInvoice,
+                                    customer_email,
+                                    jsonResponse.xMaskedCardNumber,
+                                    jsonResponse.xCardType,
+                                    jsonResponse.xToken,
+                                    jsonResponse.xResult,
+                                    jsonResponse.xStatus,
+                                    jsonResponse.xErrorCode,
+                                   
+                                );
+                            }
+
+                         
+                        },
+                        error: function (reject) {
+                            resolve(reject);
+                        },
+                    });
+                });
+            },
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                let response = result.value;
+
+                finalizeOrder(
+                    amount,
+                    totalAmount,
+                    response,
+                    firstRemainingBalance,
+                    customer_email,
+                    orderId
+                );
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire("Changes are not saved", "", "info");
+            }
+        });
+    }
+
     $("#cardExpiry").on("input", function (e) {
         let input = e.target.value;
 
@@ -352,133 +492,7 @@ $(document).ready(function () {
         })
     }
 
-    function handlePayment(
-        customer_id,
-        amount,
-        change,
-        paymentMethod,
-        number,
-        x_ref_num,
-        totalAmount,
-        isPartial,
-        orderId,
-        customer_email,
-        jsonResponse,
-    ) {
-        let remainingBalance =
-            parseFloat($("#remainingBalance").text()) || totalAmount;
-        let firstRemainingBalance = remainingBalance - amount;
-        $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
-
-        Swal.fire({
-            title:
-                change >= 0
-                    ? `Change is: $${change.toFixed(
-                          2
-                      )}. Do you want to proceed?`
-                    : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
-                          2
-                      )}`,
-            showCancelButton: true,
-            confirmButtonText: "Save",
-            cancelButtonText: `Don't save`,
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return new Promise((resolve) => {
-                    $.ajax({
-                        url: isPartial ? cartOrderUpdateUrl : cartOrderStoreUrl,
-                        type: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
-                                "content"
-                            ),
-                        },
-                        data: {
-                            order_id: orderId,
-                            amount: amount,
-                            customer_id: customer_id ?? 0,
-                            payment_method: paymentMethod,
-                            acc_number: number,
-                            x_ref_num: x_ref_num,
-                        },
-                        success: function (response) {
-                            resolve(response);
-
-                            if (!isPartial) {
-                                orderId = response.order_id;
-                                $("#order_id").val(orderId);
-                                $("#orderAmountInput").val("");
-                                $("#giftcardno").val("");
-                                $('input[name="payment_method"]:checked').prop(
-                                    "checked",
-                                    false
-                                );
-
-                                handleCardsOnFiles(
-                                    customer_id,
-                                    orderId,
-                                    jsonResponse.xInvoice,
-                                    customer_email,
-                                    jsonResponse.xMaskedCardNumber,
-                                    jsonResponse.xCardType,
-                                    jsonResponse.xToken,
-                                    jsonResponse.xResult,
-                                    jsonResponse.xStatus,
-                                    jsonResponse.xErrorCode,
-                                    jsonResponse.xName,
-                                   
-                                );
-
-                            } else {
-                                $("#orderAmountInput").val("");
-                                $("#giftcardno").val("");
-                                $('input[name="payment_method"]:checked').prop(
-                                    "checked",
-                                    false
-                                );
-                                orderId = response.OrderItem.order_id;
-                                $("#order_id").val(orderId);
-
-                                handleCardsOnFiles(
-                                    customer_id,
-                                    orderId,
-                                    jsonResponse.xInvoice,
-                                    customer_email,
-                                    jsonResponse.xMaskedCardNumber,
-                                    jsonResponse.xCardType,
-                                    jsonResponse.xToken,
-                                    jsonResponse.xResult,
-                                    jsonResponse.xStatus,
-                                    jsonResponse.xErrorCode,
-                                   
-                                );
-                            }
-
-                         
-                        },
-                        error: function (reject) {
-                            resolve(reject);
-                        },
-                    });
-                });
-            },
-        }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                let response = result.value;
-
-                finalizeOrder(
-                    amount,
-                    totalAmount,
-                    response,
-                    firstRemainingBalance,
-                    customer_email,
-                    orderId
-                );
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                Swal.fire("Changes are not saved", "", "info");
-            }
-        });
-    }
+  
 
 
     function finalizeOrder(
@@ -721,12 +735,22 @@ $(document).ready(function () {
     
     $('#customer_id').on('change', function(){
         let customer_email = $(this).find('option:selected').data('email');
-    
-        console.log(customer_email);
-
         $('#cust_email').val(customer_email);
         $('#email_invoice').val(customer_email);
     });
+
+    let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ""));
+    $("#displayTotalAmount").text(totalAmount.toFixed(2));
+    $("#remainingBalance").text(totalAmount.toFixed(2));
+
+    if (!$('#paymentHistory').length) {
+        $("#offcanvasOrder .offcanvas-body").append(`
+            <div id="paymentHistory" class="mt-3">
+                <h6>Payments Made</h6>
+                <ul class="list-group" id="paymentList"></ul>
+            </div>
+        `);
+    }
 });
 
 

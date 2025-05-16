@@ -65,7 +65,7 @@
                         <p class="float-right" id="offcanvasTax"></p>
                     </div>
 
-                    <div class="col-sm-12 border-top">
+                    {{-- <div class="col-sm-12 border-top">
                         <div class="row pt-2">
                             <div class="col-6">
                                 <p><b>Total</b></p>
@@ -75,11 +75,24 @@
                                 <p class="float-right" id="offcanvasTotalAmount"></p>
                             </div>
                         </div>
+                    </div> --}}
+                   
+                    
+                    <div class="col-sm-12 border-top">
+                        <div class="row pt-2">
+                            <div class="col-6">
+                                <p><b>Total</b></p>
+                            </div>
+                            <div class="col-6">
+                                <span>$</span>
+                                <p class="float-right" id="displayTotalAmount"></p>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-sm-12 border-top">
                         <div class="row pt-2">
                             <div class="col-6">
-                                <p><b>Balance</b></p>
+                                <p><b>Remaining</b></p>
                             </div>
                             <div class="col-6">
                                 <span>$</span>
