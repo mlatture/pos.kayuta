@@ -8,7 +8,7 @@ class Setting extends Model
 {
     protected $table = 'settings';
     protected $fillable = [
-        'key', 'value', 'is_grid_view', 'golf_listing_show', 'boat_listing_show',
+        'organization_id','key', 'value', 'is_grid_view', 'golf_listing_show', 'boat_listing_show',
         'pool_listing_show', 'product_listing_show'
     ];
 

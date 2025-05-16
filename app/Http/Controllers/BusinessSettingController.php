@@ -11,7 +11,7 @@ class BusinessSettingController extends Controller
 
     public function index()
     {
-        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN'];
+        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN', 'cancellation'];
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
@@ -19,16 +19,20 @@ class BusinessSettingController extends Controller
 
         $location = json_decode($settings['default_location'] ?? '{}', true);
         $colors = json_decode($settings['colors'] ?? '{}', true);
+        $cancellation = json_decode($settings['cancellation'] ?? '{}', true);
+
         // $cookie = json_decode($settings['cookie_setting'] ?? '{}', true);
 
         $settings['latitude'] = $location['lat'] ?? '';
         $settings['longitude'] = $location['lng'] ?? '';
         $settings['primaryColor'] = $colors['primary'] ?? '';
         $settings['secondaryColor'] = $colors['secondary'] ?? '';
+        $settings['require_cancellation_fee'] = $cancellation['require_cancellation_fee'] ?? '';
+        $settings['cancellation_fee'] = $cancellation['cancellation_fee'] ?? '';
         // $settings['cookie_status'] = $cookie['status'] ?? 0;
         // $settings['cookie_text'] = $cookie['cookie_text'] ?? '';
 
-        $settingsKeys2 = ['is_grid_view', 'golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show'];
+        $settingsKeys2 = ['is_grid_view', 'golf_listing_show', 'boat_listing_show', 'pool_listing_show', 'product_listing_show', 'cancellation'];
 
         $rawSettings = Setting::whereIn('key', $settingsKeys2)->get();
 
@@ -129,5 +133,31 @@ class BusinessSettingController extends Controller
         BusinessSettings::set('maintenance_mode', $enabled);
 
         return response()->json(['success' => true]);
+    }
+
+    public function cancellationUpdate(Request $request)
+    {
+        $request->validate([
+            'cancellation_fee' => $request->has('require_cancellation_fee') ? 'required|numeric|min:1.01' : 'nullable',
+        ]);
+
+        $cancellationSettings = [
+            'require_cancellation_fee' => $request->has('require_cancellation_fee'),
+            'cancellation_fee' => $request->input('cancellation_fee'),
+        ];
+
+        $setting = BusinessSettings::where('type', 'cancellation')->first();
+
+        if ($setting) {
+            $setting->value = json_encode($cancellationSettings);
+            $setting->save();
+        } else {
+            BusinessSettings::create([
+                'type' => 'cancellation',
+                'value' => json_encode($cancellationSettings),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Cancellation settings updated.');
     }
 }

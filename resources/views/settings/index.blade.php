@@ -36,6 +36,9 @@
                 <a class="nav-link text-dark" id="pricing-tab" data-bs-toggle="tab" href="#pricing" role="tab">Use Dynamic
                     Pricing</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" id="cancellation-tab" data-bs-toggle="tab" href="#cancellation" role="tab">Cancellation Settings</a>
+            </li>
         </ul>
 
 
@@ -46,6 +49,7 @@
             @include('settings.components.cart')
             {{-- @include('settings.components.email-templates') --}}
             @include('settings.components.use-dynamic-pricing')
+            @include('settings.components.cancellation')
 
         </div>
     </div>
