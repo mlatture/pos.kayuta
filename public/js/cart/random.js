@@ -201,12 +201,32 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on("change", "#categoryDropdown", function () {
-        var category_id = $(this).val(); // selected value
+    $(document).on("click", "#categoryButtons .category-btn", function () {
+        var category_id = $(this).data('categoryId');
+        var category_name = $(this).data('categoryName');
+
+        const url = new URL(window.location);
+        url.searchParams.set('category_name', category_name);
+        window.history.replaceState({}, '', url);
+    
+    
+        $("#categoryButtons .category-btn")
+            .removeClass("btn-primary")
+            .addClass("btn-outline-primary");
+        $(this)
+            .removeClass("btn-outline-primary")
+            .addClass("btn-primary");
+
+    
         if (!category_id) {
-            $("#category-products").html('');
+            $("#category-products").html(`
+                <div class="col-12 text-muted text-center">
+                    <h5>No Products Available</h5>
+                </div>
+            `);
             return;
         }
+    
     
         $.ajax({
             url: cartCategoryUrl,
@@ -221,7 +241,7 @@ $(document).ready(function () {
     
                 if (products.length > 0) {
                     $.each(products, function (key, val) {
-                        if (!val.show_in_category || val.quantity <= 0) return;
+                        if (!val.show_in_category) return;
     
                         let truncatedName = val.name.length > 10
                             ? val.name.substring(0, 10) + "..."
@@ -233,7 +253,7 @@ $(document).ready(function () {
                         html += `<div class="col-md-3">
                             <div class="card product-item" data-barcode="${val.barcode}" data-id="${val.id}" title="Product Name: ${val.name}">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    ${val.quantity < 0 ? 0 : val.quantity}
+                                    ${(val.quantity < 0 || val.quantity === 0) ? '*' : val.quantity}
                                 </span>
                                 <img src="${imagePath}" class="rounded mx-auto d-block img-fluid"
                                     onerror="this.onerror=null; this.src='${fallbackImageUrl}';">
@@ -268,6 +288,19 @@ $(document).ready(function () {
             },
         });
     });
+
+    $(document).ready(function () {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const selectedName = urlParams.get('category_name');
+
+        if (selectedName) {
+            const button = $(`#categoryButtons .category-btn[data-category-name="${selectedName}"]`);
+            if (button.length) {
+                button.trigger('click');
+            }
+        }
+    })
     
 
     $("#search-product").on("input", function () {
@@ -298,7 +331,7 @@ $(document).ready(function () {
                                 }">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                     ${
-                                        product.quantity < 0
+                                        ( product.quantity < 0 || product.quantity === 1)
                                             ? 0
                                             : product.quantity
                                     }

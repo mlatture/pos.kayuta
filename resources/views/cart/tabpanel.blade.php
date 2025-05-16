@@ -10,7 +10,7 @@
                                 data-bs-html="true" title="Product Name: {{ $product->name }}">
                                 <span
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ ($product->quantity < 0 || $product->quantity === 0) ? '*' : $product->quantity }}
+                                    {{ $product->quantity < 0 || $product->quantity === 0 ? '*' : $product->quantity }}
 
                                 </span>
 
@@ -35,22 +35,26 @@
     <div class="tab-pane fade" id="catgories" role="tabpanel" aria-labelledby="catgories-tab">
         <div class="order-product category-section px-3">
 
+            {{-- Category Buttons --}}
             <div class="mb-3">
-                <label for="categoryDropdown" class="form-label">Select Category</label>
-                <select id="categoryDropdown" class="form-select">
-                    <option value="">-- Select Category --</option>
+                <label class="form-label d-block">Select Category</label>
+                <div id="categoryButtons" class="d-flex flex-wrap gap-2">
                     @foreach ($categories as $category)
                         @if ($category->show_in_pos)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <button type="button" class="btn btn-outline-primary category-btn"
+                                data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}">
+                                {{ $category->name }}
+                            </button>
                         @endif
                     @endforeach
-                </select>
+                </div>
             </div>
 
+            {{-- Products Container --}}
             <div class="row" id="category-products"></div>
+
         </div>
     </div>
-
 
 
 
