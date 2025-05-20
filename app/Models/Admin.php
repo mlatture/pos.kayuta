@@ -49,7 +49,9 @@ class Admin extends Authenticatable
         if($this->role->id == 1) {
             return true;
         }
-        return in_array($permission,$this->role->module_access ?? []);
+
+        $access = json_decode($this->role->module_access, true) ?? [];
+        return in_array($permission, $access);
     }
 
 
