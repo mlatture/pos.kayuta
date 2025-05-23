@@ -32,6 +32,8 @@ use App\Http\Controllers\CartReservationController;
 use App\Http\Controllers\RateTierController;
 use App\Http\Controllers\AddOnsController;
 use App\Http\Controllers\BusinessSettingController;
+use App\Http\Controllers\FAQController;
+use App\Http\Controllers\PageController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -40,7 +42,23 @@ Auth::routes();
 
 Route::prefix('admin')->middleware('auth')->group(function () {
 
+    Route::prefix('pages')->middleware(['auth'])->group(function () {
+        Route::get('/', [PageController::class, 'index'])->name('pages.index');
+        Route::get('/create', [PageController::class, 'create'])->name('pages.create');
+        Route::post('/', [PageController::class, 'store'])->name('pages.store');
+        Route::get('/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/{page}', [PageController::class, 'update'])->name('pages.update');
+    });
+    
 
+
+    Route::get('faq', [FAQController::class, 'index'])->name('faq.index');
+    Route::get('faq/edit/{id}', [FAQController::class, 'edit'])->name('faq.edit');
+    Route::get('faq/create', [FAQController::class, 'create'])->name('faq.create');
+    Route::post('faq/store', [FAQController::class, 'store'])->name('faq.store');
+    Route::put('faq/update/{id}', [FAQController::class, 'update'])->name('faq.update');
+
+    Route::delete('faq/destroy/{id}', [FAQController::class, 'destroy'])->name('faq.destroy');
     Route::post('users',[UserController::class,'store'])->name('users.store');
     Route::get('users_details', [UserController::class, 'getUserName'])->name('user.name');
     Route::get('/', [HomeController::class, 'index'])->name('home');

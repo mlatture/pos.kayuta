@@ -45,6 +45,23 @@
 
         color: #EFC368;
     }
+
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    .dropdown-submenu>.dropdown-menu {
+        top: 0;
+        left: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        display: none;
+    }
+
+    .dropdown-submenu:hover>.dropdown-menu {
+        display: block;
+        position: absolute;
+    }
 </style>
 
 <nav class="main-header navbar navbar-expand  d-flex justify-content-between">
@@ -167,10 +184,50 @@
                 @endHasPermission
 
                 @hasPermission(config('constants.role_modules.business_settings.value'))
-                <li><a class="dropdown-item" href="{{ route('admin.business-settings.index') }}">
-                        <i class="fa-solid fa-bars-progress"></i> <span>Business Settings</span>
-                    </a></li>
-            @endHasPermission
+                    <li><a class="dropdown-item" href="{{ route('admin.business-settings.index') }}">
+                            <i class="fa-solid fa-bars-progress"></i> <span>Business Settings</span>
+                        </a></li>
+                @endHasPermission
+
+
+                @hasPermission(config('constants.role_modules.list_faqs.value'))
+                    <li><a class="dropdown-item" href="{{ route('faq.index') }}">
+                            <i class="fa-solid fa-question"></i> <span>FAQ</span>
+                        </a></li>
+                @endHasPermission
+
+                @hasPermission(config('constants.role_modules.manage_pages.value'))
+                    <li class="dropdown-submenu">
+                        <a class="dropdown-item dropdown-toggle d-flex align-items-center" href="#"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-file-alt me-2"></i>
+                            <span>Pages & Blogs</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'page']) }}">
+                                    <strong>Page</strong> 
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'article']) }}">
+                                    <strong>Article</strong> 
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'blog']) }}">
+                                    <strong>Blog</strong> 
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'landing']) }}">
+                                    <strong>Landing Page</strong> 
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endHasPermission
+
 
             </ul>
 
@@ -265,7 +322,7 @@
                         </a></li>
                 @endHasPermission
 
-            
+
 
 
             </ul>
@@ -286,3 +343,18 @@
         </li>
     </ul>
 </nav>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const submenuToggles = document.querySelectorAll('.dropdown-submenu > a');
+
+        submenuToggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function(e) {
+                const nextDropdown = this.nextElementSibling;
+                if (nextDropdown && nextDropdown.classList.contains('dropdown-menu')) {
+                    e.preventDefault();
+                    nextDropdown.classList.toggle('show');
+                }
+            });
+        });
+    });
+</script>

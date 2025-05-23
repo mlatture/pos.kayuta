@@ -209,8 +209,28 @@ return [
         'business_settings' => [
             'name' => 'Business Settings',
             'value' => 'business_settings'
+        ],
+        'list_faqs' => [
+            'name' => 'List FAQs',
+            'value' => 'list_faqs'
+        ],
+        'create_faqs' => [
+            'name' => 'Create FAQs',
+            'value' => 'create_faqs'
+        ],
+        'edit_faqs' => [
+            'name' => 'Edit FAQs',
+            'value' => 'edit_faqs'
+        ],
+        'delete_faqs' => [
+            'name' => 'Delete FAQs',
+            'value' => 'delete_faqs'
+        ],
+        'manage_pages' => [
+            'name' => 'Manage Pages',
+            'value' => 'manage_pages'
         ]
-
-
+       
+        
     ]
 ];
