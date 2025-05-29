@@ -58,19 +58,124 @@
     </div>
 @endsection
 
+
 @section('js')
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const answerField = document.querySelector('#answer');
-            if (answerField) {
-                ClassicEditor
-                    .create(answerField)
-                    .catch(error => {
-                        console.error('CKEditor initialization error:', error);
-                    });
-            }
+        let ckeditorInstance;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            ClassicEditor
+                .create(document.querySelector('#answer'))
+                .then(editor => {
+                    function debounce(func, delay) {
+                        let timeout;
+                        return function() {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(func, delay);
+                        };
+                    }
+
+
+                    ckeditorInstance = editor;
+
+                    const aiCheckbox = document.querySelector('#ai_marketing');
+                    const grammarCheckbox = document.querySelector('#grammar_check');
+
+                    if (aiCheckbox) {
+                        aiCheckbox.addEventListener('change', async function() {
+                            const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
+                                .trim();
+
+                            if (this.checked) {
+                                if (!originalText) {
+                                    alert('Answer field is empty.');
+                                    this.checked = false;
+                                    return;
+                                }
+
+                                ckeditorInstance.setData(
+                                    '<em>Rewriting with AI... please wait</em>');
+
+                                try {
+                                    const response = await fetch('{{ route('ai.rewrite') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({
+                                            text: originalText
+                                        })
+                                    });
+
+                                    const data = await response.json();
+
+                                    if (data.success) {
+                                        ckeditorInstance.setData(data.rewritten);
+                                    } else {
+                                        alert(data.message || 'Failed to rewrite.');
+                                        ckeditorInstance.setData(originalText);
+                                        this.checked = false;
+                                    }
+                                } catch (error) {
+                                    alert('Error connecting to AI server.');
+                                    ckeditorInstance.setData(originalText);
+                                    this.checked = false;
+                                }
+                            }
+                        });
+                    }
+
+                    if (grammarCheckbox) {
+                        grammarCheckbox.addEventListener('change', async function() {
+                            const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
+                                .trim();
+
+                            if (this.checked) {
+                                if (!originalText) {
+                                    alert('Answer field is empty.');
+                                    this.checked = false;
+                                    return;
+                                }
+
+                                ckeditorInstance.setData(
+                                '<em>Checking grammar... please wait</em>');
+
+                                try {
+                                    const response = await fetch('{{ route('ai.grammar') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({
+                                            text: originalText
+                                        })
+                                    });
+
+                                    const data = await response.json();
+
+                                    if (data.success) {
+                                        ckeditorInstance.setData(data.corrected);
+                                    } else {
+                                        alert(data.message || 'Failed to correct grammar.');
+                                        ckeditorInstance.setData(originalText);
+                                        this.checked = false;
+                                    }
+                                } catch (error) {
+                                    alert('Error connecting to grammar server.');
+                                    ckeditorInstance.setData(originalText);
+                                    this.checked = false;
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('CKEditor initialization error:', error);
+                });
         });
     </script>
 @endsection

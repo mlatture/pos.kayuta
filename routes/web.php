@@ -57,8 +57,13 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('faq/create', [FAQController::class, 'create'])->name('faq.create');
     Route::post('faq/store', [FAQController::class, 'store'])->name('faq.store');
     Route::put('faq/update/{id}', [FAQController::class, 'update'])->name('faq.update');
-
     Route::delete('faq/destroy/{id}', [FAQController::class, 'destroy'])->name('faq.destroy');
+
+    Route::post('/ai/seo-rewrite', [FAQController::class, 'rewriteAnswer'])->name('ai.rewrite');
+    Route::post('/ai/grammar-correct', [FAQController::class, 'grammarCorrect'])->name('ai.grammar');
+
+
+
     Route::post('users',[UserController::class,'store'])->name('users.store');
     Route::get('users_details', [UserController::class, 'getUserName'])->name('user.name');
     Route::get('/', [HomeController::class, 'index'])->name('home');

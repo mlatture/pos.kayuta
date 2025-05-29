@@ -20,6 +20,7 @@
         "laravel/tinker": "^2.7",
         "laravel/ui": "^3.0",
         "maatwebsite/excel": "^3.1",
+        "openai-php/client": "^0.13.0",
         "phpmailer/phpmailer": "^6.9",
         "spatie/laravel-permission": "^6.10",
         "yajra/laravel-datatables-oracle": "^10.11"
@@ -35,7 +36,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     },
     "extra": {
         "laravel": {
