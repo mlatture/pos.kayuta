@@ -28,17 +28,15 @@
                                 placeholder="Sorting order number" min="1">
                         </div>
 
-                        <div class="form-check mt-4">
-                            <input type="checkbox" class="form-check-input" id="grammar_check" name="auto_correct">
-                            <label class="form-check-label" for="grammar_check">Check grammar and spelling (minimal
-                                edits)</label>
+                        <div class="form-group mt-4 d-flex gap-2">
+                            <button type="button" id="btn_grammar_check" class="btn btn-outline-secondary">
+                                Check Grammar
+                            </button>
+                            <button type="button" id="btn_ai_marketing" class="btn btn-outline-info">
+                                Rewrite for SEO
+                            </button>
                         </div>
 
-                        <div class="form-check mt-4">
-                            <input type="checkbox" class="form-check-input" id="ai_marketing" name="ai_rewrite">
-                            <label class="form-check-label" for="ai_marketing">Rewrite for SEO and marketing
-                                purposes</label>
-                        </div>
                         <div class="form-check form-switch mt-4">
                             <input class="form-check-input" type="checkbox" id="show_in_details" name="show_in_details"
                                 value="1">
@@ -84,98 +82,95 @@
 
                     ckeditorInstance = editor;
 
-                    const aiCheckbox = document.querySelector('#ai_marketing');
-                    const grammarCheckbox = document.querySelector('#grammar_check');
+                    const btnGrammar = document.querySelector('#btn_grammar_check');
+                    const btnSeoRewrite = document.querySelector('#btn_ai_marketing');
 
-                    if (aiCheckbox) {
-                        aiCheckbox.addEventListener('change', async function() {
+                    // Rewrite for SEO button
+                    if (btnSeoRewrite) {
+                        btnSeoRewrite.addEventListener('click', async function() {
                             const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
                                 .trim();
 
-                            if (this.checked) {
-                                if (!originalText) {
-                                    alert('Answer field is empty.');
-                                    this.checked = false;
-                                    return;
-                                }
+                            if (!originalText) {
+                                alert('Answer field is empty.');
+                                return;
+                            }
 
-                                ckeditorInstance.setData(
-                                    '<em>Rewriting with AI... please wait</em>');
+                            btnSeoRewrite.disabled = true;
+                            ckeditorInstance.setData('<em>Rewriting with AI... please wait</em>');
 
-                                try {
-                                    const response = await fetch('{{ route('ai.rewrite') }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({
-                                            text: originalText
-                                        })
-                                    });
+                            try {
+                                const response = await fetch('{{ route('ai.rewrite') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        text: originalText
+                                    })
+                                });
 
-                                    const data = await response.json();
+                                const data = await response.json();
 
-                                    if (data.success) {
-                                        ckeditorInstance.setData(data.rewritten);
-                                    } else {
-                                        alert(data.message || 'Failed to rewrite.');
-                                        ckeditorInstance.setData(originalText);
-                                        this.checked = false;
-                                    }
-                                } catch (error) {
-                                    alert('Error connecting to AI server.');
+                                if (data.success) {
+                                    ckeditorInstance.setData(data.rewritten);
+                                } else {
+                                    alert(data.message || 'Failed to rewrite.');
                                     ckeditorInstance.setData(originalText);
-                                    this.checked = false;
                                 }
+                            } catch (error) {
+                                alert('Error connecting to AI server.');
+                                ckeditorInstance.setData(originalText);
+                            } finally {
+                                btnSeoRewrite.disabled = false;
                             }
                         });
                     }
 
-                    if (grammarCheckbox) {
-                        grammarCheckbox.addEventListener('change', async function() {
+                    // Grammar correction button
+                    if (btnGrammar) {
+                        btnGrammar.addEventListener('click', async function() {
                             const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
                                 .trim();
 
-                            if (this.checked) {
-                                if (!originalText) {
-                                    alert('Answer field is empty.');
-                                    this.checked = false;
-                                    return;
-                                }
+                            if (!originalText) {
+                                alert('Answer field is empty.');
+                                return;
+                            }
 
-                                ckeditorInstance.setData(
-                                '<em>Checking grammar... please wait</em>');
+                            btnGrammar.disabled = true;
+                            ckeditorInstance.setData('<em>Checking grammar... please wait</em>');
 
-                                try {
-                                    const response = await fetch('{{ route('ai.grammar') }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({
-                                            text: originalText
-                                        })
-                                    });
+                            try {
+                                const response = await fetch('{{ route('ai.grammar') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        text: originalText
+                                    })
+                                });
 
-                                    const data = await response.json();
+                                const data = await response.json();
 
-                                    if (data.success) {
-                                        ckeditorInstance.setData(data.corrected);
-                                    } else {
-                                        alert(data.message || 'Failed to correct grammar.');
-                                        ckeditorInstance.setData(originalText);
-                                        this.checked = false;
-                                    }
-                                } catch (error) {
-                                    alert('Error connecting to grammar server.');
+                                if (data.success) {
+                                    ckeditorInstance.setData(data.corrected);
+                                } else {
+                                    alert(data.message || 'Failed to correct grammar.');
                                     ckeditorInstance.setData(originalText);
-                                    this.checked = false;
                                 }
+                            } catch (error) {
+                                alert('Error connecting to grammar server.');
+                                ckeditorInstance.setData(originalText);
+                            } finally {
+                                btnGrammar.disabled = false;
                             }
                         });
                     }
+
                 })
                 .catch(error => {
                     console.error('CKEditor initialization error:', error);
