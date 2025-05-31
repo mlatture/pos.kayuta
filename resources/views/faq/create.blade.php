@@ -2,7 +2,21 @@
 
 @section('title', 'Create FAQ')
 @section('content-header', 'Create FAQ')
-
+@section('css')
+    <style>
+        button[data-cke-tooltip-text="Insert media"],
+        button[data-cke-tooltip-text="Insert image"],
+        button[data-cke-tooltip-text="Link (⌘K)"],
+        button[data-cke-tooltip-text="Bold (⌘B)"],
+        /* button[data-cke-tooltip-text="Italic (⌘I)"] */
+        button[data-cke-tooltip-text="Decrease Indent"],
+        button[data-cke-tooltip-text="Increase Indent"]
+        
+        {
+        display: none !important;
+        }
+    </style>
+@endsection
 @section('content')
     <div class="row animated fadeInUp">
         <div class="col-12">
@@ -70,6 +84,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             ClassicEditor
                 .create(document.querySelector('#answer'))
+
+
                 .then(editor => {
                     function debounce(func, delay) {
                         let timeout;
@@ -88,11 +104,17 @@
                     // Rewrite for SEO button
                     if (btnSeoRewrite) {
                         btnSeoRewrite.addEventListener('click', async function() {
-                            const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
+                            const questionInput = document.querySelector('#question');
+                            const questionText = questionInput.value.trim();
+                            const answerText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
                                 .trim();
 
-                            if (!originalText) {
-                                alert('Answer field is empty.');
+                            if (!questionText || !answerText) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Missing Fields',
+                                    text: 'Sure! Please provide me with the FAQ content that you`d like me to rewrite.',
+                                });
                                 return;
                             }
 
@@ -107,21 +129,27 @@
                                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                     },
                                     body: JSON.stringify({
-                                        text: originalText
+                                        question: questionText,
+                                        answer: answerText
                                     })
                                 });
 
                                 const data = await response.json();
 
                                 if (data.success) {
-                                    ckeditorInstance.setData(data.rewritten);
+                                    if (data.question) {
+                                        questionInput.value = data.question;
+                                    }
+                                    if (data.answer) {
+                                        ckeditorInstance.setData(data.answer);
+                                    }
                                 } else {
                                     alert(data.message || 'Failed to rewrite.');
-                                    ckeditorInstance.setData(originalText);
+                                    ckeditorInstance.setData(answerText);
                                 }
                             } catch (error) {
                                 alert('Error connecting to AI server.');
-                                ckeditorInstance.setData(originalText);
+                                ckeditorInstance.setData(answerText);
                             } finally {
                                 btnSeoRewrite.disabled = false;
                             }
@@ -131,11 +159,17 @@
                     // Grammar correction button
                     if (btnGrammar) {
                         btnGrammar.addEventListener('click', async function() {
-                            const originalText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
+                            const questionInput = document.querySelector('#question');
+                            const questionText = questionInput.value.trim();
+                            const answerText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
                                 .trim();
 
-                            if (!originalText) {
-                                alert('Answer field is empty.');
+                            if (!questionText || !answerText) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Missing Fields',
+                                    text: 'Question and Answer fields must not be empty.',
+                                });
                                 return;
                             }
 
@@ -150,27 +184,36 @@
                                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                     },
                                     body: JSON.stringify({
-                                        text: originalText
+                                        question: questionText,
+                                        answer: answerText
                                     })
                                 });
 
                                 const data = await response.json();
 
                                 if (data.success) {
-                                    ckeditorInstance.setData(data.corrected);
+                                    if (data.question) {
+                                        questionInput.value = data.question;
+                                    }
+                                    if (data.answer) {
+                                        ckeditorInstance.setData(data.answer);
+                                    }
                                 } else {
                                     alert(data.message || 'Failed to correct grammar.');
-                                    ckeditorInstance.setData(originalText);
+                                    ckeditorInstance.setData(answerText);
                                 }
                             } catch (error) {
-                                alert('Error connecting to grammar server.');
-                                ckeditorInstance.setData(originalText);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Server error',
+                                    text: 'Error connection to server'
+                                });
+                                ckeditorInstance.setData(answerText);
                             } finally {
                                 btnGrammar.disabled = false;
                             }
                         });
                     }
-
                 })
                 .catch(error => {
                     console.error('CKEditor initialization error:', error);

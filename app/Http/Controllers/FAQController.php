@@ -51,8 +51,6 @@ class FAQController extends Controller
             'order_by' => 'nullable|integer|min:1',
         ]);
 
-
-
         Infos::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
@@ -69,70 +67,121 @@ class FAQController extends Controller
     public function grammarCorrect(Request $request)
     {
         $request->validate([
-            'text' => 'required|string',
+            'question' => 'required|string',
+            'answer' => 'required|string',
         ]);
 
-        $text = $request->text;
-        $response = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
-            'text' => $text,
+        $correctedQuestion = $request->question;
+        $correctedAnswer = $request->answer;
+
+        // Grammar check for question
+        $questionResponse = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
+            'text' => $correctedQuestion,
             'language' => 'en-US',
         ]);
 
-        $matches = $response->json()['matches'] ?? [];
+        $qMatches = $questionResponse->json()['matches'] ?? [];
 
-        if (empty($matches)) {
-            return response()->json([
-                'success' => true,
-                'corrected' => $text,
-            ]);
-        }
-
-        usort($matches, fn($a, $b) => $b['offset'] <=> $a['offset']);
-
-        foreach ($matches as $match) {
+        usort($qMatches, fn($a, $b) => $b['offset'] <=> $a['offset']);
+        foreach ($qMatches as $match) {
             if (isset($match['replacements'][0]['value'])) {
                 $replacement = $match['replacements'][0]['value'];
                 $offset = $match['offset'];
                 $length = $match['length'];
 
-                $text = substr($text, 0, $offset) . $replacement . substr($text, $offset + $length);
+                $correctedQuestion = substr($correctedQuestion, 0, $offset) . $replacement . substr($correctedQuestion, $offset + $length);
+            }
+        }
+
+        // Grammar check for answer
+        $answerResponse = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
+            'text' => $correctedAnswer,
+            'language' => 'en-US',
+        ]);
+
+        $aMatches = $answerResponse->json()['matches'] ?? [];
+
+        usort($aMatches, fn($a, $b) => $b['offset'] <=> $a['offset']);
+        foreach ($aMatches as $match) {
+            if (isset($match['replacements'][0]['value'])) {
+                $replacement = $match['replacements'][0]['value'];
+                $offset = $match['offset'];
+                $length = $match['length'];
+
+                $correctedAnswer = substr($correctedAnswer, 0, $offset) . $replacement . substr($correctedAnswer, $offset + $length);
             }
         }
 
         return response()->json([
             'success' => true,
-            'corrected' => $text,
+            'question' => $correctedQuestion,
+            'answer' => $correctedAnswer,
         ]);
     }
 
     public function rewriteAnswer(Request $request)
     {
         $request->validate([
-            'text' => 'required|string',
+            'question' => 'nullable|string',
+            'answer' => 'nullable|string',
         ]);
+
+        $question = trim($request->input('question', ''));
+        $answer = trim($request->input('answer', ''));
+
+        // if (empty($question) && empty($answer)) {
+        //     return response()->json(
+        //         [
+        //             'success' => false,
+        //             'message' => 'Both question and answer cannot be empty.',
+        //         ],
+        //         400,
+        //     );
+        // }
 
         try {
             $client = OpenAI::client(env('OPENAI_API_KEY'));
+
+            $prompt = "Rewrite the following FAQ content to be clear, concise, and SEO-friendly:\n\n";
+            if ($question) {
+                $prompt .= "Question: {$question}\n\n";
+            }
+            if ($answer) {
+                $prompt .= "Answer: {$answer}";
+            }
 
             $response = $client->chat()->create([
                 'model' => 'gpt-3.5-turbo',
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'You are a helpful assistant that rewrites FAQ answers to be clear, concise, and SEO-friendly for a campground website.',
+                        'content' => 'You are a helpful assistant that rewrites FAQ content to be clear, concise, and SEO-friendly for a campground website.',
                     ],
                     [
                         'role' => 'user',
-                        'content' => "Please rewrite the following answer for SEO and marketing:\n\n" . $request->text,
+                        'content' => $prompt,
                     ],
                 ],
                 'temperature' => 0.7,
                 'max_tokens' => 500,
             ]);
 
+            $rewritten = $response->choices[0]->message->content ?? '';
+
+            // Basic parsing
+            $newQuestion = '';
+            $newAnswer = '';
+
+            if (stripos($rewritten, 'Answer:') !== false) {
+                [$newQuestion, $newAnswer] = explode('Answer:', $rewritten . 'Answer:');
+            } else {
+                $newAnswer = $rewritten;
+            }
+
             return response()->json([
                 'success' => true,
-                'rewritten' => $response->choices[0]->message->content ?? $request->text,
+                'question' => trim(str_replace('Question:', '', $newQuestion)),
+                'answer' => trim($newAnswer),
             ]);
         } catch (\Exception $e) {
             return response()->json(
