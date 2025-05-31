@@ -155,7 +155,7 @@ class FAQController extends Controller
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'You are a helpful assistant that rewrites FAQ content to be clear, concise, and SEO-friendly for a campground website.',
+                        'content' => 'You are a helpful assistant that rewrites FAQ content to be clear, concise, and SEO-friendly for a campground website. Do not use markdown. Plain text only.',
                     ],
                     [
                         'role' => 'user',
