@@ -136,6 +136,7 @@
 
                                 const data = await response.json();
 
+                                console.log('data seo', data);
                                 if (data.success) {
                                     if (data.question) {
                                         questionInput.value = data.question;

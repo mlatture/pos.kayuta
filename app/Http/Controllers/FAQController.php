@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Infos;
+use App\Models\PromptTemplate;
+use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use OpenAI;
+
 class FAQController extends Controller
 {
-    //
-
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -24,13 +24,8 @@ class FAQController extends Controller
                     $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_faqs.value')) ? '<button class="btn btn-danger btn-delete" data-url="' . route('faq.destroy', $faq->id) . '"><i class="fas fa-trash"></i></button>' : '';
                     return $editButton . ' ' . $deleteButton;
                 })
-                ->editColumn('description', function ($faq) {
-                    $plainText = strip_tags($faq->description);
-                    return Str::limit($plainText, 50, '...');
-                })
-                ->editColumn('created_at', function ($faq) {
-                    return Carbon::parse($faq->created_at)->format('F j, Y');
-                })
+                ->editColumn('description', fn($faq) => Str::limit(strip_tags($faq->description), 50, '...'))
+                ->editColumn('created_at', fn($faq) => Carbon::parse($faq->created_at)->format('F j, Y'))
                 ->rawColumns(['actions'])
                 ->make(true);
         }
@@ -71,46 +66,8 @@ class FAQController extends Controller
             'answer' => 'required|string',
         ]);
 
-        $correctedQuestion = $request->question;
-        $correctedAnswer = $request->answer;
-
-        // Grammar check for question
-        $questionResponse = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
-            'text' => $correctedQuestion,
-            'language' => 'en-US',
-        ]);
-
-        $qMatches = $questionResponse->json()['matches'] ?? [];
-
-        usort($qMatches, fn($a, $b) => $b['offset'] <=> $a['offset']);
-        foreach ($qMatches as $match) {
-            if (isset($match['replacements'][0]['value'])) {
-                $replacement = $match['replacements'][0]['value'];
-                $offset = $match['offset'];
-                $length = $match['length'];
-
-                $correctedQuestion = substr($correctedQuestion, 0, $offset) . $replacement . substr($correctedQuestion, $offset + $length);
-            }
-        }
-
-        // Grammar check for answer
-        $answerResponse = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
-            'text' => $correctedAnswer,
-            'language' => 'en-US',
-        ]);
-
-        $aMatches = $answerResponse->json()['matches'] ?? [];
-
-        usort($aMatches, fn($a, $b) => $b['offset'] <=> $a['offset']);
-        foreach ($aMatches as $match) {
-            if (isset($match['replacements'][0]['value'])) {
-                $replacement = $match['replacements'][0]['value'];
-                $offset = $match['offset'];
-                $length = $match['length'];
-
-                $correctedAnswer = substr($correctedAnswer, 0, $offset) . $replacement . substr($correctedAnswer, $offset + $length);
-            }
-        }
+        $correctedQuestion = $this->checkGrammar($request->question);
+        $correctedAnswer = $this->checkGrammar($request->answer);
 
         return response()->json([
             'success' => true,
@@ -119,7 +76,30 @@ class FAQController extends Controller
         ]);
     }
 
-    public function rewriteAnswer(Request $request)
+    protected function checkGrammar($text)
+    {
+        $response = \Http::asForm()->post('https://api.languagetool.org/v2/check', [
+            'text' => $text,
+            'language' => 'en-US',
+        ]);
+
+        $matches = $response->json()['matches'] ?? [];
+
+        usort($matches, fn($a, $b) => $b['offset'] <=> $a['offset']);
+
+        foreach ($matches as $match) {
+            if (isset($match['replacements'][0]['value'])) {
+                $replacement = $match['replacements'][0]['value'];
+                $offset = $match['offset'];
+                $length = $match['length'];
+                $text = substr($text, 0, $offset) . $replacement . substr($text, $offset + $length);
+            }
+        }
+
+        return $text;
+    }
+
+    public function aiRewrite(Request $request)
     {
         $request->validate([
             'question' => 'nullable|string',
@@ -129,74 +109,71 @@ class FAQController extends Controller
         $question = trim($request->input('question', ''));
         $answer = trim($request->input('answer', ''));
 
-        // if (empty($question) && empty($answer)) {
-        //     return response()->json(
-        //         [
-        //             'success' => false,
-        //             'message' => 'Both question and answer cannot be empty.',
-        //         ],
-        //         400,
-        //     );
-        // }
+        $template = PromptTemplate::where('type', 'faq_rewrite')->first();
 
+        if (!$template) {
+            $template = new \stdClass();
+            $template->system_prompt = "You are a helpful assistant that rewrites FAQ content for an RV site.";
+            $template->user_prompt = "{{answer}}";
+        }
+
+        $filledPrompt = str_replace(
+            ['{{question}}', '{{answer}}'],
+            [$question, $answer],
+            $template->user_prompt
+        );
+
+        $aiResponse = $this->callOpenAI($template->system_prompt, $filledPrompt);
+
+        return response()->json([
+            'success' => true,
+            'question' => $aiResponse['question'] ?? $question,
+            'answer' => $aiResponse['answer'] ?? $answer,
+        ]);
+    }
+
+    protected function callOpenAI(string $systemPrompt, string $userPrompt): array
+    {
         try {
             $client = OpenAI::client(env('OPENAI_API_KEY'));
-
-            $prompt = "Rewrite the following FAQ content to be clear, concise, and SEO-friendly:\n\n";
-            if ($question) {
-                $prompt .= "Question: {$question}\n\n";
-            }
-            if ($answer) {
-                $prompt .= "Answer: {$answer}";
-            }
 
             $response = $client->chat()->create([
                 'model' => 'gpt-3.5-turbo',
                 'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'You are a helpful assistant that rewrites FAQ content to be clear, concise, and SEO-friendly for a campground website. Do not use markdown. Plain text only.',
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $prompt,
-                    ],
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
                 ],
                 'temperature' => 0.7,
                 'max_tokens' => 500,
             ]);
 
-            $rewritten = $response->choices[0]->message->content ?? '';
+            $content = trim($response->choices[0]->message->content ?? '');
 
-            // Basic parsing
-            $newQuestion = '';
-            $newAnswer = '';
+            $question = '';
+            $answer = '';
 
-            if (stripos($rewritten, 'Answer:') !== false) {
-                [$newQuestion, $newAnswer] = explode('Answer:', $rewritten . 'Answer:');
+            if (preg_match('/Question[:\n]*([\s\S]*?)Answer[:\n]+([\s\S]*)/i', $content, $matches)) {
+                $question = trim($matches[1]);
+                $answer = trim($matches[2]);
             } else {
-                $newAnswer = $rewritten;
+                $answer = $content;
             }
 
-            return response()->json([
-                'success' => true,
-                'question' => trim(str_replace('Question:', '', $newQuestion)),
-                'answer' => trim($newAnswer),
-            ]);
+            return [
+                'question' => $question,
+                'answer' => $answer,
+            ];
         } catch (\Exception $e) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'message' => 'AI rewrite failed: ' . $e->getMessage(),
-                ],
-                500,
-            );
+            return [
+                'question' => '',
+                'answer' => 'AI failed: ' . $e->getMessage(),
+            ];
         }
     }
 
     public function edit($id)
     {
-        $faq = Infos::find($id);
+        $faq = Infos::findOrFail($id);
         return view('faq.edit', compact('faq'));
     }
 

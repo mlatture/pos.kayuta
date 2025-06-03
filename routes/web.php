@@ -60,7 +60,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('faq/update/{id}', [FAQController::class, 'update'])->name('faq.update');
     Route::delete('faq/destroy/{id}', [FAQController::class, 'destroy'])->name('faq.destroy');
 
-    Route::post('/ai/seo-rewrite', [FAQController::class, 'rewriteAnswer'])->name('ai.rewrite');
+    Route::post('/ai/seo-rewrite', [FAQController::class, 'aiRewrite'])->name('ai.rewrite');
     Route::post('/ai/grammar-correct', [FAQController::class, 'grammarCorrect'])->name('ai.grammar');
 
 
