@@ -229,8 +229,11 @@ return [
         'manage_pages' => [
             'name' => 'Manage Pages',
             'value' => 'manage_pages'
-        ]
+        ],
        
-        
+        'short_links' => [
+            'name' => 'Create Short Links',
+            'value' => 'short_links'
+        ]
     ]
 ];

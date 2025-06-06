@@ -197,35 +197,12 @@
                 @endHasPermission
 
                 @hasPermission(config('constants.role_modules.manage_pages.value'))
-                    <li class="dropdown-submenu">
-                        <a class="dropdown-item dropdown-toggle d-flex align-items-center" href="#"
-                            data-bs-toggle="dropdown">
-                            <i class="fas fa-file-alt me-2"></i>
-                            <span>Pages & Blogs</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'page']) }}">
-                                    <strong>Page</strong> 
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'article']) }}">
-                                    <strong>Article</strong> 
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'blog']) }}">
-                                    <strong>Blog</strong> 
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('pages.index', ['type' => 'landing']) }}">
-                                    <strong>Landing Page</strong> 
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                  
+
+                    <li><a class="dropdown-item" href="{{ route('pages.index', ['type' => 'page']) }}">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Page / Articles / Blogs</span>
+                    </a></li>
                 @endHasPermission
 
 
@@ -319,6 +296,12 @@
                     <li><a class="dropdown-item" href="{{ route('reservations.reservation-in-cart') }}">
                             <i class="nav-icon fas fa-cart-shopping"></i>
                             <span>Reservation in Cart</span>
+                        </a></li>
+                @endHasPermission
+                @hasPermission(config('constants.role_modules.short_links.value'))
+                    <li><a class="dropdown-item" href="{{ route('shortlinks.index') }}">
+                            <i class="nav-icon fas fa-link"></i>
+                            <span>Short Links</span>
                         </a></li>
                 @endHasPermission
 

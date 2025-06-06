@@ -3,7 +3,7 @@
 namespace App\CPU;
 
 use App\Model\Admin;
-use App\Model\BusinessSetting;
+use App\Model\BusinessSettings;
 use App\Model\Category;
 use App\Model\Color;
 use App\Model\Coupon;
@@ -22,9 +22,15 @@ use Illuminate\Support\Facades\Storage;
 
 class Helpers
 {
-    public static function getDictionaryFields($table, $desc = false) {
+    public static function business_setting($key, $default = null)
+    {
+        return BusinessSettings::where('type', $key)->value('value') ?? $default;
+    }
+
+    public static function getDictionaryFields($table, $desc = false)
+    {
         $dictionaryQuery = DictionaryTable::where(['table_name' => $table, 'viewable' => true]);
-        if($desc) {
+        if ($desc) {
             return $dictionaryQuery->pluck('description', 'field_name')->toArray();
         }
         return $dictionaryQuery->pluck('display_name', 'field_name')->toArray();
@@ -82,22 +88,21 @@ class Helpers
 
     public static function getDropdown($tablename, $fieldname, $selecteditem)
     {
-
         // Create the SQL query to select the records with the specified filter
         $result = DB::select(DB::raw("SELECT $fieldname FROM $tablename"));
         $recordString = '';
         $selected = '';
         // Loop through each record in the result set
-        $selecteditem = str_replace(" ", "_", $selecteditem);
+        $selecteditem = str_replace(' ', '_', $selecteditem);
 
         foreach ($result as $row) {
-            $value = str_replace(" ", "_", $row[$fieldname]);
+            $value = str_replace(' ', '_', $row[$fieldname]);
             if ($value == $selecteditem) {
-                $selected = " SELECTED ";
+                $selected = ' SELECTED ';
             } else {
-                $selected = "";
+                $selected = '';
             }
-            $recordString .= "<option value='" . $value . "' " . $selected . ">" . $row[$fieldname] . "</option>";
+            $recordString .= "<option value='" . $value . "' " . $selected . '>' . $row[$fieldname] . '</option>';
         }
         // Remove last comma and space from recordString
         return $recordString;
@@ -105,7 +110,6 @@ class Helpers
 
     public static function getShowfields($fieldname)
     {
-
         $result = DB::select('select siteclass from site_classes where :fieldname = true', ['fieldname' => $fieldname]);
         // Initialize an empty string to store all results from a single field
         $recordString = '';
@@ -113,8 +117,8 @@ class Helpers
         // Loop through each record in the result set
 
         foreach ($result as $row) {
-            $value = str_replace(" ", "_", $row['siteclass']);
-            $recordString .= " " . $value;
+            $value = str_replace(' ', '_', $row['siteclass']);
+            $recordString .= ' ' . $value;
         }
         // Remove last comma and space from recordString
         return $recordString;
@@ -168,8 +172,8 @@ class Helpers
     public static function generateTableRow($siteid, $cid, $availability, $sitehookup, $hookup)
     {
         // dd($availability, $sitehookup, $hookup);
-        if ($hookup <> "") {
-            if ($hookup <> $sitehookup) {
+        if ($hookup != '') {
+            if ($hookup != $sitehookup) {
                 $style = "style='background-color: #efc368; ''";
             } else {
                 $style = "style='background-color: #66FF66; '";
@@ -178,26 +182,33 @@ class Helpers
             $style = "style='background-color: #66FF66; '";
         }
 
-        $days = explode(",", $availability);
-        $html = "<tr><td><a href='" . route('front.site-details', ['id' => $siteid]) . "'>" . $siteid . "</a></td>";
+        $days = explode(',', $availability);
+        $html = "<tr><td><a href='" . route('front.site-details', ['id' => $siteid]) . "'>" . $siteid . '</a></td>';
         $colspan = 1;
         $tmpcid = $cid;
         $currday = $cid;
         $tmpcod = date('Y-m-d', strtotime($tmpcid . ' +1 day'));
-        $yesterday = "";
-        $bookcell = "";
+        $yesterday = '';
+        $bookcell = '';
         foreach ($days as $index => $day) {
-            if ($day == "N") {
-                if ($yesterday == "A") {
-                    $html .= "<td colspan='" . $colspan . "' " . $style . "><div align='center'>
-                    <a class='text-dark' href='" . route('front.site-details', ['id' => $siteid, 'cid' => $tmpcid, 'cod' => $tmpcod]) . "'>Show Details</a></div></td>";
+            if ($day == 'N') {
+                if ($yesterday == 'A') {
+                    $html .=
+                        "<td colspan='" .
+                        $colspan .
+                        "' " .
+                        $style .
+                        "><div align='center'>
+                    <a class='text-dark' href='" .
+                        route('front.site-details', ['id' => $siteid, 'cid' => $tmpcid, 'cod' => $tmpcod]) .
+                        "'>Show Details</a></div></td>";
                 }
                 $html .= $bookcell . "<td  style='background-color: maroon; opacity:0.5'></td>";
                 $colspan = 1;
                 // $tmpcid = date('Y-m-d', strtotime($currday . ' +1 day'));
             }
-            if ($day == "A") {
-                if ($yesterday == "A") {
+            if ($day == 'A') {
+                if ($yesterday == 'A') {
                     $colspan = $colspan + 1;
                     $tmpcod = date('Y-m-d', strtotime($currday . ' +1 day'));
                 } else {
@@ -207,13 +218,19 @@ class Helpers
             $yesterday = $day;
             $currday = date('Y-m-d', strtotime($currday . ' +1 day'));
         }
-        if ($yesterday == "A") {
-            $html .= "<td colspan='" . $colspan . "' " . $style . "><div align='center'>
-                    <a href='" . route('front.site-details', ['id' => $siteid, 'cid' => $tmpcid, 'cod' => $tmpcod]) . "'>Show Details</a></div></td>";
+        if ($yesterday == 'A') {
+            $html .=
+                "<td colspan='" .
+                $colspan .
+                "' " .
+                $style .
+                "><div align='center'>
+                    <a href='" .
+                route('front.site-details', ['id' => $siteid, 'cid' => $tmpcid, 'cod' => $tmpcod]) .
+                "'>Show Details</a></div></td>";
         }
-        return $html . "</tr>";
+        return $html . '</tr>';
     }
-
 
     public static function get_customer($request = null)
     {
@@ -237,14 +254,14 @@ class Helpers
     {
         $discount = 0;
         $user = Helpers::get_customer($request);
-        $couponLimit = Order::where('customer_id', $user->id)
-            ->where('coupon_code', $request['coupon_code'])->count();
+        $couponLimit = Order::where('customer_id', $user->id)->where('coupon_code', $request['coupon_code'])->count();
 
         $coupon = Coupon::where(['code' => $request['coupon_code']])
             ->where('limit', '>', $couponLimit)
             ->where('status', '=', 1)
             ->whereDate('start_date', '<=', Carbon::parse()->toDateString())
-            ->whereDate('expire_date', '>=', Carbon::parse()->toDateString())->first();
+            ->whereDate('expire_date', '>=', Carbon::parse()->toDateString())
+            ->first();
 
         if (isset($coupon)) {
             $total = 0;
@@ -254,7 +271,7 @@ class Helpers
             }
             if ($total >= $coupon['min_purchase']) {
                 if ($coupon['discount_type'] == 'percentage') {
-                    $discount = (($total / 100) * $coupon['discount']) > $coupon['max_discount'] ? $coupon['max_discount'] : (($total / 100) * $coupon['discount']);
+                    $discount = ($total / 100) * $coupon['discount'] > $coupon['max_discount'] ? $coupon['max_discount'] : ($total / 100) * $coupon['discount'];
                 } else {
                     $discount = $coupon['discount'];
                 }
@@ -291,7 +308,9 @@ class Helpers
 
     public static function rating_count($product_id, $rating)
     {
-        return Review::where(['product_id' => $product_id, 'rating' => $rating])->whereNull('delivery_man_id')->count();
+        return Review::where(['product_id' => $product_id, 'rating' => $rating])
+            ->whereNull('delivery_man_id')
+            ->count();
     }
 
     public static function get_business_settings($name)
@@ -332,9 +351,13 @@ class Helpers
     public static function get_shipping_methods($seller_id, $type)
     {
         if ($type == 'admin') {
-            return ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->get();
+            return ShippingMethod::where(['status' => 1])
+                ->where(['creator_type' => 'admin'])
+                ->get();
         } else {
-            return ShippingMethod::where(['status' => 1])->where(['creator_id' => $seller_id, 'creator_type' => $type])->get();
+            return ShippingMethod::where(['status' => 1])
+                ->where(['creator_id' => $seller_id, 'creator_type' => $type])
+                ->get();
         }
     }
 
@@ -350,10 +373,10 @@ class Helpers
         $query_data = Color::whereIn('code', $colors)->pluck('name', 'code')->toArray();
         $color_final = [];
         foreach ($query_data as $key => $color) {
-            $color_final[] = array(
+            $color_final[] = [
                 'name' => $color,
                 'code' => $key,
-            );
+            ];
         }
 
         $variation = [];
@@ -365,7 +388,7 @@ class Helpers
         if ((is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes'])) != null) {
             $attributes_arr = is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes']);
             foreach ($attributes_arr as $attribute) {
-                $attributes[] = (int)$attribute;
+                $attributes[] = (int) $attribute;
             }
         }
         $data['attributes'] = $attributes;
@@ -374,16 +397,15 @@ class Helpers
         foreach ($variation_arr as $var) {
             $variation[] = [
                 'type' => $var['type'],
-                'price' => (float)$var['price'],
+                'price' => (float) $var['price'],
                 'sku' => $var['sku'],
-                'qty' => (int)$var['qty'],
+                'qty' => (int) $var['qty'],
             ];
         }
         $data['variation'] = $variation;
 
         return $data;
     }
-
 
     public static function product_data_formatting($data, $multi_data = false)
     {
@@ -395,7 +417,7 @@ class Helpers
                 }
                 $data = $storage;
             } else {
-                $data = Helpers::set_data_format($data);;
+                $data = Helpers::set_data_format($data);
             }
 
             return $data;
@@ -430,7 +452,8 @@ class Helpers
     public static function combinations($arrays)
     {
         $result = [[]];
-        foreach ($arrays as $property => $property_values) { // Size small, medium
+        foreach ($arrays as $property => $property_values) {
+            // Size small, medium
             $tmp = [];
             foreach ($result as $result_item) {
                 foreach ($property_values as $property_value) {
@@ -540,7 +563,7 @@ class Helpers
     {
         $user_role = auth('admin')->user()->role;
         $permission = $user_role->module_access;
-        if (isset($permission) && $user_role->status == 1 && in_array($mod_name, (array)json_decode($permission)) == true) {
+        if (isset($permission) && $user_role->status == 1 && in_array($mod_name, (array) json_decode($permission)) == true) {
             return true;
         }
 
@@ -563,7 +586,7 @@ class Helpers
             $price = floatval($price) / floatval($currency->exchange_rate);
 
             $usd_currency = Currency::where('code', 'USD')->first();
-            $price = $usd_currency->exchange_rate < 1 ? (floatval($price) * floatval($usd_currency->exchange_rate)) : (floatval($price) / floatval($usd_currency->exchange_rate));
+            $price = $usd_currency->exchange_rate < 1 ? floatval($price) * floatval($usd_currency->exchange_rate) : floatval($price) / floatval($usd_currency->exchange_rate);
         } else {
             $price = floatval($price);
         }
@@ -615,31 +638,49 @@ class Helpers
     public static function send_push_notif_to_device($fcm_token, $data)
     {
         $key = BusinessSetting::where(['type' => 'push_notification_key'])->first()->value;
-        $url = "https://fcm.googleapis.com/fcm/send";
-        $header = array(
-            "authorization: key=" . $key . "",
-            "content-type: application/json"
-        );
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $header = ['authorization: key=' . $key . '', 'content-type: application/json'];
 
         if (isset($data['order_id']) == false) {
             $data['order_id'] = null;
         }
 
-        $postdata = '{
-            "to" : "' . $fcm_token . '",
+        $postdata =
+            '{
+            "to" : "' .
+            $fcm_token .
+            '",
             "data" : {
-                "title" :"' . $data['title'] . '",
-                "body" : "' . $data['description'] . '",
-                "image" : "' . $data['image'] . '",
-                "order_id":"' . $data['order_id'] . '",
+                "title" :"' .
+            $data['title'] .
+            '",
+                "body" : "' .
+            $data['description'] .
+            '",
+                "image" : "' .
+            $data['image'] .
+            '",
+                "order_id":"' .
+            $data['order_id'] .
+            '",
                 "is_read": 0
               },
               "notification" : {
-                "title" :"' . $data['title'] . '",
-                "body" : "' . $data['description'] . '",
-                "image" : "' . $data['image'] . '",
-                "order_id":"' . $data['order_id'] . '",
-                "title_loc_key":"' . $data['order_id'] . '",
+                "title" :"' .
+            $data['title'] .
+            '",
+                "body" : "' .
+            $data['description'] .
+            '",
+                "image" : "' .
+            $data['image'] .
+            '",
+                "order_id":"' .
+            $data['order_id'] .
+            '",
+                "title_loc_key":"' .
+            $data['order_id'] .
+            '",
                 "is_read": 0,
                 "icon" : "new",
                 "sound" : "default"
@@ -651,7 +692,7 @@ class Helpers
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
@@ -667,25 +708,35 @@ class Helpers
     {
         $key = BusinessSetting::where(['type' => 'push_notification_key'])->first()->value;
 
-        $url = "https://fcm.googleapis.com/fcm/send";
-        $header = [
-            "authorization: key=" . $key . "",
-            "content-type: application/json",
-        ];
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $header = ['authorization: key=' . $key . '', 'content-type: application/json'];
 
         $image = asset('storage/notification') . '/' . $data['image'];
-        $postdata = '{
+        $postdata =
+            '{
             "to" : "/topics/sixvalley",
             "data" : {
-                "title":"' . $data->title . '",
-                "body" : "' . $data->description . '",
-                "image" : "' . $image . '",
+                "title":"' .
+            $data->title .
+            '",
+                "body" : "' .
+            $data->description .
+            '",
+                "image" : "' .
+            $image .
+            '",
                 "is_read": 0
               },
               "notification" : {
-                "title":"' . $data->title . '",
-                "body" : "' . $data->description . '",
-                "image" : "' . $image . '",
+                "title":"' .
+            $data->title .
+            '",
+                "body" : "' .
+            $data->description .
+            '",
+                "image" : "' .
+            $image .
+            '",
                 "title_loc_key":null,
                 "is_read": 0,
                 "icon" : "new",
@@ -698,7 +749,7 @@ class Helpers
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
@@ -726,7 +777,7 @@ class Helpers
 
         return [
             'success' => $success,
-            'data' => $data
+            'data' => $data,
         ];
     }
 
@@ -735,9 +786,12 @@ class Helpers
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {
-                if ($object != "." && $object != "..") {
-                    if (filetype($dir . "/" . $object) == "dir") Helpers::remove_dir($dir . "/" . $object);
-                    else unlink($dir . "/" . $object);
+                if ($object != '.' && $object != '..') {
+                    if (filetype($dir . '/' . $object) == 'dir') {
+                        Helpers::remove_dir($dir . '/' . $object);
+                    } else {
+                        unlink($dir . '/' . $object);
+                    }
                 }
             }
             reset($objects);
@@ -796,15 +850,15 @@ class Helpers
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => route(base64_decode('YWN0aXZhdGlvbi1jaGVjaw==')),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
+            CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-        ));
+            CURLOPT_CUSTOMREQUEST => 'GET',
+        ]);
         $response = curl_exec($curl);
         $data = json_decode($response, true);
         return $data;
@@ -860,7 +914,7 @@ class Helpers
         $decimal_point_settings = Helpers::get_business_settings('decimal_point_settings');
         $position = Helpers::get_business_settings('currency_symbol_position');
         if (!is_null($position) && $position == 'left') {
-            $string = currency_symbol() . '' . number_format($amount, (!empty($decimal_point_settings) ? $decimal_point_settings : 0));
+            $string = currency_symbol() . '' . number_format($amount, !empty($decimal_point_settings) ? $decimal_point_settings : 0);
         } else {
             $string = number_format($amount, !empty($decimal_point_settings) ? $decimal_point_settings : 0) . '' . currency_symbol();
         }
@@ -891,7 +945,6 @@ class Helpers
     }
 }
 
-
 if (!function_exists('currency_symbol')) {
     function currency_symbol()
     {
@@ -919,12 +972,12 @@ function translate($key)
     App::setLocale($local);
 
     try {
-        $lang_array = include(base_path('resources/lang/' . $local . '/messages.php'));
+        $lang_array = include base_path('resources/lang/' . $local . '/messages.php');
         $processed_key = ucfirst(str_replace('_', ' ', Helpers::remove_invalid_charcaters($key)));
         $key = Helpers::remove_invalid_charcaters($key);
         if (!array_key_exists($key, $lang_array)) {
             $lang_array[$key] = $processed_key;
-            $str = "<?php return " . var_export($lang_array, true) . ";";
+            $str = '<?php return ' . var_export($lang_array, true) . ';';
             file_put_contents(base_path('resources/lang/' . $local . '/messages.php'), $str);
             $result = $processed_key;
         } else {
@@ -939,14 +992,14 @@ function translate($key)
 
 function auto_translator($q, $sl, $tl)
 {
-    $res = file_get_contents("https://translate.googleapis.com/translate_a/single?client=gtx&ie=UTF-8&oe=UTF-8&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&dt=at&sl=" . $sl . "&tl=" . $tl . "&hl=hl&q=" . urlencode($q), $_SERVER['DOCUMENT_ROOT'] . "/transes.html");
+    $res = file_get_contents('https://translate.googleapis.com/translate_a/single?client=gtx&ie=UTF-8&oe=UTF-8&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&dt=at&sl=' . $sl . '&tl=' . $tl . '&hl=hl&q=' . urlencode($q), $_SERVER['DOCUMENT_ROOT'] . '/transes.html');
     $res = json_decode($res);
     return str_replace('_', ' ', $res[0][0][0]);
 }
 
 function getLanguageCode(string $country_code): string
 {
-    $locales = array(
+    $locales = [
         'af-ZA',
         'am-ET',
         'ar-AE',
@@ -1094,8 +1147,8 @@ function getLanguageCode(string $country_code): string
         'zh-HK',
         'zh-MO',
         'zh-SG',
-        'zh-TW'
-    );
+        'zh-TW',
+    ];
 
     foreach ($locales as $locale) {
         $locale_region = explode('-', $locale);
@@ -1104,5 +1157,5 @@ function getLanguageCode(string $country_code): string
         }
     }
 
-    return "en";
+    return 'en';
 }

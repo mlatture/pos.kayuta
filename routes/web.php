@@ -34,6 +34,7 @@ use App\Http\Controllers\AddOnsController;
 use App\Http\Controllers\BusinessSettingController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ShortLinkController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -42,13 +43,38 @@ Auth::routes();
 
 Route::prefix('admin')->middleware('auth')->group(function () {
 
+    Route::prefix('short_links')->group(function () {
+        Route::get('/', [ShortLinkController::class, 'index'])->name('shortlinks.index');
+        Route::get('/create', [ShortLinkController::class, 'create'])->name('shortlinks.create');
+        Route::post('/store', [ShortLinkController::class, 'store'])->name('shortlinks.store');
+        Route::get('/{id}', [ShortLinkController::class, 'show'])->name('shortlinks.show');
+        Route::get('/edit/{id}', [ShortLinkController::class, 'edit'])->name('shortlinks.edit');
+        Route::put('/update/{id}', [ShortLinkController::class, 'update'])->name('shortlinks.update');
+        Route::delete('/{id}', [ShortLinkController::class, 'destroy'])->name('shortlinks.destroy');
+    });
+
+
     Route::prefix('pages')->middleware(['auth'])->group(function () {
         Route::get('/', [PageController::class, 'index'])->name('pages.index');
         Route::get('/create', [PageController::class, 'create'])->name('pages.create');
-        Route::post('/', [PageController::class, 'store'])->name('pages.store');
-        Route::get('/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
-        Route::put('/{page}', [PageController::class, 'update'])->name('pages.update');
+        Route::post('/pages', [PageController::class, 'storePages'])->name('pages.store');
+        Route::post('/blogs', [PageController::class, 'storeBlogs'])->name('blogs.store');
+        Route::post('/articles', [PageController::class, 'storeArticle'])->name('articles.store');
         Route::delete('/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
+        
+        
+        Route::put('/{id}', [PageController::class, 'updatePage'])->name('pages.update');
+        Route::get('/{id}', [PageController::class, 'editPage'])->name('pages.edit');
+        
+        
+        Route::get('/article/{id}', [PageController::class, 'editArticle'])->name('article.edit');
+        Route::put('/article/{id}', [PageController::class, 'updateArticle'])->name('articles.update');
+        Route::delete('/article/{id}', [PageController::class, 'destroyArticle'])->name('articles.destroy');
+        
+        Route::get('/blogs/{id}', [PageController::class, 'editBlogs'])->name('blogs.edit');
+        Route::put('/blogs/{id}', [PageController::class, 'updateBlogs'])->name('blogs.update');
+        Route::delete('/blogs/{id}', [PageController::class, 'destroyBlogs'])->name('blogs.destroy');
+        
     });
     
 
@@ -61,8 +87,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('faq/destroy/{id}', [FAQController::class, 'destroy'])->name('faq.destroy');
 
     Route::post('/ai/seo-rewrite', [FAQController::class, 'aiRewrite'])->name('ai.rewrite');
+    
     Route::post('/ai/grammar-correct', [FAQController::class, 'grammarCorrect'])->name('ai.grammar');
 
+    Route::post('/ai/article-rewrite', [PageController::class, 'aiRewriteArticle'])->name('ai.article.rewrite');
 
 
     Route::post('users',[UserController::class,'store'])->name('users.store');
