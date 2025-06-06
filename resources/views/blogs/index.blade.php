@@ -196,9 +196,7 @@
                                     <td class="text-end">{{ $article->updated_at->format('M d, Y') }}</td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">No articles found.</td>
-                                </tr>
+                               
                             @endforelse
                         </tbody>
                     </table>
