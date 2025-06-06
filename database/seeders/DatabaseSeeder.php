@@ -96,6 +96,7 @@ class DatabaseSeeder extends Seeder
         $this->call(JobsTableSeeder::class);
         $this->call(CategoriesTableSeeder::class);
         $this->call(PromptTemplateSeeder::class);
+        $this->call(BookingUrlSeeder::class);
 
     }
 }
