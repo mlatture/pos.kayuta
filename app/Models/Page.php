@@ -19,7 +19,10 @@ class Page extends Model
     public function setTitleAttribute($value)
     {
         $this->attributes['title'] = $value;
-        $this->attributes['slug'] = Str::slug($value);
+
+        if (empty($this->attributes['slug'])) {
+            $this->attributes['slug'] = Str::slug($value);
+        }
     }
 
     public function setImageAttribute($file)
@@ -44,7 +47,7 @@ class Page extends Model
 
     protected function storeFile($file, $folder)
     {
-        if (is_file($file)) {
+        if (is_a($file, \Illuminate\Http\UploadedFile::class)) {
             $date = now()->format('Y-m-d');
             $random = substr(uniqid(), -12);
             $extension = $file->getClientOriginalExtension();
@@ -55,6 +58,6 @@ class Page extends Model
             return $filename;
         }
 
-        return $file; // for cases where value is already a filename
+        return is_string($file) ? $file : null;
     }
 }

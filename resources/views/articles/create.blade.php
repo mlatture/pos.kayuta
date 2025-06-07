@@ -62,6 +62,51 @@
                             </div>
                         </div>
 
+                        <hr class="my-4">
+                        <h5 class="fw-bold">SEO and Social Media</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="metatitle" class="form-label fw-semibold">Meta Title</label>
+                                <input type="text" name="metatitle" id="metatitle" class="form-control"
+                                    placeholder="SEO meta title (optional)">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="canonicalurl" class="form-label fw-semibold">Canonical URL</label>
+                                <input type="text" name="canonicalurl" id="canonicalurl" class="form-control"
+                                    placeholder="https://example.com/blog-title">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="metadescription" class="form-label fw-semibold">Meta Description</label>
+                            <textarea name="metadescription" id="metadescription" class="form-control" rows="2"
+                                placeholder="Short meta description for SEO (optional)"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="opengraphtitle" class="form-label fw-semibold">Social Media Title</label>
+                            <input type="text" name="opengraphtitle" id="opengraphtitle" class="form-control"
+                                placeholder="Social media title (optional)">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="opengraphdescription" class="form-label fw-semibold">Social Media
+                                Description</label>
+                            <textarea name="opengraphdescription" id="opengraphdescription" class="form-control" rows="2"
+                                placeholder="Social media description (optional)"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Social Media Image</label>
+                            <input type="file" name="opengraphimage" class="form-control" accept="image/*">
+                            <small class="text-muted">Recommended size: 1200x630px</small>
+                           
+                        </div>
+
+
+                    
+
                         <div class="d-flex justify-content-end mt-4">
                             <button type="reset" class="btn btn-light me-2">Reset</button>
                             <button type="submit" class="btn btn-primary">Submit</button>
@@ -127,7 +172,8 @@
                                     },
                                     body: JSON.stringify({
                                         title: questionText,
-                                        description: answerText
+                                        description: answerText,
+                                        type: 'article'
                                     })
                                 });
 

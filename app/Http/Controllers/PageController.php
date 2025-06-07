@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Page;
 use App\Models\Blogs;
 use App\Models\Article;
-
+use App\Models\PromptTemplate;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use OpenAI;
@@ -50,10 +50,11 @@ class PageController extends Controller
 
     public function storeBlogs(Request $request)
     {
-        $type = $request->input('type');
-        $data = $request->all();
+        $data = $request->except(['thumbnail', 'opengraphimage']);
 
         $data['image'] = $request->file('thumbnail');
+        $data['opengraphimage'] = $request->file('opengraphimage');
+
         Blogs::create($data);
 
         return redirect()->back()->with('success', 'Blog created!');
@@ -61,9 +62,11 @@ class PageController extends Controller
 
     public function storeArticle(Request $request)
     {
-        $data = $request->all();
+        $data = $request->except(['thumbnail', 'opengraphimage']); 
 
         $data['thumbnail'] = $request->file('thumbnail');
+        $data['opengraphimage'] = $request->file('opengraphimage');
+
         Article::create($data);
 
         return redirect()->back()->with('success', 'Article created!');
@@ -71,10 +74,30 @@ class PageController extends Controller
 
     public function storePages(Request $request)
     {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'image' => 'nullable|image',
+            'attachment' => 'nullable|file',
+            'opengraphimage' => 'nullable|image',
+        ]);
+
         $data = $request->all();
         $data['image'] = $request->file('image');
         $data['attachment'] = $request->file('attachment');
         $data['opengraphimage'] = $request->file('opengraphimage');
+
+        $data['schema_code_pasting'] = json_encode(
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebPage',
+                'name' => $request->title,
+                'description' => strip_tags($request->description),
+                'url' => $request->canonicalurl ?: url('/pages/' . Str::slug($request->title)),
+            ],
+            JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
+        );
+
         Page::create($data);
 
         return redirect()->back()->with('success', 'Page created!');
@@ -85,33 +108,26 @@ class PageController extends Controller
         $request->validate([
             'title' => 'required|string',
             'description' => 'required|string',
+            'type' => 'required|in:article,blogs,page',
         ]);
 
         $title = trim($request->input('title'));
         $description = trim($request->input('description'));
 
-        $systemPrompt = <<<EOT
-        You are a helpful assistant that rewrites both the title and content of an article for an RV campground website.
-        Make the title more descriptive and SEO-friendly.
+        if ($request->type === 'article') {
+            $promptType = 'article_write';
+        } elseif ($request->type === 'blogs') {
+            $promptType = 'blog_write';
+        } elseif ($request->type === 'page') {
+            $promptType = 'page_write';
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invalid type specified.'], 400);
+        }
 
-        The content must be evergreen, clear, and optimized for SEO and AEO.
-        Rewrite it into **2 to 8 paragraphs**, with each paragraph containing **3 to 8 sentences**.
-        Avoid markdown, emojis, lists, or symbols. Use plain text only. Do not return anything except the rewritten title and content.
+        $prompt = PromptTemplate::where('type', $promptType)->first();
 
-        Return your response strictly in this format:
-
-        Title: [rewritten title]
-
-        Content: [rewritten article]
-        EOT;
-
-        $userPrompt = <<<EOT
-        Please rewrite the following article to be more engaging and SEO-optimized. Improve both the title and the content.
-
-        Title: {$title}
-
-        Content: {$description}
-        EOT;
+        $systemPrompt = $prompt->system_prompt;
+        $userPrompt = $prompt->user_prompt;
 
         $aiResponse = $this->callOpenAI($systemPrompt, $userPrompt);
 
@@ -270,8 +286,8 @@ class PageController extends Controller
         $blog->delete();
 
         return redirect()
-        ->route('pages.index', ['type' => 'blog'])
-        ->with('success', 'Blogs deleted successfully!');
+            ->route('pages.index', ['type' => 'blog'])
+            ->with('success', 'Blogs deleted successfully!');
     }
 
     public function destroyArticle($id)
@@ -280,8 +296,8 @@ class PageController extends Controller
         $article->delete();
 
         return redirect()
-        ->route('pages.index', ['type' => 'article'])
-        ->with('success', 'Article deleted successfully!');
+            ->route('pages.index', ['type' => 'article'])
+            ->with('success', 'Article deleted successfully!');
     }
 
     public function destroy($id)
