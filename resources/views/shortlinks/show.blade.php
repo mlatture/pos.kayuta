@@ -4,18 +4,36 @@
 @section('content-header', 'Shortlink Details')
 
 @section('content')
+@push('js')
+    <script>
+        $(document).ready(function () {
+            const successMessage = localStorage.getItem('shortlinkSuccess');
+            if (successMessage) {
+                $.toast({
+                    heading: 'Success',
+                    text: successMessage,
+                    icon: 'success',
+                    position: 'bottom-left',
+                    hideAfter: 3000,
+                    stack: 3
+                })
+
+                setTimeout(() => {
+                    localStorage.removeItem('shortlinkSuccess');
+                }, 3000);
+            }
+        })
+    </script>
+@endpush   
+
+
+
 <div class="row animated fadeInUp">
     <div class="col-12 col-lg-8 mx-auto">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
 
-                @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
+             
                 <h4 class="mb-4">
                     <i class="fas fa-link me-1 text-primary"></i> 
                     Shortlink: <code>{{ $shortlink->slug }}</code>
