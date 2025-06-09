@@ -33,31 +33,28 @@ class ShortLinkController extends Controller
         ]);
 
         $slug = Str::slug($request->slug);
+
+        // Normalize source
         $source = strtolower(str_replace(' ', '', $request->source));
         if ($source === 'fb') {
             $source = 'facebook';
         }
 
-        // 1. Get base booking URL
+        // Get base domain from settings
         $bookingBaseUrl = rtrim(BusinessSettings::where('type', 'booking_url')->value('value') ?? 'https://book.kayuta.com', '/');
 
-        // 2. Handle input path
+        // Trim and sanitize the optional path
         $inputPath = trim($request->path ?? '');
-        if ($inputPath === '') {
-            $path = $bookingBaseUrl;
-        } elseif (Str::startsWith($inputPath, ['http://', 'https://'])) {
-            $path = rtrim($inputPath, '/');
-        } else {
-            $path = $bookingBaseUrl . '/' . ltrim($inputPath, '/');
-        }
+        $cleanPath = trim($inputPath, '/');
 
-        // 3. Parse path into components
-        $urlParts = parse_url($path);
-        if (!$urlParts || !isset($urlParts['scheme']) || !isset($urlParts['host'])) {
-            return response()->json(['message' => 'Invalid URL or missing scheme/host.'], 422);
+        // Construct the URL path: either /{slug} or /{path}/{slug}
+        $base = $bookingBaseUrl;
+        if (!empty($cleanPath)) {
+            $base .= '/' . $cleanPath;
         }
+        $base .= '/' . $slug;
 
-        // 4. Build UTM parameters
+        // UTM parameters
         $params = [];
         if ($source) {
             $params['utm_source'] = $source;
@@ -69,18 +66,12 @@ class ShortLinkController extends Controller
             $params['utm_campaign'] = $request->campaign;
         }
 
-        // 5. Merge existing query params with UTM
-        parse_str($urlParts['query'] ?? '', $existingQuery);
-        $mergedQuery = array_merge($existingQuery, $params);
+        // Final full redirect URL with optional query
+        $fullRedirectUrl = $base . (!empty($params) ? '?' . http_build_query($params) : '');
 
-        // 6. Reconstruct full URL
-        $base = $urlParts['scheme'] . '://' . $urlParts['host'] . ($urlParts['path'] ?? '');
-        $fullRedirectUrl = $base . (!empty($mergedQuery) ? '?' . http_build_query($mergedQuery) : '');
-
-        // 7. Save
         $shortlink = ShortLink::create([
             'slug' => $slug,
-            'path' => $path,
+            'path' => $cleanPath, // can be null or blank
             'source' => $source,
             'medium' => $request->medium,
             'campaign' => $request->campaign,
@@ -90,13 +81,22 @@ class ShortLinkController extends Controller
         return response()->json([
             'redirect_url' => route('shortlinks.show', $shortlink->id),
         ]);
-
     }
 
     public function show($id)
     {
         $shortlink = ShortLink::findOrFail($id);
-        $shortUrl = rtrim($shortlink->path, '/') . '/go/' . $shortlink->slug;
+
+        $bookingBaseUrl = rtrim(BusinessSettings::where('type', 'booking_url')->value('value') ?? 'https://book.kayuta.com', '/');
+
+        $shortUrl = $bookingBaseUrl;
+
+        if (!empty($shortlink->path)) {
+            $shortUrl .= '/' . trim($shortlink->path, '/');
+        }
+
+        $shortUrl .= '/' . $shortlink->slug;
+
         $qr = QrCode::format('png')->size(300)->generate($shortUrl);
 
         return view('shortlinks.show', compact('shortlink', 'shortUrl', 'qr'));
