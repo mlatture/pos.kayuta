@@ -96,7 +96,7 @@ class ShortLinkController extends Controller
     public function show($id)
     {
         $shortlink = ShortLink::findOrFail($id);
-        $shortUrl = url('/go/' . $shortlink->slug);
+        $shortUrl = rtrim($shortlink->path, '/') . '/go/' . $shortlink->slug;
         $qr = QrCode::format('png')->size(300)->generate($shortUrl);
 
         return view('shortlinks.show', compact('shortlink', 'shortUrl', 'qr'));
