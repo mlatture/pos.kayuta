@@ -89,13 +89,17 @@ class ShortLinkController extends Controller
 
         $bookingBaseUrl = rtrim(BusinessSettings::where('type', 'booking_url')->value('value') ?? 'https://book.kayuta.com', '/');
 
-        $shortUrl = $bookingBaseUrl;
+        $path = trim($shortlink->path ?? '', '/');
 
-        if (!empty($shortlink->path)) {
-            $shortUrl .= '/' . trim($shortlink->path, '/');
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            $shortUrl = rtrim($path, '/') . '/' . $shortlink->slug;
+        } else {
+            $shortUrl = $bookingBaseUrl;
+            if (!empty($path)) {
+                $shortUrl .= '/' . $path;
+            }
+            $shortUrl .= '/' . $shortlink->slug;
         }
-
-        $shortUrl .= '/' . $shortlink->slug;
 
         $qr = QrCode::format('png')->size(300)->generate($shortUrl);
 
