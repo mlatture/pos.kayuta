@@ -74,6 +74,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/blogs/{id}', [PageController::class, 'editBlogs'])->name('blogs.edit');
         Route::put('/blogs/{id}', [PageController::class, 'updateBlogs'])->name('blogs.update');
         Route::delete('/blogs/{id}', [PageController::class, 'destroyBlogs'])->name('blogs.destroy');
+
+        Route::post('/ckeditor/upload', [PageController::class, 'uploadCkeditor'])->name('ckeditor.upload');
         
     });
     

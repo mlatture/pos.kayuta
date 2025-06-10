@@ -123,7 +123,14 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             ClassicEditor
-                .create(document.querySelector('#description'))
+                .create(document.querySelector('#description'), {
+                    simpleUpload: {
+                        uploadUrl: '{{ route("ckeditor.upload") }}',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    }
+                })
 
 
                 .then(editor => {

@@ -62,7 +62,7 @@ class PageController extends Controller
 
     public function storeArticle(Request $request)
     {
-        $data = $request->except(['thumbnail', 'opengraphimage']); 
+        $data = $request->except(['thumbnail', 'opengraphimage']);
 
         $data['thumbnail'] = $request->file('thumbnail');
         $data['opengraphimage'] = $request->file('opengraphimage');
@@ -306,5 +306,26 @@ class PageController extends Controller
         $page->delete();
 
         return redirect()->route('pages.index')->with('Page deleted successfully!');
+    }
+
+    public function uploadCkeditor(Request $request)
+    {
+        if ($request->hasFile('upload')) {
+            $file = $request->file('upload');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/ckeditor'), $filename);
+
+            $url = asset('uploads/ckeditor/' . $filename);
+            return response()->json([
+                'url' => $url,
+            ]);
+        }
+
+        return response()->json(
+            [
+                'error' => ['message' => 'No file uploaded.'],
+            ],
+            400,
+        );
     }
 }
