@@ -95,10 +95,10 @@ class ShortLinkController extends Controller
             $shortUrl = rtrim($path, '/') . '/' . $shortlink->slug;
         } else {
             $shortUrl = $bookingBaseUrl;
-            if (!empty($path)) {
-                $shortUrl .= '/' . $path;
-            }
-            $shortUrl .= '/' . $shortlink->slug;
+            // if (!empty($path)) {
+            //     $shortUrl .= '/' ;
+            // }
+            $shortUrl .= '/go/' . $shortlink->slug;
         }
 
         $qr = QrCode::format('png')->size(300)->generate($shortUrl);
