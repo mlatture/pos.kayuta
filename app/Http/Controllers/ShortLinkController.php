@@ -92,7 +92,9 @@ class ShortLinkController extends Controller
 
         $shortUrl = $bookingBaseUrl . '/go/' . $shortlink->slug;
 
-        $qr = QrCode::format('png')->size(300)->generate($shortUrl);
+        $qr = QrCode::format('png')
+        ->merge(public_path('images/logo.png'), 0.3, true)
+        ->size(300)->generate($shortUrl);
 
         return view('shortlinks.show', compact('shortlink', 'shortUrl', 'qr'));
     }
