@@ -34,44 +34,44 @@ class ShortLinkController extends Controller
 
         $slug = Str::slug($request->slug);
 
-        // Normalize source
         $source = strtolower(str_replace(' ', '', $request->source));
         if ($source === 'fb') {
             $source = 'facebook';
         }
 
-        // Get base domain from settings
+        // Get base booking URL
         $bookingBaseUrl = rtrim(BusinessSettings::where('type', 'booking_url')->value('value') ?? 'https://book.kayuta.com', '/');
 
-        // Trim and sanitize the optional path
+        // Handle path logic
         $inputPath = trim($request->path ?? '');
-        $cleanPath = trim($inputPath, '/');
+        $fullRedirectUrl = '';
 
-        // Construct the URL path: either /{slug} or /{path}/{slug}
-        $base = $bookingBaseUrl;
-        if (!empty($cleanPath)) {
-            $base .= '/' . $cleanPath;
+        if (Str::startsWith($inputPath, '/')) {
+            $fullRedirectUrl = $bookingBaseUrl . $inputPath;
+        } elseif (Str::startsWith($inputPath, ['http://', 'https://'])) {
+            $fullRedirectUrl = $inputPath;
         }
-        $base .= '/' . $slug;
 
         // UTM parameters
-        $params = [];
+        $utmParams = [];
         if ($source) {
-            $params['utm_source'] = $source;
+            $utmParams['utm_source'] = $source;
         }
         if ($request->medium && $request->medium !== 'none') {
-            $params['utm_medium'] = $request->medium;
+            $utmParams['utm_medium'] = $request->medium;
         }
         if ($request->campaign) {
-            $params['utm_campaign'] = $request->campaign;
+            $utmParams['utm_campaign'] = $request->campaign;
         }
 
-        // Final full redirect URL with optional query
-        $fullRedirectUrl = $base . (!empty($params) ? '?' . http_build_query($params) : '');
+        // Append UTM if needed
+        if (!empty($fullRedirectUrl) && !empty($utmParams)) {
+            $fullRedirectUrl .= (Str::contains($fullRedirectUrl, '?') ? '&' : '?') . http_build_query($utmParams);
+        }
 
         $shortlink = ShortLink::create([
             'slug' => $slug,
-            'path' => $cleanPath, // can be null or blank
+            'path' => $inputPath,
             'source' => $source,
             'medium' => $request->medium,
             'campaign' => $request->campaign,
@@ -80,6 +80,7 @@ class ShortLinkController extends Controller
 
         return response()->json([
             'redirect_url' => route('shortlinks.show', $shortlink->id),
+            'short_url' => $bookingBaseUrl . '/go/' . $slug, // for display or QR
         ]);
     }
 
@@ -89,17 +90,7 @@ class ShortLinkController extends Controller
 
         $bookingBaseUrl = rtrim(BusinessSettings::where('type', 'booking_url')->value('value') ?? 'https://book.kayuta.com', '/');
 
-        $path = trim($shortlink->path ?? '', '/');
-
-        if (Str::startsWith($path, ['http://', 'https://'])) {
-            $shortUrl = rtrim($path, '/') . '/' . $shortlink->slug;
-        } else {
-            $shortUrl = $bookingBaseUrl;
-            // if (!empty($path)) {
-            //     $shortUrl .= '/' ;
-            // }
-            $shortUrl .= '/go/' . $shortlink->slug;
-        }
+        $shortUrl = $bookingBaseUrl . '/go/' . $shortlink->slug;
 
         $qr = QrCode::format('png')->size(300)->generate($shortUrl);
 
