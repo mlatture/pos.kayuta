@@ -7,6 +7,17 @@
 @section('content-header')
     Create Static Content (e.g., About Us, Contact, Terms)
 @endsection
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+@section('css')
+    <style>
+        #quill-editor img {
+            max-width: 100%;
+            height: auto;
+            max-height: 300px
+        }
+    </style>
+@endsection
 
 @section('content')
     <div class="row animated fadeInUp">
@@ -38,9 +49,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="description" class="form-label fw-semibold">Page Content</label>
+                            {{-- <label for="description" class="form-label fw-semibold">Page Content</label>
                             <textarea name="description" id="description" class="form-control" rows="6"
-                                placeholder="Enter full page content here..."></textarea>
+                                placeholder="Enter full page content here..."></textarea> --}}
+
+                            <input type="hidden" name="description" id="description">
+                            <div id="quill-editor" style="height: 300px;"></div>
+
                         </div>
 
                         <div class="mb-3">
@@ -99,8 +114,8 @@
 
 
                         <div class="form-check form-switch mt-4">
-                            <input class="form-check-input" type="checkbox" id="status" name="status"
-                                value="1" checked>
+                            <input class="form-check-input" type="checkbox" id="status" name="status" value="1"
+                                checked>
                             <label class="form-check-label ms-2" for="status">Publish Page</label>
                         </div>
 
@@ -117,167 +132,171 @@
 @endsection
 
 @section('js')
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+
     <script>
-        let ckeditorInstance;
+        let quill;
 
+        
         document.addEventListener('DOMContentLoaded', function() {
-            ClassicEditor
-                .create(document.querySelector('#description'), {
-                    simpleUpload: {
-                        uploadUrl: '{{ route("ckeditor.upload") }}',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                placeholder: 'Enter full page content here...',
+                modules: {
+                    toolbar: [
+                        [{
+                            header: [1, 2, false]
+                        }],
+                        ['bold', 'italic', 'underline'],
+                        ['link', 'image'],
+                        [{
+                            list: 'ordered'
+                        }, {
+                            list: 'bullet'
+                        }],
+                        ['clean']
+                    ],
+                    imageResize: {
+                        displayStyles: {
+                            backgroundColor: 'black',
+                            border: 'none',
+                            color: 'white'
+                        },
+                        modules: ['Resize', 'DisplaySize']
+                    }
+
+                }
+            });
+
+            quill.on('text-change', function () {
+                const html = quill.root.innerHTML;
+                document.querySelector('#description').value = html;
+            })
+
+            // Rewrite for SEO button
+            const btnSeoRewrite = document.querySelector('#btn_ai_marketing');
+            if (btnSeoRewrite) {
+                btnSeoRewrite.addEventListener('click', async function() {
+                    const titleInput = document.querySelector('#title');
+                    const originalTitle = titleInput.value.trim();
+                    const originalContent = quill.getText().trim();
+
+                    if (!originalTitle || !originalContent) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Fields',
+                            text: 'Please enter a page title and content before rewriting.',
+                        });
+                        return;
+                    }
+
+                    btnSeoRewrite.disabled = true;
+                    quill.setText('Rewriting with AI... please wait');
+
+                    try {
+                        const response = await fetch('{{ route('ai.article.rewrite') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                title: originalTitle,
+                                description: originalContent,
+                                type: 'page'
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            if (data.title) titleInput.value = data.title;
+                            if (data.description) {
+                                quill.root.innerHTML = data.description;
+                            } else {
+                                quill.root.innerHTML = originalContent;
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'AI Rewrite Failed',
+                                text: data.message ||
+                                    'The AI server could not process the content.',
+                            });
+                            quill.root.innerHTML = originalContent;
                         }
-                    }
-                })
-
-
-                .then(editor => {
-                    function debounce(func, delay) {
-                        let timeout;
-                        return function() {
-                            clearTimeout(timeout);
-                            timeout = setTimeout(func, delay);
-                        };
-                    }
-
-
-                    ckeditorInstance = editor;
-
-                    const btnGrammar = document.querySelector('#btn_grammar_check');
-                    const btnSeoRewrite = document.querySelector('#btn_ai_marketing');
-
-                    // Rewrite for SEO button
-                    if (btnSeoRewrite) {
-                        btnSeoRewrite.addEventListener('click', async function() {
-                            const titleInput = document.querySelector('#title');
-                            const originalTitle = titleInput.value.trim();
-                            const originalContent = ckeditorInstance.getData().replace(/<[^>]+>/g,
-                                '').trim();
-
-                            if (!originalTitle || !originalContent) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Missing Fields',
-                                    text: 'Please enter a page title and content before rewriting.',
-                                });
-                                return;
-                            }
-
-                            btnSeoRewrite.disabled = true;
-                            ckeditorInstance.setData(
-                                '<p><em>Rewriting with AI... please wait</em></p>');
-
-                            try {
-                                const response = await fetch('{{ route('ai.article.rewrite') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        title: originalTitle,
-                                        description: originalContent,
-                                        type: 'page'
-                                    })
-                                });
-
-                                const data = await response.json();
-
-                                if (data.success) {
-                                    if (data.title) titleInput.value = data.title;
-                                    if (data.description) {
-                                        ckeditorInstance.setData(data.description);
-                                    } else {
-                                        ckeditorInstance.setData(originalContent);
-                                    }
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'AI Rewrite Failed',
-                                        text: data.message ||
-                                            'The AI server could not process the content.',
-                                    });
-                                    ckeditorInstance.setData(originalContent);
-                                }
-                            } catch (error) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Server Error',
-                                    text: 'Could not connect to the AI server.',
-                                });
-                                ckeditorInstance.setData(originalContent);
-                            } finally {
-                                btnSeoRewrite.disabled = false;
-                            }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Error',
+                            text: 'Could not connect to the AI server.',
                         });
+                        quill.root.innerHTML = originalContent;
+                    } finally {
+                        btnSeoRewrite.disabled = false;
                     }
-
-
-                    // Grammar correction button
-                    if (btnGrammar) {
-                        btnGrammar.addEventListener('click', async function() {
-                            const questionInput = document.querySelector('#question');
-                            const questionText = questionInput.value.trim();
-                            const answerText = ckeditorInstance.getData().replace(/<[^>]+>/g, '')
-                                .trim();
-
-                            if (!questionText || !answerText) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Missing Fields',
-                                    text: 'Question and Answer fields must not be empty.',
-                                });
-                                return;
-                            }
-
-                            btnGrammar.disabled = true;
-                            ckeditorInstance.setData('<em>Checking grammar... please wait</em>');
-
-                            try {
-                                const response = await fetch('{{ route('ai.grammar') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        question: questionText,
-                                        answer: answerText
-                                    })
-                                });
-
-                                const data = await response.json();
-
-                                if (data.success) {
-                                    if (data.question) {
-                                        questionInput.value = data.question;
-                                    }
-                                    if (data.answer) {
-                                        ckeditorInstance.setData(data.answer);
-                                    }
-                                } else {
-                                    alert(data.message || 'Failed to correct grammar.');
-                                    ckeditorInstance.setData(answerText);
-                                }
-                            } catch (error) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Server error',
-                                    text: 'Error connection to server'
-                                });
-                                ckeditorInstance.setData(answerText);
-                            } finally {
-                                btnGrammar.disabled = false;
-                            }
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('CKEditor initialization error:', error);
                 });
+            }
 
+            // Grammar correction (optional - needs to be adjusted)
+            const btnGrammar = document.querySelector('#btn_grammar_check');
+            if (btnGrammar) {
+                btnGrammar.addEventListener('click', async function() {
+                    const titleInput = document.querySelector('#title');
+                    const originalTitle = titleInput.value.trim();
+                    const plainText = quill.getText().trim();
+
+                    if (!originalTitle || !plainText) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Fields',
+                            text: 'Please enter both title and content.',
+                        });
+                        return;
+                    }
+
+                    btnGrammar.disabled = true;
+                    quill.setText('Checking grammar... please wait');
+
+                    try {
+                        const response = await fetch('{{ route('ai.grammar') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                question: originalTitle,
+                                answer: plainText
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            if (data.question) titleInput.value = data.question;
+                            if (data.answer) quill.root.innerHTML = data.answer;
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Grammar Correction Failed',
+                                text: data.message || 'Could not process the grammar check.',
+                            });
+                            quill.root.innerHTML = plainText;
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Error',
+                            text: 'Could not connect to the AI server.',
+                        });
+                        quill.root.innerHTML = plainText;
+                    } finally {
+                        btnGrammar.disabled = false;
+                    }
+                });
+            }
         });
     </script>
 @endsection
