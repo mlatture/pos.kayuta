@@ -234,6 +234,15 @@ return [
         'short_links' => [
             'name' => 'Create Short Links',
             'value' => 'short_links'
+        ],
+
+        'scan_receipt' => [
+            'name' => 'Scan a Receipt',
+            'value' => 'scan_a_receipt'
+        ],
+        'scan_electric_meter' => [
+            'name' => 'Scan Electric Meter',
+            'value' => 'scan_electric_meter'
         ]
     ]
 ];

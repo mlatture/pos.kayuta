@@ -1,27 +1,45 @@
 @extends('layouts.admin')
 
 @section('title', 'Reservation List')
-@section('content-header', 'Reservation List')
-@section('content-actions')
-    @hasPermission(config('constants.role_modules.pos_management.value'))
-        <a href="{{ route('cart.index') }}" class="btn btn-success">Open POS</a>
-    @endHasPermission
+@section('content-header')
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <h4 class="me-2">Reservation List</h4>
+            <div class="form-check form-switch">
+                <h4>
+                    <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter"
+                    {{ request('seasonal') == 1 ? 'checked' : '' }}>
+                <label class="form-check-label mt-1" for="seasonalFilter">Show Seasonal Sites</label>
+                </h4>
+            </div>
+        </div>
+    </div>
 @endsection
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+@section('content-actions')
+    <div class="d-flex align-items-center justify-content-end mb-3">
+        <button class="btn btn-outline-secondary me-2" id="prev30">&larr;</button>
+        <input type="date" id="startDatePicker" value="{{ $filters['startDate'] }}" class="form-control w-auto">
+        <button class="btn btn-outline-secondary ms-2" id="next30">&rarr;</button>
+    </div>
+@endsection
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
 @section('content')
     <style>
+        body {
+            overflow: hidden !important;
+        }
         .table-responsive {
             overflow-x: auto;
             width: 100%;
             max-width: 100%;
             position: relative;
+            max-height: 80vh !important;
         }
 
-        .management-table {
-            border-collapse: separate;
-            border-spacing: 0;
+        .table-actions {
+            margin-bottom: 10px;
         }
 
         .management-table th,
@@ -45,19 +63,8 @@
         .card {
             border: none;
             border-radius: 8px;
-
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
-        .card-header {
-            background-color: #343a40;
-            color: white;
-            border-radius: 8px 8px 0 0;
-        }
-
-
-
-
 
         .site-card {
             border: 2px solid #ddd;
@@ -74,16 +81,6 @@
             background-color: #f0fff0;
         }
 
-        .quote-btn {
-            position: fixed;
-            bottom: 30px;
-            z-index: 1000;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 50px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         #siteFilter,
         #typeFilter {
             width: 100%;
@@ -91,107 +88,27 @@
             padding: 5px 10px;
             border-radius: 0.25rem;
             background-color: #f8f9fa;
-            /* Light background for better visibility */
         }
 
-        /* Responsive design for smaller screens */
-        @media (max-width: 768px) {
-
-            #siteFilter,
-            #typeFilter {
-                width: 100%;
-                /* Full width on smaller screens */
-            }
-        }
-
-        /* Optional: Make the Select2 dropdown look consistent */
         .select2-container {
             width: 100% !important;
         }
 
-        /* Optional: Customize the dropdown arrow */
-        .select2-container .select2-selection__arrow {
-            border-color: #007bff;
-            /* Change arrow color if needed */
+        body,
+        html {
+            height: 100%;
         }
 
-        .hold-transition  {
-            overflow: hidden !important;
+        main.content {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
     </style>
-    {{-- 
-    <header class="reservation__head bg-dark py-2">
-        <div
-            class="d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between px-md-3 px-2">
-            <div class="d-flex align-items-center gap-3">
-                <a href="#" class="text-white text-decoration-none">
-                    <img src="{{ asset('images/grid-ico.svg') }}" alt="" class="me-2" />
-                    Planner
-                </a>
-                <a href="#" class="text-white text-decoration-none">
-                    <img src="{{ asset('images/pin-ico.svg') }}" alt="" class="me-2" />
-                    Map
-                </a>
-                <a href="#" class="text-white text-decoration-none">
-                    <img src="{{ asset('images/flash-ico.svg') }}" alt="" class="me-2" />
-                    Quick Add
-                </a>
-            </div>
-            <div>
-                <a href="#" class="text-white text-decoration-none">
-                    <img src="{{ asset('images/help-ico.svg') }}" alt="" class="me-2" />
-                    Help
-                </a>
-            </div>
-        </div>
-    </header> --}}
-    <div
-        class="table-actions d-flex flex-column flex-md-row align-items-md-center align-items-start justify-content-between pe-2 pt-md-3 pt-2">
-        <div class="d-flex align-items-center action__links gap-2">
-            <a href="javascript:void(0)" id="check-available" class="border text-decoration-none p-2 text-dark">
-                <img src="{{ asset('images/add-ico.svg') }}" alt="" class="me-2" />
-                Multiple Sites
-            </a>
-
-            <a class="border text-decoration-none p-2 text-dark" data-bs-toggle="collapse" href="#collapseExample"
-                role="button" aria-expanded="false" aria-controls="collapseExample">
-                <i class="fa-brands fa-searchengin"></i> Search
-            </a>
-
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter"
-                    {{ request('seasonal') == 1 ? 'checked' : '' }}>
-                <label class="form-check-label" for="seasonalFilter">Show Seasonal Sites</label>
-            </div>
-
-            <div class="collapse" id="collapseExample">
-                <div class="card card-body">
-                    <div class="input-group">
-                        <input type="text" id="searchBox" class="form-control" placeholder="Search...">
-                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">🔍</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Move this to float end --}}
-        <div class="d-flex align-items-center mb-3 ms-md-auto mt-2 mt-md-0">
-            <button class="btn btn-outline-secondary me-2" id="prev30">&larr;</button>
-            <input type="date" id="startDatePicker" value="{{ $filters['startDate'] }}" class="form-control w-auto">
-            <button class="btn btn-outline-secondary ms-2" id="next30">&rarr;</button>
-        </div>
-    </div>
 
 
-    {{-- <div class="text-center my-2 position-sticky bottom-0 z-3" style="background: white;">
-        <input type="hidden" id="nextPageUrl" value="{{ $sites->nextPageUrl() }}">
-
-    </div> --}}
-
-
-    <div class="table-responsive" style="max-height: 60vh !important; max-width: 100%">
+    <div class="table-responsive">
         <table class="table management-table table-striped">
-
             <thead>
                 <tr class="t__head">
                     <th class="sticky-col bg-dark text-white" rowspan="2">
@@ -211,11 +128,9 @@
                                 @foreach ($sites->pluck('ratetier')->unique()->sort() as $rateTier)
                                     <option value="{{ $rateTier }}">{{ $rateTier }}</option>
                                 @endforeach
-
                             </select>
                         </div>
                     </th>
-
                     @php
                         $recurringMonth = '';
                         $colspan = 0;
@@ -226,7 +141,6 @@
                                 $recurringMonth = date('M Y', strtotime($dates));
                             @endphp
                         @endif
-
                         @if ($recurringMonth == date('M Y', strtotime($dates)) && count($calendar) - 1 != $key)
                             @php
                                 $colspan += 1;
@@ -252,146 +166,19 @@
                     @foreach ($calendar as $dates)
                         <th data-date="{{ $dates }}" class="sticky-top custom--dates">
                             {{ date('D', strtotime($dates)) }}
-                            <hr class="m-0"> {{ date('d', strtotime($dates)) }}
+                            <hr class="m-0">{{ date('d', strtotime($dates)) }}
                         </th>
                     @endforeach
                 </tr>
             </thead>
-
-
             <tbody id="siteTableBody">
                 @include('reservations.components._site_rows_list', [
                     'sites' => $sites,
                     'calendar' => $calendar,
                 ])
             </tbody>
-
-
-
-
-
         </table>
-
-
-
-
     </div>
-
-
-
-    <div class="container">
-        <!-- Date Filters -->
-        <div class="filter-container row g-3 align-items-end mb-3" hidden>
-            <!-- Check-in Date -->
-            <div class="col-md-4">
-                <label for="checkin">Check-in:</label>
-                <input type="date" id="checkin" class="form-control" value="{{ now()->format('Y-m-d') }}"
-                    onchange="calculateNights()">
-            </div>
-
-            <!-- Check-out Date -->
-            <div class="col-md-4">
-                <label for="checkout">Check-out:</label>
-                <input type="date" id="checkout" class="form-control" value="{{ now()->addDay()->format('Y-m-d') }}"
-                    onchange="calculateNights()">
-            </div>
-
-            <!-- Nights Display -->
-            <div class="col-md-4">
-                <label>Nights:</label>
-                <input type="text" id="nights" value="1" class="form-control" readonly>
-            </div>
-
-            <!-- Site Availability Button -->
-            <div class="col-md-4">
-                <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
-                    data-bs-target="#filterModal">
-                    Site Availability
-                </button>
-            </div>
-
-            <!-- Get Quote Button (Hidden Initially) -->
-            <div class="col-12 text-center">
-                <button id="quoteButton" hidden onclick="quoteSites()" class="btn btn-primary quote-btn"">
-                    Get Quote
-                </button>
-            </div>
-        </div>
-
-        <div id="ganttTableAvailable" class="row" hidden></div>
-
-        <!-- Quote Modal -->
-        <div class="modal fade" id="quoteModal" tabindex="-1" aria-labelledby="quoteModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="quoteModalLabel">Quote Summary</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body" id="quoteModalBody">
-                        <!-- Table is populated dynamically -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
-                        <button type="button" id="createReservation" class="btn btn-primary">Create
-                            Reservation</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Filter Modal --}}
-
-        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="filterModalLabel">Select Sites</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="list-group" id="site-list" style="max-height: 400px; overflow-y: auto;">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="apply-filter" data-bs-dismiss="modal">Apply
-                            Filter</button>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-
-    <!-- Reservation Details Modal -->
-    <div class="modal fade" id="reservationDetailsModal" tabindex="-1" aria-labelledby="reservationDetailsModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="reservationDetailsModalLabel">Reservation Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="reservationDetailsModalBody">
-                    <!-- Dynamic Content Loaded Here -->
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-
-
 @endsection
 
 @push('js')

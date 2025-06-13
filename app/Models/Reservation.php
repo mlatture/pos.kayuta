@@ -40,9 +40,11 @@ class Reservation extends Model
         return $this->hasOne(User::class, 'id', 'customernumber');
     }
 
-    public function payment()
+  
+
+    public function payments()
     {
-        return $this->hasOne(Payment::class, 'cartid', 'cartid');
+        return $this->hasMany(Payment::class, 'cartid', 'cartid');
     }
 
     public function refunds()

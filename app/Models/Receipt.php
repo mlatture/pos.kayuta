@@ -15,4 +15,9 @@ class Receipt extends Model
     {
         return self::create($data);
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

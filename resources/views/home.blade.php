@@ -1,7 +1,17 @@
 @extends('layouts.admin')
 
 @section('content-header', 'Dashboard')
-
+@section('content-actions')
+    @hasPermission(config('constants.role_modules.scan_receipt.value'))
+        <a href="{{ route('receipts.index') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> {{ config('constants.role_modules.scan_receipt.name') }}
+        </a>
+    @endHasPermission
+    @hasPermission(config('constants.role_modules.scan_electric_meter.value'))
+        <a href="{{ route('gift-cards.create') }}" class="btn btn-success"><i class="fas fa-plus"></i>
+            {{ config('constants.role_modules.scan_electric_meter.name') }}</a>
+    @endHasPermission
+@endsection
 @section('content')
     <div class="container-fluid">
         <div class="row">
@@ -115,7 +125,7 @@
                 <div class="small-box bg-teal">
                     <div class="inner">
                         <h4>Best Selling Product</h4>
-                        <p>{{$best_products->name ?? ''}}</p>
+                        <p>{{ $best_products->name ?? '' }}</p>
                     </div>
                     <div class="icon">
                         <i class="fas fa-money-check-alt"></i>
@@ -128,7 +138,7 @@
         </div>
 
         <div class="row"><!-- Log on to codeastro.com for more projects -->
-            
+
             <!-- ./col -->
 
             {{-- <div class="col-lg-4 col-6">

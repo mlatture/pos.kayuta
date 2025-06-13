@@ -5,9 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use App\Models\Category;
+use App\Models\Receipt;
+
 class ReceiptController extends Controller
 {
-    public function uploadReceiptLogo(Request $request) 
+    public function index()
+    {
+        $categories = Category::where('account_type', 'Expense')->get();
+    
+        $receipts = Receipt::with('category')->orderByDesc('created_at')->get();
+    
+        return view('receipts.index', compact('receipts', 'categories'));
+    }
+    
+    public function uploadReceiptLogo(Request $request)
     {
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');

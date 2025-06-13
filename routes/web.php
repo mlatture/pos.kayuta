@@ -35,6 +35,7 @@ use App\Http\Controllers\BusinessSettingController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ShortLinkController;
+use App\Http\Controllers\Api\ReceiptController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -42,6 +43,11 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::prefix('admin')->middleware('auth')->group(function () {
+
+    Route::prefix('scan')->group(function () {
+        Route::get('/receipts', [ReceiptController::class, 'index'])->name('receipts.index');
+        Route::post('/receipts', [ReceiptController::class, 'store'])->name('receipts.store');
+    });
 
     Route::prefix('short_links')->group(function () {
         Route::get('/', [ShortLinkController::class, 'index'])->name('shortlinks.index');

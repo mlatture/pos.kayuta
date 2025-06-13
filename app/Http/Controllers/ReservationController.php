@@ -50,7 +50,7 @@ class ReservationController extends Controller
 
     public function index(Request $request)
     {
-        $query = Site::with(['reservations.payment']);
+        $query = Site::with(['reservations.payments']);
 
         if ($request->search) {
             $search = $request->search;

@@ -1,13 +1,9 @@
-<tr 
-    data-site-id="{{ $site->id }}"
-    data-site-siteid="{{ $site->siteid }}"
-    data-site-ratetier="{{ $site->ratetier }}"
-    data-site-siteclass="{{ $site->siteclass }}"
-    data-site-price="{{ $site->price ?? 0.0 }}"
-    data-site-images='@json($site->images ?? [])'
-    data-site-seasonal="{{ $site->seasonal }}">
-    <td class="sticky-col bg__sky text-center">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {{ $site->siteid }}<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
- 
+<tr data-site-id="{{ $site->id }}" data-site-siteid="{{ $site->siteid }}" data-site-ratetier="{{ $site->ratetier }}"
+    data-site-siteclass="{{ $site->siteclass }}" data-site-price="{{ $site->price ?? 0.0 }}"
+    data-site-images='@json($site->images ?? [])' data-site-seasonal="{{ $site->seasonal }}">
+    <td class="sticky-col bg__sky text-center">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+        {{ $site->siteid }}<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+
     <td class="sticky-col bg__sky">{{ $site->ratetier }}</td>
 
     @php
@@ -39,13 +35,42 @@
                 $reservationColSpan = $resStart->diffInDays($resEnd);
                 $i += $reservationColSpan;
 
-                $isRefunded = $reservationFound->payment && $reservationFound->payment->transaction_type === 'REFUND';
+                $outline = $reservationFound->sitelock == 20 ? '2px solid black' : '2px solid white';
+                $textColor = 'white';
 
-                $reservationClass = $isRefunded ? 'bg-danger' : 'bg-success';
+                $isCancelled = $reservationFound->cancelled ?? false;
+
+                $matchingPayment = $reservationFound->payments
+                    ->where('cartid', $reservationFound->cartid)
+                    ->sum('amount');
+
+                $fullyPaid = $matchingPayment >= ($reservationFound->total ?? 0);
+
+                $source = strtolower($reservationFound->source ?? '');
+
+                if ($isCancelled) {
+                    $bgColor = 'red';
+                    $textColor = 'white';
+                } elseif (in_array($source, ['booking.com', 'airbnb'])) {
+                    if ($fullyPaid) {
+                        $bgColor = 'purple';
+                    } else {
+                        $bgColor = 'yellow';
+                        $textColor = 'black';
+                    }
+                } else {
+                    if ($fullyPaid) {
+                        $bgColor = 'green';
+                    } else {
+                        $bgColor = 'orange';
+                        $textColor = 'black';
+                    }
+                }
             @endphp
 
-            <td colspan="{{ $reservationColSpan }}" style="cursor: pointer"
-                class="reservation-details rounded text-center text-white {{ $reservationClass }} {{ $highlightToday }}"
+            <td colspan="{{ $reservationColSpan }}"
+                style="cursor: pointer; background-color: {{ $bgColor }}; border: {{ $outline }}; color: {{ $textColor }}"
+                class="reservation-details text-center {{ $highlightToday }}"
                 data-reservation-id="{{ $reservationFound->id }}" data-start-date="{{ $reservationFound->cid }}"
                 data-end-date="{{ $reservationFound->cod }}">
                 {{ $reservationFound->user->f_name ?? 'Guest' }}
