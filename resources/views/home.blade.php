@@ -8,7 +8,7 @@
         </a>
     @endHasPermission
     @hasPermission(config('constants.role_modules.scan_electric_meter.value'))
-        <a href="{{ route('gift-cards.create') }}" class="btn btn-success"><i class="fas fa-plus"></i>
+        <a href="{{ route('meters.index') }}" class="btn btn-success"><i class="fas fa-plus"></i>
             {{ config('constants.role_modules.scan_electric_meter.name') }}</a>
     @endHasPermission
 @endsection

@@ -36,6 +36,7 @@ use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\Api\ReceiptController;
+use App\Http\Controllers\MeterController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -255,6 +256,13 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/surveys/publish-survey', [SurveyController::class, 'destroy'])->name('surveys.destroy');
     Route::get('/surveys/show-responses', [SurveyController::class, 'showResponses'])->name('surveys.show_responses');
     Route::post('/reports/z-out/download-pdf', [PDFController::class, 'generate_zOutPDF'])->name('reports.downloadPdf');
+
+
+
+    Route::prefix('electric-meter')->group(function () {
+        Route::get('/', [MeterController::class, 'index'])->name('meters.index'); 
+        Route::post('/read', [MeterController::class, 'read'])->name('meters.read');
+    });
 });
 
 
@@ -286,4 +294,6 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
     Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
+
+
 });
