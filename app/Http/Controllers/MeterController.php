@@ -25,15 +25,9 @@ class MeterController extends Controller
             'photo' => 'required|image|max:5120',
         ]);
 
-        $year = now()->year;
-        $filename = time() . '.' . $request->file('photo')->getClientOriginalExtension();
-        $path = $request->file('photo')->storeAs("meter_images/{$year}", $filename, 'public');
-        if (!Storage::disk('public')->exists($path)) {
-            return back()->with('error', 'Image upload failed.');
-        }
-
-        $imageUrl = public_path('storage/' . $path);
-
+        $relativePath = Readings::storeFile($request->file('photo'));
+        $imageUrl = asset('storage/' . $relativePath);
+        
         if (!Storage::disk('public')->exists($path)) {
             return back()->with('error', 'Image upload failed — file not saved.');
         }
