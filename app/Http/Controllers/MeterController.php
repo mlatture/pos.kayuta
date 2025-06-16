@@ -84,7 +84,7 @@ class MeterController extends Controller
         $total = $usage * $rate;
 
         // Resolve site & customer
-        $site = Site::where('siteno', $lastReading?->siteno)->first();
+        $site = Site::where('siteid', $lastReading?->siteno)->first();
         $customer = $site?->currentCustomer() ?? Customer::find($lastReading?->customer_id);
 
         // Save reading
