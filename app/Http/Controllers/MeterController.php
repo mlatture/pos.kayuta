@@ -80,7 +80,7 @@ class MeterController extends Controller
 
         $usage = $currentReading - $previousReading;
         $days = now()->diffInDays($previousDate);
-        $rate = 0.12; // Or fetch from DB if dynamic
+        $rate = 0.12;
         $total = $usage * $rate;
 
         // Resolve site & customer
@@ -105,6 +105,7 @@ class MeterController extends Controller
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
+            'days' => $days,
             'start_date' => $previousDate->toDateString(),
             'end_date' => now()->toDateString(),
         ]);
