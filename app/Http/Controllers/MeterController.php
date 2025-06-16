@@ -27,10 +27,7 @@ class MeterController extends Controller
 
         $relativePath = Readings::storeFile($request->file('photo'));
         $imageUrl = asset('storage/' . $relativePath);
-        
-        if (!Storage::disk('public')->exists($path)) {
-            return back()->with('error', 'Image upload failed — file not saved.');
-        }
+       
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
