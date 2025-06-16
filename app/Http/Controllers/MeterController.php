@@ -25,7 +25,9 @@ class MeterController extends Controller
             'photo' => 'required|image|max:5120',
         ]);
 
-        $path = $request->file('photo')->store('meter_photos', 'public');
+        $year = now()->year;
+
+        $path = $request->file('photo')->store("meter_images/{$year}", 'public');
         $imageUrl = asset('storage/' . $path);
 
         $response = Http::withHeaders([
