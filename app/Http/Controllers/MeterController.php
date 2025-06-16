@@ -90,7 +90,7 @@ class MeterController extends Controller
         // Save reading
         $reading = Readings::create([
             'kwhNo' => $meterNumber,
-            'image' => $path,
+            'image' => $relativePath,
             'date' => now(),
             'siteno' => $site?->siteno,
             'status' => 'pending',
