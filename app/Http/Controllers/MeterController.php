@@ -87,16 +87,16 @@ class MeterController extends Controller
         $site = Site::where('siteid', $lastReading?->siteno)->first();
         $customer = $site?->currentCustomer() ?? Customer::find($lastReading?->customer_id);
 
-        // Save reading
-        $reading = Readings::create([
-            'kwhNo' => $meterNumber,
-            'image' => $relativePath,
-            'date' => now(),
-            'siteno' => $site?->siteno,
-            'status' => 'pending',
-            'bill' => $currentReading,
-            'customer_id' => $customer?->id,
-        ]);
+        // // Save reading
+        // $reading = Readings::create([
+        //     'kwhNo' => $meterNumber,
+        //     'image' => $relativePath,
+        //     'date' => now(),
+        //     'siteno' => $site?->siteno,
+        //     'status' => 'pending',
+        //     'bill' => $currentReading,
+        //     'customer_id' => $customer?->id,
+        // ]);
 
         return view('meters.preview', [
             'reading' => $reading,
