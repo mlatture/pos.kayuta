@@ -26,9 +26,16 @@ class MeterController extends Controller
         ]);
 
         $year = now()->year;
+        $filename = time() . '.' . $request->file('photo')->getClientOriginalExtension();
+        
+        $path = $request->file('photo')->storeAs("meter_images/{$year}", $filename, 'public');
+        
+        $imageUrl = asset('storage/' . $path); 
 
-        $path = $request->file('photo')->store("meter_images/{$year}", 'public');
-        $imageUrl = asset('storage/' . $path);
+        if (!Storage::disk('public')->exists($path)) {
+            return back()->with('error', 'Image upload failed — file not saved.');
+        }
+        
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
