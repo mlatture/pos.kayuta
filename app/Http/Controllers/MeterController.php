@@ -87,16 +87,16 @@ class MeterController extends Controller
         $site = Site::where('siteid', $lastReading?->siteno)->first();
         $customer = $site?->currentCustomer() ?? Customer::find($lastReading?->customer_id);
 
-        // // Save reading
-        // $reading = Readings::create([
-        //     'kwhNo' => $meterNumber,
-        //     'image' => $relativePath,
-        //     'date' => now(),
-        //     'siteno' => $site?->siteno,
-        //     'status' => 'pending',
-        //     'bill' => $currentReading,
-        //     'customer_id' => $customer?->id,
-        // ]);
+        $reading = (object) [
+            'kwhNo' => $meterNumber,
+            'image' => $relativePath,
+            'date' => now(),
+            'siteno' => $site?->siteno,
+            'status' => 'pending',
+            'bill' => $currentReading,
+            'customer_id' => $customer?->id,
+        ];
+        
 
         return view('meters.preview', [
             'reading' => $reading,
@@ -108,6 +108,7 @@ class MeterController extends Controller
             'start_date' => $previousDate->toDateString(),
             'end_date' => now()->toDateString(),
         ]);
+        
     }
 
     public function sendBill(Request $request)
