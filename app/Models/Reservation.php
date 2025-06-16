@@ -42,6 +42,11 @@ class Reservation extends Model
 
   
 
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'cartid', 'cartid');
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class, 'cartid', 'cartid');

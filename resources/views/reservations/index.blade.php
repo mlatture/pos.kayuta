@@ -8,8 +8,8 @@
             <div class="form-check form-switch">
                 <h4>
                     <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter"
-                    {{ request('seasonal') == 1 ? 'checked' : '' }}>
-                <label class="form-check-label mt-1" for="seasonalFilter">Show Seasonal Sites</label>
+                        {{ request('seasonal') == 1 ? 'checked' : '' }}>
+                    <label class="form-check-label mt-1" for="seasonalFilter">Show Seasonal Sites</label>
                 </h4>
             </div>
         </div>
@@ -30,6 +30,7 @@
         body {
             overflow: hidden !important;
         }
+
         .table-responsive {
             overflow-x: auto;
             width: 100%;
@@ -103,6 +104,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        .highlight-today {
+            outline: 3px dashed #00ffcc;
+            outline-offset: -3px;
         }
     </style>
 
@@ -179,7 +185,10 @@
             </tbody>
         </table>
     </div>
+
 @endsection
+@include('reservations.modals.details')
+
 
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
@@ -278,7 +287,6 @@
                     id: reservationId
                 },
                 success: function(item) {
-                    console.log(item.cartid)
                     let customerRecord = item.customerRecord || {};
                     let arrivalDate = item.cid ? moment(item.cid).format('MMM DD, YYYY') : "N/A";
                     let departureDate = item.cod ? moment(item.cod).format('MMM DD, YYYY') : "N/A";

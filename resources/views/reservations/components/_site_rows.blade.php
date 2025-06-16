@@ -35,7 +35,16 @@
                 $reservationColSpan = $resStart->diffInDays($resEnd);
                 $i += $reservationColSpan;
 
-                $outline = $reservationFound->sitelock == 20 ? '2px solid black' : '2px solid white';
+                $today = \Carbon\Carbon::today()->format('Y-m-d');
+
+                $outline =
+                    isset($reservation->sitelock) &&
+                    (int) $reservation->sitelock === 20 &&
+                    $today >= $reservation->cid &&
+                    $today < $reservation->cod
+                        ? '2px solid black'
+                        : '2px solid white';
+
                 $textColor = 'white';
 
                 $isCancelled = $reservationFound->cancelled ?? false;
