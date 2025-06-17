@@ -37,8 +37,8 @@
             </p>
 
             <form action="{{ route('meters.sendBill') }}" method="POST">
-                <input type="text" value="{{ $reading_id }}">
                 <input type="text" value="{{ $image }}">
+                <li>{{$site}}</li>
                 @csrf
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
                 <input type="hidden" name="bill" value="{{ $reading->bill }}">
