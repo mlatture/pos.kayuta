@@ -7,14 +7,14 @@
     <div class="container">
         <div class="card shadow-sm p-4">
             <h4 class="mb-3">
-                Electric Meter Reading Details
+                Electric Meter Reading Details {{ $siteid }}
                 @if($site)
-                    (Site: {{ $site->siteid }} - {{ $site->sitename }})
+                    (Site:  {{ $site->siteid }} - {{ $site->sitename }})
                 @else
                     (Site: Not found)
                 @endif
             </h4>
-                        <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 100%; height: auto;">
+                        <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
             <hr>
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -48,7 +48,7 @@
 
             <form action="{{ route('meters.sendBill') }}" method="POST">
                 @csrf
-                <input type="hiddne" name="image" value="{{ $image }}">
+                <input type="hidden" name="image" value="{{ $image }}">
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
                 <input type="hidden" name="bill" value="{{ $reading->bill }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">

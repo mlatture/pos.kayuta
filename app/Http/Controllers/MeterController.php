@@ -75,7 +75,7 @@ class MeterController extends Controller
         $parsed = json_decode($jsonString, true);
 
         // 4. Validate extracted fields
-        $siteid = strtoupper(trim($parsed['siteid'] ?? ''));
+        $siteid = $parsed['siteid'] ?? '';
         $meterNumber = trim($parsed['meter_number'] ?? '');
         $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
 
@@ -136,6 +136,7 @@ class MeterController extends Controller
             // 'reading_id' => $savedReading->id,
             'reading' => $reading,
             'site' => $site,
+            'siteid' => $siteid,
             'customer_name' => $customerName,
             'customer_id' => $customer?->id,
             'customer' => $customer,
