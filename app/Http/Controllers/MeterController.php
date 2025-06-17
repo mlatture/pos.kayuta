@@ -106,8 +106,6 @@ class MeterController extends Controller
             }
         }
 
-      
-
         // 7. Preview object for Blade
         $reading = (object) [
             'kwhNo' => $currentReading,
@@ -152,24 +150,21 @@ class MeterController extends Controller
             'bill' => $request->bill,
             'customer_id' => $request->customer_id,
         ]);
-    
+
         $customer = User::find($reading->customer_id);
         $site = Site::where('siteid', $reading->siteno)->first();
-    
-        $lastReading = Readings::where('kwhNo', $reading->kwhNo)
-            ->where('date', '<', $reading->date)
-            ->latest('date')
-            ->first();
-    
+
+        $lastReading = Readings::where('kwhNo', $reading->kwhNo)->where('date', '<', $reading->date)->latest('date')->first();
+
         $usage = $reading->bill - ($lastReading?->bill ?? 0);
         $days = now()->diffInDays($lastReading?->date ?? now());
         $rate = 0.12;
         $total = $usage * $rate;
-    
+
         $reading->update([
             'bill' => $total,
         ]);
-    
+
         Mail::to($customer->email)->send(
             new ElectricBillGenerated([
                 'customer' => $customer,
@@ -178,12 +173,11 @@ class MeterController extends Controller
                 'total' => $total,
                 'rate' => $rate,
                 'days' => $days,
-                'start_date' => optional($lastReading)->date?->toDateString(),
+                'start_date' => optional($lastReading)->date ? Carbon::parse($lastReading->date)->toDateString() : null,
                 'end_date' => now()->toDateString(),
-            ])
+            ]),
         );
-    
+
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
     }
-    
 }
