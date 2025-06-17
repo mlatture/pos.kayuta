@@ -7,9 +7,12 @@
 <body>
     <h2>Electric Bill Summary</h2>
 
-    <p><strong>Customer Name:</strong> {{ $details['customer']->name ?? 'N/A' }}</p>
-    <p><strong>Site:</strong> {{ $details['site']->sitename ?? $details['site']->siteid ?? 'N/A' }}</p>
-    <p><strong>Billing Period:</strong> {{ \Carbon\Carbon::parse($details['start_date'])->format('F j, Y') }} to {{ \Carbon\Carbon::parse($details['end_date'])->format('F j, Y') }}</p>
+    <p><strong>Customer Name:</strong> {{ $details['customer']->f_name . ' ' . $details['customer']->l_name ?? 'N/A' }}</p>
+    <p><strong>Site No:</strong> {{ $details['site_no'] ?? 'N/A' }}</p>
+    <p><strong>Billing Period:</strong> 
+        {{ \Carbon\Carbon::parse($details['start_date'])->format('F j, Y') }} to 
+        {{ \Carbon\Carbon::parse($details['end_date'])->format('F j, Y') }}
+    </p>
     <p><strong>Usage:</strong> {{ number_format($details['usage'], 2) }} kWh</p>
     <p><strong>Rate:</strong> ${{ number_format($details['rate'], 2) }} per kWh</p>
     <p><strong>Days:</strong> {{ $details['days'] }} days</p>

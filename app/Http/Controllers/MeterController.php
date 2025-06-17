@@ -154,21 +154,22 @@ class MeterController extends Controller
         $customer = User::find($reading->customer_id);
         $site = Site::where('siteid', $reading->siteno)->first();
 
-        $lastReading = Readings::where('kwhNo', $reading->kwhNo)->where('date', '<', $reading->date)->latest('date')->first();
+        $lastReading = Readings::where('siteno', $reading->siteno)->where('date', '<', $reading->date)->latest('date')->first();
 
-        $usage = $reading->bill - ($lastReading?->bill ?? 0);
+        $previousReading = $lastReading?->kwhNo ?? 0;
+        $usage = $reading->kwhNo - $previousReading;
         $days = now()->diffInDays($lastReading?->date ?? now());
         $rate = 0.12;
         $total = $usage * $rate;
 
-        $reading->update([
-            'bill' => $total,
-        ]);
+        $reading->update(['bill' => $total]);
 
         Mail::to($customer->email)->send(
             new ElectricBillGenerated([
                 'customer' => $customer,
-                'site' => $site,
+                'site_no' => $reading->siteno,
+                'current_reading' => $reading->kwhNo,
+                'previous_reading' => $previousReading,
                 'usage' => $usage,
                 'total' => $total,
                 'rate' => $rate,
