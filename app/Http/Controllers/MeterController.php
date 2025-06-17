@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Readings;
 use App\Models\Site;
 use App\Models\Customer;
+use App\Models\User;
+use App\Models\Reservation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+
 
 class MeterController extends Controller
 {
@@ -39,8 +42,8 @@ class MeterController extends Controller
                     'content' => [
                         [
                             'type' => 'text',
-                            'text' => 'Extract and return ONLY valid JSON like {"meter_number": "ABC123", "reading": 1234.56}. No explanation.',
-                        ],
+                            'text' => 'From this electric meter image, extract and return ONLY this JSON format: {"siteid": "A6", "meter_number": "47826745", "reading": 10946}. Do not include any explanation or units.',
+                        ],                        
                         [
                             'type' => 'image_url',
                             'image_url' => [
@@ -66,42 +69,56 @@ class MeterController extends Controller
 
         $parsed = json_decode($jsonString, true);
 
-        if (!isset($parsed['meter_number'], $parsed['reading'])) {
+        if (!isset($parsed['siteid'], $parsed['reading'], $parsed['meter_number'])) {
             return back()->with('error', 'Invalid GPT response.');
         }
 
-        $meterNumber = $parsed['meter_number'];
+        $siteid = strtoupper(trim($parsed['siteid']));
+        $meterNumber = trim($parsed['meter_number']);
         $currentReading = (float) $parsed['reading'];
 
-        $lastReading = Readings::where('kwhNo', $meterNumber)->latest('date')->first();
+        
+
+        $lastReading = Readings::where('siteno', $siteid)->latest('date')->first();
 
         $previousReading = $lastReading?->bill ?? 0;
         $previousDate = $lastReading?->date ?? now();
-
         $usage = $currentReading - $previousReading;
         $days = now()->diffInDays($previousDate);
         $rate = 0.12;
         $total = $usage * $rate;
 
-        // Resolve site & customer
         $site = Site::where('siteid', $lastReading?->siteno)->first();
-        $customer = $site?->currentCustomer() ?? Customer::find($lastReading?->customer_id);
+        $customer = null;
+
+        if ($site) {
+            $latestReservation = Reservation::where('siteid', $site->siteid)   
+                ->latest('created_at')
+                ->first();
+
+            if ($latestReservation && $latestReservation->customernumber) {
+                $customer = User::where('id', $latestReservation->customernumber)->first();
+                $customerName = $customer ? ($customer->f_name . ' ' . $customer->l_name) : null;
+
+            }
+        }
 
         $reading = (object) [
-            'kwhNo' => $meterNumber,
+            'kwhNo' => $currentReading,
             'image' => $relativePath,
             'date' => now(),
-            'siteno' => $site?->siteno,
+            'siteno' => $siteid,
             'status' => 'pending',
-            'bill' => $currentReading,
+            'bill' => $total,
             'customer_id' => $customer?->id,
+            'customer_name' => $customerName
         ];
         
 
         return view('meters.preview', [
             'reading' => $reading,
             'site' => $site,
-            'customer' => $customer,
+            'customer_name' => $customerName,
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
