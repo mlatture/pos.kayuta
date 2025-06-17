@@ -27,9 +27,11 @@ class MeterController extends Controller
             'photo' => 'required|image|max:5120',
         ]);
 
+        // 1. Store file
         $relativePath = Readings::storeFile($request->file('photo'));
         $imageUrl = asset('storage/' . $relativePath);
 
+        // 2. Send to GPT
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
         ])->post('https://api.openai.com/v1/chat/completions', [
@@ -40,13 +42,17 @@ class MeterController extends Controller
                     'content' => [
                         [
                             'type' => 'text',
-                            'text' => 'From this electric meter image, extract and return ONLY this JSON format: {"siteid": "A6", "meter_number": "47826745", "reading": 10946}. Do not include any explanation or units.',
+                            'text' => 'From this electric meter image, extract and return a JSON with the following fields:
+                            {
+                            "siteid": "<value from large sticker label usually in black or white>",
+                            "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
+                            "reading": <the large numeric display at the top of the meter>
+                            }
+                            Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
                         ],
                         [
                             'type' => 'image_url',
-                            'image_url' => [
-                                'url' => $imageUrl,
-                            ],
+                            'image_url' => ['url' => $imageUrl],
                         ],
                     ],
                 ],
@@ -54,6 +60,7 @@ class MeterController extends Controller
             'max_tokens' => 100,
         ]);
 
+        // 3. Parse GPT result
         $data = $response->json();
         $content = $data['choices'][0]['message']['content'] ?? null;
 
@@ -64,19 +71,19 @@ class MeterController extends Controller
         $start = strpos($content, '{');
         $end = strrpos($content, '}');
         $jsonString = substr($content, $start, $end - $start + 1);
-
         $parsed = json_decode($jsonString, true);
 
-        if (!isset($parsed['siteid'], $parsed['reading'], $parsed['meter_number'])) {
-            return back()->with('error', 'Invalid GPT response.');
+        // 4. Validate extracted fields
+        $siteid = strtoupper(trim($parsed['siteid'] ?? ''));
+        $meterNumber = trim($parsed['meter_number'] ?? '');
+        $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
+
+        if (!$siteid || !$meterNumber || !$currentReading) {
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
         }
 
-        $siteid = strtoupper(trim($parsed['siteid']));
-        $meterNumber = trim($parsed['meter_number']);
-        $currentReading = (float) $parsed['reading'];
-
+        // 5. Get previous reading
         $lastReading = Readings::where('siteno', $siteid)->latest('date')->first();
-
         $previousReading = $lastReading?->bill ?? 0;
         $previousDate = $lastReading?->date ?? now();
         $usage = $currentReading - $previousReading;
@@ -84,19 +91,32 @@ class MeterController extends Controller
         $rate = 0.12;
         $total = $usage * $rate;
 
-        $site = Site::where('siteid', $lastReading?->siteno)->first();
-
+        // 6. Find site and customer
+        $site = Site::where('siteid', $siteid)->first();
         $customer = null;
         $customerName = null;
+
         if ($site) {
             $latestReservation = Reservation::where('siteid', $site->siteid)->latest('created_at')->first();
-
             if ($latestReservation && $latestReservation->customernumber) {
-                $customer = User::where('id', $latestReservation->customernumber)->first();
-                $customerName = $customer ? $customer->f_name . ' ' . $customer->l_name : null;
+                $customer = User::find($latestReservation->customernumber);
+                $customerName = $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null;
             }
         }
 
+        // 7. Save reading
+        $savedReading = Readings::create([
+            'kwhNo' => $currentReading,
+            'meter_number' => $meterNumber,
+            'image' => $relativePath,
+            'date' => now(),
+            'siteno' => $siteid,
+            'status' => 'pending',
+            'bill' => $total,
+            'customer_id' => $customer?->id,
+        ]);
+
+        // 8. Preview object for Blade
         $reading = (object) [
             'kwhNo' => $currentReading,
             'meter_number' => $meterNumber,
@@ -109,18 +129,7 @@ class MeterController extends Controller
             'customer_name' => $customerName,
         ];
 
-        $savedReading = Readings::create([
-            'kwhNo' => $currentReading,
-            'meter_number' => $meterNumber,
-            'image' => $relativePath,
-            'date' => now(),
-            'siteno' => $siteid,
-            'status' => 'pending',
-            'bill' => $total,
-            'customer_id' => $customer?->id,
-        ]);
-
-        
+        // 9. Return to preview view
         return view('meters.preview', [
             'image' => $relativePath,
             'reading_id' => $savedReading->id,
