@@ -104,17 +104,17 @@ class MeterController extends Controller
             }
         }
 
-        // 7. Save reading
-        $savedReading = Readings::create([
-            'kwhNo' => $currentReading,
-            'meter_number' => $meterNumber,
-            'image' => $relativePath,
-            'date' => now(),
-            'siteno' => $siteid,
-            'status' => 'pending',
-            'bill' => $total,
-            'customer_id' => $customer?->id,
-        ]);
+        // // 7. Save reading
+        // $savedReading = Readings::create([
+        //     'kwhNo' => $currentReading,
+        //     'meter_number' => $meterNumber,
+        //     'image' => $relativePath,
+        //     'date' => now(),
+        //     'siteno' => $siteid,
+        //     'status' => 'pending',
+        //     'bill' => $total,
+        //     'customer_id' => $customer?->id,
+        // ]);
 
         // 8. Preview object for Blade
         $reading = (object) [
@@ -132,7 +132,7 @@ class MeterController extends Controller
         // 9. Return to preview view
         return view('meters.preview', [
             'image' => $relativePath,
-            'reading_id' => $savedReading->id,
+            // 'reading_id' => $savedReading->id,
             'reading' => $reading,
             'site' => $site,
             'customer_name' => $customerName,
