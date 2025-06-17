@@ -153,7 +153,7 @@ class MeterController extends Controller
             'customer_id' => $request->customer_id,
         ]);
     
-        $customer = Customer::find($reading->customer_id);
+        $customer = User::find($reading->customer_id);
         $site = Site::where('siteid', $reading->siteno)->first();
     
         $lastReading = Readings::where('kwhNo', $reading->kwhNo)
