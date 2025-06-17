@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 
-
 class MeterController extends Controller
 {
     public function index()
@@ -30,7 +29,6 @@ class MeterController extends Controller
 
         $relativePath = Readings::storeFile($request->file('photo'));
         $imageUrl = asset('storage/' . $relativePath);
-       
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
@@ -43,7 +41,7 @@ class MeterController extends Controller
                         [
                             'type' => 'text',
                             'text' => 'From this electric meter image, extract and return ONLY this JSON format: {"siteid": "A6", "meter_number": "47826745", "reading": 10946}. Do not include any explanation or units.',
-                        ],                        
+                        ],
                         [
                             'type' => 'image_url',
                             'image_url' => [
@@ -77,8 +75,6 @@ class MeterController extends Controller
         $meterNumber = trim($parsed['meter_number']);
         $currentReading = (float) $parsed['reading'];
 
-        
-
         $lastReading = Readings::where('siteno', $siteid)->latest('date')->first();
 
         $previousReading = $lastReading?->bill ?? 0;
@@ -93,14 +89,11 @@ class MeterController extends Controller
         $customer = null;
         $customerName = null;
         if ($site) {
-            $latestReservation = Reservation::where('siteid', $site->siteid)   
-                ->latest('created_at')
-                ->first();
+            $latestReservation = Reservation::where('siteid', $site->siteid)->latest('created_at')->first();
 
             if ($latestReservation && $latestReservation->customernumber) {
                 $customer = User::where('id', $latestReservation->customernumber)->first();
-                $customerName = $customer ? ($customer->f_name . ' ' . $customer->l_name) : null;
-
+                $customerName = $customer ? $customer->f_name . ' ' . $customer->l_name : null;
             }
         }
 
@@ -112,14 +105,15 @@ class MeterController extends Controller
             'status' => 'pending',
             'bill' => $total,
             'customer_id' => $customer?->id,
-            'customer_name' => $customerName
+            'customer_name' => $customerName,
         ];
-        
 
         return view('meters.preview', [
             'reading' => $reading,
             'site' => $site,
             'customer_name' => $customerName,
+            'customer_id' => $customer?->id,
+            'customer' => $customer,
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
@@ -127,7 +121,6 @@ class MeterController extends Controller
             'start_date' => $previousDate->toDateString(),
             'end_date' => now()->toDateString(),
         ]);
-        
     }
 
     public function sendBill(Request $request)

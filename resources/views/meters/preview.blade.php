@@ -16,7 +16,7 @@
                 <p><strong>Usage:</strong> {{ number_format($usage, 2) }} kWh over {{ $days }} days</p>
             </div>
             <div class="col-md-6">
-                <p><strong>Customer Name:</strong> {{ $customer?->fullname ?? 'N/A' }}</p>
+                <p><strong>Customer Name:</strong> {{ $customer_name ?? 'N/A' }}</p>
                 <p><strong>Email:</strong> {{ $customer?->email ?? 'N/A' }}</p>
                 <p><strong>Site:</strong> {{ $site?->siteno ?? 'N/A' }}</p>
                 <p><strong>Billing Period:</strong> {{ $start_date }} to {{ $end_date }}</p>
@@ -37,7 +37,7 @@
             <input type="hidden" name="bill" value="{{ $reading->bill }}">
             <input type="hidden" name="image" value="{{ $reading->image }}">
             <input type="hidden" name="siteno" value="{{ $site?->siteno }}">
-            <input type="hidden" name="customer_id" value="{{ $customer?->id }}">
+            <input type="hidden" name="customer_id" value="{{ $customer_id?->id }}">
             <input type="hidden" name="usage" value="{{ $usage }}">
             <input type="hidden" name="rate" value="{{ $rate }}">
             <input type="hidden" name="days" value="{{ $days }}">
