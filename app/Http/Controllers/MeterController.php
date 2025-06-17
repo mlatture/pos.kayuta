@@ -99,6 +99,7 @@ class MeterController extends Controller
 
         $reading = (object) [
             'kwhNo' => $currentReading,
+            'meter_number' => $meterNumber,
             'image' => $relativePath,
             'date' => now(),
             'siteno' => $siteid,

@@ -10,9 +10,9 @@
 
         <div class="row mb-3">
             <div class="col-md-6">
-                <p><strong>Meter Number:</strong> {{ $reading->kwhNo }}</p>
-                <p><strong>Current Reading:</strong> {{ number_format($reading->bill, 2) }} kWh</p>
-                <p><strong>Previous Reading:</strong> {{ number_format($reading->bill - $usage, 2) }} kWh</p>
+                <p><strong>Meter Number:</strong> {{ $reading->meter_number }}</p>
+                <p><strong>Current Reading:</strong> {{ number_format($reading->kwhNo, 2) }} kWh</p>
+                <p><strong>Previous Reading:</strong> {{ number_format($reading->kwhNo - $usage, 2) }} kWh</p>
                 <p><strong>Usage:</strong> {{ number_format($usage, 2) }} kWh over {{ $days }} days</p>
             </div>
             <div class="col-md-6">
