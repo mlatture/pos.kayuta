@@ -70,7 +70,7 @@
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
                 <input type="hidden" name="bill" value="{{ $reading->bill }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">
-                <input type="hidden" name="siteno" value="{{ $site?->siteno }}">
+                <input type="hidden" name="siteno" value="{{ $siteid }}">
                 <input type="hidden" name="customer_id" id="hidden_customer_id" value="{{ $customer?->id }}">
                 <input type="hidden" name="usage" value="{{ $usage }}">
                 <input type="hidden" name="rate" value="{{ $rate }}">

@@ -157,9 +157,10 @@ class MeterController extends Controller
         $lastReading = Readings::where('siteno', $reading->siteno)->where('date', '<', $reading->date)->latest('date')->first();
 
         $previousReading = $lastReading?->kwhNo ?? 0;
-        $usage = $reading->kwhNo - $previousReading;
-        $days = now()->diffInDays($lastReading?->date ?? now());
+        $currentReading = $reading->kwhNo;
+        $usage = $currentReading - $previousReading;
         $rate = 0.12;
+        $days = now()->diffInDays($lastReading?->date ?? now());
         $total = $usage * $rate;
 
         $reading->update(['bill' => $total]);
