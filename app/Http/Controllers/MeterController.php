@@ -109,7 +109,21 @@ class MeterController extends Controller
             'customer_name' => $customerName,
         ];
 
+        $savedReading = Readings::create([
+            'kwhNo' => $currentReading,
+            'meter_number' => $meterNumber,
+            'image' => $relativePath,
+            'date' => now(),
+            'siteno' => $siteid,
+            'status' => 'pending',
+            'bill' => $total,
+            'customer_id' => $customer?->id,
+        ]);
+
+        
         return view('meters.preview', [
+            'image' => $relativePath,
+            'reading_id' => $savedReading->id,
             'reading' => $reading,
             'site' => $site,
             'customer_name' => $customerName,
