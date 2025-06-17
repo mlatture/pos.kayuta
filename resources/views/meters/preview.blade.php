@@ -6,14 +6,16 @@
 @section('content')
     <div class="container">
         <div class="card shadow-sm p-4">
-            <h4 class="mb-3">Electric Meter Reading Details</h4>
-            
+            <h4 class="mb-3">Electric Meter Reading Details ( Site: {{ $site->id}} - {{ $site->sitename }})</h4>
+            <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 100%; height: auto;">
+            <hr>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <p><strong>Meter Number:</strong> {{ $reading->meter_number }}</p>
                     <p><strong>Current Reading:</strong> {{ number_format($reading->kwhNo, 2) }} kWh</p>
                     <p><strong>Previous Reading:</strong> {{ number_format($reading->kwhNo - $usage, 2) }} kWh</p>
                     <p><strong>Usage:</strong> {{ number_format($usage, 2) }} kWh over {{ $days }} days</p>
+                    
                 </div>
                 <div class="col-md-6">
                     <p><strong>Customer Name:</strong> {{ $customer_name ?? 'N/A' }}</p>
@@ -28,6 +30,7 @@
                 </div>
             </div>
 
+
             <hr>
 
             <h5>Total Bill</h5>
@@ -37,9 +40,9 @@
             </p>
 
             <form action="{{ route('meters.sendBill') }}" method="POST">
-                <input type="text" value="{{ $image }}">
                 <li>{{$site}}</li>
                 @csrf
+                <input type="hiddne" name="image" value="{{ $image }}">
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
                 <input type="hidden" name="bill" value="{{ $reading->bill }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">
