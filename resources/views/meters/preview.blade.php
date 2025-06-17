@@ -6,8 +6,15 @@
 @section('content')
     <div class="container">
         <div class="card shadow-sm p-4">
-            <h4 class="mb-3">Electric Meter Reading Details ( Site: {{ $site->id}} - {{ $site->sitename }})</h4>
-            <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 100%; height: auto;">
+            <h4 class="mb-3">
+                Electric Meter Reading Details
+                @if($site)
+                    (Site: {{ $site->siteid }} - {{ $site->sitename }})
+                @else
+                    (Site: Not found)
+                @endif
+            </h4>
+                        <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 100%; height: auto;">
             <hr>
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -40,7 +47,6 @@
             </p>
 
             <form action="{{ route('meters.sendBill') }}" method="POST">
-                <li>{{$site}}</li>
                 @csrf
                 <input type="hiddne" name="image" value="{{ $image }}">
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
