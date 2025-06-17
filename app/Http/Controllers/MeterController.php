@@ -140,7 +140,7 @@ class MeterController extends Controller
         ]);
     }
 
-    public function sendBill(Request $request)
+    public function send(Request $request)
     {
         $reading = Readings::create([
             'kwhNo' => $request->kwhNo,

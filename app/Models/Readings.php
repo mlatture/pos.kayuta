@@ -11,7 +11,7 @@ class Readings extends Model
 
     protected $table = 'readings';
 
-    protected $fillable = ['kwhNo', 'image', 'date', 'siteno', 'status', 'bill', 'customer_id'];
+    protected $fillable = ['kwhNo', 'image', 'date', 'siteno', 'status', 'bill', 'customer_id', 'meter_number'];
 
     public static function storeFile($file, $folder = 'meter_images')
     {
