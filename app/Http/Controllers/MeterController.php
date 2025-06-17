@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 
 class MeterController extends Controller
 {
@@ -142,8 +143,8 @@ class MeterController extends Controller
             'rate' => $rate,
             'total' => $total,
             'days' => $days,
-            'start_date' => $previousDate->toDateString(),
-            'end_date' => now()->toDateString(),
+            'start_date' => Carbon::parse($previousDate)->toDateString(),
+            'end_date' => Carbon::parse(now())->toDateString(),
         ]);
     }
 
