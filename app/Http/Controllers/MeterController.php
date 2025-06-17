@@ -89,8 +89,9 @@ class MeterController extends Controller
         $total = $usage * $rate;
 
         $site = Site::where('siteid', $lastReading?->siteno)->first();
-        $customer = null;
 
+        $customer = null;
+        $customerName = null;
         if ($site) {
             $latestReservation = Reservation::where('siteid', $site->siteid)   
                 ->latest('created_at')
