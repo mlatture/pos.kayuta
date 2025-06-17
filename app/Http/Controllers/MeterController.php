@@ -123,6 +123,7 @@ class MeterController extends Controller
 
         // 8. Return to preview view
         return view('meters.preview', [
+            'meter_number' => $meterNumber,
             'image' => $relativePath,
             'reading' => $reading,
             'site' => $site,
