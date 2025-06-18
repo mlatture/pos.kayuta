@@ -283,11 +283,13 @@ class SiteController extends Controller
             ->limit(10)
             ->get();
 
-        return $sites->map(function ($site) {
+        $result = $sites->map(function ($site) {
             return [
                 'label' => "{$site->siteid} - {$site->sitename}",
                 'value' => $site->siteid,
             ];
         });
+
+        return response()->json($result);
     }
 }

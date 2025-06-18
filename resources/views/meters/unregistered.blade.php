@@ -4,6 +4,13 @@
 @section('content-header', 'Register New Meter to Site')
 @push('css')
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <style>
+        .ui-autocomplete {
+            z-index: 9999 !important;
+            background: white;
+            border: 1px solid #ccc;
+        }
+    </style>
 @endpush
 @section('content')
     <div class="container">
@@ -78,7 +85,11 @@
                             term: request.term
                         },
                         success: function(data) {
+                            console.log('Autocomplete data:', data);
                             response(data);
+                        },
+                        error: function(xhr) {
+                            console.error('Autocomplete error:', xhr.responseText);
                         }
                     });
                 },
@@ -89,6 +100,7 @@
                     return false;
                 }
             });
+
         });
     </script>
 @endpush
