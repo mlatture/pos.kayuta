@@ -19,8 +19,14 @@ class MeterController extends Controller
 {
     public function index()
     {
-        $overdueSites = Readings::select('siteno')->groupBy('siteno')->havingRaw('MAX(date) <= CURDATE() - INTERVAL 20 DAY')->get();
+        $thresholdDate = Carbon::now()->subDays(20)->toDateString();
 
+        $overDueMeterNumbers = Readings::select('meter_number')
+            ->groupBy('meter_number')
+            ->havingRaw('MAX(date) <= ?', [$thresholdDate])
+            ->pluck('meter_number');
+
+        $overdueSites = Site::whereIn('neter_number', $overDueMeterNumbers)->get();
         return view('meters.index', compact('overdueSites'));
     }
 
@@ -105,13 +111,9 @@ class MeterController extends Controller
         $total = $usage * $rate;
 
         // 6. Find reservation for the reading date
-        $reservation = Reservation::where('siteid', $site->siteid)
-            ->whereDate('cid', '<=', now())
-            ->whereDate('cod', '>=', now())
-            ->first();
-        
-        $customer = $reservation ? User::find($reservation->customernumber) : null;
+        $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
 
+        $customer = $reservation ? User::find($reservation->customernumber) : null;
 
         // 7. Build preview data
         $reading = (object) [
@@ -123,9 +125,7 @@ class MeterController extends Controller
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
-            'previousKwh' => $previousKwh
-
-
+            'previousKwh' => $previousKwh,
         ];
 
         // 8. Return to preview view
