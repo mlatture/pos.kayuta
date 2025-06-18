@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Carbon;
+
 use App\Models\Readings;
 use App\Models\Site;
-use App\Models\Customer;
-use App\Models\User;
 use App\Models\Reservation;
+use App\Models\User;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
 
 use App\Mail\ElectricBillGenerated;
 class MeterController extends Controller
@@ -75,66 +76,67 @@ class MeterController extends Controller
         $jsonString = substr($content, $start, $end - $start + 1);
         $parsed = json_decode($jsonString, true);
 
-        // 4. Validate extracted fields
-        $siteid = $parsed['siteid'] ?? '';
         $meterNumber = trim($parsed['meter_number'] ?? '');
         $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
 
-        if (!$siteid || !$meterNumber || !$currentReading) {
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
+        if (!$meterNumber || !$currentReading) {
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values (meter number or reading).');
         }
 
-        // 5. Get previous reading
-        $lastReading = Readings::where('siteno', $siteid)->latest('date')->first();
-        $previousReading = $lastReading?->bill ?? 0;
+        // 4. Lookup site by meter_number
+        $site = Site::where('meter_number', $meterNumber)->first();
+        if (!$site) {
+            return view('meters.unregistered', [
+                'meter_number' => $meterNumber,
+                'reading' => $currentReading,
+                'image' => $relativePath,
+                'date' => now()->toDateString(),
+            ]);
+        }
+
+        // 5. Lookup last reading for this meter
+
+        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
+        $previousKwh = $lastReading?->kwhNo ?? 0;
         $previousDate = $lastReading?->date ?? now();
-        $usage = $currentReading - $previousReading;
-        $days = now()->diffInDays($previousDate);
+        $usage = $currentReading - $previousKwh;
+        $days = now()->diffInDays(Carbon::parse($previousDate));
         $rate = 0.12;
         $total = $usage * $rate;
 
-        // 6. Find site and customer
-        $site = Site::where('siteid', $siteid)->first();
-        $customer = null;
-        $customerName = null;
+        // 6. Find reservation for the reading date
+        $reservation = Reservation::where('siteid', $site->siteid)
+            ->whereDate('cid', '<=', now())
+            ->whereDate('cod', '>=', now())
+            ->first();
+        
+        $customer = $reservation ? User::find($reservation->customernumber) : null;
 
-        if ($site) {
-            $latestReservation = Reservation::where('siteid', $site->siteid)->latest('created_at')->first();
-            if ($latestReservation && $latestReservation->customernumber) {
-                $customer = User::find($latestReservation->customernumber);
-                $customerName = $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null;
-            }
-        }
 
-        // 7. Preview object for Blade
+        // 7. Build preview data
         $reading = (object) [
             'kwhNo' => $currentReading,
             'meter_number' => $meterNumber,
             'image' => $relativePath,
-            'date' => now(),
-            'siteno' => $siteid,
-            'status' => 'pending',
-            'bill' => $total,
-            'customer_id' => $customer?->id,
-            'customer_name' => $customerName,
+            'date' => now()->toDateString(),
+            'siteid' => $site->siteid,
+            'usage' => $usage,
+            'rate' => $rate,
+            'total' => $total,
+            'previousKwh' => $previousKwh
+
+
         ];
 
         // 8. Return to preview view
         return view('meters.preview', [
-            'meter_number' => $meterNumber,
-            'image' => $relativePath,
             'reading' => $reading,
             'site' => $site,
-            'siteid' => $siteid,
-            'customer_name' => $customerName,
-            'customer_id' => $customer?->id,
             'customer' => $customer,
-            'usage' => $usage,
-            'rate' => $rate,
-            'total' => $total,
-            'days' => $days,
+            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
             'start_date' => Carbon::parse($previousDate)->toDateString(),
-            'end_date' => Carbon::parse(now())->toDateString(),
+            'end_date' => now()->toDateString(),
+            'days' => $days,
         ]);
     }
 

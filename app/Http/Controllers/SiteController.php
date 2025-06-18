@@ -173,19 +173,18 @@ class SiteController extends Controller
                         unlink($oldImagePath);
                     }
                 }
-            
+
                 $filename = Str::uuid() . '.' . $request->file('image')->getClientOriginalExtension();
-            
+
                 $imagePath = $request->file('image')->move(public_path('storage/sites'), $filename);
-            
+
                 $site->image = 'storage/sites/' . $filename;
             }
-            
+
             // Save the site model
             if (!$site->save()) {
                 return redirect()->back()->with('error', 'Sorry, something went wrong while updating the site.');
             }
-            
 
             return redirect()->route('sites.index')->with('success', 'Success, site has been updated.');
         } catch (Exception $e) {
@@ -202,7 +201,6 @@ class SiteController extends Controller
      */
     public function destroy(Site $site)
     {
-       
         $site->delete();
 
         return response()->json([
@@ -227,38 +225,38 @@ class SiteController extends Controller
     {
         $site = Site::findOrFail($id);
         $uploadedImages = [];
-    
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 if ($file->isValid()) {
                     $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    
+
                     $image = app('image')->resize($file);
 
                     $path = public_path('storage/sites/' . $filename);
-                    
+
                     app('image')->save($image, $path);
 
                     $uploadedImages[] = $filename;
                 }
             }
         }
-    
+
         $existing = $site->images;
 
         if (is_string($existing)) {
             $existing = json_decode($existing, true);
         }
         $existing = is_array($existing) ? $existing : [];
-    
+
         $allImages = array_merge($existing, $uploadedImages);
         $site->images = json_encode($allImages);
         $site->save();
         $site->refresh();
-    
+
         return redirect()->back()->with('success', 'Images uploaded successfully!');
     }
-    
+
     public function deleteImage($siteId, $filename)
     {
         $site = Site::findOrFail($siteId);
@@ -274,5 +272,22 @@ class SiteController extends Controller
         $site->save();
 
         return response()->json(['success' => true, 'message' => 'Image deleted successfully.']);
+    }
+
+    public function search(Request $request)
+    {
+        $term = $request->get('term');
+
+        $sites = Site::where('siteid', 'LIKE', "%{$term}%")
+            ->orWhere('sitename', 'LIKE', "%{$term}%")
+            ->limit(10)
+            ->get();
+
+        return $sites->map(function ($site) {
+            return [
+                'label' => "{$site->siteid} - {$site->sitename}",
+                'value' => $site->siteid,
+            ];
+        });
     }
 }

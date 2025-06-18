@@ -5,6 +5,7 @@ use App\Http\Controllers\API\DataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ReceiptController;
+use App\Http\Controllers\SiteController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -35,3 +36,5 @@ Route::get('/product-image/{filename}', function ($filename) {
 
     return Response::file($path);
 });
+
+Route::get('/api/sites/search', [SiteController::class, 'search'])->name('api.sites.search');
