@@ -9,6 +9,7 @@ use App\Models\Readings;
 use App\Models\Site;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Models\Bills;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -137,6 +138,7 @@ class MeterController extends Controller
             'start_date' => Carbon::parse($previousDate)->toDateString(),
             'end_date' => now()->toDateString(),
             'days' => $days,
+            'reservation_id' => $reservation->id,
         ]);
     }
 
@@ -221,45 +223,66 @@ class MeterController extends Controller
 
     public function send(Request $request)
     {
+        $request->validate([
+            'meter_number' => 'required|string',
+            'image' => 'required|string',
+            'kwhNo' => 'required|numeric',
+            'prevkwhNo' => 'required|numeric',
+            'total' => 'required|numeric',
+            'siteid' => 'required|string',
+            'usage' => 'required|string',
+            'reservation_id' => 'nullable|exists:reservations,id',
+            'customer_id' => 'nullable|exists:users,id',
+            'rate' => 'nullable|numeric',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+        ]);
+
+        $rate = $request->rate ?? 0.12;
+        $readingDate = Carbon::now();
+
+    
+
+        // 1. Create reading record
         $reading = Readings::create([
             'kwhNo' => $request->kwhNo,
             'meter_number' => $request->meter_number,
             'image' => $request->image,
-            'date' => now(),
-            'siteno' => $request->siteno,
-            'status' => 'billed',
-            'bill' => $request->bill,
-            'customer_id' => $request->customer_id,
+            'date' => $readingDate,
         ]);
 
-        $customer = User::find($reading->customer_id);
-        $site = Site::where('siteid', $reading->siteno)->first();
-
-        $lastReading = Readings::where('siteno', $reading->siteno)->where('date', '<', $reading->date)->latest('date')->first();
-
-        $previousReading = $lastReading?->kwhNo ?? 0;
-        $currentReading = $reading->kwhNo;
-        $usage = $currentReading - $previousReading;
-        $rate = 0.12;
-        $days = now()->diffInDays($lastReading?->date ?? now());
-        $total = $usage * $rate;
-
-        $reading->update(['bill' => $total]);
-
-        Mail::to($customer->email)->send(
-            new ElectricBillGenerated([
-                'customer' => $customer,
-                'site_no' => $reading->siteno,
-                'current_reading' => $reading->kwhNo,
-                'previous_reading' => $previousReading,
-                'usage' => $usage,
-                'total' => $total,
-                'rate' => $rate,
-                'days' => $days,
-                'start_date' => optional($lastReading)->date ? Carbon::parse($lastReading->date)->toDateString() : null,
-                'end_date' => now()->toDateString(),
+        // 2. Create bill
+        $bill = Bill::create([
+            'reservation_id' => $request->reservation_id,
+            'customer_id' => $request->customer_id,
+            'kwh_used' => $request->usage,
+            'rate' => $rate,
+            'total_cost' => $request->total,
+            'reading_bills' => json_encode([
+                'start' => $request->start_date,
+                'end' => $request->end_date,
             ]),
-        );
+            'auto_email' => true,
+        ]);
+
+        // 3. Send email
+        $customer = User::find($request->customer_id);
+        if ($customer && $customer->email) {
+            Mail::to($customer->email)->send(
+                new ElectricBillGenerated([
+                    'customer' => $customer,
+                    'site_no' => $request->siteid,
+                    'current_reading' => $request->kwhNo,
+                    'previous_reading' => $request->prevkwhNo,
+                    'usage' => $request->usage,
+                    'total' => $request->total,
+                    'rate' => $rate,
+                    'days' => $request->days,
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                ]),
+            );
+        }
 
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
     }

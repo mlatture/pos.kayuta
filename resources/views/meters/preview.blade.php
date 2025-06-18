@@ -64,9 +64,11 @@
                 <input type="hidden" name="meter_number" value="{{ $reading->meter_number }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
-                <input type="hidden" name="bill" value="{{ $reading->total }}">
-                <input type="hidden" name="image" value="{{ $reading->image }}">
-                <input type="hidden" name="siteno" value="{{ $reading->siteid }}">
+                <input type="hidden" name="prevkwhNo" value="{{ $reading->previousKwh }}">
+                <input type="hidden" name="total" value="{{ $reading->total }}">
+                <input type="hidden" name="siteid" value="{{ $reading->siteid }}">
+                <input type="hidden" name="reservation_id" value="{{ $reservation_id }}">
+
                 <input type="hidden" name="customer_id" id="hidden_customer_id" value="{{ $customer?->id }}">
                 <input type="hidden" name="usage" value="{{ $reading->usage }}">
                 <input type="hidden" name="rate" value="{{ $reading->rate }}">
