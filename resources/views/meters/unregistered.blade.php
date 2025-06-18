@@ -2,7 +2,9 @@
 
 @section('title', 'Register New Meter')
 @section('content-header', 'Register New Meter to Site')
-
+@push('css')
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+@endpush
 @section('content')
     <div class="container">
         <div class="card shadow-sm p-4">
@@ -57,6 +59,8 @@
 @endsection
 
 @push('js')
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const siteInput = document.getElementById('siteid');
@@ -85,7 +89,6 @@
                     return false;
                 }
             });
-
         });
     </script>
 @endpush
