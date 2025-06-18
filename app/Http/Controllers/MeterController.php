@@ -260,7 +260,7 @@ class MeterController extends Controller
             'kwh_used' => $request->usage,
             'rate' => $rate,
             'total_cost' => $request->total,
-            'reading_bills' => json_encode([
+            'reading_dates' => json_encode([
                 'start' => $request->start_date,
                 'end' => $request->end_date,
             ]),

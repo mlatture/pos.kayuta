@@ -17,12 +17,12 @@ class Bills extends Model
         'kwh_used',
         'rate',
         'total_cost',
-        'reading_bills',
+        'reading_dates',
         'auto_email',
     ];
 
     protected $casts = [
-        'reading_bills' => 'array',
+        'reading_dates' => 'array',
         'auto_email' => 'boolean',
     ];
     
