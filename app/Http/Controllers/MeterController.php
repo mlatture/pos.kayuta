@@ -184,4 +184,34 @@ class MeterController extends Controller
 
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
     }
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'siteid' => 'required|string|exists:sites,siteid',
+            'meter_number' => 'required|string',
+        ]);
+
+        $newMeterNumber = $request->meter_number;
+
+        $site = Site::where('siteid', $request->siteid)->firstOrFail();
+        $oldMeterNumber = $site->meter_number;
+
+        $conflictSite = Site::where('meter_number', $newMeterNumber)->where('siteid', '!=', $site->siteid)->first();
+
+        if ($conflictSite) {
+            $conflictSite->meter_number = null;
+            $conflictSite->save();
+        }
+
+        $site->meter_number = $newMeterNumber;
+        $site->save();
+
+        return redirect()
+            ->route('meters.read')
+            ->with([
+                'registered' => true,
+                'message' => "Meter {$newMeterNumber} has been assigned to Site {$site->siteid}" . ($oldMeterNumber ? " (previous: {$oldMeterNumber})" : '') . ($conflictSite ? " (removed from Site {$conflictSite->siteid})" : ''),
+            ]);
+    }
 }
