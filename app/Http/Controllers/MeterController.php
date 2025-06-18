@@ -254,7 +254,7 @@ class MeterController extends Controller
         ]);
 
         // 2. Create bill
-        $bill = Bill::create([
+        $bill = Bills::create([
             'reservation_id' => $request->reservation_id,
             'customer_id' => $request->customer_id,
             'kwh_used' => $request->usage,
