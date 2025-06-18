@@ -138,7 +138,7 @@ class MeterController extends Controller
             'start_date' => Carbon::parse($previousDate)->toDateString(),
             'end_date' => now()->toDateString(),
             'days' => $days,
-            'reservation_id' => $reservation->id,
+            'reservation_id' => $reservation->id ?? '',
         ]);
     }
 
