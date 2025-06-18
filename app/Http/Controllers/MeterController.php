@@ -140,6 +140,85 @@ class MeterController extends Controller
         ]);
     }
 
+    public function register(Request $request)
+    {
+        $request->validate([
+            'siteid' => 'required|string|exists:sites,siteid',
+            'meter_number' => 'required|string',
+            'kwhNo' => 'required|numeric',
+            'image' => 'required|string',
+            'date' => 'required|date',
+        ]);
+
+        $newMeterNumber = $request->meter_number;
+        $site = Site::where('siteid', $request->siteid)->firstOrFail();
+
+        $conflictSite = Site::where('meter_number', $newMeterNumber)->where('siteid', '!=', $site->siteid)->first();
+
+        if ($conflictSite) {
+            $conflictSite->meter_number = null;
+            $conflictSite->save();
+        }
+
+        $site->meter_number = $newMeterNumber;
+        $site->save();
+
+        return redirect()
+            ->route('meters.preview.fromSession')
+            ->with('reading_data', [
+                'kwhNo' => $request->kwhNo,
+                'meter_number' => $newMeterNumber,
+                'image' => $request->image,
+                'date' => $request->date,
+                'siteid' => $site->siteid,
+            ]);
+    }
+
+    public function previewFromSession()
+    {
+        $data = session('reading_data');
+
+        if (!$data) {
+            return redirect()->route('meters.index')->with('error', 'No reading data available.');
+        }
+
+        $site = Site::where('siteid', $data['siteid'])->first();
+        $lastReading = Readings::where('meter_number', $data['meter_number'])->latest('date')->first();
+
+        $previousKwh = $lastReading?->kwhNo ?? 0;
+        $previousDate = $lastReading?->date ?? now();
+        $usage = $data['kwhNo'] - $previousKwh;
+        $days = now()->diffInDays(\Carbon\Carbon::parse($previousDate));
+        $rate = 0.12;
+        $total = $usage * $rate;
+
+        $reservation = Reservation::where('siteid', $data['siteid'])->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+
+        $customer = $reservation ? User::find($reservation->customernumber) : null;
+
+        $reading = (object) [
+            'kwhNo' => $data['kwhNo'],
+            'meter_number' => $data['meter_number'],
+            'image' => $data['image'],
+            'date' => $data['date'],
+            'siteid' => $data['siteid'],
+            'usage' => $usage,
+            'rate' => $rate,
+            'total' => $total,
+            'previousKwh' => $previousKwh,
+        ];
+
+        return view('meters.preview', [
+            'reading' => $reading,
+            'site' => $site,
+            'customer' => $customer,
+            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
+            'start_date' => Carbon::parse($previousDate)->toDateString(),
+            'end_date' => now()->toDateString(),
+            'days' => $days,
+        ]);
+    }
+
     public function send(Request $request)
     {
         $reading = Readings::create([
@@ -183,35 +262,5 @@ class MeterController extends Controller
         );
 
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
-    }
-
-    public function register(Request $request)
-    {
-        $request->validate([
-            'siteid' => 'required|string|exists:sites,siteid',
-            'meter_number' => 'required|string',
-        ]);
-
-        $newMeterNumber = $request->meter_number;
-
-        $site = Site::where('siteid', $request->siteid)->firstOrFail();
-        $oldMeterNumber = $site->meter_number;
-
-        $conflictSite = Site::where('meter_number', $newMeterNumber)->where('siteid', '!=', $site->siteid)->first();
-
-        if ($conflictSite) {
-            $conflictSite->meter_number = null;
-            $conflictSite->save();
-        }
-
-        $site->meter_number = $newMeterNumber;
-        $site->save();
-
-        return redirect()
-            ->route('meters.read')
-            ->with([
-                'registered' => true,
-                'message' => "Meter {$newMeterNumber} has been assigned to Site {$site->siteid}" . ($oldMeterNumber ? " (previous: {$oldMeterNumber})" : '') . ($conflictSite ? " (removed from Site {$conflictSite->siteid})" : ''),
-            ]);
     }
 }

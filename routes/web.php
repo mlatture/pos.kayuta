@@ -264,6 +264,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/read', [MeterController::class, 'read'])->name('meters.read');
         Route::post('/send', [MeterController::class, 'send'])->name('meters.sendBill');
         Route::post('/register', [MeterController::class, 'register'])->name('meters.register');
+
+        Route::get('/preview/session', [MeterController::class, 'previewFromSession'])->name('meters.preview.fromSession');
     });
 });
 
