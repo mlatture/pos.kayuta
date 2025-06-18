@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::table('sites', function (Blueprint $table) {
             $table->dropColumn('lastmeterreading');
-            $table->dropColumn('meter_number');
 
         });
     }
