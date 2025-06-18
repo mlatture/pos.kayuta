@@ -54,8 +54,8 @@
 
             <h5>Total Bill</h5>
             <p class="fs-4">
-                <strong>{{ config('settings.currency_symbol', '$') }}{{ number_format($total, 2) }}</strong>
-                <span class="text-muted">(Rate: {{ $rate }} per kWh)</span>
+                <strong>{{ config('settings.currency_symbol', '$') }}{{ number_format($reading->total, 2) }}</strong>
+                <span class="text-muted">(Rate: {{ $reading->rate }} per kWh)</span>
             </p>
 
             <form action="{{ route('meters.sendBill') }}" method="POST">
