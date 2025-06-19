@@ -243,6 +243,11 @@ return [
         'scan_electric_meter' => [
             'name' => 'Scan Electric Meter',
             'value' => 'scan_electric_meter'
-        ]
+        ],
+
+        'seasonal_settings' => [
+            'name' => 'Seasonal Settings',
+            'value' => 'seasonal_settings'
+        ],
     ]
 ];

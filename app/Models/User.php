@@ -31,6 +31,8 @@ class User extends Authenticatable
     
 
     
+
+
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -94,4 +96,8 @@ class User extends Authenticatable
     }
 
     
+    public function seasonalRenewal()
+    {
+        return $this->hasOne(SeasonalRenewal::class);
+    }
 }

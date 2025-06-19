@@ -8,6 +8,9 @@
         <div class="card shadow-sm p-4">
             <h4 class="mb-3">
                 Electric Meter Reading Details (Site No: {{ $reading->siteid }})
+
+                -
+                
                 @if ($reading->new_meter_number || !empty($request->new_meter_number))
                     <span class="text-success ms-2">(New Meter Registered)</span>
                 @endif

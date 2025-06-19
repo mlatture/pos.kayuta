@@ -37,6 +37,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\MeterController;
+use App\Http\Controllers\SeasonalSettingController;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -299,5 +300,11 @@ Route::prefix('admin')->middleware('auth')->group(static function () {
     Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
     Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
 
+
+    //Seasonal Settings;
+    Route::prefix('seasonal-settings')->group(function () {
+        Route::get('index', [SeasonalSettingController::class, 'index'])->name('admin.seasonal-settings.index');
+        Route::post('store', [SeasonalSettingController::class, 'store'])->name('admin.seasonal-settings.store');
+    });
 
 });

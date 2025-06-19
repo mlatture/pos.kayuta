@@ -197,12 +197,10 @@
                 @endHasPermission
 
                 @hasPermission(config('constants.role_modules.manage_pages.value'))
-                  
-
                     <li><a class="dropdown-item" href="{{ route('pages.index', ['type' => 'page']) }}">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <span>Page / Articles / Blogs</span>
-                    </a></li>
+                            <i class="fa-solid fa-file-lines"></i>
+                            <span>Page / Articles / Blogs</span>
+                        </a></li>
                 @endHasPermission
 
 
@@ -304,6 +302,17 @@
                             <span>Short Links</span>
                         </a></li>
                 @endHasPermission
+
+
+                @hasPermission(config('constants.role_modules.seasonal_settings.value'))
+                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index') }}">
+                            <i class="fa-solid fa-gears"></i> <span>
+                                {{ config('constants.role_modules.seasonal_settings.name')}}
+                            </span>
+                        </a></li>
+                @endHasPermission
+
+
 
 
 
