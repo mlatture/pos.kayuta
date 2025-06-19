@@ -127,6 +127,7 @@ class MeterController extends Controller
             'rate' => $rate,
             'total' => $total,
             'previousKwh' => $previousKwh,
+            'new_meter_number' => false,
         ];
 
         // 8. Return to preview view
@@ -208,6 +209,8 @@ class MeterController extends Controller
             'rate' => $rate,
             'total' => $total,
             'previousKwh' => $previousKwh,
+            'new_meter_number' => true,
+
         ];
 
         return view('meters.preview', [
@@ -245,7 +248,6 @@ class MeterController extends Controller
 
     
 
-        // 1. Create reading record
         $reading = Readings::create([
             'kwhNo' => $request->kwhNo,
             'meter_number' => $request->meter_number,
@@ -253,37 +255,37 @@ class MeterController extends Controller
             'date' => $readingDate,
         ]);
 
-        // 2. Create bill
-        $bill = Bills::create([
-            'reservation_id' => $request->reservation_id,
-            'customer_id' => $request->customer_id,
-            'kwh_used' => $request->usage,
-            'rate' => $rate,
-            'total_cost' => $request->total,
-            'reading_dates' => json_encode([
-                'start' => $request->start_date,
-                'end' => $request->end_date,
-            ]),
-            'auto_email' => true,
-        ]);
-
-        // 3. Send email
-        $customer = User::find($request->customer_id);
-        if ($customer && $customer->email) {
-            Mail::to($customer->email)->send(
-                new ElectricBillGenerated([
-                    'customer' => $customer,
-                    'site_no' => $request->siteid,
-                    'current_reading' => $request->kwhNo,
-                    'previous_reading' => $request->prevkwhNo,
-                    'usage' => $request->usage,
-                    'total' => $request->total,
-                    'rate' => $rate,
-                    'days' => $request->days,
-                    'start_date' => $request->start_date,
-                    'end_date' => $request->end_date,
+        if ($request->customer_id && $request->new_meter_number) {
+            $bill = Bills::create([
+                'reservation_id' => $request->reservation_id,
+                'customer_id' => $request->customer_id,
+                'kwh_used' => $request->usage,
+                'rate' => $rate,
+                'total_cost' => $request->total,
+                'reading_dates' => json_encode([
+                    'start' => $request->start_date,
+                    'end' => $request->end_date,
                 ]),
-            );
+                'auto_email' => true,
+            ]);
+    
+            $customer = User::find($request->customer_id);
+            if ($customer && $customer->email) {
+                Mail::to($customer->email)->send(
+                    new ElectricBillGenerated([
+                        'customer' => $customer,
+                        'site_no' => $request->siteid,
+                        'current_reading' => $request->kwhNo,
+                        'previous_reading' => $request->prevkwhNo,
+                        'usage' => $request->usage,
+                        'total' => $request->total,
+                        'rate' => $rate,
+                        'days' => $request->days,
+                        'start_date' => $request->start_date,
+                        'end_date' => $request->end_date,
+                    ]),
+                );
+            }
         }
 
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');

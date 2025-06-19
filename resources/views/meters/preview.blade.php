@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-6">
                     @if (!$customer)
-                        <div class="mb-3">
+                        {{-- <div class="mb-3">
                             <label for="customer_select" class="form-label"><strong>Select Customer:</strong></label>
                             <select name="customer_id" id="customer_select" class="form-control" required>
                                 <option value="">-- Select Customer --</option>
@@ -34,7 +34,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <p><strong>Email:</strong> <span id="customer_email">N/A</span></p>
+                        <p><strong>Email:</strong> <span id="customer_email">N/A</span></p> --}}
+                        <p><strong>No customer was staying</strong></p>
                     @else
                         <p><strong>Customer Name:</strong> {{ $customer_name }}</p>
                         <p><strong>Email:</strong> {{ $customer?->email }}</p>
@@ -61,6 +62,7 @@
             <form action="{{ route('meters.sendBill') }}" method="POST">
                 @csrf
 
+                <input type="hidden" name="new_meter_number" value="{{ $reading->new_meter_number }}">
                 <input type="hidden" name="meter_number" value="{{ $reading->meter_number }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">
                 <input type="hidden" name="kwhNo" value="{{ $reading->kwhNo }}">
