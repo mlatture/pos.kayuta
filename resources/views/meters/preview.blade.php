@@ -8,8 +8,11 @@
         <div class="card shadow-sm p-4">
             <h4 class="mb-3">
                 Electric Meter Reading Details (Site No: {{ $reading->siteid }})
-           
+                @if ($reading->new_meter_number || !empty($request->new_meter_number))
+                    <span class="text-success ms-2">(New Meter Registered)</span>
+                @endif
             </h4>
+            
             <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
             <hr>
             <div class="row mb-3">
@@ -88,23 +91,22 @@
 @endsection
 
 @push('js')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const select = document.getElementById('customer_select');
-        const emailSpan = document.getElementById('customer_email');
-        const hiddenCustomerId = document.getElementById('hidden_customer_id');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('customer_select');
+            const emailSpan = document.getElementById('customer_email');
+            const hiddenCustomerId = document.getElementById('hidden_customer_id');
 
-        if (select) {
-            select.addEventListener('change', function() {
-                const selected = this.options[this.selectedIndex];
-                const email = selected.getAttribute('data-email') || 'N/A';
-                const id = selected.value;
+            if (select) {
+                select.addEventListener('change', function() {
+                    const selected = this.options[this.selectedIndex];
+                    const email = selected.getAttribute('data-email') || 'N/A';
+                    const id = selected.value;
 
-                emailSpan.textContent = email;
-                hiddenCustomerId.value = id;
-            });
-        }
-    });
-</script>
-
+                    emailSpan.textContent = email;
+                    hiddenCustomerId.value = id;
+                });
+            }
+        });
+    </script>
 @endpush
