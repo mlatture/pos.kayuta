@@ -13,9 +13,7 @@ class Kernel extends ConsoleKernel
      *
      * @var array
      */
-    protected $commands = [
-       GenerateSqlDump::class,
-    ];
+    protected $commands = [GenerateSqlDump::class, \App\Console\Commands\GenerateSeasonalRenewals::class];
 
     /**
      * Define the application's command schedule.
@@ -27,9 +25,11 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
-        $schedule->call(function(){
-            (new App\Http\Controllers\NewReservationController)->deleteCart();
-        })->everyMinutes();
+        $schedule
+            ->call(function () {
+                (new App\Http\Controllers\NewReservationController())->deleteCart();
+            })
+            ->everyMinutes();
     }
 
     /**
@@ -39,7 +39,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

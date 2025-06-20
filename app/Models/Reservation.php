@@ -66,6 +66,11 @@ class Reservation extends Model
         return $this->hasOne(Site::class, 'siteid', 'siteid');
     }
 
+    public function siteForSeasonal()
+    {
+        return $this->belongsTo(Site::class, 'siteid', 'siteid');
+    }
+
     public function getAllPaginate()
     {
         return self::with(['user'])->orderBy('id', 'DESC')->paginate(10);

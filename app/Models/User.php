@@ -61,6 +61,11 @@ class User extends Authenticatable
         return $this->hasMany(Reservation::class, 'customernumber');
     }
 
+    public function latestReservation()
+    {   
+        return $this->hasOne(Reservation::class, 'customernumber', 'id')->latestOfMany();
+    }
+
     public function cart_reservations()
     {
         return $this->hasMany(CartReservation::class, 'customernumber');
