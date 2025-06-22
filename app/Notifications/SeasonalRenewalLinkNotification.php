@@ -48,7 +48,8 @@ class SeasonalRenewalLinkNotification extends Notification
             ->greeting('Hi, ' . trim("{$notifiable->f_name} {$notifiable->l_name}") ?: 'Guest' . ',')
             ->line('We’re now accepting seasonal renewals for the upcoming year.')
             ->action('Renew Your Site', $this->signedUrl)
-            ->line('This secure link will expire in 14 days.');
+            ->line('This secure link will expire in 14 days.')
+            ->salutation('Regards, Kayuta Lake Campground');
     }
 
     /**

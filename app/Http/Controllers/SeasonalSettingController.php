@@ -69,6 +69,8 @@ class SeasonalSettingController extends Controller
                 ],
             );
 
+            URL::forceRootUrl('https://book.kayuta.com');
+
             $signedUrl = URL::temporarySignedRoute(
                 'seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]
             );
