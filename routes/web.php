@@ -290,16 +290,19 @@ Route::prefix('admin')
         Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
         Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
         Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
+    });
 
-        //Seasonal Settings;
-        Route::prefix('seasonal')->group(function () {
-            Route::get('settings/index', [SeasonalSettingController::class, 'index'])->name('admin.seasonal-settings.index');
-            Route::post('settings/store', [SeasonalSettingController::class, 'store'])->name('admin.seasonal-settings.store');
-            Route::post('renewals/trigger', [SeasonalSettingController::class, 'triggerRenewals'])->name('admin.seasonal-renewals.trigger');
+//Seasonal Settings;
 
-            Route::prefix('guest')->group(function () {
-                Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');
-                Route::post('{user}/respond', [SeasonalRenewalGuestController::class, 'respond'])->name('seasonal.renewal.respond');
-            });
+Route::prefix('seasonal')
+    ->middleware('auth')
+    ->group(function () {
+        Route::get('settings/index', [SeasonalSettingController::class, 'index'])->name('admin.seasonal-settings.index');
+        Route::post('settings/store', [SeasonalSettingController::class, 'store'])->name('admin.seasonal-settings.store');
+        Route::post('renewals/trigger', [SeasonalSettingController::class, 'triggerRenewals'])->name('admin.seasonal-renewals.trigger');
+
+        Route::prefix('guest')->group(function () {
+            Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');
+            Route::post('{user}/respond', [SeasonalRenewalGuestController::class, 'respond'])->name('seasonal.renewal.respond');
         });
     });

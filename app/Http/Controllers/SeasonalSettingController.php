@@ -45,13 +45,14 @@ class SeasonalSettingController extends Controller
     public function triggerRenewals()
     {
         $setting = SeasonalSetting::latest()->first();
-        
 
         if (!$setting) {
             return back()->with('error', 'No seasonal settings found.');
         }
 
-        $users = User::where('seasonal', true)->with(['latestReservation.siteForSeasonal'])->get();
+        $users = User::where('seasonal', true)
+            ->with(['latestReservation.siteForSeasonal'])
+            ->get();
         $count = 0;
 
         foreach ($users as $user) {
@@ -69,17 +70,17 @@ class SeasonalSettingController extends Controller
                 ],
             );
 
-            URL::forceRootUrl('https://book.kayuta.com');
-
-            $signedUrl = URL::temporarySignedRoute(
-                'seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]
-            );
+             URL::forceRootUrl('https://book.kayuta.com');
+            // URL::forceRootUrl('http://127.0.0.1:8001');
+            $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
 
             $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
 
             $count++;
         }
 
-        return redirect()->back()->with('success', "$count seasonal renewal records generated and links sent.");
+        return redirect()
+            ->back()
+            ->with('success', "$count seasonal renewal records generated and links sent.");
     }
 }
