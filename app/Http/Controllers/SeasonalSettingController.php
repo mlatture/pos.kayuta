@@ -78,9 +78,9 @@ class SeasonalSettingController extends Controller
             $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
 
             //Generate contract
-            $templatePath = public_path('storages/templates/contract_template.docx');
+            $templatePath = public_path('storage/templates/contract_template.docx');
             $fileName = "contract_{$user->l_name}_{$user->id}.docx";
-            $filePath = public_path("storages/contracts/$fileName");
+            $filePath = public_path("storage/contracts/$fileName");
 
             $siteNumber = $user->latestReservation->siteForSeasonal->siteid ?? 'N/A';
 
