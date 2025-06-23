@@ -13,6 +13,9 @@ use App\Notifications\SeasonalRenewalLinkNotification;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\TemplateProcessor;
+
 
 class SeasonalSettingController extends Controller
 {
@@ -70,9 +73,31 @@ class SeasonalSettingController extends Controller
                 ],
             );
 
-             URL::forceRootUrl('https://book.kayuta.com');
+            URL::forceRootUrl('https://book.kayuta.com');
             // URL::forceRootUrl('http://127.0.0.1:8001');
             $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
+
+            //Generate contract
+            $templatePath = public_path('storages/templates/contract_template.docx');
+            $fileName = "contract_{$user->l_name}_{$user->id}.docx";
+            $filePath = public_path("storages/contracts/$fileName");
+
+            $siteNumber = $user->latestReservation->siteForSeasonal->siteid ?? 'N/A';
+
+            $templateProcessor = new TemplateProcessor($templatePath);
+            $templateProcessor->setValues([
+                'first_name' => $user->f_name,
+                'last_name' => $user->l_name,
+                'site_number' => $siteNumber,
+                'seasonal_rate' => "$" . number_format($rate),
+                'deadline' => $setting->renewal_deadline->format('F j, Y'),
+                'discount_amount' => '$100',
+                'year' => now()->year + 1,
+            ]);
+            $templateProcessor->saveAs($filePath);
+
+            // Generate downloadable link 
+            // $downloadLink = route('contracts.download', ['user' => $user->id]);
 
             $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
 
