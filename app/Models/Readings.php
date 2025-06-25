@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use Intervention\Image\Facades\Image;
-
 class Readings extends Model
 {
     use HasFactory;
@@ -25,21 +23,17 @@ class Readings extends Model
             $filename = "{$date}-{$random}.{$extension}";
     
             $destination = public_path("storage/{$folder}/{$year}");
+            $fullPath = "{$destination}/{$filename}";
     
             if (!file_exists($destination)) {
                 mkdir($destination, 0775, true);
             }
-
-            $image = Image::make($file)
-                ->resize(1000, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })
-                ->encode($extension, 80);
-
     
-            $image->save($destination, $filename);
-    
+
+            $imageService = app('image');
+            $resizedImage = $imageService->resize($file);
+            $imageService->save($resizedImage, $fullPath);
+            
             return "{$folder}/{$year}/{$filename}";
         }
     
