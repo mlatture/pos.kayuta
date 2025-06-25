@@ -31,9 +31,8 @@
 
                 <div class="mb-3">
                     <label for="siteid" class="form-label"><strong>Assign to Site</strong></label>
-                    <input type="text" name="siteid" id="siteid" class="form-control" placeholder="Enter Site ID"
-                        required>
-                    <small class="text-muted">Type to search. Site must already exist.</small>
+                    <input type="text" name="siteid" id="siteid" class="form-control" placeholder="Enter Site ID">
+                        <small class="text-muted">Type to search. Site must already exist.</small>
                 </div>
 
                 <div class="mb-3">
