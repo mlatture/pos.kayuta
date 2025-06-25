@@ -22,7 +22,7 @@
                                 <i class="fas fa-bolt me-1"></i> Scan and Preview Bill
                             </button>
                             <div id="loading-msg" class="mt-3 text-center text-muted" style="display: none;">
-                                ⏳ Please wait, scanning meter...
+                                <i class="fa-solid fa-hourglass-end fa-spin"></i>  Please wait, scanning meter...
                             </div>
 
                         </form>
@@ -76,8 +76,9 @@
         $(document).ready(function() {
             const meterForm = $('#meter-form');
             const loadingMsg = $('#loading-msg');
+
             meterForm.on('submit', function() {
-                console.log(loadingMsg.show(););
+                console.log('Showing loading message...');
                 loadingMsg.show();
             });
         });
