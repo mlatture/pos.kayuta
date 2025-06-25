@@ -10,12 +10,12 @@
                 Electric Meter Reading Details (Site No: {{ $reading->siteid }})
 
                 -
-                
+
                 @if ($reading->new_meter_number || !empty($request->new_meter_number))
                     <span class="text-success ms-2">(New Meter Registered)</span>
                 @endif
             </h4>
-            
+
             <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
             <hr>
             <div class="row mb-3">
@@ -86,7 +86,9 @@
 
                 <div class="d-flex gap-3">
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-success">Save and Send Bill</button>
+                    <button type="submit" class="btn btn-success">
+                        {{ $reading->new_meter_number ? 'Save' : 'Save and Send Bill' }}
+                    </button>
                 </div>
             </form>
         </div>
