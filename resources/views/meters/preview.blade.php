@@ -18,7 +18,8 @@
 
             <div class="row mb-3 align-items-start">
                 <div class="col-md-6">
-                    <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+                    <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image"
+                        style="max-width: 50%; height: auto;">
                 </div>
 
                 <div class="col-md-6 d-flex flex-column gap-2">
