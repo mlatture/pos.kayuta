@@ -85,7 +85,7 @@ class MeterController extends Controller
         $jsonString = substr($content, $start, $end - $start + 1);
         $parsed = json_decode($jsonString, true);
 
-        $meterNumber = trim($parsed['meter_number'] ?? '');
+        $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
         $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
 
         if (!$meterNumber || !$currentReading) {
