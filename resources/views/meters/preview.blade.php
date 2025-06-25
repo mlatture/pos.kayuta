@@ -9,14 +9,48 @@
             <h4 class="mb-3">
                 Electric Meter Reading Details (Site No: {{ $reading->siteid }})
 
-                -
+
 
                 @if ($reading->new_meter_number || !empty($request->new_meter_number))
                     <span class="text-success ms-2">(New Meter Registered)</span>
                 @endif
             </h4>
 
-            <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+            <div class="row mb-3 align-items-start">
+                <div class="col-md-6">
+                    <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+                </div>
+
+                <div class="col-md-6 d-flex flex-column gap-2">
+                    <form action="{{ route('meters.read') }}" method="POST" id="retry-form">
+                        @csrf
+                        <input type="hidden" name="existing_image" value="{{ $image }}">
+                        <button type="submit" class="btn btn-warning w-100">
+                            🔁 That doesn't seem right, try again
+                        </button>
+                    </form>
+
+                    <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
+                        id="take-photo-form">
+                        @csrf
+                        <input type="file" name="photo" id="take-photo-input" accept="image/*" capture="environment"
+                            style="display: none;" required>
+                    </form>
+
+                    <button type="button" class="btn btn-secondary w-100" id="take-photo-button">
+                        📷 Take another picture
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading-overlay"
+                style="display: none !important; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(255, 255, 255, 0.8); z-index: 99999; display: flex; align-items: center; justify-content: center;">
+                <div class="text-center">
+
+                    <i class="fa-solid fa-hourglass-end fa-spin"></i> Please wait, scanning meter...
+                </div>
+            </div>
             <hr>
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -87,7 +121,7 @@
                 <div class="d-flex gap-3">
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     <button type="submit" class="btn btn-success">
-                        {{ ($reading->new_meter_number || !$customer) ? 'Save' : 'Save and Send Bill' }}
+                        {{ $reading->new_meter_number || !$customer ? 'Save' : 'Save and Send Bill' }}
                     </button>
                 </div>
             </form>
@@ -112,6 +146,30 @@
                     hiddenCustomerId.value = id;
                 });
             }
+        });
+    </script>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        document.getElementById('take-photo-button').addEventListener('click', function() {
+            document.getElementById('take-photo-input').click();
+        });
+
+
+        // Show loading when any form with image is submitted
+        document.getElementById('take-photo-input').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                showLoading();
+                document.getElementById('take-photo-form').submit();
+            }
+        });
+
+        // Handle retry button
+        document.querySelectorAll('form[action="{{ route('meters.read') }}"]').forEach(form => {
+            form.addEventListener('submit', showLoading);
         });
     </script>
 @endpush
