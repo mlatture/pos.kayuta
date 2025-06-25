@@ -38,7 +38,7 @@ class Readings extends Model
                 ->encode($extension, 80);
 
     
-            $image->move($destination, $filename);
+            $image->save($destination, $filename);
     
             return "{$folder}/{$year}/{$filename}";
         }
