@@ -87,7 +87,7 @@
                 <div class="d-flex gap-3">
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     <button type="submit" class="btn btn-success">
-                        {{ $reading->new_meter_number ? 'Save' : 'Save and Send Bill' }}
+                        {{ ($reading->new_meter_number || !$customer) ? 'Save' : 'Save and Send Bill' }}
                     </button>
                 </div>
             </form>
