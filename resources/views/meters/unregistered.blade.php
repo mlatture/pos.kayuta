@@ -15,10 +15,23 @@
 @section('content')
     <div class="container">
         <div class="card shadow-sm p-4">
+
+
             <h4 class="mb-3">New Meter Not Found in System</h4>
 
             <div class="mb-3">
                 <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+            </div>
+
+            <div id="loading-overlay"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(255, 255, 255, 0.8); z-index: 99999; display: flex; align-items: center; justify-content: center;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 fw-semibold text-primary">Please wait, uploading image...</p>
+                </div>
             </div>
 
             <form action="{{ route('meters.register') }}" method="POST">
@@ -126,14 +139,21 @@
     </script>
 
     <script>
-        document.getElementById('take-photo-button').addEventListener('click', function() {
-            document.getElementById('take-photo-input').click();
-        });
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
 
+        // Show loading when any form with image is submitted
         document.getElementById('take-photo-input').addEventListener('change', function() {
             if (this.files.length > 0) {
+                showLoading();
                 document.getElementById('take-photo-form').submit();
             }
+        });
+
+        // Handle retry button
+        document.querySelectorAll('form[action="{{ route('meters.read') }}"]').forEach(form => {
+            form.addEventListener('submit', showLoading);
         });
     </script>
 @endpush

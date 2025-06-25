@@ -44,6 +44,8 @@ class MeterController extends Controller
             $path = Readings::storeFile($request->file('photo'));
         } elseif ($request->filled('existing_image')) {
             $path = $request->input('existing_image');
+
+            return back()->with('Warning', 'That Doesn`t seem right, try again.');
         }
         if (!$path || !file_exists(public_path('storage/' . $path))) {
             return back()->with('Error', 'Image not found.');
