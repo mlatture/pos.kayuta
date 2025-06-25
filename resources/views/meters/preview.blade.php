@@ -18,13 +18,13 @@
 
             <div class="row mb-3 align-items-start">
                 <div class="col-md-6">
-                    <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+                    <img src="{{ asset('storage/' . $reading->image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
                 </div>
 
                 <div class="col-md-6 d-flex flex-column gap-2">
                     <form action="{{ route('meters.read') }}" method="POST" id="retry-form">
                         @csrf
-                        <input type="hidden" name="existing_image" value="{{ $image }}">
+                        <input type="hidden" name="existing_image" value="{{ $reading->image }}">
                         <button type="submit" class="btn btn-warning w-100">
                             🔁 That doesn't seem right, try again
                         </button>
