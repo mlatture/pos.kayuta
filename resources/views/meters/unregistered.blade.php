@@ -19,8 +19,31 @@
 
             <h4 class="mb-3">New Meter Not Found in System</h4>
 
-            <div class="mb-3">
-                <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 50%; height: auto;">
+            <div class="row mb-3 align-items-start">
+                <div class="col-md-6">
+                    <img src="{{ asset('storage/' . $image) }}" alt="Meter Image" style="max-width: 80%; height: auto;">
+                </div>
+
+                <div class="col-md-6 d-flex flex-column gap-2">
+                    <form action="{{ route('meters.read') }}" method="POST" id="retry-form">
+                        @csrf
+                        <input type="hidden" name="existing_image" value="{{ $image }}">
+                        <button type="submit" class="btn btn-warning w-100">
+                            🔁 That doesn't seem right, try again
+                        </button>
+                    </form>
+
+                    <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
+                        id="take-photo-form">
+                        @csrf
+                        <input type="file" name="photo" id="take-photo-input" accept="image/*" capture="environment"
+                            style="display: none;" required>
+                    </form>
+
+                    <button type="button" class="btn btn-secondary w-100" id="take-photo-button">
+                        📷 Take another picture
+                    </button>
+                </div>
             </div>
 
             <div id="loading-overlay"
@@ -71,26 +94,6 @@ background: rgba(255, 255, 255, 0.8); z-index: 99999; display: flex; align-items
                 <div class="d-flex gap-3">
 
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
-
-                    <form action="{{ route('meters.read') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="existing_image" value="{{ $image }}">
-                        <button type="submit" class="btn btn-warning">
-                            🔁 That doesn't seem right, try again
-                        </button>
-                    </form>
-
-                    <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
-                        id="take-photo-form" style="display: none;">
-                        @csrf
-                        <input type="file" name="photo" id="take-photo-input" accept="image/*" capture="environment"
-                            required>
-                    </form>
-
-                    <button type="button" class="btn btn-secondary" id="take-photo-button">
-                        📷 Take another picture
-                    </button>
-
 
                     <button type="submit" class="btn btn-primary">Register Meter</button>
                 </div>
