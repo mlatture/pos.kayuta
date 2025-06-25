@@ -157,6 +157,132 @@ class MeterController extends Controller
         ]);
     }
 
+    public function scan(Request $request)
+    {
+        $path = null;
+
+        $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        // 1. Store file
+        if ($request->hasFile('photo')) {
+            $path = Readings::storeFile($request->file('photo'));
+        } elseif ($request->filled('existing_image')) {
+            $path = $request->input('existing_image');
+
+            return back()->with('Warning', 'That Doesn`t seem right, try again.');
+        }
+        if (!$path || !file_exists(public_path('storage/' . $path))) {
+            return back()->with('Error', 'Image not found.');
+        }
+
+        $imageUrl = asset('storage/' . $path);
+
+        // 2. Send to GPT
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
+        ])->post('https://api.openai.com/v1/chat/completions', [
+            'model' => 'gpt-4o',
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'text',
+                            'text' => 'From this electric meter image, extract and return a JSON with the following fields:
+                            {
+                            "siteid": "<value from large sticker label usually in black or white>",
+                            "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
+                            "reading": <the large numeric display at the top of the meter>
+                            }
+                            Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
+                        ],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => ['url' => $imageUrl],
+                        ],
+                    ],
+                ],
+            ],
+            'max_tokens' => 100,
+        ]);
+
+        // 3. Parse GPT result
+        $data = $response->json();
+        $content = $data['choices'][0]['message']['content'] ?? null;
+
+        if (!$content || !str_contains($content, '{')) {
+
+            session()->flash('retry_path', $path);
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
+        }
+
+        $start = strpos($content, '{');
+        $end = strrpos($content, '}');
+        $jsonString = substr($content, $start, $end - $start + 1);
+        $parsed = json_decode($jsonString, true);
+
+        $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
+        $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
+
+        if (!$meterNumber || !$currentReading) {
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values (meter number or reading).');
+        }
+
+        // 4. Lookup site by meter_number
+        $site = Site::where('meter_number', $meterNumber)->first();
+        if (!$site) {
+            return redirect()->route('meters.unregistered', [
+                'meter_number' => $meterNumber,
+                'reading' => $currentReading,
+                'image' => $path,
+                'date' => now()->toDateString(),
+            ]);
+        }
+
+        // 5. Lookup last reading for this meter
+
+        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
+        $previousKwh = $lastReading?->kwhNo ?? 0;
+        $previousDate = $lastReading?->date ?? now();
+        $usage = $currentReading - $previousKwh;
+        $days = now()->diffInDays(Carbon::parse($previousDate));
+        $rate = 0.12;
+        $total = $usage * $rate;
+
+        // 6. Find reservation for the reading date
+        $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+
+        $customer = $reservation ? User::find($reservation->customernumber) : null;
+
+        // 7. Build preview data
+        $reading = (object) [
+            'kwhNo' => $currentReading,
+            'meter_number' => $meterNumber,
+            'image' => $path,
+            'date' => now()->toDateString(),
+            'siteid' => $site->siteid,
+            'usage' => $usage,
+            'rate' => $rate,
+            'total' => $total,
+            'previousKwh' => $previousKwh,
+            'new_meter_number' => false,
+        ];
+
+        // 8. Return to preview view
+        return view('meters.preview', [
+            'reading' => $reading,
+            'site' => $site,
+            'customer' => $customer,
+            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
+            'start_date' => Carbon::parse($previousDate)->toDateString(),
+            'end_date' => now()->toDateString(),
+            'days' => $days,
+            'reservation_id' => $reservation->id ?? '',
+        ]);
+    }
+
     public function unregister(Request $request) 
     {
         return view('meters.unregistered', [

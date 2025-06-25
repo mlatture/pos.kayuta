@@ -22,7 +22,7 @@
                 </div>
 
                 <div class="col-md-6 d-flex flex-column gap-2">
-                    <form action="{{ route('meters.read') }}" method="POST" id="retry-form">
+                    <form action="{{ route('meters.scan') }}" method="POST" id="retry-form">
                         @csrf
                         <input type="hidden" name="existing_image" value="{{ $reading->image }}">
                         <button type="submit" class="btn btn-warning w-100">
@@ -30,7 +30,7 @@
                         </button>
                     </form>
 
-                    <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
+                    <form action="{{ route('meters.scan') }}" method="POST" enctype="multipart/form-data"
                         id="take-photo-form">
                         @csrf
                         <input type="file" name="photo" id="take-photo-input" accept="image/*" capture="environment"
