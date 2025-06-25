@@ -138,10 +138,16 @@ background: rgba(255, 255, 255, 0.8); z-index: 99999; display: flex; align-items
         });
     </script>
 
+
     <script>
         function showLoading() {
             document.getElementById('loading-overlay').style.display = 'flex';
         }
+
+        document.getElementById('take-photo-button').addEventListener('click', function() {
+            document.getElementById('take-photo-input').click();
+        });
+
 
         // Show loading when any form with image is submitted
         document.getElementById('take-photo-input').addEventListener('change', function() {
