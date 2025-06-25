@@ -168,7 +168,7 @@ background: rgba(255, 255, 255, 0.8); z-index: 99999; display: flex; align-items
         });
 
         // Handle retry button
-        document.querySelectorAll('form[action="{{ route('meters.read') }}"]').forEach(form => {
+        document.querySelectorAll('form[action="{{ route('meters.scan') }}"]').forEach(form => {
             form.addEventListener('submit', showLoading);
         });
     </script>
