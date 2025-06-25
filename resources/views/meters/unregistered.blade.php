@@ -32,7 +32,7 @@
                 <div class="mb-3">
                     <label for="siteid" class="form-label"><strong>Assign to Site</strong></label>
                     <input type="text" name="siteid" id="siteid" class="form-control" placeholder="Enter Site ID">
-                        <small class="text-muted">Type to search. Site must already exist.</small>
+                    <small class="text-muted">Type to search. Site must already exist.</small>
                 </div>
 
                 <div class="mb-3">
@@ -67,9 +67,17 @@
                         </button>
                     </form>
 
-                    <a href="{{ route('meters.read') }}" class="btn btn-secondary">
+                    <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
+                        id="take-photo-form" style="display: none;">
+                        @csrf
+                        <input type="file" name="photo" id="take-photo-input" accept="image/*" capture="environment"
+                            required>
+                    </form>
+
+                    <button type="button" class="btn btn-secondary" id="take-photo-button">
                         📷 Take another picture
-                    </a>
+                    </button>
+
 
                     <button type="submit" class="btn btn-primary">Register Meter</button>
                 </div>
@@ -114,6 +122,18 @@
                 }
             });
 
+        });
+    </script>
+
+    <script>
+        document.getElementById('take-photo-button').addEventListener('click', function() {
+            document.getElementById('take-photo-input').click();
+        });
+
+        document.getElementById('take-photo-input').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                document.getElementById('take-photo-form').submit();
+            }
         });
     </script>
 @endpush

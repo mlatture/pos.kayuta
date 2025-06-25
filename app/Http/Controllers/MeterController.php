@@ -105,7 +105,7 @@ class MeterController extends Controller
         // 4. Lookup site by meter_number
         $site = Site::where('meter_number', $meterNumber)->first();
         if (!$site) {
-            return view('meters.unregistered', [
+            return redirect()->route('meters.unregistered', [
                 'meter_number' => $meterNumber,
                 'reading' => $currentReading,
                 'image' => $path,
@@ -153,6 +153,17 @@ class MeterController extends Controller
             'days' => $days,
             'reservation_id' => $reservation->id ?? '',
         ]);
+    }
+
+    public function unregister(Request $request) 
+    {
+        return view('meters.unregistered', [
+            'meter_number' => $request->meter_number,
+            'reading' => $request->reading,
+            'image' => $request->image,
+            'date' => $request->date,
+        ]);
+    
     }
 
     public function register(Request $request)
