@@ -57,7 +57,21 @@
                 </div>
 
                 <div class="d-flex gap-3">
+
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
+
+                    <form action="{{ route('meters.read') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="existing_image" value="{{ $image }}">
+                        <button type="submit" class="btn btn-warning">
+                            🔁 That doesn't seem right, try again
+                        </button>
+                    </form>
+
+                    <a href="{{ route('meters.read') }}" class="btn btn-secondary">
+                        📷 Take another picture
+                    </a>
+
                     <button type="submit" class="btn btn-primary">Register Meter</button>
                 </div>
             </form>
