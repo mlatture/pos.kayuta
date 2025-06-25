@@ -256,7 +256,7 @@ Route::prefix('admin')
         Route::prefix('electric-meter')->group(function () {
             Route::get('/', [MeterController::class, 'index'])->name('meters.index');
             Route::post('/read', [MeterController::class, 'read'])->name('meters.read');
-            Route::post('/read', [MeterController::class, 'scan'])->name('meters.scan');
+            Route::post('/scan', [MeterController::class, 'scan'])->name('meters.scan');
             Route::get('/unregistered', [MeterController::class, 'unregister'])->name('meters.unregistered');
             Route::post('/send', [MeterController::class, 'send'])->name('meters.sendBill');
             Route::post('/register', [MeterController::class, 'register'])->name('meters.register');
