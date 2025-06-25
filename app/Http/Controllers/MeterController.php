@@ -75,6 +75,8 @@ class MeterController extends Controller
         $content = $data['choices'][0]['message']['content'] ?? null;
 
         if (!$content || !str_contains($content, '{')) {
+
+            session()->flash('retry_path', $relativePath);
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
 
