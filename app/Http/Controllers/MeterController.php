@@ -33,13 +33,23 @@ class MeterController extends Controller
 
     public function read(Request $request)
     {
+        $path = null;
+
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
 
         // 1. Store file
-        $relativePath = Readings::storeFile($request->file('photo'));
-        $imageUrl = asset('storage/' . $relativePath);
+        if ($request->hasFile('photo')) {
+            $path = Readings::storeFile($request->file('photo'));
+        } elseif ($request->filled('existing_image')) {
+            $path = $request->input('existing_image');
+        }
+        if (!$path || !file_exists(public_path('storage/' . $path))) {
+            return back()->with('Error', 'Image not found.');
+        }
+
+        $imageUrl = asset('storage/' . $path);
 
         // 2. Send to GPT
         $response = Http::withHeaders([
@@ -76,7 +86,7 @@ class MeterController extends Controller
 
         if (!$content || !str_contains($content, '{')) {
 
-            session()->flash('retry_path', $relativePath);
+            session()->flash('retry_path', $path);
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
 
@@ -98,7 +108,7 @@ class MeterController extends Controller
             return view('meters.unregistered', [
                 'meter_number' => $meterNumber,
                 'reading' => $currentReading,
-                'image' => $relativePath,
+                'image' => $path,
                 'date' => now()->toDateString(),
             ]);
         }
@@ -122,7 +132,7 @@ class MeterController extends Controller
         $reading = (object) [
             'kwhNo' => $currentReading,
             'meter_number' => $meterNumber,
-            'image' => $relativePath,
+            'image' => $path,
             'date' => now()->toDateString(),
             'siteid' => $site->siteid,
             'usage' => $usage,
