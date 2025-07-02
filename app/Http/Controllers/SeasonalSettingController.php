@@ -8,6 +8,8 @@ use App\Models\RateTier;
 use App\Models\SeasonalSetting;
 use App\Models\SeasonalRenewal;
 use App\Models\User;
+use App\Models\DocumentTemplate;
+use App\Models\SeasonalRate;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
 
@@ -15,6 +17,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\TemplateProcessor;
+
+use App\Helpers\FileHelper;
 
 
 class SeasonalSettingController extends Controller
@@ -26,7 +30,51 @@ class SeasonalSettingController extends Controller
         $setting = session('success') ? null : SeasonalSetting::latest()->first();
 
         $rateTiers = RateTier::distinct('tier')->pluck('tier')->toArray();
-        return view('admin.seasonal.index', compact('setting', 'rateTiers'));
+
+        $documentTemplates = DocumentTemplate::all();
+        $seasonalRates = SeasonalRate::with('template')->get();
+
+        return view('admin.seasonal.index', compact('setting', 'rateTiers', 'documentTemplates', 'seasonalRates'));
+    }
+
+    public function storeTemplate(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'required|file|mimes:doc,docx,pdf',
+        ]);
+
+        $path = FileHelper::storeFile($request->file('file'), 'templates', $validated['name']);
+
+        DocumentTemplate::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'file' => $path,
+            'is_active' => true,
+        ]);
+
+        return back()->with('success', 'Template uploaded successfully.');
+    }
+
+    public function storeRate(Request $request)
+    {
+        $validated = $request->validate([
+            'rate_name' => 'required|string|max:255',
+            'rate_price' => 'required|numeric',
+            'deposit_amount' => 'required|numeric',
+            'early_pay_discount' => 'nullable|numeric',
+            'full_payment_discount' => 'nullable|numeric',
+            'payment_plan_starts' => 'nullable|date',
+            'final_payment_due' => 'nullable|date',
+            'template_id' => 'nullable|exists:document_templates,id',
+            'applies_to_all' => 'boolean',
+            'active' => 'boolean',
+        ]);
+
+        SeasonalRate::create($validated);
+
+        return back()->with('success', 'Seasonal rate added successfully.');
     }
 
     public function store(Request $request)
@@ -96,7 +144,7 @@ class SeasonalSettingController extends Controller
             ]);
             $templateProcessor->saveAs($filePath);
 
-            // Generate downloadable link 
+            // Generate downloadable link
             // $downloadLink = route('contracts.download', ['user' => $user->id]);
 
             $user->notify(new SeasonalRenewalLinkNotification($signedUrl));

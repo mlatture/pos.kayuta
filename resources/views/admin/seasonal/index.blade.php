@@ -4,124 +4,132 @@
 
 @section('content')
     @if (session('success'))
-        @php
-            $setting = null;
-        @endphp
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success:</strong> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
-    <div class="card shadow border-0">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+
+    <div class="card shadow border-0 bg-white rounded-4 overflow-hidden">
+        <div class="card-header bg-gradient text-dark d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #00b09b, #96c93d);">
             <h4 class="mb-0">
-                <i class="bi bi-gear-fill me-2"></i> Seasonal Guest Renewal Settings
+                <i class="bi bi-gear-fill me-2 "></i> Seasonal Guest Renewal Settings
             </h4>
         </div>
 
-        <div class="card-body">
+        <div class="card-body py-4 px-4">
+            <div class="row g-5">
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-4 shadow-sm">
+                        <h5 class="mb-3 text-primary">📄 Upload Document Templates</h5>
+                        <form method="POST" action="{{ route('settings.storeTemplate') }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-floating mb-3">
+                                <input name="name" class="form-control" id="templateName" placeholder="Template Name" required>
+                                <label for="templateName">Name</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input name="description" class="form-control" id="templateDescription" placeholder="Description">
+                                <label for="templateDescription">Description</label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Upload File (DOC, DOCX, PDF)</label>
+                                <input type="file" name="file" class="form-control" required>
+                            </div>
+                            <button class="btn btn-success w-100">Upload Template</button>
+                        </form>
 
-            
-
-            @if (session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <hr class="my-4">
+                        <h6>📂 Existing Templates</h6>
+                        <ul class="list-group">
+                            @forelse ($documentTemplates as $template)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <strong>{{ $template->name }}</strong>
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('storage/' . $template->file) }}" target="_blank">Download</a>
+                                </li>
+                            @empty
+                                <li class="list-group-item">No templates uploaded yet.</li>
+                            @endforelse
+                        </ul>
+                    </div>
                 </div>
-            @endif
 
-            <div class="mb-4 d-flex ">
-                <button type="button" id="triggerRenewalsBtn" class="btn btn-warning">
-                    <i class="bi bi-arrow-repeat me-1"></i> Trigger Seasonal Renewals
-                </button>
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-4 shadow-sm">
+                        <h5 class="mb-3 text-primary">💲 Define Seasonal Rates</h5>
+                        <form method="POST" action="{{ route('settings.storeRate') }}">
+                            @csrf
+                            <div class="form-floating mb-3">
+                                <input name="rate_name" class="form-control" id="rateName" placeholder="Rate Name" required>
+                                <label for="rateName">Rate Name</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input name="rate_price" type="number" step="0.01" class="form-control" id="ratePrice" placeholder="Rate Price" required>
+                                <label for="ratePrice">Rate Price</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input name="deposit_amount" type="number" step="0.01" class="form-control" id="depositAmount" placeholder="Deposit" required>
+                                <label for="depositAmount">Deposit Amount</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input name="early_pay_discount" type="number" step="0.01" class="form-control" id="earlyDiscount" placeholder="Early Pay Discount">
+                                <label for="earlyDiscount">Early Pay Discount ($)</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input name="full_payment_discount" type="number" step="0.01" class="form-control" id="fullDiscount" placeholder="Full Payment Discount">
+                                <label for="fullDiscount">Full Payment Discount ($)</label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Payment Plan Starts</label>
+                                <input name="payment_plan_starts" type="date" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Final Payment Due</label>
+                                <input name="final_payment_due" type="date" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Template</label>
+                                <select name="template_id" class="form-select">
+                                    <option value="">-- Select Template --</option>
+                                    @foreach ($documentTemplates as $template)
+                                        <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="applies_to_all" value="1" id="appliesToAll">
+                                <label class="form-check-label" for="appliesToAll">
+                                    Applies to All (For liability waivers)
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" name="active" value="1" id="rateActive" checked>
+                                <label class="form-check-label" for="rateActive">
+                                    Active?
+                                </label>
+                            </div>
+                            <button class="btn btn-primary w-100">Save Seasonal Rate</button>
+                        </form>
 
-                <form id="triggerRenewalsForm" action="{{ route('admin.seasonal-renewals.trigger') }}" method="POST"
-                    style="display: none;">
-                    @csrf
-                </form>
+                        <hr class="my-4">
+                        <h6>📊 Existing Rates</h6>
+                        <ul class="list-group">
+                            @forelse ($seasonalRates as $rate)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $rate->rate_name }}</strong> - ${{ $rate->rate_price }}
+                                        @if ($rate->template)
+                                            <small class="text-muted">({{ $rate->template->name }})</small>
+                                        @endif
+                                    </div>
+                                </li>
+                            @empty
+                                <li class="list-group-item">No seasonal rates defined yet.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
             </div>
-
-
-            <form method="POST" action="{{ route('admin.seasonal-settings.store') }}">
-                @csrf
-
-
-                <div class="row g-4 mb-4">
-                    <div class="col-md-3">
-                        <label for="default_rate" class="form-label">
-                            Default Rate
-                        </label>
-                        <input type="number" step="0.01" name="default_rate" id="default_rate" class="form-control"
-                            placeholder="e.g. 1200.00" required>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="discount_percentage" class="form-label">
-                            Discount (%)
-                        </label>
-                        <input type="number" step="0.01" name="discount_percentage" id="discount_percentage"
-                            class="form-control" placeholder="e.g. 10">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="deposit_amount" class="form-label">
-                            Deposit Amount
-                        </label>
-                        <input type="number" step="0.01" name="deposit_amount" id="deposit_amount" class="form-control"
-                            placeholder="e.g. 250.00">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="renewal_deadline" class="form-label">
-                            Renewal Deadline
-                        </label>
-                        <input type="date" name="renewal_deadline" id="renewal_deadline" class="form-control" required>
-                    </div>
-                </div>
-
-                <hr class="mb-4">
-
-                <!-- TIER SETTINGS -->
-                <h5 class="text-muted mb-3">
-                    <i class="bi bi-layers-half me-2"></i> Rate Tiers Per Site Type
-                </h5>
-
-                <div class="row g-4">
-                    @forelse ($rateTiers as $tier)
-                        <div class="col-md-3">
-                            <label class="form-label">
-                                {{ Str::title(str_replace('-', ' ', $tier)) }} Rate
-                            </label>
-                            <input type="number" step="0.01" name="rate_tiers[{{ $tier }}]" class="form-control"
-                                placeholder="e.g. 1350.00">
-                        </div>
-                    @empty
-                        <div class="col-12 text-muted">No rate tiers found in the system.</div>
-                    @endforelse
-                </div>
-
-                <div class="mt-4 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-save me-1"></i> Save Settings
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 @endsection
-@push('js')
-    <script>
-        document.getElementById('triggerRenewalsBtn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'This will generate renewals for all seasonal users.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, generate!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('triggerRenewalsForm').submit();
-                }
-            });
-        });
-    </script>
-@endpush

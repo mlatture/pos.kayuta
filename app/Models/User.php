@@ -26,7 +26,7 @@ class User extends Authenticatable
         'probation', 'is_active', 'is_phone_verified', 'is_email_verified', 'payment_card_last_four',
         'payment_card_brand', 'payment_card_fawry_token', 'login_medium', 'social_id', 'facebook_id',
         'google_id', 'temporary_token', 'cm_firebase_token', 'wallet_balance', 'loyalty_point',
-        'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address',
+        'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address', 'seasonal'
     ];
     
 
@@ -49,6 +49,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'seasonal' => 'array'
     ];
 
     public function getAvatarUrl()

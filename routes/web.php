@@ -292,6 +292,8 @@ Route::prefix('admin')
         Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
         Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
         Route::get('get-data', [CheckAvailability::class, 'getData'])->name('get.data.to.push');
+
+        Route::post('/customers/{user}/update-seasonal', [CustomerController::class, 'updateSeasonal'])->name('customers.updateSeasonal');
     });
 
 //Seasonal Settings;
@@ -302,6 +304,10 @@ Route::prefix('seasonal')
         Route::get('settings/index', [SeasonalSettingController::class, 'index'])->name('admin.seasonal-settings.index');
         Route::post('settings/store', [SeasonalSettingController::class, 'store'])->name('admin.seasonal-settings.store');
         Route::post('renewals/trigger', [SeasonalSettingController::class, 'triggerRenewals'])->name('admin.seasonal-renewals.trigger');
+
+        Route::post('settings/store/template', [SeasonalSettingController::class, 'storeTemplate'])->name('settings.storeTemplate');
+        Route::post('settings/store/rate', [SeasonalSettingController::class, 'storeRate'])->name('settings.storeRate');
+
 
         Route::prefix('guest')->group(function () {
             Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');

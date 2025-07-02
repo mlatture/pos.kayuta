@@ -46,6 +46,35 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
+
+                    <!-- Edit Seasonal Rates Modal -->
+                    <div class="modal fade" id="seasonalModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <form id="seasonalForm">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Seasonal Rates</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <select name="seasonal[]" id="seasonalSelect" multiple class="form-select select2"
+                                            style="width: 100%">
+                                            @foreach (\App\Models\SeasonalRate::where('active', true)->get() as $rate)
+                                                <option value="{{ $rate->id }}">{{ $rate->rate_name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="hidden" name="user_id" id="selectedUserId">
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
@@ -58,31 +87,12 @@
                                         <th>Email</th>
                                         <th>Contact</th>
                                         <th>Address</th>
+                                        <th>Seasonal</th>
                                         <th>Created At</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {{-- @foreach ($customers as $key => $customer)
-                                        <tr>
-                                            <td>
-                                                @hasPermission(config('constants.role_modules.edit_customers.value'))
-                                                <a href="{{ route('customers.edit', $customer) }}"
-                                                   class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                                                @endHasPermission
-                                                @hasPermission(config('constants.role_modules.delete_customers.value'))
-                                                <button class="btn btn-danger btn-delete"
-                                                        data-url="{{ route('customers.destroy', $customer) }}"><i
-                                                        class="fas fa-trash"></i></button>
-                                                @endHasPermission
-                                            </td>
-                                            <td>{{ $key + 1 }}</td>
-                                            <td>{{ $customer->f_name }} {{ $customer->l_name }}</td>
-                                            <td>{{ $customer->email }}</td>
-                                            <td>{{ $customer->phone }}</td>
-                                            <td>{{ $customer->street_address }}</td>
-                                            <td>{{ $customer->created_at }}</td>
-                                        </tr>
-                                    @endforeach --}}
+
                                 </tbody>
                             </table>
                         </div>
@@ -98,46 +108,57 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
-                    processing: true,
-                    serverSide: true,
-                    ajax: "{{ route('customers.index') }}", 
-                    columns: [{
-                            data: 'actions',
-                            name: 'actions',
-                            orderable: false,
-                            searchable: false
-                        },
-                        { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                        {
-                            data: 'f_name',
-                            name: 'f_name'
-                        },
-                        {
-                            data: 'email',
-                            name: 'email'
-                        },
-                        {
-                            data: 'phone',
-                            name: 'phone'
-                        },
-                        {
-                            data: 'street_address',
-                            name: 'street_address'
-                        },
-                        {
-                            data: 'created_at',
-                            name: 'created_at'
-                        }
-                    ],
-                    responsive: true,
-                    dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
-                    buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
-                    language: {
-                        search: 'Search: ',
-                        lengthMenu: 'Show _MENU_ entries'
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('customers.index') }}",
+
+
+                columns: [{
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
                     },
-                    pageLength: 10
-                });
+                    {
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'f_name',
+                        name: 'f_name'
+                    },
+                    {
+                        data: 'email',
+                        name: 'email'
+                    },
+                    {
+                        data: 'phone',
+                        name: 'phone'
+                    },
+                    {
+                        data: 'street_address',
+                        name: 'street_address'
+                    },
+                    {
+                        data: 'seasonal_names',
+                        name: 'seasonal_names'
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at'
+                    }
+                ],
+                responsive: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries'
+                },
+                pageLength: 10
+            });
 
             $(document).on('click', '.btn-delete', function() {
                 $this = $(this);
@@ -169,7 +190,57 @@
                         })
                     }
                 })
-            })
+            });
+
+            let selectedUserId = null;
+            let updateSeasonalUrl = '{{ route('customers.updateSeasonal', ['user' => '__USER_ID__']) }}';
+
+            $(document).on('click', '.edit-seasonal', function() {
+                selectedUserId = $(this).data('id');
+                const selected = $(this).data('selected').toString().split(',');
+                $('#seasonalSelect').val(selected).trigger('change');
+                $('#seasonalModal').modal('show');
+            });
+
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+
+
+            $('#seasonalForm').submit(function(e) {
+                e.preventDefault();
+
+                const finalUrl = updateSeasonalUrl.replace('__USER_ID__', selectedUserId);
+
+                $.post(finalUrl, $(this).serialize(), function(res) {
+                    if (res.success) {
+                        $('#seasonalModal').modal('hide');
+
+                        $.toast({
+                            heading: 'Success',
+                            text: res.message,
+                            icon: 'success',
+                            position: 'bottom-left',
+                            hideAfter: 3000,
+                            stack: 3
+                        });
+
+                        $('.table').DataTable().ajax.reload(null, false);
+                    }
+                });
+            });
+
+            $('#seasonalModal').on('shown.bs.modal', function() {
+                $('#seasonalSelect').select2({
+                    dropdownParent: $('#seasonalModal'),
+                    width: '100%',
+                    placeholder: "Select seasonal rates"
+                });
+            });
+
+
         })
     </script>
 @endsection

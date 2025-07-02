@@ -7,6 +7,8 @@ use App\Http\Requests\CustomerStoreRequest;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\SeasonalRate;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -30,7 +32,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'created_at')->where('id', '!=', 0)->latest();
+            $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'seasonal', 'created_at')->where('id', '!=', 0)->latest();
 
             return DataTables::of($customers)
                 ->addIndexColumn()
@@ -42,10 +44,19 @@ class CustomerController extends Controller
 
                     return $viewButton . ' ' . $editButton . ' ' . $deleteButton;
                 })
+                ->addColumn('seasonal_names', function ($customer) {
+                    $seasonalIds = is_array($customer->seasonal) ? $customer->seasonal : json_decode($customer->seasonal ?? '[]', true);
+
+                    $rates = SeasonalRate::whereIn('id', $seasonalIds)->pluck('rate_name')->toArray();
+                    $names = implode(', ', $rates);
+
+                    return '<button class="btn btn-sm btn-outline-primary edit-seasonal" data-id="' . $customer->id . '" data-selected="' . implode(',', $seasonalIds) . '">' . ($names ?: 'None') . '</button>';
+                })
+
                 ->editColumn('created_at', function ($customer) {
                     return Carbon::parse($customer->created_at)->format('F j, Y'); // Format date
                 })
-                ->rawColumns(['actions']) // Ensures buttons render properly
+                ->rawColumns(['actions', 'seasonal_names']) // Ensures buttons render properly
                 ->make(true);
         }
 
@@ -214,5 +225,12 @@ class CustomerController extends Controller
                 'message' => 'No user found with this email.',
             ]);
         }
+    }
+
+    public function updateSeasonal(Request $request, User $user)
+    {
+        $user->seasonal = $request->input('seasonal', []);
+        $user->save();
+        return response()->json(['success' => true, 'message' => 'Seasonal updated successfully.']);
     }
 }
