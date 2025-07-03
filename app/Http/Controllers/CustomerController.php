@@ -34,6 +34,11 @@ class CustomerController extends Controller
         if ($request->ajax()) {
             $customers = User::select('id', 'f_name', 'l_name', 'email', 'phone', 'street_address', 'seasonal', 'created_at')->where('id', '!=', 0)->latest();
 
+            if ($request->only_seasonal) {
+                $customers->whereJsonLength('seasonal', '>', 0);
+            }
+        
+
             return DataTables::of($customers)
                 ->addIndexColumn()
                 ->addColumn('actions', function ($customer) {

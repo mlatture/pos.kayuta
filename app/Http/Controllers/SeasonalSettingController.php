@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\CPU\ImageManager;
+
 use App\Models\RateTier;
 use App\Models\SeasonalSetting;
 use App\Models\SeasonalRenewal;
@@ -19,7 +21,6 @@ use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\TemplateProcessor;
 
 use App\Helpers\FileHelper;
-
 
 class SeasonalSettingController extends Controller
 {
@@ -155,5 +156,25 @@ class SeasonalSettingController extends Controller
         return redirect()
             ->back()
             ->with('success', "$count seasonal renewal records generated and links sent.");
+    }
+
+    public function destroy(DocumentTemplate $template)
+    {
+        $seasonalRates = SeasonalRate::where('template_id', $template->id)->get();
+
+        foreach ($seasonalRates as $rate) {
+            $rate->delete();
+        }
+
+        if ($template->file) {
+            ImageManager::delete($template->file);
+        }
+
+        $template->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Document Template deleted successfully!',
+        ]);
     }
 }

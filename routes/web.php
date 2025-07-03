@@ -306,8 +306,8 @@ Route::prefix('seasonal')
         Route::post('renewals/trigger', [SeasonalSettingController::class, 'triggerRenewals'])->name('admin.seasonal-renewals.trigger');
 
         Route::post('settings/store/template', [SeasonalSettingController::class, 'storeTemplate'])->name('settings.storeTemplate');
+        Route::delete('settings/destroy/{template}', [SeasonalSettingController::class, 'destroy'])->name('template.destroy');
         Route::post('settings/store/rate', [SeasonalSettingController::class, 'storeRate'])->name('settings.storeRate');
-
 
         Route::prefix('guest')->group(function () {
             Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');

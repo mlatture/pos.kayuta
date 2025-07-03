@@ -77,6 +77,7 @@
 
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
+
                             <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
                                 width="100%">
                                 <thead>
@@ -110,7 +111,12 @@
             $('.table').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('customers.index') }}",
+                ajax: {
+                    url: "{{ route('customers.index') }}",
+                    data: function(d) {
+                        d.only_seasonal = $('#onlySeasonalFilter').is(':checked') ? 1 : 0;
+                    }
+                },
 
 
                 columns: [{
@@ -151,7 +157,11 @@
                     }
                 ],
                 responsive: true,
-                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                dom: '<"dt-top-container d-flex justify-content-between align-items-center mb-3"' +
+                    '<"dt-left-in-div"f>' +
+                    '<"dt-center-in-div custom-filter-checkbox">' +
+                    '<"dt-right-in-div"B>' +
+                    '>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
                 buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
                 language: {
                     search: 'Search: ',
@@ -159,6 +169,31 @@
                 },
                 pageLength: 10
             });
+
+            $('.custom-filter-checkbox').html(`
+                <label class="form-check-label mb-0">
+                    <input type="checkbox" id="onlySeasonalFilter" class="form-check-input me-2">
+                    Only Seasonal
+                </label>
+            `);
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                const onlySeasonalChecked = $('#onlySeasonalFilter').is(':checked');
+                if (!onlySeasonalChecked) return true;
+
+                const seasonalCell = document.createElement("div");
+                seasonalCell.innerHTML = data[6] || '';
+                const plainText = seasonalCell.textContent || seasonalCell.innerText || '';
+
+                return plainText.trim().toLowerCase() !== 'none';
+            });
+
+            $('#onlySeasonalFilter').on('change', function() {
+                $('.table').DataTable().ajax.reload();
+            });
+
+
+
+
 
             $(document).on('click', '.btn-delete', function() {
                 $this = $(this);

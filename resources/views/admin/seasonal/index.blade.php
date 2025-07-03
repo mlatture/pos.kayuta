@@ -3,15 +3,11 @@
 @section('title', 'Seasonal Settings')
 
 @section('content')
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Success:</strong> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+
 
     <div class="card shadow border-0 bg-white rounded-4 overflow-hidden">
-        <div class="card-header bg-gradient text-dark d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #00b09b, #96c93d);">
+        <div class="card-header bg-gradient text-dark d-flex justify-content-between align-items-center"
+            style="background: linear-gradient(90deg, #00b09b, #96c93d);">
             <h4 class="mb-0">
                 <i class="bi bi-gear-fill me-2 "></i> Seasonal Guest Renewal Settings
             </h4>
@@ -25,11 +21,13 @@
                         <form method="POST" action="{{ route('settings.storeTemplate') }}" enctype="multipart/form-data">
                             @csrf
                             <div class="form-floating mb-3">
-                                <input name="name" class="form-control" id="templateName" placeholder="Template Name" required>
+                                <input name="name" class="form-control" id="templateName" placeholder="Template Name"
+                                    required>
                                 <label for="templateName">Name</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input name="description" class="form-control" id="templateDescription" placeholder="Description">
+                                <input name="description" class="form-control" id="templateDescription"
+                                    placeholder="Description">
                                 <label for="templateDescription">Description</label>
                             </div>
                             <div class="mb-3">
@@ -45,8 +43,14 @@
                             @forelse ($documentTemplates as $template)
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <strong>{{ $template->name }}</strong>
-                                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('storage/' . $template->file) }}" target="_blank">Download</a>
+                                    <div class="d-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                            href="{{ asset('storage/' . $template->file) }}" target="_blank">Download</a>
+                                        <button class="btn btn-sm btn-outline-danger btn-delete"
+                                            data-url="{{ route('template.destroy', $template->id) }}">Delete</button>
+                                    </div>
                                 </li>
+
                             @empty
                                 <li class="list-group-item">No templates uploaded yet.</li>
                             @endforelse
@@ -60,23 +64,28 @@
                         <form method="POST" action="{{ route('settings.storeRate') }}">
                             @csrf
                             <div class="form-floating mb-3">
-                                <input name="rate_name" class="form-control" id="rateName" placeholder="Rate Name" required>
+                                <input name="rate_name" class="form-control" id="rateName" placeholder="Rate Name"
+                                    required>
                                 <label for="rateName">Rate Name</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input name="rate_price" type="number" step="0.01" class="form-control" id="ratePrice" placeholder="Rate Price" required>
+                                <input name="rate_price" type="number" step="0.01" class="form-control" id="ratePrice"
+                                    placeholder="Rate Price" required>
                                 <label for="ratePrice">Rate Price</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input name="deposit_amount" type="number" step="0.01" class="form-control" id="depositAmount" placeholder="Deposit" required>
+                                <input name="deposit_amount" type="number" step="0.01" class="form-control"
+                                    id="depositAmount" placeholder="Deposit" required>
                                 <label for="depositAmount">Deposit Amount</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input name="early_pay_discount" type="number" step="0.01" class="form-control" id="earlyDiscount" placeholder="Early Pay Discount">
+                                <input name="early_pay_discount" type="number" step="0.01" class="form-control"
+                                    id="earlyDiscount" placeholder="Early Pay Discount">
                                 <label for="earlyDiscount">Early Pay Discount ($)</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input name="full_payment_discount" type="number" step="0.01" class="form-control" id="fullDiscount" placeholder="Full Payment Discount">
+                                <input name="full_payment_discount" type="number" step="0.01" class="form-control"
+                                    id="fullDiscount" placeholder="Full Payment Discount">
                                 <label for="fullDiscount">Full Payment Discount ($)</label>
                             </div>
                             <div class="mb-3">
@@ -97,13 +106,15 @@
                                 </select>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="applies_to_all" value="1" id="appliesToAll">
+                                <input class="form-check-input" type="checkbox" name="applies_to_all" value="1"
+                                    id="appliesToAll">
                                 <label class="form-check-label" for="appliesToAll">
                                     Applies to All (For liability waivers)
                                 </label>
                             </div>
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" name="active" value="1" id="rateActive" checked>
+                                <input class="form-check-input" type="checkbox" name="active" value="1"
+                                    id="rateActive" checked>
                                 <label class="form-check-label" for="rateActive">
                                     Active?
                                 </label>
@@ -133,3 +144,51 @@
         </div>
     </div>
 @endsection
+
+@push('js')
+    <script>
+        $(document).on('click', '.btn-delete', function() {
+            $this = $(this);
+
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-danger'
+                },
+                buttonsStyling: false
+            })
+
+            swalWithBootstrapButtons.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to delete this template?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No',
+                reverseButtons: true
+            }).then((result) => {
+                console.log('result:', result);
+
+                if (result.value) {
+                    $.post($this.data('url'), {
+                        _method: 'DELETE',
+                        _token: '{{ csrf_token() }}'
+                    }, function(res) {
+                        $this.closest('li').fadeOut(500, function() {
+                            $(this).remove();
+                        });
+                        $.toast({
+                            heading: 'Success',
+                            text: res.message,
+                            icon: 'success',
+                            position: 'bottom-left',
+                            hideAfter: 3000,
+                            stack: 3
+                        });
+
+                    })
+                }
+            });
+        });
+    </script>
+@endpush
