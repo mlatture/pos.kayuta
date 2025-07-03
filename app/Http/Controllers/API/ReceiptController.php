@@ -24,15 +24,25 @@ class ReceiptController extends Controller
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('public/storage/receipt_logos', $filename);
-
+            
+            $destinationPath = public_path('storage/receipt_logos');
+    
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0775, true);
+            }
+    
+            $file->move($destinationPath, $filename);
+    
             return response()->json([
                 'success' => true,
                 'filename' => $filename,
             ]);
         }
+    
         return response()->json([
             'success' => false,
+            'message' => 'No file uploaded',
         ]);
     }
+    
 }
