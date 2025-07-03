@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\MeterController;
 use App\Http\Controllers\SeasonalSettingController;
 use App\Http\Controllers\SeasonalRenewalGuestController;
+use App\Http\Controllers\ReceiptController as NewReceiptController; 
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -48,6 +49,8 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        Route::post('receipt/upload/logo', [NewReceiptController::class, 'uploadReceiptLogo'])->name('receipt.upload.logo');
+
         Route::prefix('scan')->group(function () {
             Route::get('/receipts', [ReceiptController::class, 'index'])->name('receipts.index');
             Route::post('/receipts', [ReceiptController::class, 'store'])->name('receipts.store');

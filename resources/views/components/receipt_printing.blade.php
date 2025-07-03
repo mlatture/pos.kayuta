@@ -55,7 +55,7 @@
             formData.append("_token", "{{ csrf_token() }}");
 
             $.ajax({
-                url: "{{ url('api/upload-receipt-logo') }}",
+                url: '{{ route('receipt.upload.logo') }}',
                 type: "POST",
                 data: formData,
                 contentType: false,
