@@ -11,8 +11,12 @@ use App\Models\SeasonalAddOns;
 use App\Models\User;
 use App\Models\SeasonalRate;
 use App\Models\SeasonalRenewal;
+use App\Models\DocumentTemplate;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
+
+
+use PhpOffice\PhpWord\TemplateProcessor;
 
 class SeasonalTransactionsController extends Controller
 {
@@ -147,6 +151,28 @@ class SeasonalTransactionsController extends Controller
                         now()->addDays(14),
                         ['user' => $user->id]
                     );
+
+                    $docsFile = DocumentTemplate::find($rate->template_id);
+                    //Generate Contracts
+                    if ($docsFile && file_exists(public_path("storage/{$docsFile->file}"))) {
+                        $templatePath = public_path("storage/{$docsFile->file}");
+                        $fileName = "contract_{$user->l_name}_{$user->id}.docx";
+                        $filePath = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
+                    
+                        if (!file_exists(dirname($filePath))) {
+                            mkdir(dirname($filePath), 0775, true);
+                        }
+                    
+                        $templateProcessor = new TemplateProcessor($templatePath);
+                        $templateProcessor->setValues([
+                            'first_name' => $user->f_name,
+                            'last_name' => $user->l_name,
+                            'seasonal_rate' => "$" . number_format($rate->rate_price, 2),
+                            'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
+                        ]);
+                        $templateProcessor->saveAs($filePath);
+                    }
+                    
         
                     // Send email notification
                     $user->notify(new SeasonalRenewalLinkNotification($signedUrl));

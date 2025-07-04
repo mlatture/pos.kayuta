@@ -47,5 +47,6 @@
         </tbody>
     </table>
 @else
-    <strong>No Seasonal Renewals Yet</strong>
+    <li class="list-group-item">No Seasonal Renewals Yet.</li>
+
 @endif
