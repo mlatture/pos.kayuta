@@ -16,31 +16,17 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $guarded  =   [];
+    protected $guarded = [];
 
     protected $table = 'users';
-    protected $fillable = [
-        'organization_id', 'f_name', 'l_name', 'name', 'phone', 'home_phone', 'work_phone', 'email',
-        'password', 'image', 'street_address', 'address_2', 'address_3', 'country', 'state', 'city',
-        'zip', 'house_no', 'apartment_no', 'discovery_method', 'date_of_birth', 'anniversary', 'age',
-        'probation', 'is_active', 'is_phone_verified', 'is_email_verified', 'payment_card_last_four',
-        'payment_card_brand', 'payment_card_fawry_token', 'login_medium', 'social_id', 'facebook_id',
-        'google_id', 'temporary_token', 'cm_firebase_token', 'wallet_balance', 'loyalty_point',
-        'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address', 'seasonal'
-    ];
-    
-
-    
-
+    protected $fillable = ['organization_id', 'f_name', 'l_name', 'name', 'phone', 'home_phone', 'work_phone', 'email', 'password', 'image', 'street_address', 'address_2', 'address_3', 'country', 'state', 'city', 'zip', 'house_no', 'apartment_no', 'discovery_method', 'date_of_birth', 'anniversary', 'age', 'probation', 'is_active', 'is_phone_verified', 'is_email_verified', 'payment_card_last_four', 'payment_card_brand', 'payment_card_fawry_token', 'login_medium', 'social_id', 'facebook_id', 'google_id', 'temporary_token', 'cm_firebase_token', 'wallet_balance', 'loyalty_point', 'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address', 'seasonal'];
 
     /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
      */
-    protected $hidden = [
-        'password', 'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * The attributes that should be cast to native types.
@@ -49,7 +35,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'seasonal' => 'array'
+        'seasonal' => 'array',
     ];
 
     public function getAvatarUrl()
@@ -63,7 +49,7 @@ class User extends Authenticatable
     }
 
     public function latestReservation()
-    {   
+    {
         return $this->hasOne(Reservation::class, 'customernumber', 'id')->latestOfMany();
     }
 
@@ -81,12 +67,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(CartReservation::class, 'customernumber');
     }
-   
- 
+
     public function receipts()
     {
         return $this->hasManyThrough(Receipt::class, Reservation::class, 'customernumber', 'cartid', 'id', 'cartid');
-
     }
 
     public function findUserById($id)
@@ -94,16 +78,22 @@ class User extends Authenticatable
         return self::find($id);
     }
 
-    public function getFullNameAttribute(){
-        if($this->name) {
+    public function getFullNameAttribute()
+    {
+        if ($this->name) {
             return $this->name;
         }
-        return $this->f_name.' '.$this->l_name;
+        return $this->f_name . ' ' . $this->l_name;
     }
 
-    
     public function seasonalRenewal()
     {
         return $this->hasOne(SeasonalRenewal::class);
+    }
+
+    public function getSeasonalRatesAttribute()
+    {
+        $ids = is_array($this->seasonal) ? $this->seasonal : json_decode($this->seasonal, true);
+        return SeasonalRate::whereIn('id', $ids ?: [])->get();
     }
 }

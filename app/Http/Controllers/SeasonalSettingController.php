@@ -12,6 +12,8 @@ use App\Models\SeasonalRenewal;
 use App\Models\User;
 use App\Models\DocumentTemplate;
 use App\Models\SeasonalRate;
+use App\Models\SeasonalAddOns;
+
 
 use App\Notifications\SeasonalRenewalLinkNotification;
 
@@ -28,14 +30,13 @@ class SeasonalSettingController extends Controller
 
     public function index()
     {
-        $setting = session('success') ? null : SeasonalSetting::latest()->first();
-
-        $rateTiers = RateTier::distinct('tier')->pluck('tier')->toArray();
-
         $documentTemplates = DocumentTemplate::all();
+        $seasonalAddOns = SeasonalAddOns::all();
         $seasonalRates = SeasonalRate::with('template')->get();
+        $renewals = SeasonalRenewal::with('customer')->latest()->get();
 
-        return view('admin.seasonal.index', compact('setting', 'rateTiers', 'documentTemplates', 'seasonalRates'));
+
+        return view('admin.seasonal.index', compact('seasonalAddOns','documentTemplates', 'seasonalRates', 'renewals'));
     }
 
     public function storeTemplate(Request $request)
