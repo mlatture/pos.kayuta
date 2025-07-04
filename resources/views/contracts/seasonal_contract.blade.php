@@ -103,10 +103,13 @@
                     <th>Final Rate</th>
                     <td><strong>${{ number_format($final_rate, 2) }}</strong></td>
                 </tr>
+
+                @if(!empty($deadline))
                 <tr>
                     <th>Final Payment Due</th>
                     <td>{{ $deadline }}</td>
                 </tr>
+                @endif
             </table>
         </div>
 
