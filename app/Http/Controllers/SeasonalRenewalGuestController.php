@@ -11,11 +11,22 @@ class SeasonalRenewalGuestController extends Controller
 {
     //
 
-    public function show(User $user)
+    public function verifyLink(Request $request, User $user)
     {
-        $renewal = SeasonalRenewal::where('customer_id', $user->id)->firstOrFail();
+        if (!$request->hasValidSignature()) {
+            return redirect()->route('front.auth.login')->with('error', 'link was expired.');
+        }
 
-        return view('seasonal.guest-show', compact('user', 'renewal'));
+        $user = User::find($user);
+
+        if (!$user) {
+            return redirect()->route('front.auth.login')->with('error', 'User not found.');
+
+        }
+
+        Auth::guard('customer')->login($user);
+
+        return redirect()->route('front.customer.profile')->with('success', 'Successfully logged in!');
     }
 
     public function respond(Request $request, User $user)

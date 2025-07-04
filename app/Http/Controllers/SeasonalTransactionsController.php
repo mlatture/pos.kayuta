@@ -143,7 +143,7 @@ class SeasonalTransactionsController extends Controller
 
                     URL::forceRootUrl('https://book.kayuta.com');
                     // URL::forceRootUrl('http://127.0.0.1:8001');
-                    $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
+                    $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
 
                     $docsFile = DocumentTemplate::find($rate->template_id);
                     //Generate Contracts

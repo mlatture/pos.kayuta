@@ -328,7 +328,7 @@ Route::prefix('seasonal')
         });
 
         Route::prefix('guest')->group(function () {
-            Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');
+            Route::get('{user}', [SeasonalRenewalGuestController::class, 'verifyLink'])->name('seasonal.verify.guest');
             Route::post('{user}/respond', [SeasonalRenewalGuestController::class, 'respond'])->name('seasonal.renewal.respond');
         });
     });
