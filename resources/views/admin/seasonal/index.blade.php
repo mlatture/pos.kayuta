@@ -110,7 +110,7 @@
                                 </li>
 
                             @empty
-                                <li class="list-group-item">No templates uploaded yet.</li>
+                                <li class="list-group-item">No addon added yet.</li>
                             @endforelse
                         </ul>
                     </div>
