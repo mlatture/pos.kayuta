@@ -151,13 +151,17 @@ class SeasonalTransactionsController extends Controller
                         $templatePath = public_path("storage/{$docsFile->file}");
                         $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
                         $filePath = public_path("storage/contracts/{$docsFile->name}");
-                        $filePath2 = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
+                        // $filePath2 = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
                         
 
+                        $filePath = public_path("storage/contracts/{$docsFile->name}");
 
-                        if (!file_exists(dirname($filePath))) {
-                            mkdir(dirname($filePath), 0775, true);
+                        if (!file_exists($filePath)) {
+                            mkdir($filePath, 0775, true);
                         }
+                        
+                        
+                      
 
                         // $templateProcessor = new TemplateProcessor($templatePath);
                         // $templateProcessor->setValues([
