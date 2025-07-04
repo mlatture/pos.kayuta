@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
-
 use App\Models\SeasonalAddOns;
 use App\Models\User;
 use App\Models\SeasonalRate;
@@ -15,8 +14,8 @@ use App\Models\DocumentTemplate;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
 
-
 use PhpOffice\PhpWord\TemplateProcessor;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SeasonalTransactionsController extends Controller
 {
@@ -85,8 +84,6 @@ class SeasonalTransactionsController extends Controller
         }
     }
 
-  
-
     // Send Emails to the Seasonals Customers
 
     public function sendEmails(Request $request)
@@ -145,38 +142,50 @@ class SeasonalTransactionsController extends Controller
                     );
 
                     URL::forceRootUrl('https://book.kayuta.com');
-                        // URL::forceRootUrl('http://127.0.0.1:8001');
-                    $signedUrl = URL::temporarySignedRoute(
-                        'seasonal.renewal.guest',
-                        now()->addDays(14),
-                        ['user' => $user->id]
-                    );
+                    // URL::forceRootUrl('http://127.0.0.1:8001');
+                    $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
 
                     $docsFile = DocumentTemplate::find($rate->template_id);
                     //Generate Contracts
                     if ($docsFile && file_exists(public_path("storage/{$docsFile->file}"))) {
                         $templatePath = public_path("storage/{$docsFile->file}");
-                        $fileName = "contract_{$user->l_name}_{$user->id}.docx";
-                        $filePath = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
-                    
+                        $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
+                        $filePath = public_path("storage/contracts/{$docsFile->name}");
+                        $filePath2 = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
+                        
+
+
                         if (!file_exists(dirname($filePath))) {
                             mkdir(dirname($filePath), 0775, true);
                         }
-                    
-                        $templateProcessor = new TemplateProcessor($templatePath);
-                        $templateProcessor->setValues([
+
+                        // $templateProcessor = new TemplateProcessor($templatePath);
+                        // $templateProcessor->setValues([
+                        //     'first_name' => $user->f_name,
+                        //     'last_name' => $user->l_name,
+                        //     'seasonal_rate' => "$" . number_format($rate->rate_price, 2),
+                        //     'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
+                        // ]);
+                        // $templateProcessor->saveAs($filePath2);
+
+                        $pdf = Pdf::loadView('contracts.seasonal_contract', [
                             'first_name' => $user->f_name,
                             'last_name' => $user->l_name,
-                            'seasonal_rate' => "$" . number_format($rate->rate_price, 2),
+                            'site_number' => $user->site_number ?? null,
+                            'email' => $user->email,
+                            'initial_rate' => $rate->rate_price,
+                            'discount_percent' => null, // or $rate->discount_percent
+                            'discount_amount' => null, // or $rate->discount_amount
+                            'final_rate' => $rate->rate_price,
+                            'addons' => null,
                             'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
                         ]);
-                        $templateProcessor->saveAs($filePath);
+
+                        $pdf->save("$filePath/{$fileName}");
                     }
-                    
-        
+
                     // Send email notification
                     $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
-        
                 }
             }
 
@@ -197,4 +206,7 @@ class SeasonalTransactionsController extends Controller
             );
         }
     }
+
+   
+    
 }

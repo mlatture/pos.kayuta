@@ -14,7 +14,6 @@ use App\Models\DocumentTemplate;
 use App\Models\SeasonalRate;
 use App\Models\SeasonalAddOns;
 
-
 use App\Notifications\SeasonalRenewalLinkNotification;
 
 use Illuminate\Support\Str;
@@ -35,8 +34,7 @@ class SeasonalSettingController extends Controller
         $seasonalRates = SeasonalRate::with('template')->get();
         $renewals = SeasonalRenewal::with('customer')->latest()->get();
 
-
-        return view('admin.seasonal.index', compact('seasonalAddOns','documentTemplates', 'seasonalRates', 'renewals'));
+        return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'renewals'));
     }
 
     public function storeTemplate(Request $request)
@@ -177,5 +175,17 @@ class SeasonalSettingController extends Controller
             'success' => true,
             'message' => 'Document Template deleted successfully!',
         ]);
+    }
+
+    // Download Generated Contracts PDF
+    public function downloadExistingContract($filename)
+    {
+        $path = public_path("storage/contracts/{$filename}");
+
+        if (file_exists($path)) {
+            return response()->download($path);
+        }
+
+        abort(404, 'Contract not found.');
     }
 }

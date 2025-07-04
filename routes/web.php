@@ -322,6 +322,11 @@ Route::prefix('seasonal')
             Route::delete('destroy/{addon}', [SeasonalTransactionsController::class, 'destroyAddOn'])->name('seasonal.addon.destroy');
         });
 
+
+        Route::prefix('contracts')->group(function () {
+            Route::get('download/{filename}', [SeasonalSettingController::class, 'downloadExistingContract']);
+        });
+
         Route::prefix('guest')->group(function () {
             Route::get('{user}', [SeasonalRenewalGuestController::class, 'show'])->name('seasonal.renewal.guest');
             Route::post('{user}/respond', [SeasonalRenewalGuestController::class, 'respond'])->name('seasonal.renewal.respond');

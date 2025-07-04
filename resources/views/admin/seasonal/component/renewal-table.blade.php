@@ -16,6 +16,9 @@
                 <th>Payments</th>
                 <th>Card/Account</th>
                 <th>Day of Month</th>
+
+                <th>Contract</th>
+
             </tr>
         </thead>
         <tbody>
@@ -42,6 +45,42 @@
                     </td>
                     <td>{{ $renewal->masked_account }}</td>
                     <td>{{ $renewal->day_of_month }}</td>
+
+                    <td>
+                        @php
+                            $fileName = "contract_{$renewal->customer->l_name}_{$renewal->customer_id}.pdf";
+
+                            $templateName = null;
+
+                            $seasonalIds = is_array($renewal->customer->seasonal)
+                                ? $renewal->customer->seasonal
+                                : json_decode($renewal->customer->seasonal, true);
+
+                            foreach ($seasonalIds ?? [] as $rateId) {
+                                $rate = $seasonalRates->firstWhere('id', $rateId);
+                                if (
+                                    $rate &&
+                                    $rate->template &&
+                                    file_exists(public_path("storage/contracts/{$rate->template->name}/{$fileName}"))
+                                ) {
+                                    $templateName = $rate->template->name;
+                                    break;
+                                }
+                            }
+
+                            $contractPath = $templateName ? "storage/contracts/{$templateName}/{$fileName}" : null;
+                        @endphp
+
+                        @if ($contractPath && file_exists(public_path($contractPath)))
+                            <a href="{{ asset($contractPath) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                Download PDF
+                            </a>
+                        @else
+                            <span class="text-muted">Not generated</span>
+                        @endif
+                    </td>
+
+
                 </tr>
             @endforeach
         </tbody>

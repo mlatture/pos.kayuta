@@ -11,26 +11,7 @@ class SeasonalRenewal extends Model
 
     protected $table = 'seasonal_renewals';
 
-    protected $fillable = [
-        'customer_id',
-        'customer_name',
-        'customer_email',
-        'allow_renew',
-        'status',
-        'initial_rate',
-        'discount_percent',
-        'discount_amount',
-        'discount_note',
-        'final_rate',
-        'payment_plan',
-        'payment_plan_id',
-        'selected_payment_method',
-        'day_of_month',
-        'offered_rate',
-        'renewed',
-        'response_date',
-        'notes',
-    ];
+    protected $fillable = ['customer_id', 'customer_name', 'customer_email', 'allow_renew', 'status', 'initial_rate', 'discount_percent', 'discount_amount', 'discount_note', 'final_rate', 'payment_plan', 'payment_plan_id', 'selected_payment_method', 'day_of_month', 'offered_rate', 'renewed', 'response_date', 'notes'];
 
     protected $casts = [
         'allow_renew' => 'boolean',
@@ -47,6 +28,7 @@ class SeasonalRenewal extends Model
     {
         return $this->belongsTo(User::class);
     }
+
 
     // public function paymentPlan()
     // {
