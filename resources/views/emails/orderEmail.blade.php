@@ -39,7 +39,7 @@
             z-index: 1;
         }
 
-        
+
 
         h1 {
             font-size: 1.5em;
@@ -136,11 +136,19 @@
 <body>
     <div id="invoice-POS">
         <center id="top">
+
             @if (session('receipt.headerText'))
                 <p class="text-center mb-2" style="font-size: 0.8em;">
                     {{ session('receipt.headerText') }}
                 </p>
             @endif
+
+            {{-- Logo inside the body --}}
+            <div class="text-center mb-2">
+                <img src="{{ $logoUrl }}" alt="Watermark"
+                    style="opacity: 0.8; max-width: 200px; display: block; margin: 0 auto;">
+
+            </div>
 
             <div class="info">
                 <h5>Order#: {!! $order->id !!}</h5>
@@ -152,11 +160,7 @@
         </center>
 
         <div id="bot">
-            {{-- Logo inside the body --}}
-            <div class="text-center mb-2">
-                <img src="{{ $logoUrl }}" alt="Watermark" style="opacity: 0.05; max-width: 200px; display: block; margin: 0 auto;">
 
-            </div>
 
             {{-- Order items table --}}
             <div id="table">
