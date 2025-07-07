@@ -3,26 +3,43 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <title>Order Invoice # {!! $order->id !!} </title>
+
     <style>
         #invoice-POS {
-            box-shadow: 0 0 1in -0.25in rgba(0, 0, 0, 0.5);
+            position: relative;
             padding: 2mm;
             margin: 0 auto;
             width: 80mm;
             background: #FFF;
-
+            z-index: 1;
+            /* Make sure it's above the background */
         }
 
-        ::selection {
-            background: #f31544;
-            color: #FFF;
+        #invoice-POS::before {
+            content: "";
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-image: url('{{ session('receipt.logo') ? asset('storage/receipt_logos/' . session('receipt.logo')) : '' }}');
+            background-size: 80%;
+            /* Adjust size here */
+            background-repeat: no-repeat;
+            opacity: 0.05;
+            /* Faint watermark effect */
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        ::moz-selection {
-            background: #f31544;
-            color: #FFF;
+        /* Make sure all content stays above the watermark */
+        #invoice-POS * {
+            position: relative;
+            z-index: 1;
         }
+
+        
 
         h1 {
             font-size: 1.5em;
@@ -48,7 +65,6 @@
         #top,
         #mid,
         #bot {
-            /* Targets all id with 'col-' */
             border-bottom: 1px solid #EEE;
         }
 
@@ -64,26 +80,8 @@
             min-height: 50px;
         }
 
-        #top .logo {
-            / / float: left;
-            height: 60px;
-            width: 100px;
-            background: url('{!! asset('images/logo.png') !!}') no-repeat;
-            background-size: 95px 60px;
-        }
-
-        .clientlogo {
-            float: left;
-            height: 60px;
-            width: 60px;
-            background: url(http://michaeltruong.ca/images/client.jpg) no-repeat;
-            background-size: 60px 60px;
-            border-radius: 50px;
-        }
-
         .info {
             display: block;
-            / / float: left;
             margin-left: 0;
         }
 
@@ -100,13 +98,7 @@
             border-collapse: collapse;
         }
 
-        td {
-            / / padding: 5 px 0 5 px 15 px;
-            / / border: 1 px solid #EEE
-        }
-
         .tabletitle {
-            / / padding: 5 px;
             font-size: .5em;
             background: #EEE;
         }
@@ -127,44 +119,46 @@
             margin-top: 5mm;
         }
 
-        ul.recipt-ul {
-            padding-left: 12px;
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .mb-2 {
+            margin-bottom: 8px;
         }
     </style>
 </head>
 
 <body>
-
     <div id="invoice-POS">
-
         <center id="top">
-            <div class="logo"></div>
+            @if (session('receipt.headerText'))
+                <p class="text-center mb-2" style="font-size: 0.8em;">
+                    {{ session('receipt.headerText') }}
+                </p>
+            @endif
+
             <div class="info">
-                {{--            <h2>KozeShake</h2> --}}
                 <h5>Order#: {!! $order->id !!}</h5>
                 <p>
-                   
-                    Date: {!! date('d-m-Y') !!}</br>
-                    Time: {!! date('H:i', time()) !!}</br>
-                </p>
-            </div><!--End Info-->
-        </center><!--End InvoiceTop-->
-
-        {{-- <div id="mid">
-            <div class="info">
-                <h2>Contact Info</h2>
-                <p>
-                    Name: {!! !empty($order->customer->f_name) ? $order->customer->f_name : 'Walk-in Customer' !!}</br>
-                    @if ($order->customer)
-                       
-                        Phone: {!! !empty($order->customer->phone) ? $order->customer->phone : 'N/A' !!}</br>
-                    @endif
+                    Date: {!! date('d-m-Y') !!}<br>
+                    Time: {!! date('H:i', time()) !!}
                 </p>
             </div>
-        </div> --}}
+        </center>
 
         <div id="bot">
+            {{-- Logo inside the body --}}
+            <div class="text-center mb-2">
+                <img src="{{ $logoUrl }}" alt="Watermark" style="opacity: 0.05; max-width: 200px; display: block; margin: 0 auto;">
 
+            </div>
+
+            {{-- Order items table --}}
             <div id="table">
                 <table>
                     <tr class="tabletitle">
@@ -190,111 +184,103 @@
                             <h2>Sub Total</h2>
                         </td>
                     </tr>
+
                     @php
                         $itemTotal = 0;
                         $subTotal = 0;
                         $totalTax = 0;
                         $totalDiscount = 0;
                     @endphp
-                    @if (count($order->items) > 0)
-                        @foreach ($order->items as $key => $detail)
-                            <tr class="service">
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! !empty($detail->product) ? $detail->product->name : 'N/A' !!}</p>
-                                </td>
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! $detail->quantity !!}</p>
-                                </td>
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! '$' . number_format($detail->product->price, 2) !!}</p>
-                                </td>
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! '$' . number_format($detail->product->price * $detail->quantity, 2) !!}</p>
-                                </td>
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! '$' . number_format($detail->tax, 2) !!}</p>
-                                </td>
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! '$' . number_format($detail->discount, 2) !!}</p>
-                                </td>
 
-                                @php $subTotal = $detail->price @endphp
-                                @php $totalTax += $detail->tax @endphp
-                                @php $totalDiscount += $detail->discount @endphp
-                                @php $itemTotal += $subTotal @endphp
-                                <td class="tableitem">
-                                    <p class="itemtext">{!! '$' . number_format($subTotal, 2) !!}</p>
-                                </td>
-                            </tr>
-                        @endforeach
-
-                        <tr class="tabletitle">
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td class="Rate">
-                                <h2>Tax</h2>
+                    @foreach ($order->items as $detail)
+                        <tr class="service">
+                            <td class="tableitem">
+                                <p class="itemtext">{{ optional($detail->product)->name ?? 'N/A' }}</p>
                             </td>
-                            <td class="payment">
-                                <h2>{!! '$' . number_format($totalTax, 2) !!}</h2>
+                            <td class="tableitem">
+                                <p class="itemtext">{{ $detail->quantity }}</p>
+                            </td>
+                            <td class="tableitem">
+                                <p class="itemtext">${{ number_format($detail->product->price, 2) }}</p>
+                            </td>
+                            <td class="tableitem">
+                                <p class="itemtext">${{ number_format($detail->product->price * $detail->quantity, 2) }}
+                                </p>
+                            </td>
+                            <td class="tableitem">
+                                <p class="itemtext">${{ number_format($detail->tax, 2) }}</p>
+                            </td>
+                            <td class="tableitem">
+                                <p class="itemtext">${{ number_format($detail->discount, 2) }}</p>
+                            </td>
+                            @php
+                                $subTotal = $detail->price;
+                                $totalTax += $detail->tax;
+                                $totalDiscount += $detail->discount;
+                                $itemTotal += $subTotal;
+                            @endphp
+                            <td class="tableitem">
+                                <p class="itemtext">${{ number_format($subTotal, 2) }}</p>
                             </td>
                         </tr>
+                    @endforeach
 
+                    <tr class="tabletitle">
+                        <td colspan="5"></td>
+                        <td class="Rate">
+                            <h2>Tax</h2>
+                        </td>
+                        <td class="payment">
+                            <h2>${{ number_format($totalTax, 2) }}</h2>
+                        </td>
+                    </tr>
+
+                    @if ($totalDiscount > 0 || $order->gift_card_amount > 0)
                         <tr class="tabletitle">
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td colspan="5"></td>
                             <td class="Rate">
                                 <h2>Discount</h2>
                             </td>
                             <td class="payment">
-                                <h2>- {!! '$' . number_format($totalDiscount, 2) !!}</h2>
+                                <h2>- ${{ number_format($totalDiscount, 2) }}</h2>
                             </td>
                         </tr>
 
                         <tr class="tabletitle">
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td colspan="5"></td>
                             <td class="Rate">
-                                <h2>Gift Card Amount</h2>
+                                <h2>Gift Card</h2>
                             </td>
                             <td class="payment">
-                                <h2>- {!! '$' . number_format($order->gift_card_amount, 2) !!}</h2>
-                            </td>
-                        </tr>
-
-                        <tr class="tabletitle">
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td class="Rate">
-                                <h2>Total</h2>
-                            </td>
-                            <td class="payment">
-                                <h2>{!! '$' . number_format($order->amount, 2) !!}</h2>
+                                <h2>- ${{ number_format($order->gift_card_amount, 2) }}</h2>
                             </td>
                         </tr>
                     @endif
-                </table>
-            </div><!--End Table-->
 
-            <div id="legalcopy">
-                <p class="legal"><strong>Thank you for purchase!</strong>
-                </p>
+                    <tr class="tabletitle">
+                        <td colspan="5"></td>
+                        <td class="Rate">
+                            <h2>Total</h2>
+                        </td>
+                        <td class="payment">
+                            <h2>${{ number_format($order->amount, 2) }}</h2>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
-        </div><!--End InvoiceBot-->
-    </div><!--End Invoice-->
+            {{-- Footer Text + Thank you --}}
+            <div id="legalcopy" class="text-center mt-2">
+                @if (session('receipt.footerText'))
+                    <p class="text-center" style="font-size: 0.8em; margin-bottom: 4px;">
+                        {{ session('receipt.footerText') }}
+                    </p>
+                @endif
 
+                <p class="legal"><strong>Thank you for your purchase!</strong></p>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -236,6 +236,40 @@
 
 @push('js')
     <script>
+        $(document).on('click', '#clearAndReloadBtn', function() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will reset the entire renewal process for the new season.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, reset it!',
+                cancelButtonText: 'Cancel'
+
+            }).then((result) => {
+               
+                const renewalCount = {{ $currentYearRenewalsCount }};
+                let htmlMessage = `<p>Renewals this year: <strong>${renewalCount}</strong></p>`;
+
+                if (renewalCount === 0) {
+                    htmlMessage +=
+                        `<br><p>No renewal records found for the current year.</p>`;
+                }
+
+                Swal.fire({
+                    icon: renewalCount === 0 ? 'warning' : 'info',
+                    title: renewalCount === 0 ? 'Start of New Season' : 'Renewals Overview',
+                    html: htmlMessage,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.reload();
+                    }
+                });
+            })
+        });
         $(document).on('click', '#sendEmailBtn', function() {
             const $btn = $(this);
             const url = $btn.data('url');

@@ -34,7 +34,16 @@ class SeasonalSettingController extends Controller
         $seasonalRates = SeasonalRate::with('template')->get();
         $renewals = SeasonalRenewal::with('customer')->latest()->get();
 
-        return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'renewals'));
+        // Reset Renewals
+        $currentYear = now()->year;
+        $currentYearRenewalsCount = $renewals->filter(function ($renewal) use ($currentYear) {
+            return optional($renewal->created_at)->year === $currentYear;
+        })->count();
+    
+    
+        $showResetWarning = $currentYearRenewalsCount === 0;
+
+        return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'renewals', 'showResetWarning', 'currentYearRenewalsCount'));
     }
 
     public function storeTemplate(Request $request)

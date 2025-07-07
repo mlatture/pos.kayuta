@@ -135,7 +135,7 @@ class SeasonalTransactionsController extends Controller
                             'payment_plan_id' => null,
                             'selected_payment_method' => null,
                             'day_of_month' => null,
-                            'renewed' => false,
+                            'renewed' => falsef,
                             'response_date' => null,
                             'notes' => 'Auto-created during offer send',
                         ],

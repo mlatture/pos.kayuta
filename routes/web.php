@@ -40,7 +40,8 @@ use App\Http\Controllers\MeterController;
 use App\Http\Controllers\SeasonalSettingController;
 use App\Http\Controllers\SeasonalRenewalGuestController;
 use App\Http\Controllers\SeasonalTransactionsController;
-use App\Http\Controllers\ReceiptController as NewReceiptController; 
+use App\Http\Controllers\ReceiptController as NewReceiptController;
+use App\Models\Order;
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -50,6 +51,14 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        Route::post('/receipt/save-settings', [NewReceiptController::class, 'saveSettings'])->name('receipt.save.settings');
+
+        Route::get('/test/receipt', function () {
+            $order = Order::latest()->first(); // Or whatever logic fits
+            return view('emails.orderEmail', compact('order'));
+        });
+        
+
         Route::post('receipt/upload/logo', [NewReceiptController::class, 'uploadReceiptLogo'])->name('receipt.upload.logo');
 
         Route::prefix('scan')->group(function () {
@@ -315,13 +324,13 @@ Route::prefix('seasonal')
 
         Route::prefix('renewals')->group(function () {
             Route::post('send-emails', [SeasonalTransactionsController::class, 'sendEmails'])->name('seasonal.sendEmails');
+            Route::post('clear', [SeasonalTransactionsController::class, 'clear'])->name('seasonal.clear');
         });
 
         Route::prefix('add-ons')->group(function () {
             Route::post('store', [SeasonalTransactionsController::class, 'storeAddOns'])->name('seasonal.addons.store');
             Route::delete('destroy/{addon}', [SeasonalTransactionsController::class, 'destroyAddOn'])->name('seasonal.addon.destroy');
         });
-
 
         Route::prefix('contracts')->group(function () {
             Route::get('download/{filename}', [SeasonalSettingController::class, 'downloadExistingContract']);

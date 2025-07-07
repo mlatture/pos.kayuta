@@ -1,4 +1,5 @@
-<div class="modal fade" id="receiptPrintingModal" tabindex="-1" aria-labelledby="receiptPrintingModalLabel" aria-hidden="true">
+<div class="modal fade" id="receiptPrintingModal" tabindex="-1" aria-labelledby="receiptPrintingModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -20,7 +21,8 @@
 
                 <!-- Receipt Preview -->
                 <div class="border p-3" id="receiptPreview">
-                    <img id="logoPreview" src="" alt="Header Logo" class="d-block mx-auto mb-3" style="max-width: 100px; display: none;">
+                    <img id="logoPreview" src="" alt="Header Logo" class="d-block mx-auto mb-3"
+                        style="max-width: 100px; display: none;">
                     <p id="headerTextPreview" class="text-center"></p>
                     <hr>
                     <p>Receipt content goes here...</p>
@@ -37,18 +39,18 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="saveSettings">Save</button>
-              
+
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    $(document).ready(function () {
-     
-        loadStoredSettings();
+    $(document).ready(function() {
 
-        $("#logoUpload").change(function () {
+        // loadStoredSettings();
+
+        $("#logoUpload").change(function() {
             let file = this.files[0];
             let formData = new FormData();
             formData.append("logo", file);
@@ -60,62 +62,90 @@
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function (response) {
+                success: function(response) {
                     if (response.success) {
                         let timestampedFilename = response.filename;
                         localStorage.setItem("receiptLogo", timestampedFilename);
-                        $("#logoPreview").attr("src", "/storage/receipt_logos/" + timestampedFilename).show();
+                        $("#logoPreview").attr("src", "/storage/receipt_logos/" +
+                            timestampedFilename).show();
                     }
                 }
             });
         });
 
-        $("#saveSettings").click(function () {
+        $("#saveSettings").click(function() {
+            // let headerText = $("#headerText").val();
+            // let footerText = $("#footerText").val();
+
+            // localStorage.setItem("receiptHeaderText", headerText);
+            // localStorage.setItem("receiptFooterText", footerText);
+
+            // $("#headerTextPreview").text(headerText);
+            // $("#footerTextPreview").text(footerText);
+
+            // $.toast({
+            //     heading: 'Success',
+            //     text: "Settings saved successfully",
+            //     position: 'top-right',
+            //     loaderBg: '#00c263',
+            //     icon: 'success',
+            //     hideAfter: 2000,
+            //     stack: 6
+            // });
+
+            // setTimeout(function () {
+            //     $("#receiptPrintingModal").modal("hide");
+            // }, 1000);
+
             let headerText = $("#headerText").val();
             let footerText = $("#footerText").val();
+            let logo = localStorage.getItem("receiptLogo");
 
-            localStorage.setItem("receiptHeaderText", headerText);
-            localStorage.setItem("receiptFooterText", footerText);
+            $.post('{{ route('receipt.save.settings') }}', {
+                _token: '{{ csrf_token() }}',
+                logo: logo,
+                headerText: headerText,
+                footerText: footerText
+            }, function(response) {
+                console.log(response);
+                $.toast({
+                    heading: 'Success',
+                    text: "Settings saved successfully",
+                    position: 'top-right',
+                    loaderBg: '#00c263',
+                    icon: 'success',
+                    hideAfter: 2000,
+                    stack: 6
+                });
 
-            $("#headerTextPreview").text(headerText);
-            $("#footerTextPreview").text(footerText);
-
-            $.toast({
-                heading: 'Success',
-                text: "Settings saved successfully",
-                position: 'top-right',
-                loaderBg: '#00c263',
-                icon: 'success',
-                hideAfter: 2000,
-                stack: 6
+                setTimeout(function() {
+                    $("#receiptPrintingModal").modal("hide");
+                }, 1000);
             });
 
-            setTimeout(function () {
-                $("#receiptPrintingModal").modal("hide");
-            }, 1000);
 
 
         });
 
-      
-        function loadStoredSettings() {
-            let storedLogo = localStorage.getItem("receiptLogo");
-            let storedHeaderText = localStorage.getItem("receiptHeaderText");
-            let storedFooterText = localStorage.getItem("receiptFooterText");
 
-            if (storedLogo) {
-                $("#logoPreview").attr("src", "/storage/receipt_logos/" + storedLogo).show();
-            }
-            if (storedHeaderText) {
-                $("#headerText").val(storedHeaderText);
-                $("#headerTextPreview").text(storedHeaderText);
-            }
-            if (storedFooterText) {
-                $("#footerText").val(storedFooterText);
-                $("#footerTextPreview").text(storedFooterText);
-            }
-        }
+        // function loadStoredSettings() {
+        //     let storedLogo = localStorage.getItem("receiptLogo");
+        //     let storedHeaderText = localStorage.getItem("receiptHeaderText");
+        //     let storedFooterText = localStorage.getItem("receiptFooterText");
 
-  
+        //     if (storedLogo) {
+        //         $("#logoPreview").attr("src", "/storage/receipt_logos/" + storedLogo).show();
+        //     }
+        //     if (storedHeaderText) {
+        //         $("#headerText").val(storedHeaderText);
+        //         $("#headerTextPreview").text(storedHeaderText);
+        //     }
+        //     if (storedFooterText) {
+        //         $("#footerText").val(storedFooterText);
+        //         $("#footerTextPreview").text(storedFooterText);
+        //     }
+        // }
+
+
     });
 </script>

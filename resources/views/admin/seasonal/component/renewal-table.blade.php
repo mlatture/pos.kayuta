@@ -1,3 +1,5 @@
+
+
 @if ($renewals->count())
     <table class="table table-bordered table-striped bg-light" id="seasonalRenewalsTable">
         <thead class="table-secondary">
