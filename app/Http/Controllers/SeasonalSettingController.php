@@ -32,10 +32,11 @@ class SeasonalSettingController extends Controller
         $documentTemplates = DocumentTemplate::all();
         $seasonalAddOns = SeasonalAddOns::all();
         $seasonalRates = SeasonalRate::with('template')->get();
-        $renewals = SeasonalRenewal::with('customer')->latest()->get();
+        $currentYear = now()->year;
+
+        $renewals = SeasonalRenewal::whereYear('created_at', $currentYear)->with('customer')->latest()->get();
 
         // Reset Renewals
-        $currentYear = now()->year;
         $currentYearRenewalsCount = $renewals->filter(function ($renewal) use ($currentYear) {
             return optional($renewal->created_at)->year === $currentYear;
         })->count();

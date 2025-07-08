@@ -9,20 +9,28 @@
             <div class="modal-body">
                 <!-- Upload Header Logo -->
                 <div class="mb-3">
-                    <label for="logoUpload" class="form-label">Upload Header Logo</label>
-                    <input type="file" class="form-control" id="logoUpload">
+                    <label for="logoUpload" class="form-label">Upload Header Logo <small class="text-danger">* Only JPG
+                            or PNG files are allowed</small>
+                    </label>
+                    <input type="file" value="{{ (session('receipt.receipt.logo') ? session('receipt.logo') : '') }}" class="form-control" id="logoUpload" accept="image/jpeg, image/png">
                 </div>
 
                 <!-- Header Text -->
                 <div class="mb-3">
                     <label for="headerText" class="form-label">Header Text</label>
-                    <input type="text" class="form-control" id="headerText" placeholder="Enter header text">
+                    <input type="text" value="{{ (session('receipt.footerText') ? session('receipt.footerText') : '') }}" class="form-control" id="headerText" placeholder="Enter header text">
                 </div>
 
                 <!-- Receipt Preview -->
                 <div class="border p-3" id="receiptPreview">
-                    <img id="logoPreview" src="" alt="Header Logo" class="d-block mx-auto mb-3"
-                        style="max-width: 100px; display: none;">
+                    @if (session('receipt.logo'))
+                        <img id="logoPreview" src="{{ asset('storage/receipt_logos/' . session('receipt.logo')) }}"
+                            alt="Header Logo" class="d-block mx-auto mb-3" style="max-width: 100px;">
+                    @else
+                        <img id="logoPreview" src="" alt="Header Logo" class="d-block mx-auto mb-3"
+                            style="max-width: 100px; display: none;">
+                    @endif
+
                     <p id="headerTextPreview" class="text-center"></p>
                     <hr>
                     <p>Receipt content goes here...</p>
@@ -33,7 +41,7 @@
                 <!-- Footer Text -->
                 <div class="mb-3">
                     <label for="footerText" class="form-label">Footer Text</label>
-                    <input type="text" class="form-control" id="footerText" placeholder="Enter footer text">
+                    <input type="text" value="{{ (session('receipt.footerText') ? session('receipt.footerText') : '') }}"  class="form-control" id="footerText" placeholder="Enter footer text">
                 </div>
             </div>
             <div class="modal-footer">
@@ -52,6 +60,30 @@
 
         $("#logoUpload").change(function() {
             let file = this.files[0];
+
+            if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
+                $.toast({
+                    heading: 'Success',
+                    text: "Settings saved successfully",
+                    position: 'top-right',
+                    loaderBg: '#00c263',
+                    icon: 'success',
+                    hideAfter: 2000,
+                    stack: 6
+                });
+                $.toast({
+                    heading: 'Warning',
+                    text: "Only JPG or PNG files are allowed.",
+                    position: 'top-right',
+                    icon: 'warning',
+                    hideAfter: 2000,
+                    stack: 6
+                });
+                $(this).val('');
+                return;
+            }
+
+
             let formData = new FormData();
             formData.append("logo", file);
             formData.append("_token", "{{ csrf_token() }}");
@@ -74,28 +106,6 @@
         });
 
         $("#saveSettings").click(function() {
-            // let headerText = $("#headerText").val();
-            // let footerText = $("#footerText").val();
-
-            // localStorage.setItem("receiptHeaderText", headerText);
-            // localStorage.setItem("receiptFooterText", footerText);
-
-            // $("#headerTextPreview").text(headerText);
-            // $("#footerTextPreview").text(footerText);
-
-            // $.toast({
-            //     heading: 'Success',
-            //     text: "Settings saved successfully",
-            //     position: 'top-right',
-            //     loaderBg: '#00c263',
-            //     icon: 'success',
-            //     hideAfter: 2000,
-            //     stack: 6
-            // });
-
-            // setTimeout(function () {
-            //     $("#receiptPrintingModal").modal("hide");
-            // }, 1000);
 
             let headerText = $("#headerText").val();
             let footerText = $("#footerText").val();
