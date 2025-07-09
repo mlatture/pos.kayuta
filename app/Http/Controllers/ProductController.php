@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductImport;
 
-
+use App\Models\SystemLog;
 class ProductController extends Controller
 {
     private $object;
@@ -38,28 +38,28 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $products = Product::query()->with(['category', 'taxType']);
-    
+
         if (auth()->user()->organization_id) {
             $products->where('organization_id', auth()->user()->organization_id);
         }
-    
+
         if ($request->search) {
             $products->where('name', 'LIKE', "%{$request->search}%");
         }
-    
+
         if ($request->category_id) {
             $products->where('category_id', $request->category_id);
         }
-    
+
         $products = $products->latest()->get();
-    
+
         if ($request->wantsJson()) {
             return ProductResource::collection($products);
         }
-    
+
         return view('products.index', compact('products'));
     }
-    
+
     public function categoryProducts(Request $request)
     {
         try {
@@ -114,7 +114,7 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request)
     {
-        $filename = ''; 
+        $filename = '';
 
         if ($request->hasFile('image')) {
             $imageFile = $request->file('image');
@@ -124,11 +124,8 @@ class ProductController extends Controller
             $filename = time() . '_' . $imageFile->getClientOriginalName();
             $path = public_path('storage/products/' . $filename);
             app('image')->save($image, $path);
-
-            
         }
 
-   
         $quantity = $request->quantity === '*' ? -1 : $request->quantity;
 
         $product = Product::create([
@@ -145,6 +142,17 @@ class ProductController extends Controller
             'status' => $request->status,
             'product_vendor_id' => $request->product_vendor_id ?? null,
             'cost' => $request->cost,
+        ]);
+
+        SystemLog::create([
+            'created_at' => now(),
+            'transaction_type' => 'Inventory',
+            'status' => 'Success',
+            'customer_name' => auth()->user()->f_name && auth()->user()->l_name ? auth()->user()->f_name . ' ' . auth()->user()->l_name : auth()->user()->name,
+            'customer_email' => auth()->user()->email,
+            'user_id' => auth()->user()->id,
+            'description' => 'Created new product: ' . $product->name,
+            'sale_amount' => $request->price,
         ]);
 
         if (!$product) {
@@ -194,12 +202,15 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($request->id);
 
+        // Capture state before changes
+        $before = $product->only(['name', 'description', 'barcode', 'price', 'quantity', 'status', 'cost', 'discount_type', 'discount', 'category_id', 'tax_type_id', 'product_vendor_id']);
+
         $request->validate([
             'name' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10048',
-            'barcode' => 'nullable|string|max:50|unique:products,barcode,' . $request->id,
+            'barcode' => 'nullable|string|max:50|unique:products,barcode,' . $product->id,
             'cost' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer',
@@ -209,24 +220,25 @@ class ProductController extends Controller
             'discount' => 'nullable|numeric|min:0',
         ]);
 
-        // Check if the request has a file
+        // Handle image upload
         if ($request->hasFile('image')) {
             $imageFile = $request->file('image');
-
             $image = app('image')->resize($imageFile);
 
             $filename = time() . '_' . $imageFile->getClientOriginalName();
             $path = public_path('storage/products/' . $filename);
-
             app('image')->save($image, $path);
 
             $product->image = $filename;
-            $product->save();
-
         }
 
-        $product->fill($request->only(['name', 'category_id', 'tax_type_id', 'description', 'barcode', 'cost', 'price', 'quantity', 'status', 'type', 'discount_type', 'discount', 'product_vendor_id']));
+        // Update fields
+        $product->fill($request->only(['name', 'category_id', 'tax_type_id', 'description', 'barcode', 'cost', 'price', 'quantity', 'status', 'discount_type', 'discount', 'product_vendor_id']));
 
+        // Capture state after fill, before saving
+        $after = $product->only(array_keys($before));
+
+        // Save the product
         if (!$product->save()) {
             return response()->json(
                 [
@@ -236,6 +248,20 @@ class ProductController extends Controller
                 500,
             );
         }
+
+        // Log the update
+        SystemLog::create([
+            'created_at' => now(),
+            'transaction_type' => 'Inventory',
+            'status' => 'Success',
+            'customer_name' => trim((auth()->user()->f_name ?? '') . ' ' . (auth()->user()->l_name ?? '')) ?: auth()->user()->name,
+            'customer_email' => auth()->user()->email,
+            'user_id' => auth()->user()->id,
+            'description' => 'Updated product: ' . $product->name,
+            'sale_amount' => $product->price,
+            'before' => $before,
+            'after' => $after,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -279,48 +305,50 @@ class ProductController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls,csv'
+            'excel_file' => 'required|mimes:xlsx,xls,csv',
         ]);
-    
+
         $collection = \Maatwebsite\Excel\Facades\Excel::toCollection(null, $request->file('excel_file'))[0];
-    
+
         foreach ($collection->skip(1) as $row) {
-            if (!isset($row[3]) || empty($row[3])) continue; // Ensure "Name" is present
-    
+            if (!isset($row[3]) || empty($row[3])) {
+                continue;
+            } // Ensure "Name" is present
+
             $categoryName = isset($row[2]) && trim($row[2]) ? trim($row[2]) : 'Other';
-    
+
             $category = \App\Models\Category::firstOrCreate(
                 ['name' => $categoryName],
                 [
                     'status' => 1,
-                    'organization_id' => auth()->user()->organization_id
-                ]
+                    'organization_id' => auth()->user()->organization_id,
+                ],
             );
-    
+
             Product::updateOrCreate(
                 ['barcode' => $row[5] ?? null], // UPC
                 [
                     'category_id' => $category->id,
-                    'name' => $row[3] ?? null,                // Name
-                    'description' => $row[4] ?? null,         // Description
-                    'barcode' => $row[5] ?? null,             // UPC
-                    'account' => $row[6] ?? null,             // Account
+                    'name' => $row[3] ?? null, // Name
+                    'description' => $row[4] ?? null, // Description
+                    'barcode' => $row[5] ?? null, // UPC
+                    'account' => $row[6] ?? null, // Account
                     'price' => is_numeric($row[7]) ? $row[7] : 0, // Price
-                    'cost' => is_numeric($row[8]) ? $row[8] : 0,  // Cost
-                    'markup' => $row[9] ?? null,              // Markup %
-                    'profit' => $row[10] ?? null,             // Profit
+                    'cost' => is_numeric($row[8]) ? $row[8] : 0, // Cost
+                    'markup' => $row[9] ?? null, // Markup %
+                    'profit' => $row[10] ?? null, // Profit
                     'quantity' => is_numeric($row[11]) ? $row[11] : 0, // Quantity
                     'status' => isset($row[12]) && strtolower($row[12]) == 'true' ? 1 : 0, // IsActive
                     'suggested_addon' => 0,
-                    'organization_id' => auth()->user()->organization_id
-                ]
+                    'organization_id' => auth()->user()->organization_id,
+                ],
             );
         }
-    
+
         return redirect()->back()->with('success', 'Products imported successfully.');
     }
-    
-    public function toggleStatus(Product $product) 
+
+    public function toggleStatus(Product $product)
     {
         $product->status = !$product->status;
         $product->save();
@@ -328,18 +356,17 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'status' => $product->status,
-            'message' => 'Product status updated successfully.'
-
+            'message' => 'Product status updated successfully.',
         ]);
-    }    
+    }
     public function toggleQuickPick(Product $product)
     {
         $product->quick_pick = !$product->quick_pick;
         $product->save();
 
         return response()->json([
-            'success' => true, 
-            'quick_pick' => $product->quick_pick
+            'success' => true,
+            'quick_pick' => $product->quick_pick,
         ]);
     }
 
@@ -350,7 +377,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'show_in_category' => $product->show_in_category
+            'show_in_category' => $product->show_in_category,
         ]);
     }
 }

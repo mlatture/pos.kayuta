@@ -40,6 +40,7 @@ use App\Http\Controllers\MeterController;
 use App\Http\Controllers\SeasonalSettingController;
 use App\Http\Controllers\SeasonalRenewalGuestController;
 use App\Http\Controllers\SeasonalTransactionsController;
+use App\Http\Controllers\SystemLogsController;
 use App\Http\Controllers\ReceiptController as NewReceiptController;
 use App\Models\Order;
 Route::get('/', function () {
@@ -51,13 +52,10 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        Route::get('system/logs', [SystemLogsController::class, 'index'])->name('admin.system_logs.index');
+
         Route::post('/receipt/save-settings', [NewReceiptController::class, 'saveSettings'])->name('receipt.save.settings');
 
-        Route::get('/test/receipt', function () {
-            $order = Order::latest()->first(); // Or whatever logic fits
-            return view('emails.orderEmail', compact('order'));
-        });
-        
 
         Route::post('receipt/upload/logo', [NewReceiptController::class, 'uploadReceiptLogo'])->name('receipt.upload.logo');
 

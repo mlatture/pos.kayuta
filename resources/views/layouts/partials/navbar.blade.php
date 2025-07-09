@@ -307,11 +307,19 @@
                 @hasPermission(config('constants.role_modules.seasonal_settings.value'))
                     <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index') }}">
                             <i class="fa-solid fa-gears"></i> <span>
-                                {{ config('constants.role_modules.seasonal_settings.name')}}
+                                {{ config('constants.role_modules.seasonal_settings.name') }}
                             </span>
                         </a></li>
                 @endHasPermission
 
+
+                @hasPermission(config('constants.role_modules.system_logs.value'))
+                    <li><a class="dropdown-item" href="{{ route('admin.system_logs.index') }}">
+                            <i class="fa-solid fa-table-columns"></i> <span>
+                                {{ config('constants.role_modules.system_logs.name') }}
+                            </span>
+                        </a></li>
+                @endHasPermission
 
 
 

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 
 use App\Models\ScheduledPayment;
+use App\Models\SystemLog;
 
 use App\Notifications\PaymentReminder;
 
@@ -29,15 +30,25 @@ class SendPaymentReminders extends Command
      *
      * @return int
      */
+
     public function handle()
     {
         $upcoming = ScheduledPayment::where('reminder_sent', false)
-            ->whereBetween('created_at', [now(), now()->addDays(3)])
+            ->whereBetween('payment_date', [now(), now()->addDays(3)])
             ->with('customer')
             ->get();
 
         if ($upcoming->isEmpty()) {
-            $this->info('No scheduled payments due in the next 3 days.');
+            $description = 'No scheduled payments due in the next 3 days';
+
+            SystemLog::create([
+                'transaction_type' => 'Scheduled Job',
+                'status' => 'Failed',
+                'description' => $description,
+                'created_at' => now(),
+            ]);
+
+            $this->info($description);
             return Command::SUCCESS;
         }
 
@@ -53,19 +64,39 @@ class SendPaymentReminders extends Command
                 continue;
             }
 
-            $customer->notify(new PaymentReminder($payment));
+            try {
+                $customer->notify(new PaymentReminder($payment));
 
-            $payment->reminder_sent = true;
-            $payment->save();
+                $payment->reminder_sent = true;
+                $payment->save();
 
-            $this->info("Reminder sent to {$customer->email} for {$payment->amount}");
-            $sent++;
+                $logStatus = 'Success';
+                $description = "Reminder email sent for payment ID {$payment->id}";
+            } catch (\Exception $e) {
+                $logStatus = 'Failed';
+                $description = "Failed to send reminder for payment ID {$payment->id}: " . $e->getMessage();
+            }
+
+            SystemLog::create([
+                'transaction_type' => 'Scheduled Job',
+                'status' => $logStatus,
+                'customer_name' => $customer->f_name . ' ' . $customer->l_name,
+                'customer_email' => $customer->email,
+                'user_id' => $customer->id,
+                'description' => $description,
+                'sale_amount' => $payment->amount,
+                'payment_type' => $payment->payment_type,
+                'created_at' => now(),
+            ]);
+
+            $this->info("Reminder {$logStatus} for {$customer->email} (Payment ID {$payment->id})");
+
+            $logStatus === 'Success' ? $sent++ : $skipped++;
         }
 
         $this->line('---------');
         $this->info("Total reminders sent: {$sent}");
-        $this->warn("Total skipped (no customer): {$skipped}");
-    
+        $this->warn("Total skipped or failed: {$skipped}");
 
         return Command::SUCCESS;
     }

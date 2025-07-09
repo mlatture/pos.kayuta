@@ -5,8 +5,8 @@
 
 @section('content')
 
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
+<div class="card shadow-sm mb-4 overflow-auto" style="max-height: 80vh;">
+    <div class="card-body ">
         <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 

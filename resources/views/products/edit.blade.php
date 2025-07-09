@@ -5,7 +5,7 @@
 
 @section('content')
 
-    <div class="card">
+    <div class="card shadow-sm mb-4 overflow-auto" style="max-height: 80vh;">
         <div class="card-body">
 
             <form enctype="multipart/form-data" id="editProductForm">
@@ -14,8 +14,8 @@
                 <input type="hidden" name="id" value="{{ $product->id }}">
                 <div class="form-group">
                     <label for="name">Name</label>
-                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" id="name"
-                        placeholder="Name" value="{{ old('name', $product->name) }}" minlength="3" required>
+                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                        id="name" placeholder="Name" value="{{ old('name', $product->name) }}" minlength="3" required>
                     @error('name')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -137,7 +137,8 @@
                 <div class="form-group">
                     <label for="quantity">Quantity</label>
                     <input type="text" name="quantity" class="form-control @error('quantity') is-invalid @enderror"
-                        id="quantity" placeholder="Quantity" value="{{ old('quantity', $product->quantity) }}" required>
+                        id="quantity" placeholder="Quantity" value="{{ old('quantity', $product->quantity) }}"
+                        required>
                     @error('quantity')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -249,7 +250,7 @@
                         setTimeout(() => {
                             window.location.href = "{{ route('products.index') }}";
                         }, 2000);
-                        
+
                     } else {
                         Swal.fire({
                             title: 'Error!',

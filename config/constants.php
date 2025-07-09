@@ -249,5 +249,10 @@ return [
             'name' => 'Seasonal Settings',
             'value' => 'seasonal_settings'
         ],
+
+        'system_logs' => [
+            'name' => 'System Logs',
+            'value' => 'system_logs'
+        ],
     ]
 ];
