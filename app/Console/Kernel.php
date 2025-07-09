@@ -6,6 +6,8 @@ use App\Console\Commands\GenerateSqlDump;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Http\Controllers\NewReservationController;
+
+use App\Console\Commands\SendPaymentReminders;
 class Kernel extends ConsoleKernel
 {
     /**
@@ -25,11 +27,13 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
+        $schedule->command(SendPaymentReminders::class)->daily();
         $schedule
             ->call(function () {
                 (new App\Http\Controllers\NewReservationController())->deleteCart();
             })
             ->everyMinutes();
+
     }
 
     /**
