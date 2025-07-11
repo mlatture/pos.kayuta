@@ -257,6 +257,13 @@ class SeasonalTransactionsController extends Controller
             $downPayment = $validated['down_payment'] ?? 0;
             $remaining = $fullAmount - $downPayment;
             $months = $startDate->diffInMonths($endDate);
+            if ($months <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment schedule: final payment date must be after start date.',
+                ]);
+            }
+            
             $monthlyAmount = round($remaining / $months, 2);
             $totalScheduled = 0;
             
