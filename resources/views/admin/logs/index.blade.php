@@ -68,20 +68,23 @@
 @endsection
 
 @section('js')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+    <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
     <script>
         $(document).ready(function() {
-            $('#logs-table').DataTable({
+            const table = $('#logs-table').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.system_logs.index') }}',
-                columns: [
-                    // {
-                    //     data: 'DT_RowIndex',
-                    //     name: 'DT_RowIndex',
-                    //     orderable: false,
-                    //     searchable: false
-                    // },
-                    {
+                ajax: {
+                    url: '{{ route('admin.system_logs.index') }}',
+                    data: function(d) {
+                        d.date_range = $('#date-range').val();
+                        d.types = $('#type-filter').val();
+                    }
+                },
+                columns: [{
                         data: 'created_at',
                         name: 'created_at'
                     },
@@ -122,21 +125,15 @@
                         name: 'before',
                         orderable: false,
                         searchable: false,
-                        render: function(data) {
-                            return data ? `<pre>${data}</pre>` : '-';
-                        }
-
+                        render: data => data ? `<pre>${data}</pre>` : '-'
                     },
                     {
                         data: 'after',
                         name: 'after',
                         orderable: false,
                         searchable: false,
-                        render: function(data) {
-                            return data ? `<pre>${data}</pre>` : '-';
-                        }
-
-                    },
+                        render: data => data ? `<pre>${data}</pre>` : '-'
+                    }
                 ],
                 responsive: true,
                 dom: '<"dt-top-container d-flex justify-content-between align-items-center mb-3"' +
@@ -149,9 +146,82 @@
                     search: 'Search: ',
                     lengthMenu: 'Show _MENU_ entries'
                 },
+                pageLength: 10,
+                initComplete: function() {
+                    $('.custom-filter-checkbox').html(`
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="text" id="date-range" class="form-control form-control-sm" placeholder="Select date range" style="max-width: 200px;">
+                            <select id="type-filter" class="form-select form-select-sm" multiple style="width: 200px"></select>
+                        </div>
+                    `);
 
-                pageLength: 10
+                    $('#type-filter').select2({
+                        placeholder: 'Select types',
+                        width: 'resolve'
+                    });
+
+
+
+
+                    // Fetch distinct types for filter
+                    $.get('{{ route('admin.system_logs.index') }}?get_types=1', function(data) {
+                        if (data.types) {
+                            data.types.forEach(function(type) {
+                                $('#type-filter').append(new Option(type, type));
+                            });
+                        }
+                    });
+
+                    $('#date-range, #type-filter').on('change', function() {
+                        $('#logs-table').DataTable().draw();
+                    });
+
+                    // Daterangepicker config
+                    $('#date-range').daterangepicker({
+                        autoUpdateInput: false,
+                        locale: {
+                            cancelLabel: 'Clear'
+                        }
+                    });
+
+                    $('#date-range').on('apply.daterangepicker', function(ev, picker) {
+                        $(this).val(picker.startDate.format('YYYY-MM-DD') + ' to ' + picker
+                            .endDate.format('YYYY-MM-DD'));
+                        $('#logs-table').DataTable().draw();
+                    });
+
+                    $('#date-range').on('cancel.daterangepicker', function(ev, picker) {
+                        $(this).val('');
+                        $('#logs-table').DataTable().draw();
+                    });
+
+                }
+            });
+
+            // Bind date & type filters
+            $('#date-range, #type-filter').on('change', function() {
+                table.draw();
+            });
+
+            // Initialize daterangepicker
+            $('#date-range').daterangepicker({
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear'
+                }
+            });
+
+            $('#date-range').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' to ' + picker.endDate.format(
+                    'YYYY-MM-DD'));
+                table.draw();
+            });
+
+            $('#date-range').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                table.draw();
             });
         });
     </script>
+
 @endsection

@@ -12,46 +12,46 @@ class SystemLogsController extends Controller
 {
     public function index(Request $request)
     {
+        // Return types for filter dropdown
+        if ($request->get('get_types')) {
+            $types = SystemLog::distinct()->pluck('transaction_type')->filter()->values();
+            return response()->json(['types' => $types]);
+        }
+
         if ($request->ajax()) {
-            $logs = SystemLog::select(['id', 'transaction_type', 'sale_amount', 'status', 'payment_type', 'confirmation_number', 'customer_name', 'customer_email', 'user_id', 'description', 'before', 'after', 'created_at'])->latest();
+            $logs = SystemLog::query();
 
-            return DataTables::of($logs)
+            // Date range filter
+            if ($request->has('date_range') && $request->date_range) {
+                [$start, $end] = explode(' to ', $request->date_range);
+                $logs->whereBetween('created_at', [Carbon::parse($start)->startOfDay(), Carbon::parse($end)->endOfDay()]);
+            }
+
+            // Type multi-select filter
+            if ($request->has('types') && is_array($request->types)) {
+                $logs->whereIn('transaction_type', $request->types);
+            }
+
+            return DataTables::of($logs->latest())
                 ->addIndexColumn()
-                ->editColumn('created_at', function ($log) {
-                    return Carbon::parse($log->created_at)->format('F j, Y g:i A');
-                })
-                ->editColumn('before', function ($log) {
-                    $before = is_array($log->before) ? $log->before : json_decode($log->before ?? '[]', true);
-                    if (empty($before)) {
-                        return '-';
-                    }
-
-                    $lines = collect($before)
-                        ->map(function ($val, $key) {
-                            return "$key: " . (is_scalar($val) ? $val : json_encode($val));
-                        })
-                        ->implode("\n");
-
-                    return '<pre>' . e($lines) . '</pre>';
-                })
-                ->editColumn('after', function ($log) {
-                    $after = is_array($log->after) ? $log->after : json_decode($log->after ?? '[]', true);
-                    if (empty($after)) {
-                        return '-';
-                    }
-
-                    $lines = collect($after)
-                        ->map(function ($val, $key) {
-                            return "$key: " . (is_scalar($val) ? $val : json_encode($val));
-                        })
-                        ->implode("\n");
-
-                    return '<pre>' . e($lines) . '</pre>';
-                })
+                ->editColumn('created_at', fn($log) => Carbon::parse($log->created_at)->format('F j, Y g:i A'))
+                ->editColumn('before', fn($log) => $this->formatJsonToPre($log->before))
+                ->editColumn('after', fn($log) => $this->formatJsonToPre($log->after))
                 ->rawColumns(['before', 'after'])
                 ->make(true);
         }
 
         return view('admin.logs.index');
+    }
+
+    private function formatJsonToPre($json)
+    {
+        $data = is_array($json) ? $json : json_decode($json ?? '[]', true);
+        if (empty($data)) {
+            return '-';
+        }
+
+        $lines = collect($data)->map(fn($val, $key) => "$key: " . (is_scalar($val) ? $val : json_encode($val)))->implode("\n");
+        return '<pre>' . e($lines) . '</pre>';
     }
 }
