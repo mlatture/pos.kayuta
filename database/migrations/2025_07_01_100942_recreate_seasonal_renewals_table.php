@@ -16,7 +16,7 @@ return new class extends Migration {
 
         Schema::create('seasonal_renewals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade'); // remove
             $table->string('customer_name')->nullable();
             $table->string('customer_email')->nullable();
             $table->boolean('allow_renew')->default(false);
@@ -29,14 +29,15 @@ return new class extends Migration {
             $table->decimal('final_rate', 10, 2)->nullable(); // auto-calculate
 
             $table->enum('payment_plan', ['paid_in_full', 'monthly_ach', 'monthly_credit'])->nullable();
-            $table->unsignedBigInteger('payment_plan_id')->nullable();
-            $table->string('selected_payment_method')->nullable();
+            $table->unsignedBigInteger('payment_plan_id')->nullable(); // remove
+        
+            $table->string('selected_payment_method')->nullable(); // remove
             $table->tinyInteger('day_of_month')->nullable()->comment('Any number less than 29');
 
-            $table->decimal('offered_rate', 10, 2)->nullable(); // existing field
-            $table->boolean('renewed')->default(false);
-            $table->date('response_date')->nullable();
-            $table->text('notes')->nullable();
+            $table->decimal('offered_rate', 10, 2)->nullable(); // remove
+            $table->boolean('renewed')->default(false); // remove
+            $table->date('response_date')->nullable(); // remove
+            $table->text('notes')->nullable(); // remove
 
             $table->timestamps();
         });

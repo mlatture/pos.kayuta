@@ -11,9 +11,27 @@ class ScheduledPayment extends Model
 
     protected $table = 'scheduled_payments';
 
+    protected $fillable = [
+        'customer_name',
+        'customer_email',
+        'payment_date',
+        'payment_type',
+        'reference_key',
+        'reservation_id',
+        'reminder_sent',
+        'recurring',
+        'frequency',
+        'status',
+        'amount'
+
+    ];
+
+    public $casts = [
+        'response_date' => 'array'
+    ];
     public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_email', 'email');
     }
     
 }

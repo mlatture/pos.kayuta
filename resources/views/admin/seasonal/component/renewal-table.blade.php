@@ -15,7 +15,7 @@
                 <th>Discount Note</th>
                 <th>Final Rate</th>
                 <th>Payment Plan</th>
-                <th>Payments</th>
+                {{-- <th>Payments</th> --}}
                 <th>Card/Account</th>
                 <th>Day of Month</th>
 
@@ -36,16 +36,16 @@
                     <td>${{ $renewal->discount_amount }}</td>
                     <td>{{ $renewal->discount_note }}</td>
                     <td>${{ $renewal->rate }}</td>
-                    <td>{{ $renewal->payment_plan }}</td>
-                    <td>
+                    <td>{{ str_replace('_', ' ', $renewal->payment_plan) }}</td>
+                    {{-- <td>
                         @if ($renewal->linked_plan_id)
                             <a href="{{ route('payment-plans.show', $renewal->linked_plan_id) }}"
                                 target="_blank">View</a>
                         @else
                             —
                         @endif
-                    </td>
-                    <td>{{ $renewal->masked_account }}</td>
+                    </td> --}}
+                    <td>{{ $renewal->selected_card }}</td>
                     <td>{{ $renewal->day_of_month }}</td>
 
                     <td>

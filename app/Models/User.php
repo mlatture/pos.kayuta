@@ -88,7 +88,7 @@ class User extends Authenticatable
 
     public function seasonalRenewal()
     {
-        return $this->hasOne(SeasonalRenewal::class);
+        return $this->hasOne(SeasonalRenewal::class, 'email');
     }
 
     public function getSeasonalRatesAttribute()

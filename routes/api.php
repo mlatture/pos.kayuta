@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\SeasonalTransactionsController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -22,6 +23,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('upload-receipt-logo', [ReceiptController::class, 'uploadReceiptLogo']);
+
+Route::post('seasonal/payment/{user}', [SeasonalTransactionsController::class, 'storeScheduledPayments']);
 
 Route::get('search-sites', [CheckAvailability::class, 'getSites']);
 Route::get('sites-and-reservations', [CheckAvailability::class, 'getReservAndSites']);

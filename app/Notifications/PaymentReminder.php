@@ -46,9 +46,8 @@ class PaymentReminder extends Notification
     {
         return (new MailMessage)
             ->subject('Upcoming Payment Reminder')
-            ->greeting('Hello ' . ($notifiable->first_name ?? $notifiable->name) . ',')
-            ->line("This is a reminder that a payment of **$" . number_format($this->payment->amount, 2) . "** will be processed on **" . Carbon::parse($this->payment->scheduled_at)->format('F j, Y') . "**.")
-            ->line("It will be charged to your card or account ending in **" . $this->payment->card_last4 . "**.")
+            ->greeting('Hello ' . ($notifiable->customer_name) . ',')
+            ->line("This is a reminder that a payment of **$" . number_format($this->payment->first()->amount, 2) . "** will be processed on **" . Carbon::parse($this->payment->first()->payment_date)->format('F j, Y') . "**.")
             ->line("You can check the **My Bills** section of your account to view or adjust your payments.")
             ->salutation('Thank you, Kayuta Lake Team');
 

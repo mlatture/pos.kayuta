@@ -11,11 +11,13 @@ use App\Models\User;
 use App\Models\SeasonalRate;
 use App\Models\SeasonalRenewal;
 use App\Models\DocumentTemplate;
-
+use App\Models\ScheduledPayment;
 use App\Notifications\SeasonalRenewalLinkNotification;
 
 use PhpOffice\PhpWord\TemplateProcessor;
 use Barryvdh\DomPDF\Facade\Pdf;
+
+use Carbon\Carbon;
 
 class SeasonalTransactionsController extends Controller
 {
@@ -117,27 +119,21 @@ class SeasonalTransactionsController extends Controller
                     }
 
                     SeasonalRenewal::updateOrCreate(
-                        [
-                            'customer_id' => $user->id,
-                            'offered_rate' => $rate->rate_price,
-                            'status' => 'sent offer',
-                        ],
+                        
                         [
                             'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
                             'customer_email' => $user->email,
                             'allow_renew' => true,
+                            'status' => 'sent offer',
+                            
                             'initial_rate' => $rate->rate_price,
                             'discount_percent' => null,
                             'discount_amount' => null,
                             'discount_note' => null,
                             'final_rate' => $rate->rate_price,
                             'payment_plan' => null,
-                            'payment_plan_id' => null,
-                            'selected_payment_method' => null,
+                            'selected_card' => null,
                             'day_of_month' => null,
-                            'renewed' => falsef,
-                            'response_date' => null,
-                            'notes' => 'Auto-created during offer send',
                         ],
                     );
 
@@ -152,16 +148,12 @@ class SeasonalTransactionsController extends Controller
                         $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
                         $filePath = public_path("storage/contracts/{$docsFile->name}");
                         // $filePath2 = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
-                        
 
                         $filePath = public_path("storage/contracts/{$docsFile->name}");
 
                         if (!file_exists($filePath)) {
                             mkdir($filePath, 0775, true);
                         }
-                        
-                        
-                      
 
                         // $templateProcessor = new TemplateProcessor($templatePath);
                         // $templateProcessor->setValues([
@@ -211,6 +203,126 @@ class SeasonalTransactionsController extends Controller
         }
     }
 
-   
-    
+    // Through Api Transactions (It Triggers from Book.kayuta.com)
+    public function storeScheduledPayments(User $user, SeasonalRate $rate, Request $request)
+    {
+        $validated = $request->validate([
+            'payment_type' => 'required|in:full,installments', // User selection UI (not stored as-is)
+            'payment_method' => 'required|in:credit,ach,in_store,mailed_check', // Match ENUM: 'credit', 'ach'
+            'down_payment' => 'nullable|numeric|min:0',
+        ]);
+
+        $renewal = SeasonalRenewal::where('customer_email', $user->email)->latest()->first();
+        if (!$renewal) {
+            return response()->json(['Renewal record not found.']);
+        }
+
+        $rate = SeasonalRate::where('rate_price', $renewal->initial_rate)->latest()->first();
+        if (!$rate) {
+            return response()->json(['Seasonal rate not found.']);
+        }
+
+        $map = [
+            'credit' => 'credit',
+            'ach' => 'ach',
+        ];
+        
+        $paymentMethod = $map[$request->payment_method];
+        
+        $fullAmount = $renewal->final_rate;
+        $dayOfMonth = $renewal->day_of_month ?? 5; // fallback
+        $startDate = Carbon::parse($rate->payment_plan_starts);
+        $endDate = Carbon::parse($rate->final_payment_due);
+
+        if ($validated['payment_type'] === 'full') {
+            // Full Payment - frequency = none
+            ScheduledPayment::create([
+                'customer_email' => $user->email,
+                'customer_name' => $user->f_name . ' ' . $user->l_name,
+                'payment_date' => now(),
+                'amount' => $fullAmount,
+                'payment_type' => $paymentMethod, // 'ach' or 'credit'
+                'frequency' => 'none',
+                'status' => 'Completed',
+            ]);
+
+            $renewal->update([
+                'payment_plan' => $paymentMethod === 'ach' ? 'paid_in_full' : 'paid_in_full',
+                'status' => 'paid in full',
+                'day_of_month' => $dayOfMonth,
+                'renewed' => true,
+                'selected_card' => $paymentMethod,
+            ]);
+        } else {
+            $downPayment = $validated['down_payment'] ?? 0;
+            $remaining = $fullAmount - $downPayment;
+            $months = $startDate->diffInMonths($endDate);
+            $monthlyAmount = round($remaining / $months, 2);
+            $totalScheduled = 0;
+            
+            DB::beginTransaction();
+            try {
+                if ($downPayment > 0) {
+                    ScheduledPayment::create([
+                        'customer_email' => $user->email,
+                        'customer_name' => $user->f_name . ' ' . $user->l_name,
+                        'payment_date' => now(),
+                        'amount' => $downPayment,
+                        'payment_type' => $paymentMethod,
+                        'frequency' => 'none',
+                        'status' => 'Completed',
+                    ]);
+                }
+
+                for ($i = 0; $i < $months; $i++) {
+                    $due = $startDate->copy()->addMonths($i)->day($dayOfMonth);
+                    if ($due->lt($startDate)) {
+                        $due->addMonth();
+                    }
+                
+                    // Handle rounding adjustment for last month
+                    $amount = $i === $months - 1
+                        ? round($remaining - $totalScheduled, 2)
+                        : $monthlyAmount;
+                
+                    $totalScheduled += $amount;
+                
+                    ScheduledPayment::create([
+                        'customer_email' => $user->email,
+                        'customer_name' => $user->f_name . ' ' . $user->l_name,
+                        'payment_date' => $due,
+                        'amount' => $amount,
+                        'payment_type' => $paymentMethod,
+                        'frequency' => 'monthly',
+                        'status' => 'Pending',
+                    ]);
+                }
+                
+
+                $renewal->update([
+                    'payment_plan' => $paymentMethod === 'ach' ? 'monthly_ach' : 'monthly_credit',
+                    'status' => 'paid deposit',
+                    'selected_card' => $paymentMethod,
+                    'day_of_month' => $dayOfMonth,
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()
+                    ->json([ 
+                        'success' => false,
+                        'message' => 'Failed to create payment schedule: ' . $e->getMessage()]);
+            }
+        }
+
+        
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment setup complete! Redirecting in 3s...',
+        ]);
+
+        
+    }
 }
