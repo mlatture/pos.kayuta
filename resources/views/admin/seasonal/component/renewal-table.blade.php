@@ -91,3 +91,25 @@
     <li class="list-group-item">No Seasonal Renewals Yet.</li>
 
 @endif
+@section('js')
+    <script>
+        $(document).ready(function() {
+            $('.table').DataTable({
+                responsive: true,
+                stateSave: true,
+                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
+                buttons: [
+                    'colvis',
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+
+                language: {
+                    search: 'Search: ',
+                    lengthMenu: 'Show _MENU_ entries',
+                },
+                pageLength: 10
+            });
+
+        })
+    </script>
+@endsection

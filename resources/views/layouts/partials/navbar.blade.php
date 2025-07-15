@@ -305,7 +305,7 @@
 
 
                 @hasPermission(config('constants.role_modules.seasonal_settings.value'))
-                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index') }}">
+                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index', ['tab' => 'renewals'])  }}">
                             <i class="fa-solid fa-gears"></i> <span>
                                 {{ config('constants.role_modules.seasonal_settings.name') }}
                             </span>
