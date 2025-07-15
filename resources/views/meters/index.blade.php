@@ -5,11 +5,14 @@
 
 @section('content')
     <div class="container-fluid">
-        @session('info')
-            <div class="alert alert-info">
-                {{ session('info') }}
-            </div>
-        @endsession
+        @foreach (['success', 'error', 'info', 'warning'] as $msg)
+            @if (session($msg))
+                <div class="alert alert-{{ $msg }}">
+                    {{ session($msg) }}
+                </div>
+            @endif
+        @endforeach
+
         <!-- Upload Form -->
         <div class="row mb-4">
             <div class="col-lg-8 mx-auto">
@@ -17,7 +20,8 @@
                     <div class="card-body">
                         <h5 class="mb-4"><i class="fas fa-camera me-2 text-primary"></i>Upload or Take a Photo of the
                             Electric Meter</h5>
-                        <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data" id="meter-form">
+                        <form action="{{ route('meters.read') }}" method="POST" enctype="multipart/form-data"
+                            id="meter-form">
                             @csrf
                             <div class="mb-3">
                                 <input type="file" class="form-control" name="photo" accept="image/*"
@@ -27,7 +31,7 @@
                                 <i class="fas fa-bolt me-1"></i> Scan and Preview Bill
                             </button>
                             <div id="loading-msg" class="mt-3 text-center text-muted" style="display: none;">
-                                <i class="fa-solid fa-hourglass-end fa-spin"></i>  Please wait, scanning meter...
+                                <i class="fa-solid fa-hourglass-end fa-spin"></i> Please wait, scanning meter...
                             </div>
 
                         </form>

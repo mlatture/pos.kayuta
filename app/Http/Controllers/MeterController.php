@@ -404,6 +404,10 @@ class MeterController extends Controller
                 ]);
             }
 
+            if ($lastReading->kwhNo >= $request->kwhNo) {
+                return redirect()->route('meters.index')->with('warning', 'New reading must be greater than the last reading.');
+            }
+
             return redirect()->route('meters.index')->with('info', 'Reading updated (no customer found).');
         }
 
