@@ -10,6 +10,7 @@ use App\Models\Site;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Bills;
+use App\Models\BusinessSettings;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -121,7 +122,7 @@ class MeterController extends Controller
         $previousDate = $lastReading?->date ?? now();
         $usage = $currentReading - $previousKwh;
         $days = now()->diffInDays(Carbon::parse($previousDate));
-        $rate = 0.12;
+        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
         $total = $usage * $rate;
 
         // 6. Find reservation for the reading date
@@ -246,7 +247,7 @@ class MeterController extends Controller
         $previousDate = $lastReading?->date ?? now();
         $usage = $currentReading - $previousKwh;
         $days = now()->diffInDays(Carbon::parse($previousDate));
-        $rate = 0.12;
+        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
         $total = $usage * $rate;
 
         // 6. Find reservation for the reading date
@@ -340,7 +341,8 @@ class MeterController extends Controller
         $previousDate = $lastReading?->date ?? now();
         $usage = $data['kwhNo'] - $previousKwh;
         $days = now()->diffInDays(\Carbon\Carbon::parse($previousDate));
-        $rate = 0.12;
+        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
+
         $total = $usage * $rate;
 
         $reservation = Reservation::where('siteid', $data['siteid'])->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
@@ -389,7 +391,7 @@ class MeterController extends Controller
             'end_date' => 'required|date',
         ]);
 
-        $rate = $request->rate ?? 0.12;
+        $rate = $request->rate ?? BusinessSettings::where('type', 'electric_meter_rate')->value('value');
         $readingDate = Carbon::now();
 
         // CASE 1: No customer — update existing reading

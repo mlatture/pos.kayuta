@@ -11,7 +11,7 @@ class BusinessSettingController extends Controller
 
     public function index()
     {
-        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN', 'cancellation'];
+        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN', 'cancellation', 'electric_meter_rate'];
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
@@ -159,5 +159,28 @@ class BusinessSettingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Cancellation settings updated.');
+    }
+
+    public function electricMeterRateUpdate(Request $request)
+    {
+        $request->validate([
+            'electric_meter_rate' => 'required|numeric|min:0',
+        ]);
+
+        $electricMeterRate = $request->input('electric_meter_rate');
+
+        $setting = BusinessSettings::where('type', 'electric_meter_rate')->first();
+
+        if ($setting) {
+            $setting->value = $electricMeterRate;
+            $setting->save();
+        } else {
+            BusinessSettings::create([
+                'type' => 'electric_meter_rate',
+                'value' => $electricMeterRate,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Electric Meter Rate updated successfully.');
     }
 }

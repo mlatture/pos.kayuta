@@ -285,6 +285,7 @@ Route::prefix('admin')
         Route::post('general-settings/update', [BusinessSettingController::class, 'generalUpdate'])->name('admin.general-settings.update');
         Route::post('search-settings/update', [BusinessSettingController::class, 'searchUpdate'])->name('admin.search-settings.update');
         Route::post('cart-settings/update', [BusinessSettingController::class, 'cartUpdate'])->name('admin.cart-settings.update');
+        Route::post('electric-meter-rate/update', [BusinessSettingController::class, 'electricMeterRateUpdate'])->name('admin.electric-meter-rate.update');
         Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
         Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
         Route::post('settinfs/cancellation-fee', [BusinessSettingController::class, 'cancellationUpdate'])->name('admin.cancellation-settings.update');
