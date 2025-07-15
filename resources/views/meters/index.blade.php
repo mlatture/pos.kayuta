@@ -5,6 +5,11 @@
 
 @section('content')
     <div class="container-fluid">
+        @session('info')
+            <div class="alert alert-info">
+                {{ session('info') }}
+            </div>
+        @endsession
         <!-- Upload Form -->
         <div class="row mb-4">
             <div class="col-lg-8 mx-auto">
