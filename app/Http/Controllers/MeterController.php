@@ -27,7 +27,7 @@ class MeterController extends Controller
             ->havingRaw('MAX(date) <= ?', [$thresholdDate])
             ->pluck('meter_number');
 
-        $overdueSites = Site::whereIn('neter_number', $overDueMeterNumbers)->get();
+        $overdueSites = Site::whereIn('meter_number', $overDueMeterNumbers)->get();
         return view('meters.index', compact('overdueSites'));
     }
 
