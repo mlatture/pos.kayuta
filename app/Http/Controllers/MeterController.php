@@ -87,7 +87,6 @@ class MeterController extends Controller
         $content = $data['choices'][0]['message']['content'] ?? null;
 
         if (!$content || !str_contains($content, '{')) {
-
             session()->flash('retry_path', $path);
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
@@ -213,7 +212,6 @@ class MeterController extends Controller
         $content = $data['choices'][0]['message']['content'] ?? null;
 
         if (!$content || !str_contains($content, '{')) {
-
             session()->flash('retry_path', $path);
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
@@ -283,7 +281,7 @@ class MeterController extends Controller
         ]);
     }
 
-    public function unregister(Request $request) 
+    public function unregister(Request $request)
     {
         return view('meters.unregistered', [
             'meter_number' => $request->meter_number,
@@ -291,7 +289,6 @@ class MeterController extends Controller
             'image' => $request->image,
             'date' => $request->date,
         ]);
-    
     }
 
     public function register(Request $request)
@@ -361,7 +358,6 @@ class MeterController extends Controller
             'total' => $total,
             'previousKwh' => $previousKwh,
             'new_meter_number' => true,
-
         ];
 
         return view('meters.preview', [
@@ -373,7 +369,6 @@ class MeterController extends Controller
             'end_date' => now()->toDateString(),
             'days' => $days,
             'reservation_id' => $reservation->id ?? '',
-
         ]);
     }
 
@@ -397,8 +392,22 @@ class MeterController extends Controller
         $rate = $request->rate ?? 0.12;
         $readingDate = Carbon::now();
 
-    
+        // CASE 1: No customer — update existing reading
+        if (!$request->filled('customer_id')) {
+            $latestReading = Readings::where('meter_number', $request->meter_number)->latest('date')->first();
 
+            if ($latestReading) {
+                $latestReading->update([
+                    'kwhNo' => $request->kwhNo,
+                    'image' => $request->image,
+                    'date' => $readingDate,
+                ]);
+            }
+
+            return redirect()->route('meters.index')->with('info', 'Reading updated (no customer found).');
+        }
+
+        // CASE 2: Customer exists — save reading + bill + send mail
         $reading = Readings::create([
             'kwhNo' => $request->kwhNo,
             'meter_number' => $request->meter_number,
@@ -406,8 +415,8 @@ class MeterController extends Controller
             'date' => $readingDate,
         ]);
 
-        if ($request->customer_id && $request->new_meter_number) {
-            $bill = Bills::create([
+        if ($request->filled('customer_id')) {
+            Bills::create([
                 'reservation_id' => $request->reservation_id,
                 'customer_id' => $request->customer_id,
                 'kwh_used' => $request->usage,
@@ -419,7 +428,7 @@ class MeterController extends Controller
                 ]),
                 'auto_email' => true,
             ]);
-    
+
             $customer = User::find($request->customer_id);
             if ($customer && $customer->email) {
                 Mail::to($customer->email)->send(
