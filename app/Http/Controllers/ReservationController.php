@@ -192,8 +192,8 @@ class ReservationController extends Controller
             'comments' => $reservation->comments,
             'total' => $reservation->total ?? 0,
             'balance' => $reservation->balance ?? 0,
-            'checkedin' => optional($reservation->checkedin)->format('M d, Y') ?? null,
-            'checkedout' => optional($reservation->checkedout)->format('M d, Y') ?? null,
+            'checkedin' => optional($reservation->checkedin)->format('F j, Y g:i A') ?? null,
+            'checkedout' => optional($reservation->checkedout)->format('F j, Y g:i A') ?? null,
             'source' => $reservation->source ?? 'Walk-In',
             'customerRecord' => [
                 'email' => $reservation->user->email ?? 'N/A',

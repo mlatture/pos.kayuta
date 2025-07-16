@@ -209,8 +209,8 @@ Route::prefix('admin')
 
         Route::post('reservations/invoice/{id}/paybalance', [PayBalanceController::class, 'payBalance']);
         Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
-        Route::put('reservations/update_checked_in', [NewReservationController::class, 'updateCheckedIn']);
-        Route::put('reservations/update_checked_out', [NewReservationController::class, 'updateCheckedOut']);
+        Route::patch('reservations/update_checked_in', [NewReservationController::class, 'updateCheckedIn'])->name('reservations.updateCheckedIn');
+        Route::patch('reservations/update_checked_out', [NewReservationController::class, 'updateCheckedOut'])->name('reservations.updateCheckedOut');
         Route::resource('reservations', ReservationController::class);
         Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
         Route::resource('tax-types', TaxTypeController::class);

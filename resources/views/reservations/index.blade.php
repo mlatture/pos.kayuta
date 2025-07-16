@@ -287,92 +287,187 @@
                     id: reservationId
                 },
                 success: function(item) {
-                    let customerRecord = item.customerRecord || {};
-                    let arrivalDate = item.cid ? moment(item.cid).format('MMM DD, YYYY') : "N/A";
-                    let departureDate = item.cod ? moment(item.cod).format('MMM DD, YYYY') : "N/A";
-                    let balance = parseFloat(item.balance || 0).toFixed(2);
-                    let balanceClass = balance > 0 ? 'bg-danger' : 'bg-success';
+                    const c = item.customerRecord || {};
+                    const format = d => d ? moment(d).format('MMM DD, YYYY') : 'N/A';
+                    const balance = parseFloat(item.balance || 0).toFixed(2);
 
-                    let modalBody = `
-                        <div class="card card-body">
-                            <h5 class="mb-3">Reservation Details</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Customer:</strong> ${item.fname || 'Guest'} ${item.lname || ''}</p>
-                                    <p><strong>Arrival:</strong> ${arrivalDate}</p>
-                                    <p><strong>Departure:</strong> ${departureDate}</p>
-                                    <p><strong>Site ID:</strong> ${item.siteid || "N/A"}</p>
-                                    <p><strong>Rig Type:</strong> ${item.rigtype || "N/A"}</p>
-                                    <p><strong>Rig Length:</strong> ${item.riglength || "N/A"}</p>
-                                    <p><strong>Class:</strong> ${item.siteclass || "N/A"}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Email:</strong> ${customerRecord.email || "N/A"}</p>
-                                    <p><strong>Phone:</strong> ${customerRecord.phone || "N/A"}</p>
-                                    <p><strong>Length of Stay:</strong> ${item.nights || "N/A"} nights</p>
-                                    <p><strong>Confirmation Number:</strong> ${item.cartid || "N/A"}</p>
-                                    <p><strong>Comments:</strong> ${item.comments || "N/A"}</p>
-                                    <p><strong>Total:</strong> $${parseFloat(item.total || 0).toFixed(2)}</p>
-                                    <p><strong>Balance:</strong> 
-                                        <span class="badge ${balanceClass} rounded-pill">$${balance}</span>
-                                    </p>
-                                </div>
-                            </div>
+                    $('#resCustomerName').text(`${item.fname || 'Guest'} ${item.lname || ''}`);
+                    $('#resArrivalDate').text(format(item.cid));
+                    $('#resDepartureDate').text(format(item.cod));
+                    $('#resSiteId').text(item.siteid || 'N/A');
+                    $('#resRigType').text(item.rigtype || 'N/A');
+                    $('#resRigLength').text(item.riglength || 'N/A');
+                    $('#resSiteClass').text(item.siteclass || 'N/A');
 
-                            <hr>
+                    $('#resEmail').text(c.email || 'N/A');
+                    $('#resPhone').text(c.phone || 'N/A');
+                    $('#resNights').text(item.nights || 'N/A');
+                    $('#resCartId').text(item.cartid || 'N/A');
+                    $('#resComments').text(item.comments || 'N/A');
+                    $('#resTotal').text(parseFloat(item.total || 0).toFixed(2));
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Checked In:</strong> 
-                                        ${item.checkedin || `<input type="checkbox" class="checked_in_date" onclick="handleCheckIn(this, '${item.cartid}');">`}
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Checked Out:</strong> 
-                                        ${item.checkedout || `<input type="checkbox" class="checked_out_date" onclick="handleCheckOut(this, '${item.cartid}');">`}
-                                    </p>
-                                </div>
-                            </div>
+                    const balanceBadge = $('#resBalanceBadge');
+                    balanceBadge.text(`$${balance}`);
+                    balanceBadge.removeClass('bg-danger bg-success').addClass(balance > 0 ? 'bg-danger' :
+                        'bg-success');
 
-                            <hr>
+                    $('#resCheckIn').html(item.checkedin ||
+                        `<input type="checkbox" class="checked_in_date" onclick="handleCheckIn(this, '${item.cartid}')">`
+                    );
+                    $('#resCheckOut').html(item.checkedout ||
+                        `<input type="checkbox" class="checked_out_date" onclick="handleCheckOut(this, '${item.cartid}')">`
+                    );
+                    $('#resSource').text(item.source || 'Walk-In');
 
-                            <p><strong>Source:</strong> ${item.source || "Walk-In"}</p>
+                    $('#action1').data('id', item.cartid);
+                    $('#action3').data('id', item.cartid);
 
-                            <hr> 
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" data-id="${item.cartid}" id="action1">
-                                        <div class="card-body d-flex justify-content-center align-items-center">
-                                            <h6 class="card-title text-center">
-                                                <i class="fa-solid fa-pen-to-square"></i>
-                                                Edit Reservations
-                                            </h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card mb-2 action-card" style="cursor: pointer; height: 150px;" id="action3" data-id="${item.cartid}">
-                                        <div class="card-body d-flex justify-content-center align-items-center">
-                                            <h6 class="card-title text-center">
-                                                <i class="fa-solid fa-hand-holding-dollar"></i> Payment
-                                            </h6>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    $('#reservationDetailsModalBody').html(modalBody);
+                    $('#reservationDetailsContent').show();
                     $('#reservationDetailsModal').modal('show');
                 },
-                error: function(error) {
+                error: function(err) {
                     alert('Unable to fetch reservation details.');
-                    console.log(error);
+                    console.error(err);
                 }
             });
         }
+
+        let originalCID = null;
+        let originalCOD = null;
+
+        $(document).on('click', '#btnAdjustDates', function() {
+            const cid = $('#resArrivalDate').text();
+            const cod = $('#resDepartureDate').text();
+            if (cid && cod) {
+                originalCID = moment(cid, 'MMM DD, YYYY');
+                originalCOD = moment(cod, 'MMM DD, YYYY');
+                updateDateRangePicker();
+                $('#adjustDatesPicker').slideDown();
+            }
+        });
+
+        function updateDateRangePicker() {
+            $('#adjustDateRange').val(`${originalCID.format('MMM DD, YYYY')} → ${originalCOD.format('MMM DD, YYYY')}`);
+        }
+
+        function adjustDates(direction) {
+            originalCID.add(direction, 'days');
+            originalCOD.add(direction, 'days');
+            updateDateRangePicker();
+        }
+
+        function submitAdjustedDates() {
+            // Send AJAX PATCH or POST to your backend with new CID/COD
+            Swal.fire('Dates adjusted!', 'You can now apply charges/refunds and email a receipt.', 'success');
+        }
+
+
+
+        function handleCheckIn(checkbox, cartId) {
+            Swal.fire({
+                title: 'Confirm Check-In',
+                text: 'Are you sure you want to check in this guest?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, check in',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const now = new Date().toLocaleString();
+                    const checkInRoute = "{{ route('reservations.updateCheckedIn') }}";
+
+                    fetch(checkInRoute, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                            },
+                            body: JSON.stringify({
+                                cartid: cartId
+                            }),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                checkbox.parentElement.innerHTML = now;
+                                Swal.fire('Checked in!', `Time: ${now}`, 'success');
+                            } else {
+                                Swal.fire('Error', data.message || 'Could not check in.', 'error');
+                                checkbox.checked = false;
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Error', 'Request failed. Please try again.', 'error');
+                            checkbox.checked = false;
+                        });
+                } else {
+                    checkbox.checked = false;
+                }
+            });
+        }
+
+
+        function handleCheckOut(checkbox, cartId) {
+            Swal.fire({
+                title: 'Confirm Check-Out',
+                text: 'Are you sure you want to check out this guest?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, check out',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const checkOutRoute = "{{ route('reservations.updateCheckedOut') }}";
+
+                    fetch(checkOutRoute, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                            },
+                            body: JSON.stringify({
+                                cartid: cartId
+                            }),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                checkbox.parentElement.innerHTML = formatDateTime(data.checked_out_date);
+                                Swal.fire('Checked out!', `Time: ${formatDateTime(data.checked_out_date)}`,
+                                    'success');
+                            } else {
+                                Swal.fire('Error', data.message || 'Could not check out.', 'error');
+                                checkbox.checked = false;
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Error', 'Request failed. Please try again.', 'error');
+                            checkbox.checked = false;
+                        });
+
+                } else {
+                    checkbox.checked = false;
+                }
+            });
+        }
+
+        function formatDateTime(datetimeStr) {
+            const date = new Date(datetimeStr);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+
 
 
         $(document).on("click", "#action1", function() {

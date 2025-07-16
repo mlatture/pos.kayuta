@@ -109,33 +109,42 @@ class NewReservationController extends Controller
     public function updateCheckedOut(Request $request)
     {
         $cartid = $request->input('cartid');
+
         $request->validate([
             'cartid' => 'required|exists:reservations,cartid',
         ]);
 
         try {
+            DB::beginTransaction();
+
             $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            $customer_email = User::where('id', $reservation->customernumber)->value('email');
+
             $reservation->update([
                 'checkedout' => Carbon::now(),
             ]);
 
+            // Generate unique token for survey
             do {
                 $generate_token = str_replace(['+', '/', '='], '', base64_encode(random_bytes(16)));
-                $check_token = SurveysResponseModel::where('token', $generate_token)->exists();
-            } while ($check_token);
+            } while (SurveysResponseModel::where('token', $generate_token)->exists());
 
+            // Get all active surveys
             $publishedSurveyIds = PublishSurveyModel::where('active', true)->pluck('id');
 
+            // Create a survey entry
             Survey::create([
                 'name' => $reservation->fname . ' ' . $reservation->lname,
                 'survey_id' => $publishedSurveyIds->toJson(),
-                'guest_email' => $reservation->email,
+                'guest_email' => $reservation->email ?? $customer_email,
                 'token' => $generate_token,
                 'siteId' => $reservation->siteid,
                 'subject' => 'We value your feedback!',
-                'message' => 'Thanks for your recent visit to Kayuta Lake Campground. We`d love to get your feedback on your stay.',
+                'message' => 'Thanks for your recent visit to Kayuta Lake Campground. We’d love to get your feedback on your stay.',
                 'created_at' => Carbon::now()->addDay(),
             ]);
+
+            DB::commit();
 
             return response()->json(
                 [
@@ -146,10 +155,12 @@ class NewReservationController extends Controller
                 200,
             );
         } catch (Exception $e) {
+            DB::rollBack();
+
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Failed to checked-out status',
+                    'message' => 'Failed to update checked-out status.',
                     'error' => $e->getMessage(),
                 ],
                 500,
@@ -991,7 +1002,6 @@ class NewReservationController extends Controller
         $business_settings = BusinessSettings::where('type', 'cancellation')->first();
         $cancellation = $business_settings ? json_decode($business_settings->value, true) : [];
 
-        
         $cartid = $request->cartid;
         $refundMethod = $request->refund_method;
         $reason = $request->reason;
