@@ -14,7 +14,7 @@ class Product extends Model
 
     public function taxType()
     {
-        return $this->belongsTo(TaxType::class);
+        return $this->belongsTo(TaxType::class, 'tax_type_id', 'id');
     }
 
     public function category()

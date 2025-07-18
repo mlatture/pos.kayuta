@@ -29,27 +29,40 @@ $(document).ready(function () {
     });
 
     var storeCartTimeout = null;
+    // $(window).keypress(function (event) {
+    //     if (!isFocused && !isSelectFocused) {
+    //         if (storeCartTimeout) {
+    //             clearTimeout(storeCartTimeout);
+    //         }
+    //         // Process barcode input if no form field element is focused
+    //         var barcode = String.fromCharCode(event.which);
+    //         // Do something with the barcode value
+    //         var code = event.which || event.keyCode;
+    //         var character = String.fromCharCode(code);
+    //         barcode += character;
+    //         var currentValue = $("#searchterm").val();
+    //         if (currentValue == null) {
+    //             currentValue = "";
+    //         }
+    //         $("#searchterm").val(currentValue + character);
+    //         storeCartTimeout = setTimeout(function () {
+    //             storeCart(currentValue + character);
+    //         }, 500);
+    //     }
+    // });
+
     $(window).keypress(function (event) {
         if (!isFocused && !isSelectFocused) {
-            if (storeCartTimeout) {
-                clearTimeout(storeCartTimeout);
-            }
-            // Process barcode input if no form field element is focused
-            var barcode = String.fromCharCode(event.which);
-            // Do something with the barcode value
             var code = event.which || event.keyCode;
             var character = String.fromCharCode(code);
-            barcode += character;
-            var currentValue = $("#searchterm").val();
-            if (currentValue == null) {
-                currentValue = "";
-            }
+            var currentValue = $("#searchterm").val() || "";
             $("#searchterm").val(currentValue + character);
-            storeCartTimeout = setTimeout(function () {
-                storeCart(currentValue + character);
-            }, 500);
+
+            // Call storeCart immediately without delay
+            storeCart(currentValue + character);
         }
     });
+
 
     $(document).on("click", ".product-item", function () {
         var barcode = $(this).data("barcode");

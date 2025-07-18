@@ -83,7 +83,7 @@
                                             </td>
                                             <td>{{ $product->id }}</td>
                                             <td>{{ $product->category->name ?? 'N/A' }}</td>
-                                            <td>{{ $product->taxType->name ?? 'N/A' }}</td>
+                                            <td>{{ $product->taxType->title ?? 'N/A' }}</td>
                                             <td>{{ $product->name }}</td>
                                             <td>
                                                 <span

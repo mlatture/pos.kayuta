@@ -13,23 +13,21 @@ function storeCart(barcode = null, productId = null) {
         },
         data,
         success: function(response) {
-            $.toast({
-                heading: 'Success',
-                text: response.message,
-                position: 'top-right',
-                // bgColor: '#FF1356',4444333322221111
-                loaderBg: '#00c263',
-                icon: 'success',
-                hideAfter: 2000,
-                stack: 6
-            });
+            // $.toast({
+            //     heading: 'Success',
+            //     text: 'Order added to cart successfully',
+            //     position: 'top-right',
+            //     // bgColor: '#FF1356',4444333322221111
+            //     loaderBg: '#00c263',
+            //     icon: 'success',
+            //     hideAfter: 1000,
+            //     stack: 6
+            // });
 
             if(response.response.data.upsell_message){
                 localStorage.setItem('upsell_message', response.response.data.upsell_message)
             }
-            setTimeout(function () {
-                window.location.reload();
-            }, 2000);
+            window.location.reload();
         },
         error: function(reject) {
             if (reject.status === 422) {
