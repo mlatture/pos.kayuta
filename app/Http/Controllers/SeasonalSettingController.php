@@ -37,11 +37,12 @@ class SeasonalSettingController extends Controller
         $renewals = SeasonalRenewal::whereYear('created_at', $currentYear)->with('customer')->latest()->get();
 
         // Reset Renewals
-        $currentYearRenewalsCount = $renewals->filter(function ($renewal) use ($currentYear) {
-            return optional($renewal->created_at)->year === $currentYear;
-        })->count();
-    
-    
+        $currentYearRenewalsCount = $renewals
+            ->filter(function ($renewal) use ($currentYear) {
+                return optional($renewal->created_at)->year === $currentYear;
+            })
+            ->count();
+
         $showResetWarning = $currentYearRenewalsCount === 0;
 
         return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'renewals', 'showResetWarning', 'currentYearRenewalsCount'));
@@ -70,21 +71,25 @@ class SeasonalSettingController extends Controller
     public function storeRate(Request $request)
     {
         $validated = $request->validate([
-            'rate_name' => 'required|string|max:255',
-            'rate_price' => 'required|numeric',
-            'deposit_amount' => 'required|numeric',
-            'early_pay_discount' => 'nullable|numeric',
-            'full_payment_discount' => 'nullable|numeric',
+            'rate_name' => 'required|string|max:255|unique:seasonal_rates,rate_name',
+            'rate_price' => 'required|numeric|min:0',
+            'deposit_amount' => 'nullable|numeric|min:0',
+            'early_pay_discount' => 'nullable|numeric|min:0',
+            'full_payment_discount' => 'nullable|numeric|min:0',
             'payment_plan_starts' => 'nullable|date',
             'final_payment_due' => 'nullable|date',
             'template_id' => 'nullable|exists:document_templates,id',
-            'applies_to_all' => 'boolean',
-            'active' => 'boolean',
+            'applies_to_all' => 'nullable|boolean',
+            'active' => 'nullable|boolean',
         ]);
 
-        SeasonalRate::create($validated);
+        $rate = new SeasonalRate();
+        $rate = $rate->fill($validated);
+        $rate->applies_to_all = $request->has('applies_to_all');
+        $rate->active = $request->has('active');
+        $rate->save();
 
-        return back()->with('success', 'Seasonal rate added successfully.');
+        return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
     }
 
     public function store(Request $request)

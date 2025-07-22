@@ -23,14 +23,19 @@
             @include('admin.seasonal.component.nav-seasonal')
 
             <div class="tab-content mt-3">
-                <div class="tab-pane fade {{ request('tab', 'upload') == 'upload' ? 'show active' : '' }}" id="upload">
-                    @include('admin.seasonal.component.upload-document')
-                </div>
-                
-                <div class="tab-pane fade {{ request('tab', 'renewals') == 'renewals' ? 'show active' : '' }}" id="renewals">
+                <div class="tab-pane fade {{ request('tab', 'overview') == 'overview' ? 'show active' : '' }}" id="overview">
                     @include('admin.seasonal.component.seasonal-guest-renewals')
                 </div>
 
+                <div class="tab-pane fade {{ request('tab', 'form') == 'form' ? 'show active' : '' }}" id="form">
+                    @include('admin.seasonal.component.upload-document')
+                </div>
+                
+                <div class="tab-pane fade {{ request('tab', 'rate') == 'rate' ? 'show active' : '' }}" id="rate">
+                    @include('admin.seasonal.component.seasonal-rates')
+                </div>
+                
+                
                 
 
                 <div class="tab-pane fade {{ request('tab', 'addons') == 'addons' ? 'show active' : '' }}" id="addons">

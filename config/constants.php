@@ -245,9 +245,9 @@ return [
             'value' => 'scan_electric_meter'
         ],
 
-        'seasonal_settings' => [
-            'name' => 'Seasonal Settings',
-            'value' => 'seasonal_settings'
+        'seasonal_renewals' => [
+            'name' => 'Seasonal Renewals',
+            'value' => 'seasonal_renewals'
         ],
 
         'system_logs' => [

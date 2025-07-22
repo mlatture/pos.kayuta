@@ -1,21 +1,26 @@
 <nav>
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
-            <a class="nav-link {{ request('tab', 'renewals') === 'upload' ? 'active' : '' }}"
-                href="{{ route('admin.seasonal-settings.index', ['tab' => 'upload']) }}">
-                Upload Document
+            <a class="nav-link {{ request('tab', 'overview') === 'overview' ? 'active' : '' }}"
+                href="{{ route('admin.seasonal-settings.index', ['tab' => 'overview']) }}">
+                Overview
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{ request('tab', 'renewals') === 'renewals' ? 'active' : '' }}"
-                href="{{ route('admin.seasonal-settings.index', ['tab' => 'renewals']) }}">
-                Seasonal Guest Renewals
-            </a>
+            <a class="nav-link {{ request('tab', 'form') === 'form' ? 'active' : '' }}"
+                href="{{ route('admin.seasonal-settings.index', ['tab' => 'form']) }}">
+                Forms </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {{ request('tab', 'renewals') === 'addons' ? 'active' : '' }}"
+            <a class="nav-link {{ request('tab', 'rate') === 'rate' ? 'active' : '' }}"
+                href="{{ route('admin.seasonal-settings.index', ['tab' => 'rate']) }}">
+                Rates </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link {{ request('tab', 'addons') === 'addons' ? 'active' : '' }}"
                 href="{{ route('admin.seasonal-settings.index', ['tab' => 'addons']) }}">
-                Seasonal Add Ons
+                Add Ons
             </a>
         </li>
 

@@ -304,10 +304,10 @@
                 @endHasPermission
 
 
-                @hasPermission(config('constants.role_modules.seasonal_settings.value'))
-                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index', ['tab' => 'renewals'])  }}">
+                @hasPermission(config('constants.role_modules.seasonal_renewals.value'))
+                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index', ['tab' => 'overview'])  }}">
                             <i class="fa-solid fa-gears"></i> <span>
-                                {{ config('constants.role_modules.seasonal_settings.name') }}
+                                {{ config('constants.role_modules.seasonal_renewals.name') }}
                             </span>
                         </a></li>
                 @endHasPermission

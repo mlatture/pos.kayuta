@@ -69,6 +69,13 @@
             'currency_symbol' => config('settings.currency_symbol'),
             'warning_quantity' => config('settings.warning_quantity'),
         ]);
+
+        <
+        script >
+            setTimeout(() => {
+                $('.alert').fadeOut('slow');
+            }, 4000);
+    </script>
     </script>
 </head>
 
