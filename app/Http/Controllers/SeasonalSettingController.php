@@ -16,10 +16,13 @@ use App\Models\SeasonalAddOns;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Str;
 use PhpOffice\PhpWord\TemplateProcessor;
+
 
 use App\Helpers\FileHelper;
 
@@ -83,11 +86,17 @@ class SeasonalSettingController extends Controller
             'active' => 'nullable|boolean',
         ]);
 
-        $rate = new SeasonalRate();
-        $rate = $rate->fill($validated);
-        $rate->applies_to_all = $request->has('applies_to_all');
-        $rate->active = $request->has('active');
-        $rate->save();
+        try {
+            DB::beginTransaction();
+            $rate = new SeasonalRate();
+            $rate = $rate->fill($validated);
+            $rate->applies_to_all = $request->has('applies_to_all');
+            $rate->active = $request->has('active');
+            $rate->save();
+        } catch(\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to save seasonal rate: ' . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
     }
@@ -174,17 +183,30 @@ class SeasonalSettingController extends Controller
 
     public function destroy(DocumentTemplate $template)
     {
-        $seasonalRates = SeasonalRate::where('template_id', $template->id)->get();
+        // $seasonalRates = SeasonalRate::where('template_id', $template->id)->get();
 
-        foreach ($seasonalRates as $rate) {
-            $rate->delete();
+        // foreach ($seasonalRates as $rate) {
+        //     $rate->delete();
+        // }
+
+        try {
+            DB::beginTransaction();
+
+            if ($template->file) {
+                ImageManager::delete($template->file);
+            }
+
+            $template->delete();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Failed to delete Document Template: ' . $e->getMessage(),
+                ],
+                500,
+            );
         }
-
-        if ($template->file) {
-            ImageManager::delete($template->file);
-        }
-
-        $template->delete();
 
         return response()->json([
             'success' => true,

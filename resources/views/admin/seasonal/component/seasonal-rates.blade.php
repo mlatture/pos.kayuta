@@ -68,28 +68,20 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Template</label>
-                    <select name="template_id" class="form-select" required>
-                        <option value="">-- Select Template --</option>
-                        @foreach ($documentTemplates as $template)
-                            <option value="{{ $template->id }}"
-                                {{ old('template_id') == $template->id ? 'selected' : '' }}>
-                                {{ $template->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col">
-                        <div class="form-check form-switch">
-                            <input type="checkbox" name="applies_to_all" value="1" class="form-check-input"
-                                id="appliesToAll" {{ old('applies_to_all') ? 'checked' : '' }}>
-                            Applies to All (For liability waivers)
-                            </label>
-                        </div>
-
+                        <label class="form-label">Template</label>
+                        <select name="template_id" class="form-select" required>
+                            <option value="">-- Select Template --</option>
+                            @foreach ($documentTemplates as $template)
+                                <option value="{{ $template->id }}"
+                                    {{ old('template_id') == $template->id ? 'selected' : '' }}>
+                                    {{ $template->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
+
                     <div class="col">
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="active" value="1" checked
@@ -99,6 +91,18 @@
                             </label>
                         </div>
                     </div>
+                </div>
+                <div class="row">
+                    {{-- <div class="col">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="applies_to_all" value="1" class="form-check-input"
+                                id="appliesToAll" {{ old('applies_to_all') ? 'checked' : '' }}>
+                            Applies to All (For liability waivers)
+                            </label>
+                        </div>
+
+                    </div> --}}
+
                 </div>
                 <button class="btn btn-success w-100">Save Seasonal Rate</button>
             </form>
@@ -139,5 +143,5 @@
         @endforeach
     @endif
 
-    
+
 @endpush
