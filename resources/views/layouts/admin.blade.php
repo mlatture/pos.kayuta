@@ -70,12 +70,10 @@
             'warning_quantity' => config('settings.warning_quantity'),
         ]);
 
-        <
-        script >
-            setTimeout(() => {
-                $('.alert').fadeOut('slow');
-            }, 4000);
-    </script>
+
+        setTimeout(() => {
+            $('.alert').fadeOut('slow');
+        }, 4000);
     </script>
 </head>
 
