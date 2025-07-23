@@ -92,14 +92,16 @@ class SeasonalSettingController extends Controller
             // $rate->applies_to_all = $request->has('applies_to_all');
             $rate->active = $request->has('active');
             $rate->save();
+            
+            DB::commit();
+            
+            return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()
                 ->back()
                 ->with('error', 'Failed to save seasonal rate: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
     }
 
     public function updateRate(Request $request, $id)
@@ -154,7 +156,6 @@ class SeasonalSettingController extends Controller
 
         try {
             DB::beginTransaction();
-
 
             $rate->delete();
 

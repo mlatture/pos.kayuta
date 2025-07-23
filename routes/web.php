@@ -319,7 +319,6 @@ Route::prefix('seasonal')
 
         Route::post('settings/store/template', [SeasonalSettingController::class, 'storeTemplate'])->name('settings.storeTemplate');
         Route::delete('settings/destroy/{template}', [SeasonalSettingController::class, 'destroy'])->name('template.destroy');
-        Route::post('settings/store/rate', [SeasonalSettingController::class, 'storeRate'])->name('settings.storeRate');
 
         Route::prefix('renewals')->group(function () {
             Route::post('send-emails', [SeasonalTransactionsController::class, 'sendEmails'])->name('seasonal.sendEmails');
@@ -327,6 +326,7 @@ Route::prefix('seasonal')
         });
 
         Route::prefix('settings')->group(function () {
+            Route::post('store/rate', [SeasonalSettingController::class, 'storeRate'])->name('settings.store.rate');
             Route::put('update/{rate}', [SeasonalSettingController::class, 'updateRate'])->name('settings.update.rate');
             Route::delete('destroy/rate/{rate}', [SeasonalSettingController::class, 'destroyRate'])->name('settings.destroy.rate');
         });

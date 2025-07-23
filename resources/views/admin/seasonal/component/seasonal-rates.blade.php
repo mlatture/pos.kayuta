@@ -2,7 +2,7 @@
     <div class="col">
         <div class="border rounded-3 p-4 shadow-sm">
             <h5 class="mb-3 text-primary">💲 Define Seasonal Rates</h5>
-            <form method="POST" action="{{ route('settings.storeRate') }}">
+            <form method="POST" action="{{ route('settings.store.rate') }}">
                 @csrf
                 <div class="row">
                     <div class="col">
