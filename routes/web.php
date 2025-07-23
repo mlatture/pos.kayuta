@@ -326,6 +326,11 @@ Route::prefix('seasonal')
             Route::post('clear', [SeasonalTransactionsController::class, 'clear'])->name('seasonal.clear');
         });
 
+        Route::prefix('settings')->group(function () {
+            Route::put('update/{rate}', [SeasonalSettingController::class, 'updateRate'])->name('settings.update.rate');
+            Route::delete('destroy/rate/{rate}', [SeasonalSettingController::class, 'destroyRate'])->name('settings.destroy.rate');
+        });
+
         Route::prefix('add-ons')->group(function () {
             Route::post('store', [SeasonalTransactionsController::class, 'storeAddOns'])->name('seasonal.addons.store');
             Route::delete('destroy/{addon}', [SeasonalTransactionsController::class, 'destroyAddOn'])->name('seasonal.addon.destroy');

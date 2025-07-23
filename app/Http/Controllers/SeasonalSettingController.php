@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpWord\TemplateProcessor;
 
-
 use App\Helpers\FileHelper;
 
 class SeasonalSettingController extends Controller
@@ -93,12 +92,79 @@ class SeasonalSettingController extends Controller
             $rate->applies_to_all = $request->has('applies_to_all');
             $rate->active = $request->has('active');
             $rate->save();
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to save seasonal rate: ' . $e->getMessage());
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to save seasonal rate: ' . $e->getMessage());
         }
 
         return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
+    }
+
+    public function updateRate(Request $request, $id)
+    {
+        $rate = SeasonalRate::findOrFail($id);
+
+        $validated = $request->validate([
+            'rate_name' => 'required|string|max:255|unique:seasonal_rates,rate_name,' . $rate->id,
+            'rate_price' => 'required|numeric|min:0',
+            'deposit_amount' => 'nullable|numeric|min:0',
+            'early_pay_discount' => 'nullable|numeric|min:0',
+            'full_payment_discount' => 'nullable|numeric|min:0',
+            'payment_plan_starts' => 'nullable|date',
+            'final_payment_due' => 'nullable|date',
+            'template_id' => 'nullable|exists:document_templates,id',
+            // 'applies_to_all' => 'nullable|boolean',
+            'active' => 'nullable|boolean',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $rate->fill($validated);
+            // $rate->applies_to_all = $request->has('applies_to_all');
+            $rate->active = $request->has('active');
+            $rate->save();
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Rate updated successfully!']);
+            }
+
+            // Fallback (non-AJAX)
+            return redirect()->back()->with('success', 'Seasonal Rate updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Update failed: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to update seasonal rate: ' . $e->getMessage());
+        }
+    }
+
+    public function destroyRate($id)
+    {
+        $rate = SeasonalRate::findOrFail($id);
+
+        try {
+            DB::beginTransaction();
+
+
+            $rate->delete();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Seasonal Rate deleted successfully!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Failed to delete seasonal rate: ' . $e->getMessage()], 500);
+        }
     }
 
     public function store(Request $request)

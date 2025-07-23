@@ -118,6 +118,17 @@
                                 <small class="text-muted">({{ $rate->template->name }})</small>
                             @endif
                         </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal"
+                                data-bs-target="#editRateModal" data-rate='@json($rate)'
+                                data-param-id="{{ $rate->id }}" data-param-type="seasonal">
+
+                                Update
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-danger btn-delete"
+                                data-url="{{ route('settings.destroy.rate', $rate->id) }}">Delete</button>
+                        </div>
                     </li>
                 @empty
                     <li class="list-group-item">No seasonal rates defined yet.</li>
@@ -125,6 +136,8 @@
             </ul>
         </div>
     </div>
+
+    @include('admin.seasonal.modal.rates-edit')
 
 </div>
 
@@ -143,5 +156,79 @@
         @endforeach
     @endif
 
+
+    <script>
+        $('#editRateModal').on('show.bs.modal', function(event) {
+            const button = $(event.relatedTarget);
+            const rate = button.data('rate');
+            const rateId = button.data('param-id');
+            const modal = $(this);
+
+
+            // Set form values
+            modal.find('input[name="rate_id"]').val(rateId || '');
+            modal.find('input[name="rate_name"]').val(rate.rate_name || '');
+            modal.find('input[name="rate_price"]').val(rate.rate_price || '');
+            modal.find('input[name="deposit_amount"]').val(rate.deposit_amount || '');
+            modal.find('input[name="early_pay_discount"]').val(rate.early_pay_discount || '');
+            modal.find('input[name="full_payment_discount"]').val(rate.full_payment_discount || '');
+            modal.find('input[name="payment_plan_starts"]').val(rate.payment_plan_starts || '');
+            modal.find('input[name="final_payment_due"]').val(rate.final_payment_due || '');
+            modal.find('select[name="template_id"]').val(rate.template_id || '');
+
+
+            modal.find('input[name="active"]').prop('checked', !!rate.active);
+
+
+
+        });
+
+        // Delete Rate
+        $(document).on('click', '.btn-delete', function() {
+            $this = $(this);
+
+            console.log('Delete button clicked:', $this.data('url'));
+
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-danger'
+                },
+                buttonsStyling: false
+            })
+
+            swalWithBootstrapButtons.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to delete this data?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No',
+                reverseButtons: true
+            }).then((result) => {
+                console.log('result:', result);
+
+                if (result.value) {
+                    $.post($this.data('url'), {
+                        _method: 'DELETE',
+                        _token: '{{ csrf_token() }}'
+                    }, function(res) {
+                        $this.closest('li').fadeOut(500, function() {
+                            $(this).remove();
+                        });
+                        $.toast({
+                            heading: 'Success',
+                            text: res.message,
+                            icon: 'success',
+                            position: 'bottom-left',
+                            hideAfter: 3000,
+                            stack: 3
+                        });
+
+                    })
+                }
+            });
+        });
+    </script>
 
 @endpush
