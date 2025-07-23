@@ -81,7 +81,7 @@ class SeasonalSettingController extends Controller
             'payment_plan_starts' => 'nullable|date',
             'final_payment_due' => 'nullable|date',
             'template_id' => 'nullable|exists:document_templates,id',
-            'applies_to_all' => 'nullable|boolean',
+            // 'applies_to_all' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);
 
@@ -89,7 +89,7 @@ class SeasonalSettingController extends Controller
             DB::beginTransaction();
             $rate = new SeasonalRate();
             $rate = $rate->fill($validated);
-            $rate->applies_to_all = $request->has('applies_to_all');
+            // $rate->applies_to_all = $request->has('applies_to_all');
             $rate->active = $request->has('active');
             $rate->save();
         } catch (\Exception $e) {
