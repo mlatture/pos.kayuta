@@ -92,9 +92,9 @@ class SeasonalSettingController extends Controller
             // $rate->applies_to_all = $request->has('applies_to_all');
             $rate->active = $request->has('active');
             $rate->save();
-            
+
             DB::commit();
-            
+
             return redirect()->back()->with('success', 'Seasonal Rate saved successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -264,6 +264,13 @@ class SeasonalSettingController extends Controller
             }
 
             $template->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Document Template deleted successfully!',
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(
@@ -274,11 +281,6 @@ class SeasonalSettingController extends Controller
                 500,
             );
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Document Template deleted successfully!',
-        ]);
     }
 
     // Download Generated Contracts PDF

@@ -318,7 +318,7 @@ Route::prefix('seasonal')
         Route::post('renewals/trigger', [SeasonalSettingController::class, 'triggerRenewals'])->name('admin.seasonal-renewals.trigger');
 
         Route::post('settings/store/template', [SeasonalSettingController::class, 'storeTemplate'])->name('settings.storeTemplate');
-        Route::delete('settings/destroy/{template}', [SeasonalSettingController::class, 'destroy'])->name('template.destroy');
+        Route::delete('settings/destroy/template/{template}', [SeasonalSettingController::class, 'destroy'])->name('template.destroy');
 
         Route::prefix('renewals')->group(function () {
             Route::post('send-emails', [SeasonalTransactionsController::class, 'sendEmails'])->name('seasonal.sendEmails');
