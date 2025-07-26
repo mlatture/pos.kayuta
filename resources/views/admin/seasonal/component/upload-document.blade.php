@@ -27,8 +27,8 @@
                     <label for="templateName">Name</label>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Upload File (DOC, DOCX, PDF)</label>
-                    <input type="file" name="file" class="form-control" required>
+                    <label class="form-label">Upload File (DOC, DOCX)</label>
+                    <input type="file" name="file" class="form-control" accept=".doc,.docx" required>
                 </div>
                 <button class="btn btn-success w-100">Upload Template</button>
             </form>

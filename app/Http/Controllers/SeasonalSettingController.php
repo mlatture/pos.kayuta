@@ -87,7 +87,7 @@ class SeasonalSettingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'file' => 'required|file|mimes:doc,docx,pdf',
+            'file' => 'required|file|mimes:doc,docx',
         ]);
 
         $path = FileHelper::storeFile($request->file('file'), 'templates', $validated['name']);
