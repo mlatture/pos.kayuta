@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 use App\Models\SeasonalAddOns;
 use App\Models\User;
@@ -13,10 +14,10 @@ use App\Models\SeasonalRenewal;
 use App\Models\DocumentTemplate;
 use App\Models\ScheduledPayment;
 use App\Notifications\SeasonalRenewalLinkNotification;
+use App\Notifications\NonRenewalNotification;
 
 use PhpOffice\PhpWord\TemplateProcessor;
 use Barryvdh\DomPDF\Facade\Pdf;
-
 use Carbon\Carbon;
 
 class SeasonalTransactionsController extends Controller
@@ -92,25 +93,24 @@ class SeasonalTransactionsController extends Controller
     {
         $recipients = User::whereNotNull('seasonal')->whereRaw('JSON_LENGTH(seasonal) > 0')->get();
 
-        // Flatten all seasonal rate IDs from users
-
-        $allRateIds = $recipients
-            ->flatMap(function ($user) {
-                return is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
-            })
-            ->unique()
-            ->filter()
-            ->values()
-            ->all();
-
-        // Join and Get Seasonal Rate
-        $seasonalRates = SeasonalRate::whereIn('id', $allRateIds)->get()->keyBy('id');
+        $currentYear = now()->year;
+        $seasonalRates = SeasonalRate::with('template')->get()->keyBy('id');
+        $documentTemplates = DocumentTemplate::all()->keyBy('id');
 
         DB::beginTransaction();
 
         try {
             foreach ($recipients as $user) {
+                $alreadyRenewed = SeasonalRenewal::where('customer_email', $user->email)->whereYear('created_at', $currentYear)->exists();
+
+                if ($alreadyRenewed) {
+                    continue;
+                }
+
                 $seasonalIds = is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
+                if (!$seasonalIds || !is_array($seasonalIds)) {
+                    continue;
+                }
 
                 foreach ($seasonalIds as $rateId) {
                     $rate = $seasonalRates->get($rateId);
@@ -118,80 +118,83 @@ class SeasonalTransactionsController extends Controller
                         continue;
                     }
 
-                    SeasonalRenewal::updateOrCreate(
-                        
-                        [
-                            'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
-                            'customer_email' => $user->email,
-                            'allow_renew' => true,
-                            'status' => 'sent offer',
-                            
-                            'initial_rate' => $rate->rate_price,
-                            'discount_percent' => null,
-                            'discount_amount' => null,
-                            'discount_note' => null,
-                            'final_rate' => $rate->rate_price,
-                            'payment_plan' => null,
-                            'selected_card' => null,
-                            'day_of_month' => null,
-                        ],
-                    );
+                    $status = Str::contains(Str::lower($rate->template->name ?? ''), 'non-renewal') || Str::contains(Str::lower($rate->rate_name ?? ''), 'sent rejection') ? 'sent rejection' : 'sent offer';
 
-                    URL::forceRootUrl('https://book.kayuta.com');
-                    // URL::forceRootUrl('http://127.0.0.1:8001');
-                    $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
+                    SeasonalRenewal::updateOrCreate([
+                        'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
+                        'customer_email' => $user->email,
+                        'allow_renew' => true,
+                        'status' => $status,
+                        'initial_rate' => $rate->rate_price,
+                        'discount_percent' => null,
+                        'discount_amount' => null,
+                        'discount_note' => null,
+                        'final_rate' => $rate->rate_price,
+                        'payment_plan' => null,
+                        'selected_card' => null,
+                        'day_of_month' => null,
+                    ]);
 
-                    $docsFile = DocumentTemplate::find($rate->template_id);
-                    //Generate Contracts
-                    if ($docsFile && file_exists(public_path("storage/{$docsFile->file}"))) {
-                        $templatePath = public_path("storage/{$docsFile->file}");
-                        $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
-                        $filePath = public_path("storage/contracts/{$docsFile->name}");
-                        // $filePath2 = public_path("storage/contracts/{$docsFile->name}/{$fileName}");
+                    // Determine matched template
+                    $matchedTemplate = null;
+                    $matchedTemplateName = null;
 
-                        $filePath = public_path("storage/contracts/{$docsFile->name}");
-
-                        if (!file_exists($filePath)) {
-                            mkdir($filePath, 0775, true);
-                        }
-
-                        // $templateProcessor = new TemplateProcessor($templatePath);
-                        // $templateProcessor->setValues([
-                        //     'first_name' => $user->f_name,
-                        //     'last_name' => $user->l_name,
-                        //     'seasonal_rate' => "$" . number_format($rate->rate_price, 2),
-                        //     'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
-                        // ]);
-                        // $templateProcessor->saveAs($filePath2);
-
-                        $pdf = Pdf::loadView('contracts.seasonal_contract', [
-                            'first_name' => $user->f_name,
-                            'last_name' => $user->l_name,
-                            'site_number' => $user->site_number ?? null,
-                            'email' => $user->email,
-                            'initial_rate' => $rate->rate_price,
-                            'discount_percent' => null, // or $rate->discount_percent
-                            'discount_amount' => null, // or $rate->discount_amount
-                            'final_rate' => $rate->rate_price,
-                            'addons' => null,
-                            'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
-                        ]);
-
-                        $pdf->save("$filePath/{$fileName}");
+                    if ($rate->template && isset($documentTemplates[$rate->template_id])) {
+                        $matchedTemplate = $documentTemplates[$rate->template_id];
+                        $matchedTemplateName = $matchedTemplate->name;
                     }
 
-                    // Send email notification
-                    $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
+                    if (!$matchedTemplate || !file_exists(public_path("storage/{$matchedTemplate->file}"))) {
+                        \Log::warning("Missing template for user {$user->email}");
+                        continue;
+                    }
+
+                    // Generate contract PDF
+                    $templatePath = public_path("storage/{$matchedTemplate->file}");
+                    $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
+                    $contractFolder = public_path("storage/contracts/{$matchedTemplate->name}");
+
+                    if (!file_exists($contractFolder)) {
+                        mkdir($contractFolder, 0775, true);
+                    }
+
+                    $pdf = Pdf::loadView('contracts.seasonal_contract', [
+                        'first_name' => $user->f_name,
+                        'last_name' => $user->l_name,
+                        'site_number' => $user->site_number ?? null,
+                        'email' => $user->email,
+                        'initial_rate' => $rate->rate_price,
+                        'discount_amount' => $rate->discount_amount ?? null,
+                        'final_rate' => $rate->rate_price,
+                        'addons' => null,
+                        'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
+                    ]);
+
+                    $pdf->save("$contractFolder/{$fileName}");
+
+                    URL::forceRootUrl('https://book.kayuta.com');
+                    $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
+
+                    \Log::info("Sending renewal to {$user->email}, using template: {$matchedTemplateName}");
+
+                    if (Str::contains(Str::lower($matchedTemplateName), 'non-renewal')) {
+                        $user->notify(new NonRenewalNotification($signedUrl));
+                    } else {
+                        $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
+                    }
                 }
             }
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Renewal entries created for seasonal customers.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('sendEmails error: ' . $e->getMessage());
+
             return response()->json(
                 [
                     'success' => false,
@@ -226,9 +229,9 @@ class SeasonalTransactionsController extends Controller
             'credit' => 'credit',
             'ach' => 'ach',
         ];
-        
+
         $paymentMethod = $map[$request->payment_method];
-        
+
         $fullAmount = $renewal->final_rate;
         $dayOfMonth = $renewal->day_of_month ?? 5; // fallback
         $startDate = Carbon::parse($rate->payment_plan_starts);
@@ -263,10 +266,10 @@ class SeasonalTransactionsController extends Controller
                     'message' => 'Invalid payment schedule: final payment date must be after start date.',
                 ]);
             }
-            
+
             $monthlyAmount = round($remaining / $months, 2);
             $totalScheduled = 0;
-            
+
             DB::beginTransaction();
             try {
                 if ($downPayment > 0) {
@@ -286,14 +289,12 @@ class SeasonalTransactionsController extends Controller
                     if ($due->lt($startDate)) {
                         $due->addMonth();
                     }
-                
+
                     // Handle rounding adjustment for last month
-                    $amount = $i === $months - 1
-                        ? round($remaining - $totalScheduled, 2)
-                        : $monthlyAmount;
-                
+                    $amount = $i === $months - 1 ? round($remaining - $totalScheduled, 2) : $monthlyAmount;
+
                     $totalScheduled += $amount;
-                
+
                     ScheduledPayment::create([
                         'customer_email' => $user->email,
                         'customer_name' => $user->f_name . ' ' . $user->l_name,
@@ -304,7 +305,6 @@ class SeasonalTransactionsController extends Controller
                         'status' => 'Pending',
                     ]);
                 }
-                
 
                 $renewal->update([
                     'payment_plan' => $paymentMethod === 'ach' ? 'monthly_ach' : 'monthly_credit',
@@ -316,20 +316,16 @@ class SeasonalTransactionsController extends Controller
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                return response()
-                    ->json([ 
-                        'success' => false,
-                        'message' => 'Failed to create payment schedule: ' . $e->getMessage()]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create payment schedule: ' . $e->getMessage(),
+                ]);
             }
         }
-
-        
 
         return response()->json([
             'success' => true,
             'message' => 'Payment setup complete! Redirecting in 3s...',
         ]);
-
-        
     }
 }

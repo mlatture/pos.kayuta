@@ -15,6 +15,7 @@ use App\Models\SeasonalRate;
 use App\Models\SeasonalAddOns;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
+use App\Notifications\NonRenewalNotification;
 
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
@@ -31,30 +32,61 @@ class SeasonalSettingController extends Controller
 
     public function index()
     {
-        $documentTemplates = DocumentTemplate::all();
+        $documentTemplates = DocumentTemplate::all()->keyBy('id');
         $seasonalAddOns = SeasonalAddOns::all();
-        $seasonalRates = SeasonalRate::with('template')->get();
+        $seasonalRates = SeasonalRate::with('template')->get()->keyBy('id');
         $currentYear = now()->year;
 
         $renewals = SeasonalRenewal::whereYear('created_at', $currentYear)->with('customer')->latest()->get();
 
-        // Reset Renewals
-        $currentYearRenewalsCount = $renewals
-            ->filter(function ($renewal) use ($currentYear) {
-                return optional($renewal->created_at)->year === $currentYear;
-            })
-            ->count();
+        $nonRenewals = collect();
+        $filteredRenewals = collect();
 
+        foreach ($renewals as $renewal) {
+            $user = $renewal->customer;
+            if (!$user || !$user->seasonal) {
+                continue;
+            }
+
+            $seasonalIds = is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
+
+            $matchedRate = null;
+
+            foreach ($seasonalIds ?? [] as $rateId) {
+                $rate = $seasonalRates->get($rateId);
+                if (!$rate) {
+                    continue;
+                }
+
+                // Match by rate price or similarity
+                if ((float) $rate->rate_price == (float) $renewal->initial_rate) {
+                    $matchedRate = $rate;
+                    break;
+                }
+            }
+
+            $templateName = strtolower($matchedRate->template->name ?? '');
+            $rateName = strtolower($matchedRate->rate_name ?? '');
+
+            $isNonRenewal = Str::contains($templateName, 'non-renewal') || Str::contains($rateName, 'non-renewal');
+            $isRenewal = !Str::contains($templateName, 'non-renewal') && !Str::contains($rateName, 'non-renewal');
+            if ($isNonRenewal) {
+                $nonRenewals->push($renewal);
+            } elseif ($isRenewal) {
+                $filteredRenewals->push($renewal);
+            }
+        }
+
+        $currentYearRenewalsCount = $filteredRenewals->count();
         $showResetWarning = $currentYearRenewalsCount === 0;
 
-        return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'renewals', 'showResetWarning', 'currentYearRenewalsCount'));
+        return view('admin.seasonal.index', compact('seasonalAddOns', 'documentTemplates', 'seasonalRates', 'filteredRenewals', 'nonRenewals', 'showResetWarning', 'currentYearRenewalsCount', 'renewals'));
     }
 
     public function storeTemplate(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
             'file' => 'required|file|mimes:doc,docx,pdf',
         ]);
 
@@ -62,7 +94,6 @@ class SeasonalSettingController extends Controller
 
         DocumentTemplate::create([
             'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
             'file' => $path,
             'is_active' => true,
         ]);
@@ -192,14 +223,23 @@ class SeasonalSettingController extends Controller
             return back()->with('error', 'No seasonal settings found.');
         }
 
+        $currentYear = now()->year;
+        $seasonalRates = SeasonalRate::with('template')->get();
+        $documentTemplates = DocumentTemplate::all()->keyBy('id');
+
         $users = User::where('seasonal', true)
             ->with(['latestReservation.siteForSeasonal'])
             ->get();
         $count = 0;
 
         foreach ($users as $user) {
-            $tier = $user->latestReservation->siteForSeasonal->ratetier ?? null;
-            $rate = $setting->rate_tiers[$tier] ?? $setting->default_rate;
+            $alreadyRenewed = SeasonalRenewal::where('customer_id', $user->id)->whereYear('created_at', $currentYear)->exists();
+
+            if ($alreadyRenewed) {
+                continue; // Skip if already renewed this year
+            }
+
+            $rate = $setting->default_rate;
 
             SeasonalRenewal::updateOrCreate(
                 ['customer_id' => $user->id],
@@ -212,33 +252,67 @@ class SeasonalSettingController extends Controller
                 ],
             );
 
+            //Generate contract
+            $fileName = "contract_{$user->l_name}_{$user->id}.docx";
+            $templatePath = null;
+            $matchedTemplateName = null;
+
+            $userSeasonalRates = is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
+
+            foreach ($userSeasonalRates ?? [] as $rateId) {
+                $rateModel = $seasonalRates->firstWhere('id', $rateId);
+                if ($rateModel && $rateModel->template && isset($documentTemplates[$rateModel->template_id])) {
+                    $matchedTemplate = $documentTemplates[$rateModel->template_id];
+                    $templatePath = public_path("storage/{$matchedTemplate->file}");
+                    $matchedTemplateName = $matchedTemplate->name;
+                    break; // Use the first matching template
+                }
+            }
+
+            if (!$templatePath || !file_exists($templatePath)) {
+                $templatePath = null;
+
+                if (!file_exists($templatePath)) {
+                    return back()->with('error', 'No valid template found for the user.');
+                }
+            }
+            // $templatePath = public_path('storage/templates/contract_template.docx');
+            // $filePath = public_path("storage/contracts/$fileName");
+
+            try {
+                $siteNumber = $user->latestReservation->siteForSeasonal->siteid ?? 'N/A';
+
+                $templateProcessor = new TemplateProcessor($templatePath);
+                $templateProcessor->setValues([
+                    'first_name' => $user->f_name,
+                    'last_name' => $user->l_name,
+                    'site_number' => $siteNumber,
+                    'seasonal_rate' => "$" . number_format($rate),
+                    'deadline' => $setting->renewal_deadline->format('F j, Y'),
+                    'discount_amount' => $rateModel->discount_amount ?? '0',
+                    'year' => now()->year + 1,
+                ]);
+                $templateProcessor->saveAs(public_path("storage/contracts/{$fileName}"));
+            } catch (\Exception $e) {
+                \Log::error("Failed to generate contract for {$user->email}: " . $e->getMessage());
+                continue;
+            }
+
             URL::forceRootUrl('https://book.kayuta.com');
             // URL::forceRootUrl('http://127.0.0.1:8001');
             $signedUrl = URL::temporarySignedRoute('seasonal.renewal.guest', now()->addDays(14), ['user' => $user->id]);
 
-            //Generate contract
-            $templatePath = public_path('storage/templates/contract_template.docx');
-            $fileName = "contract_{$user->l_name}_{$user->id}.docx";
-            $filePath = public_path("storage/contracts/$fileName");
+            try {
+                \Log::info("Matched template for {$user->email}: {$matchedTemplateName}");
 
-            $siteNumber = $user->latestReservation->siteForSeasonal->siteid ?? 'N/A';
-
-            $templateProcessor = new TemplateProcessor($templatePath);
-            $templateProcessor->setValues([
-                'first_name' => $user->f_name,
-                'last_name' => $user->l_name,
-                'site_number' => $siteNumber,
-                'seasonal_rate' => "$" . number_format($rate),
-                'deadline' => $setting->renewal_deadline->format('F j, Y'),
-                'discount_amount' => '$100',
-                'year' => now()->year + 1,
-            ]);
-            $templateProcessor->saveAs($filePath);
-
-            // Generate downloadable link
-            // $downloadLink = route('contracts.download', ['user' => $user->id]);
-
-            $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
+                if ($matchedTemplateName && Str::contains(Str::lower($matchedTemplateName) . 'non-renewal')) {
+                    $user->notify(new NonRenewalNotification($signedUrl));
+                } else {
+                    $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to send notification to {$user->email}: " . $e->getMessage());
+            }
 
             $count++;
         }
