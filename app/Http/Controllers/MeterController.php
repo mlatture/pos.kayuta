@@ -15,7 +15,7 @@ use App\Models\BusinessSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
 class MeterController extends Controller
 {
@@ -59,27 +59,29 @@ class MeterController extends Controller
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
         ])->post('https://api.openai.com/v1/chat/completions', [
             'model' => 'gpt-4o',
-            'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'text',
-                            'text' => 'From this electric meter image, extract and return a JSON with the following fields:
-                            {
-                            "siteid": "<value from large sticker label usually in black or white>",
-                            "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
-                            "reading": <the large numeric display at the top of the meter>
-                            }
-                            Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
-                        ],
-                        [
-                            'type' => 'image_url',
-                            'image_url' => ['url' => $imageUrl],
-                        ],
-                    ],
-                ],
-            ],
+            // 'messages' => [
+            //     [
+            //         'role' => 'user',
+            //         'content' => [
+            //             [
+            //                 'type' => 'text',
+            //                 'text' => 'From this electric meter image, extract and return a JSON with the following fields:
+            //                 {
+            //                 "siteid": "<value from large sticker label usually in black or white>",
+            //                 "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
+            //                 "reading": <the large numeric display at the top of the meter>
+            //                 }
+            //                 Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
+            //             ],
+            //             [
+            //                 'type' => 'image_url',
+            //                 'image_url' => ['url' => $imageUrl],
+            //             ],
+            //         ],
+            //     ],
+            // ],
+            'messages' => $this->getGptMessages('meter_page', $imageUrl),
+
             'max_tokens' => 100,
         ]);
 
@@ -184,27 +186,29 @@ class MeterController extends Controller
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
         ])->post('https://api.openai.com/v1/chat/completions', [
             'model' => 'gpt-4o',
-            'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'text',
-                            'text' => 'From this electric meter image, extract and return a JSON with the following fields:
-                            {
-                            "siteid": "<value from large sticker label usually in black or white>",
-                            "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
-                            "reading": <the large numeric display at the top of the meter>
-                            }
-                            Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
-                        ],
-                        [
-                            'type' => 'image_url',
-                            'image_url' => ['url' => $imageUrl],
-                        ],
-                    ],
-                ],
-            ],
+            // 'messages' => [
+            //     [
+            //         'role' => 'user',
+            //         'content' => [
+            //             [
+            //                 'type' => 'text',
+            //                 'text' => 'From this electric meter image, extract and return a JSON with the following fields:
+            //                 {
+            //                 "siteid": "<value from large sticker label usually in black or white>",
+            //                 "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
+            //                 "reading": <the large numeric display at the top of the meter>
+            //                 }
+            //                 Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.',
+            //             ],
+            //             [
+            //                 'type' => 'image_url',
+            //                 'image_url' => ['url' => $imageUrl],
+            //             ],
+            //         ],
+            //     ],
+            // ],
+            'messages' => $this->getGptMessages('meter_page', $imageUrl),
+
             'max_tokens' => 100,
         ]);
 
@@ -280,6 +284,42 @@ class MeterController extends Controller
             'days' => $days,
             'reservation_id' => $reservation->id ?? '',
         ]);
+    }
+
+    private function getGptMessages(string $type = 'meter_page', string $imageUrl = ''): array
+    {
+        $template = DB::table('prompt_templates')->where('type', $type)->select('system_prompt', 'user_prompt')->first();
+
+        $systemPrompt = $template->system_prompt ?? 'You are an assistant that extracts electric meter readings from images.';
+        $userPrompt =
+            $template->user_prompt ??
+            'From this electric meter image, extract and return a JSON with the following fields:
+            {
+            "siteid": "<value from large sticker label usually in black or white>",
+            "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
+            "reading": <the large numeric display at the top of the meter>
+            }
+            Always return your best guess, even if some values are unclear. Respond in JSON format only without explanation.';
+
+        return [
+            [
+                'role' => 'system',
+                'content' => $systemPrompt,
+            ],
+            [
+                'role' => 'user',
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => $userPrompt,
+                    ],
+                    [
+                        'type' => 'image_url',
+                        'image_url' => ['url' => $imageUrl],
+                    ],
+                ],
+            ],
+        ];
     }
 
     public function unregister(Request $request)
