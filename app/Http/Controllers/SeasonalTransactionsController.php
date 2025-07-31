@@ -152,7 +152,7 @@ class SeasonalTransactionsController extends Controller
                     }
 
                     // Generate contract PDF
-                    $templatePath = public_path("storage/{$matchedTemplate->file}");
+                    $templatePath = public_path("storage/{$matchedTemplate->file}"); // original template file
                     $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
                     $contractFolder = public_path("storage/contracts/{$matchedTemplate->name}");
 
@@ -160,19 +160,8 @@ class SeasonalTransactionsController extends Controller
                         mkdir($contractFolder, 0775, true);
                     }
 
-                    $pdf = Pdf::loadView('contracts.seasonal_contract', [
-                        'first_name' => $user->f_name,
-                        'last_name' => $user->l_name,
-                        'site_number' => $user->site_number ?? null,
-                        'email' => $user->email,
-                        'initial_rate' => $rate->rate_price,
-                        'discount_amount' => $rate->discount_amount ?? null,
-                        'final_rate' => $rate->rate_price,
-                        'addons' => null,
-                        'deadline' => optional($rate->final_payment_due)->format('F j, Y'),
-                    ]);
-
-                    $pdf->save("$contractFolder/{$fileName}");
+                    $destinationPath = $contractFolder . '/' . $fileName;
+                    copy($templatePath, $destinationPath);
 
                     URL::forceRootUrl('https://book.kayuta.com');
                     $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
