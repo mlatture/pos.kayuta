@@ -2,40 +2,90 @@
 
 namespace App\Services;
 
-class CardKnoxService extends BaseService {
+use Illuminate\Support\Facades\Http;
 
-    public function __construct(){
-        parent::__construct('https://x1.cardknox.com', [
-            'Content-type: application/x-www-form-urlencoded',
-            'X-Recurring-Api-Version: 1.0', // Replace with the appropriate API version if needed.
-            'Accept' => 'application/json'
-        ]);
+class CardKnoxService
+{
+    protected string $endpoint;
+    protected string $apiKey;
+
+    public function __construct()
+    {
+        $this->endpoint = config('services.cardknox.endpoint', 'https://x1.cardknox.com/gateway');
+        $this->apiKey = config('services.cardknox.api_key');
     }
 
     /**
-     * Create Sale
-     * @param $cardNumber
-     * @param $amount
-     * @param $expiry
-     * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * Process a credit card sale.
+     *
+     * @param string $cardNumber
+     * @param string $expiry Format: MM/YY or MMYY
+     * @param float $amount
+     * @return array Parsed response from Cardknox
      */
-    public function sale($cardNumber, $amount, $expiry): array
+    public function sale(string $cardNumber, string $expiry, float $amount): array
     {
-        $xExp = str_replace('/','',$expiry);
+        $xExp = str_replace('/', '', $expiry);
+
         $data = [
-            'xKey' => config('services.cardknox.api_key'),
-            // 'api-secret' => config('services.cardknox.api_secret'),
-            "xVersion" => "4.5.5",
-            "xCommand" => "cc:Sale",
-            'xAmount' => $amount,
+            'xKey' => $this->apiKey,
+            'xCommand' => 'cc:sale',
+            'xVersion' => '5.0.0',
             'xCardNum' => $cardNumber,
-//            'xCVV' => '123',
-            'xExp'     => $xExp,
+            'xExp' => $xExp,
+            'xAmount' => number_format($amount, 2, '.', ''),
+            'xSoftwareName' => 'KayutaLake',
             'xSoftwareVersion' => '1.0',
-            'xSoftwareName' => 'KayutaLake'
+            'xAllowDuplicate' => 'true',
         ];
-        return $this->postRequest('/gateway',http_build_query($data),null,false);
+
+        return $this->send($data);
     }
 
+    /**
+     * Process an ACH sale.
+     *
+     * @param string $routingNumber
+     * @param string $accountNumber
+     * @param float $amount
+     * @return array Parsed response from Cardknox
+     */
+    public function achSale(string $routingNumber, string $accountNumber, string $accountName,float $amount): array
+    {
+        $data = [
+            'xKey' => $this->apiKey,
+            'xCommand' => 'check:sale',
+            'xVersion' => '5.0.0',
+            'xRouting' => $routingNumber,
+            'xAccount' => $accountNumber,
+            'xName' => $accountName,
+            'xAmount' => number_format($amount, 2, '.', ''),
+            'xSoftwareName' => 'KayutaLake',
+            'xSoftwareVersion' => '1.0',
+            'xAllowDuplicate' => 'true',
+        ];
+
+        return $this->send($data);
+    }
+
+    /**
+     * Send the request to Cardknox and parse response.
+     *
+     * @param array $data
+     * @return array
+     */
+    protected function send(array $data): array
+    {
+        $response = Http::asForm()
+            ->withHeaders([
+                'X-Recurring-Api-Version' => '1.0',
+                'Accept' => 'application/json',
+            ])
+            ->post($this->endpoint, $data);
+
+        $body = $response->body();
+        parse_str($body, $parsed);
+
+        return $parsed;
+    }
 }

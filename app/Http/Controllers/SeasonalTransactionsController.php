@@ -20,6 +20,8 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
+use App\Services\CardKnoxService;
+
 class SeasonalTransactionsController extends Controller
 {
     public function storeAddOns(Request $request)
@@ -207,63 +209,109 @@ class SeasonalTransactionsController extends Controller
     }
 
     // Through Api Transactions (It Triggers from Book.kayuta.com)
-    public function storeScheduledPayments(User $user, SeasonalRate $rate, Request $request)
+
+    public function storeScheduledPayments(User $user, SeasonalRate $rate, Request $request, CardKnoxService $cardknox)
     {
         $validated = $request->validate([
-            'payment_type' => 'required|in:full,installments', // User selection UI (not stored as-is)
-            'payment_method' => 'required|in:credit,ach,in_store,mailed_check', // Match ENUM: 'credit', 'ach'
+            'payment_type' => 'required|in:full,installments',
+            'payment_method' => 'required|in:credit,ach,in_store,mailed_check',
             'down_payment' => 'nullable|numeric|min:0',
+            'card_number' => 'nullable|string',
+            'expiry' => 'nullable|string',
+            'account_number' => 'nullable|string',
+            'routing_number' => 'nullable|string',
+            'account_name' => 'nullable|string',
         ]);
 
         $renewal = SeasonalRenewal::where('customer_email', $user->email)->latest()->first();
         if (!$renewal) {
-            return response()->json(['Renewal record not found.']);
+            return response()->json(['message' => 'Renewal record not found.'], 404);
         }
 
         $rate = SeasonalRate::where('rate_price', $renewal->initial_rate)->latest()->first();
+
         if (!$rate) {
-            return response()->json(['Seasonal rate not found.']);
+            return response()->json(['message' => 'Seasonal rate not found.'], 404);
         }
 
-        $map = [
-            'credit' => 'credit',
-            'ach' => 'ach',
-        ];
-
-        $paymentMethod = $map[$request->payment_method];
-
         $fullAmount = $renewal->final_rate;
-        $dayOfMonth = $renewal->day_of_month ?? 5; // fallback
+        $dayOfMonth = $renewal->day_of_month ?? 5;
         $startDate = Carbon::parse($rate->payment_plan_starts);
         $endDate = Carbon::parse($rate->final_payment_due);
 
+        // FULL PAYMENT PROCESSING
         if ($validated['payment_type'] === 'full') {
-            // Full Payment - frequency = none
-            ScheduledPayment::create([
-                'customer_email' => $user->email,
-                'customer_name' => $user->f_name . ' ' . $user->l_name,
-                'payment_date' => now(),
-                'amount' => $fullAmount,
-                'payment_type' => $paymentMethod, // 'ach' or 'credit'
-                'frequency' => 'none',
-                'status' => 'Completed',
-            ]);
+            $earlyDiscount = $rate->early_pay_discount ?? 0;
+            $fullDiscount = $rate->full_payment_discount ?? 0;
+            $totalDiscountPercent = $earlyDiscount + $fullDiscount;
 
-            $renewal->update([
-                'payment_plan' => $paymentMethod === 'ach' ? 'paid_in_full' : 'paid_in_full',
-                'status' => 'paid in full',
-                'day_of_month' => $dayOfMonth,
-                'renewed' => true,
-                'selected_card' => $paymentMethod,
-            ]);
-        } else {
+            $discountAmount = $fullAmount * ($totalDiscountPercent / 100);
+            $discountedTotal = round($fullAmount - $discountAmount, 2);
+
+            try {
+                DB::beginTransaction();
+
+                $response = match ($validated['payment_method']) {
+                    'credit' => $cardknox->sale($validated['card_number'], $validated['expiry'], $discountedTotal),
+                    'ach' => $cardknox->achSale($validated['routing_number'], $validated['account_number'], $validated['account_name'], $discountedTotal),
+                    default => ['xResult' => 'A'],
+                };
+
+                if (($response['xResult'] ?? '') !== 'A') {
+                    \Log::error('CardKnox Response:', $response);
+
+                    DB::rollBack();
+                    return response()->json(
+                        [
+                            'message' => $response['xError'] ?? 'Payment failed.',
+                            'success' => false,
+                        ],
+                        400,
+                    );
+                }
+
+                ScheduledPayment::create([
+                    'customer_email' => $user->email,
+                    'customer_name' => $user->f_name . ' ' . $user->l_name,
+                    'payment_date' => now(),
+                    'amount' => $discountedTotal,
+                    'payment_type' => $validated['payment_method'],
+                    'frequency' => 'none',
+                    'status' => 'Completed',
+                ]);
+
+                $renewal->update([
+                    'payment_plan' => 'paid_in_full',
+                    'status' => 'paid in full',
+                    'renewed' => true,
+                    'selected_card' => $validated['payment_method'],
+                    'day_of_month' => $dayOfMonth,
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('CardKnox Response:', $response);
+
+                return response()->json(
+                    [
+                        'message' => 'Error processing full payment: ' . $e->getMessage() ?? 'Unknown error',
+                        'success' => false,
+                    ],
+                    500,
+                );
+            }
+        }
+        // INSTALLMENT PLAN PROCESSING
+        else {
             $downPayment = $validated['down_payment'] ?? 0;
             $remaining = $fullAmount - $downPayment;
             $months = $startDate->diffInMonths($endDate);
+
             if ($months <= 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid payment schedule: final payment date must be after start date.',
+                    'message' => 'Invalid schedule: final payment date must be after start date.',
                 ]);
             }
 
@@ -272,54 +320,74 @@ class SeasonalTransactionsController extends Controller
 
             DB::beginTransaction();
             try {
+                // Process down payment now (if provided)
                 if ($downPayment > 0) {
+                    $response = match ($validated['payment_method']) {
+                        'credit' => $cardknox->sale($validated['card_number'], $validated['expiry'], $downPayment),
+                        'ach' => $cardknox->achSale($validated['routing_number'], $validated['account_number'], $validated['account_name'], $downPayment),
+                        default => ['xResult' => 'A'],
+                    };
+
+                    if (($response['xResult'] ?? '') !== 'A') {
+                        DB::rollBack();
+                        return response()->json(
+                            [
+                                'message' => $response['xError'] ?? 'Down payment failed.',
+                                'success' => false,
+                            ],
+                            400,
+                        );
+                    }
+
                     ScheduledPayment::create([
                         'customer_email' => $user->email,
                         'customer_name' => $user->f_name . ' ' . $user->l_name,
                         'payment_date' => now(),
                         'amount' => $downPayment,
-                        'payment_type' => $paymentMethod,
+                        'payment_type' => $validated['payment_method'],
                         'frequency' => 'none',
                         'status' => 'Completed',
                     ]);
                 }
 
+                // Schedule future payments
                 for ($i = 0; $i < $months; $i++) {
-                    $due = $startDate->copy()->addMonths($i)->day($dayOfMonth);
-                    if ($due->lt($startDate)) {
-                        $due->addMonth();
+                    $dueDate = $startDate->copy()->addMonths($i)->day($dayOfMonth);
+                    if ($dueDate->lt($startDate)) {
+                        $dueDate->addMonth();
                     }
 
-                    // Handle rounding adjustment for last month
                     $amount = $i === $months - 1 ? round($remaining - $totalScheduled, 2) : $monthlyAmount;
-
                     $totalScheduled += $amount;
 
                     ScheduledPayment::create([
                         'customer_email' => $user->email,
                         'customer_name' => $user->f_name . ' ' . $user->l_name,
-                        'payment_date' => $due,
+                        'payment_date' => $dueDate,
                         'amount' => $amount,
-                        'payment_type' => $paymentMethod,
+                        'payment_type' => $validated['payment_method'],
                         'frequency' => 'monthly',
                         'status' => 'Pending',
                     ]);
                 }
 
                 $renewal->update([
-                    'payment_plan' => $paymentMethod === 'ach' ? 'monthly_ach' : 'monthly_credit',
+                    'payment_plan' => 'monthly_' . $validated['payment_method'],
                     'status' => 'paid deposit',
-                    'selected_card' => $paymentMethod,
+                    'selected_card' => $validated['payment_method'],
                     'day_of_month' => $dayOfMonth,
                 ]);
 
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create payment schedule: ' . $e->getMessage(),
-                ]);
+                return response()->json(
+                    [
+                        'success' => false,
+                        'message' => 'Failed to create payment schedule: ' . $e->getMessage(),
+                    ],
+                    500,
+                );
             }
         }
 
