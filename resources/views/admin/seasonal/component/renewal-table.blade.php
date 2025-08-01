@@ -17,6 +17,7 @@
                     <th>Payment Plan</th>
                     <th>Card/Account</th>
                     <th>Day of Month</th>
+                    <th>Action</th>
                     {{-- <th>Contract</th> --}}
                 </tr>
             </thead>
@@ -36,6 +37,14 @@
                         <td>{{ str_replace('_', ' ', $renewal->payment_plan) }}</td>
                         <td>{{ $renewal->selected_card }}</td>
                         <td>{{ $renewal->day_of_month }}</td>
+                        <td>
+                            <a href="{{ route('seasonal.user.statements', $renewal->customer_email) }}"
+                                class="btn btn-sm btn-outline-info mt-1">
+                                📄 View Statements
+                            </a>
+                        </td>
+
+
                         {{-- <td>
                             @php
                                 $fileName = "contract_{$renewal->customer->l_name}_{$renewal->customer_id}.pdf";

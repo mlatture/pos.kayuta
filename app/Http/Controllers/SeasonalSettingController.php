@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\DocumentTemplate;
 use App\Models\SeasonalRate;
 use App\Models\SeasonalAddOns;
+use App\Models\ScheduledPayment;
 
 use App\Notifications\SeasonalRenewalLinkNotification;
 use App\Notifications\NonRenewalNotification;
@@ -215,8 +216,6 @@ class SeasonalSettingController extends Controller
         return redirect()->back()->with('success', 'Seasonal settings saved.');
     }
 
-   
-
     public function destroy(DocumentTemplate $template)
     {
         // $seasonalRates = SeasonalRate::where('template_id', $template->id)->get();
@@ -262,5 +261,16 @@ class SeasonalSettingController extends Controller
         }
 
         abort(404, 'Contract not found.');
+    }
+
+    public function statements(ScheduledPayment $scheduledPayment, $email)
+    {
+        $statements = $scheduledPayment->where('customer_email', $email)->orderBy('payment_date', 'asc')->get();
+
+        if ($statements->isEmpty()) {
+            return redirect()->back()->with('error', 'No statements found for this customer.');
+        }
+
+        return view('admin.seasonal.statements', compact('statements'));
     }
 }
