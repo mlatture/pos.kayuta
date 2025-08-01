@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-
+use App\Models\CardsOnFile;
 class CardKnoxService
 {
     protected string $endpoint;
@@ -23,7 +23,7 @@ class CardKnoxService
      * @param float $amount
      * @return array Parsed response from Cardknox
      */
-    public function sale(string $cardNumber, string $expiry, float $amount): array
+    public function sale(string $cardNumber, string $cvv, string $expiry, float $amount): array
     {
         $xExp = str_replace('/', '', $expiry);
 
@@ -32,6 +32,7 @@ class CardKnoxService
             'xCommand' => 'cc:sale',
             'xVersion' => '5.0.0',
             'xCardNum' => $cardNumber,
+            'xCVV' => $cvv,
             'xExp' => $xExp,
             'xAmount' => number_format($amount, 2, '.', ''),
             'xSoftwareName' => 'KayutaLake',
@@ -39,7 +40,27 @@ class CardKnoxService
             'xAllowDuplicate' => 'true',
         ];
 
-        return $this->send($data);
+        $response = $this->send($data);
+
+        // Optionally store card on file
+        if (isset($response['xToken'], $response['xMaskedCardNumber'])) {
+            CardsOnFile::updateOrCreate(
+                ['xtoken' => $response['xToken']],
+                [
+                    'xmaskedcardnumber' => $response['xMaskedCardNumber'],
+                    'method' => $response['xCardType'] ?? 'Unknown',
+                    'xtoken' => $response['xToken'],
+                    'name' => $response['xName'] ?? null,
+                    'email' => $response['xEmail'] ?? null,
+                    // 'receipt' => $response['xRefNum'] ?? null,
+                    'gateway_response' => json_encode($response),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
+        }
+
+        return $response;
     }
 
     /**
@@ -50,7 +71,7 @@ class CardKnoxService
      * @param float $amount
      * @return array Parsed response from Cardknox
      */
-    public function achSale(string $routingNumber, string $accountNumber, string $accountName,float $amount): array
+    public function achSale(string $routingNumber, string $accountNumber, string $accountName, float $amount): array
     {
         $data = [
             'xKey' => $this->apiKey,
@@ -65,7 +86,26 @@ class CardKnoxService
             'xAllowDuplicate' => 'true',
         ];
 
-        return $this->send($data);
+        $response = $this->send($data);
+
+        // Store ACH token if available
+        if (isset($response['xToken'])) {
+            CardsOnFile::updateOrCreate(
+                ['xtoken' => $response['xToken']],
+                [
+                    'method' => 'ach',
+                    'xtoken' => $response['xToken'],
+                    'name' => $response['xName'] ?? null,
+                    'email' => $response['xEmail'] ?? null,
+                    // 'receipt' => $response['xRefNum'] ?? null,
+                    'gateway_response' => json_encode($response),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
+        }
+
+        return $response;
     }
 
     /**

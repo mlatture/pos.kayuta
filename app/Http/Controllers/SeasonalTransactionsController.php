@@ -276,11 +276,12 @@ class SeasonalTransactionsController extends Controller
             'payment_type' => 'required|in:full,installments',
             'payment_method' => 'required|in:credit,ach,in_store,mailed_check',
             'down_payment' => 'nullable|numeric|min:0',
-            'card_number' => 'nullable|string',
-            'expiry' => 'nullable|string',
-            'account_number' => 'nullable|string',
-            'routing_number' => 'nullable|string',
-            'account_name' => 'nullable|string',
+            'xCardNum' => 'nullable|string',
+            'xCVV' => 'nullable|string',
+            'xExp' => 'nullable|string',
+            'xACH' => 'nullable|string',
+            'xRouting' => 'nullable|string',
+            'xName' => 'nullable|string',
         ]);
 
         $renewal = SeasonalRenewal::where('customer_email', $user->email)->latest()->first();
@@ -308,12 +309,14 @@ class SeasonalTransactionsController extends Controller
             $discountAmount = $fullAmount * ($totalDiscountPercent / 100);
             $discountedTotal = round($fullAmount - $discountAmount, 2);
 
+            $response = null;
+
             try {
                 DB::beginTransaction();
 
                 $response = match ($validated['payment_method']) {
-                    'credit' => $cardknox->sale($validated['card_number'], $validated['expiry'], $discountedTotal),
-                    'ach' => $cardknox->achSale($validated['routing_number'], $validated['account_number'], $validated['account_name'], $discountedTotal),
+                    'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $discountedTotal),
+                    'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $discountedTotal),
                     default => ['xResult' => 'A'],
                 };
 
@@ -351,11 +354,15 @@ class SeasonalTransactionsController extends Controller
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('CardKnox Response:', $response);
+
+                \Log::error('CardKnox Error', [
+                    'exception' => $e->getMessage(),
+                    'response' => $response ?? 'No response returned',
+                ]);
 
                 return response()->json(
                     [
-                        'message' => 'Error processing full payment: ' . $e->getMessage() ?? 'Unknown error',
+                        'message' => 'Error processing full payment: ' . $e->getMessage(),
                         'success' => false,
                     ],
                     500,
@@ -383,8 +390,8 @@ class SeasonalTransactionsController extends Controller
                 // Process down payment now (if provided)
                 if ($downPayment > 0) {
                     $response = match ($validated['payment_method']) {
-                        'credit' => $cardknox->sale($validated['card_number'], $validated['expiry'], $downPayment),
-                        'ach' => $cardknox->achSale($validated['routing_number'], $validated['account_number'], $validated['account_name'], $downPayment),
+                        'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $downPayment),
+                        'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $downPayment),
                         default => ['xResult' => 'A'],
                     };
 
