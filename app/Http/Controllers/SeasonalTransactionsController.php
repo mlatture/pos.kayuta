@@ -89,6 +89,71 @@ class SeasonalTransactionsController extends Controller
         }
     }
 
+    public function clearAndReload()
+    {
+        $recipients = User::whereNotNull('seasonal')->whereRaw('JSON_LENGTH(seasonal) > 0')->get();
+        $currentYear = now()->year;
+        $seasonalRates = SeasonalRate::with('template')->get()->keyBy('id');
+        $documentTemplates = DocumentTemplate::all()->keyBy('id');
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($recipients as $user) {
+                $alreadyRenewed = SeasonalRenewal::where('customer_email', $user->email)->whereYear('created_at', $currentYear)->exists();
+                if ($alreadyRenewed) {
+                    continue;
+                }
+
+                $seasonalIds = is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
+                if (!$seasonalIds || !is_array($seasonalIds)) {
+                    continue;
+                }
+
+                foreach ($seasonalIds as $rateId) {
+                    $rate = $seasonalRates->get($rateId);
+                    if (!$rate) {
+                        continue;
+                    }
+
+                    $status = Str::contains(Str::lower($rate->template->name ?? ''), 'non-renewal') || Str::contains(Str::lower($rate->rate_name ?? ''), 'sent rejection') ? 'sent rejection' : 'sent offer';
+
+                    $discount_percent = $rate->early_pay_discount + $rate->full_payment_discount ?? 0;
+                    SeasonalRenewal::updateOrCreate([
+                        'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
+                        'customer_email' => $user->email,
+                        'allow_renew' => true,
+                        'status' => $status,
+                        'initial_rate' => $rate->rate_price,
+                        'discount_percent' => $discount_percent ?? null,
+                        'discount_amount' => null,
+                        'discount_note' => null,
+                        'final_rate' => $rate->rate_price,
+                        'payment_plan' => null,
+                        'selected_card' => null,
+                        'day_of_month' => null,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Seasonal renewals cleared and reloaded successfully.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('clearAndReload error: ' . $e->getMessage());
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Failed to clear and reload seasonal renewals.',
+                    'error' => $e->getMessage(),
+                ],
+                500,
+            );
+        }
+    }
     // Send Emails to the Seasonals Customers
 
     public function sendEmails(Request $request)

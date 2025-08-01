@@ -322,6 +322,7 @@ Route::prefix('seasonal')
 
         Route::prefix('renewals')->group(function () {
             Route::post('send-emails', [SeasonalTransactionsController::class, 'sendEmails'])->name('seasonal.sendEmails');
+            Route::post('clear-and-reload', [SeasonalTransactionsController::class, 'clearAndReload'])->name('seasonal.reload');
             Route::post('clear', [SeasonalTransactionsController::class, 'clear'])->name('seasonal.clear');
             Route::get('statements/{email}', [SeasonalSettingController::class, 'statements'])->name('seasonal.user.statements');
         });

@@ -71,6 +71,26 @@
                         `<br><p>No renewal records found for the current year.</p>`;
                 }
 
+                $.post('{{ route('seasonal.reload') }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(res) {
+                    $.toast({
+                        heading: 'Success',
+                        text: res.message,
+                        icon: 'success',
+                        position: 'bottom-left',
+                        hideAfter: 3000,
+                    });
+                }).fail(function(err) {
+                    $.toast({
+                        heading: 'Error',
+                        text: err.responseJSON?.message || 'Something went wrong.',
+                        icon: 'error',
+                        position: 'bottom-left',
+                        hideAfter: 3000,
+                    });
+                });
+
                 Swal.fire({
                     icon: renewalCount === 0 ? 'warning' : 'info',
                     title: renewalCount === 0 ? 'Start of New Season' : 'Renewals Overview',
