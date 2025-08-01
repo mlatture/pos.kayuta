@@ -122,7 +122,7 @@ class SeasonalTransactionsController extends Controller
                     SeasonalRenewal::updateOrCreate([
                         'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
                         'customer_email' => $user->email,
-                        'allow_renew' => true,
+                        'allow_renew' => false,
                         'status' => $status,
                         'initial_rate' => $rate->rate_price,
                         'discount_percent' => $discount_percent ?? null,
@@ -168,12 +168,6 @@ class SeasonalTransactionsController extends Controller
 
         try {
             foreach ($recipients as $user) {
-                $alreadyRenewed = SeasonalRenewal::where('customer_email', $user->email)->whereYear('created_at', $currentYear)->exists();
-
-                if ($alreadyRenewed) {
-                    continue;
-                }
-
                 $seasonalIds = is_array($user->seasonal) ? $user->seasonal : json_decode($user->seasonal, true);
                 if (!$seasonalIds || !is_array($seasonalIds)) {
                     continue;
@@ -185,59 +179,71 @@ class SeasonalTransactionsController extends Controller
                         continue;
                     }
 
-                    $status = Str::contains(Str::lower($rate->template->name ?? ''), 'non-renewal') || Str::contains(Str::lower($rate->rate_name ?? ''), 'sent rejection') ? 'sent rejection' : 'sent offer';
+                    $template = $rate->template;
+                    $templateName = $template->name ?? null;
 
-                    SeasonalRenewal::updateOrCreate([
-                        'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
-                        'customer_email' => $user->email,
-                        'allow_renew' => true,
-                        'status' => $status,
-                        'initial_rate' => $rate->rate_price,
-                        'discount_percent' => null,
-                        'discount_amount' => null,
-                        'discount_note' => null,
-                        'final_rate' => $rate->rate_price,
-                        'payment_plan' => null,
-                        'selected_card' => null,
-                        'day_of_month' => null,
-                    ]);
-
-                    // Determine matched template
-                    $matchedTemplate = null;
-                    $matchedTemplateName = null;
-
-                    if ($rate->template && isset($documentTemplates[$rate->template_id])) {
-                        $matchedTemplate = $documentTemplates[$rate->template_id];
-                        $matchedTemplateName = $matchedTemplate->name;
-                    }
-
-                    if (!$matchedTemplate || !file_exists(public_path("storage/{$matchedTemplate->file}"))) {
+                    if (!$template || !file_exists(public_path("storage/{$template->file}"))) {
                         \Log::warning("Missing template for user {$user->email}");
                         continue;
                     }
 
-                    // Generate contract PDF
-                    $templatePath = public_path("storage/{$matchedTemplate->file}"); // original template file
+                    // Check if renewal already exists for current year
+                    $existingRenewal = SeasonalRenewal::where('customer_email', $user->email)->whereYear('created_at', $currentYear)->first();
+
+                    // Skip if exists and allow_renew is already true
+                    if ($existingRenewal && $existingRenewal->allow_renew) {
+                        continue;
+                    }
+
+                    // Update or create logic
+                    $status = Str::contains(Str::lower($templateName), 'non-renewal') ? 'sent rejection' : 'sent offer';
+
+                    if ($existingRenewal) {
+                        // Update existing record
+                        $existingRenewal->update([
+                            'allow_renew' => true,
+                            'status' => $status,
+                            'initial_rate' => $rate->rate_price,
+                            'final_rate' => $rate->rate_price,
+                        ]);
+                    } else {
+                        // Create new renewal record
+                        SeasonalRenewal::create([
+                            'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
+                            'customer_email' => $user->email,
+                            'allow_renew' => true,
+                            'status' => $status,
+                            'initial_rate' => $rate->rate_price,
+                            'final_rate' => $rate->rate_price,
+                        ]);
+                    }
+
+                    // Generate contract
                     $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
-                    $contractFolder = public_path("storage/contracts/{$matchedTemplate->name}");
+                    $contractFolder = public_path("storage/contracts/{$templateName}");
 
                     if (!file_exists($contractFolder)) {
                         mkdir($contractFolder, 0775, true);
                     }
 
-                    $destinationPath = $contractFolder . '/' . $fileName;
-                    copy($templatePath, $destinationPath);
+                    $destinationPath = "{$contractFolder}/{$fileName}";
+                    if (!file_exists($destinationPath)) {
+                        $sourcePath = public_path("storage/{$template->file}");
+                        copy($sourcePath, $destinationPath);
+                    }
 
+                    // Send email
                     URL::forceRootUrl('https://book.kayuta.com');
                     $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
 
-                    \Log::info("Sending renewal to {$user->email}, using template: {$matchedTemplateName}");
-
-                    if (Str::contains(Str::lower($matchedTemplateName), 'non-renewal')) {
-                        $user->notify(new NonRenewalNotification($signedUrl));
+                    if (Str::contains(Str::lower($templateName), 'non-renewal')) {
+                        $user->notify(new \App\Notifications\NonRenewalNotification($signedUrl));
                     } else {
-                        $user->notify(new SeasonalRenewalLinkNotification($signedUrl));
+                        $user->notify(new \App\Notifications\SeasonalRenewalLinkNotification($signedUrl));
                     }
+
+                    \Log::info("Processed seasonal renewal for {$user->email}");
+                    break; // only use first matching seasonal rate
                 }
             }
 
@@ -245,7 +251,7 @@ class SeasonalTransactionsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Renewal entries created for seasonal customers.',
+                'message' => 'Emails sent and renewals updated where applicable.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -254,7 +260,7 @@ class SeasonalTransactionsController extends Controller
             return response()->json(
                 [
                     'success' => false,
-                    'message' => 'Failed to create renewal records.',
+                    'message' => 'Failed to send renewal emails.',
                     'error' => $e->getMessage(),
                 ],
                 500,

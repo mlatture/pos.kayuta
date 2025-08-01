@@ -72,7 +72,7 @@
 
 
         setTimeout(() => {
-            $('.alert-success', '.alert-danger').fadeOut('slow');
+            $('.alert-success, .alert-danger').fadeOut('slow');
         }, 4000);
     </script>
 </head>
