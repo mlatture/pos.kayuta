@@ -77,7 +77,7 @@ class MeterController extends Controller
 
         // 3. Parse CLAUDE AI result
         $data = $response->json();
-        $content = $data['choices'][0]['message']['content'] ?? null;
+        $content = $data['content'][0]['text'] ?? null;
 
         if (!$content || !str_contains($content, '{')) {
             session()->flash('retry_path', $path);
@@ -194,7 +194,7 @@ class MeterController extends Controller
 
         // 3. Parse CLAUDE AI result
         $data = $response->json();
-        $content = $data['choices'][0]['message']['content'] ?? null;
+        $content = $data['content'][0]['text'] ?? null;
 
         if (!$content || !str_contains($content, '{')) {
             session()->flash('retry_path', $path);
