@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
+
+
 class MeterController extends Controller
 {
     public function index()
@@ -34,8 +36,6 @@ class MeterController extends Controller
 
     public function read(Request $request)
     {
-        $path = null;
-
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
@@ -45,16 +45,41 @@ class MeterController extends Controller
             $path = Readings::storeFile($request->file('photo'));
         } elseif ($request->filled('existing_image')) {
             $path = $request->input('existing_image');
-
             return back()->with('Warning', 'That Doesn`t seem right, try again.');
         }
+
         if (!$path || !file_exists(public_path('storage/' . $path))) {
             return back()->with('Error', 'Image not found.');
         }
 
-        $imageUrl = asset('storage/' . $path);
+        $imagePath = public_path('storage/' . $path);
 
-        // 2. Send to CLAUDE AI
+        // 2. Convert image to base64 (without data URI prefix)
+        $imageData = file_get_contents($imagePath);
+        $base64 = base64_encode($imageData);
+
+        // 3. Build Claude message format with base64 image
+
+        $textPrompt = $this->getClaudePromptMessage('meter_page', asset('storage/' . $path));
+
+        $claudeMessages = [
+            [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => $textPrompt],
+                    [
+                        'type' => 'image',
+                        'source' => [
+                            'type' => 'base64',
+                            'media_type' => 'image/jpeg', // you may adjust to image/png
+                            'data' => $base64,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        // 4. Claude API call
         $response = Http::withHeaders([
             'x-api-key' => env('CLAUDE_API_KEY'),
             'anthropic-version' => '2023-06-01',
@@ -62,20 +87,9 @@ class MeterController extends Controller
             'model' => 'claude-sonnet-4-20250514',
             'max_tokens' => 1024,
             'temperature' => 0,
-            'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'text',
-                            'text' => $this->getClaudePromptMessage($imageUrl),
-                        ],
-                    ],
-                ],
-            ],
+            'messages' => $claudeMessages,
         ]);
 
-        // 3. Parse CLAUDE AI result
         $data = $response->json();
         $content = $data['content'][0]['text'] ?? null;
 
@@ -84,19 +98,17 @@ class MeterController extends Controller
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
 
-        $start = strpos($content, '{');
-        $end = strrpos($content, '}');
-        $jsonString = substr($content, $start, $end - $start + 1);
+        $jsonString = substr($content, strpos($content, '{'), strrpos($content, '}') - strpos($content, '{') + 1);
         $parsed = json_decode($jsonString, true);
 
         $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
         $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
 
         if (!$meterNumber || !$currentReading) {
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values (meter number or reading).');
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
         }
 
-        // 4. Lookup site by meter_number
+        // 5. Proceed to next logic
         $site = Site::where('meter_number', $meterNumber)->first();
         if (!$site) {
             return redirect()->route('meters.unregistered', [
@@ -107,8 +119,6 @@ class MeterController extends Controller
             ]);
         }
 
-        // 5. Lookup last reading for this meter
-
         $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
         $previousKwh = $lastReading?->kwhNo ?? 0;
         $previousDate = $lastReading?->date ?? now();
@@ -117,12 +127,10 @@ class MeterController extends Controller
         $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
         $total = $usage * $rate;
 
-        // 6. Find reservation for the reading date
         $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
 
         $customer = $reservation ? User::find($reservation->customernumber) : null;
 
-        // 7. Build preview data
         $reading = (object) [
             'kwhNo' => $currentReading,
             'meter_number' => $meterNumber,
@@ -136,7 +144,6 @@ class MeterController extends Controller
             'new_meter_number' => false,
         ];
 
-        // 8. Return to preview view
         return view('meters.preview', [
             'reading' => $reading,
             'site' => $site,
@@ -149,10 +156,8 @@ class MeterController extends Controller
         ]);
     }
 
-    public function scan(Request $request)
+   public function scan(Request $request)
     {
-        $path = null;
-
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
@@ -162,16 +167,41 @@ class MeterController extends Controller
             $path = Readings::storeFile($request->file('photo'));
         } elseif ($request->filled('existing_image')) {
             $path = $request->input('existing_image');
-
             return back()->with('Warning', 'That Doesn`t seem right, try again.');
         }
+
         if (!$path || !file_exists(public_path('storage/' . $path))) {
             return back()->with('Error', 'Image not found.');
         }
 
-        $imageUrl = asset('storage/' . $path);
+        $imagePath = public_path('storage/' . $path);
 
-        // 2. Send to CLAUDE AI
+        // 2. Convert image to base64 (without data URI prefix)
+        $imageData = file_get_contents($imagePath);
+        $base64 = base64_encode($imageData);
+
+        // 3. Build Claude message format with base64 image
+
+        $textPrompt = $this->getClaudePromptMessage('meter_page', asset('storage/' . $path));
+
+        $claudeMessages = [
+            [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => $textPrompt],
+                    [
+                        'type' => 'image',
+                        'source' => [
+                            'type' => 'base64',
+                            'media_type' => 'image/jpeg', // you may adjust to image/png
+                            'data' => $base64,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        // 4. Claude API call
         $response = Http::withHeaders([
             'x-api-key' => env('CLAUDE_API_KEY'),
             'anthropic-version' => '2023-06-01',
@@ -179,20 +209,9 @@ class MeterController extends Controller
             'model' => 'claude-sonnet-4-20250514',
             'max_tokens' => 1024,
             'temperature' => 0,
-            'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'text',
-                            'text' => $this->getClaudePromptMessage($imageUrl),
-                        ],
-                    ],
-                ],
-            ],
+            'messages' => $claudeMessages,
         ]);
 
-        // 3. Parse CLAUDE AI result
         $data = $response->json();
         $content = $data['content'][0]['text'] ?? null;
 
@@ -201,19 +220,17 @@ class MeterController extends Controller
             return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
         }
 
-        $start = strpos($content, '{');
-        $end = strrpos($content, '}');
-        $jsonString = substr($content, $start, $end - $start + 1);
+        $jsonString = substr($content, strpos($content, '{'), strrpos($content, '}') - strpos($content, '{') + 1);
         $parsed = json_decode($jsonString, true);
 
         $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
         $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
 
         if (!$meterNumber || !$currentReading) {
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values (meter number or reading).');
+            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
         }
 
-        // 4. Lookup site by meter_number
+        // 5. Proceed to next logic
         $site = Site::where('meter_number', $meterNumber)->first();
         if (!$site) {
             return redirect()->route('meters.unregistered', [
@@ -224,8 +241,6 @@ class MeterController extends Controller
             ]);
         }
 
-        // 5. Lookup last reading for this meter
-
         $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
         $previousKwh = $lastReading?->kwhNo ?? 0;
         $previousDate = $lastReading?->date ?? now();
@@ -234,12 +249,10 @@ class MeterController extends Controller
         $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
         $total = $usage * $rate;
 
-        // 6. Find reservation for the reading date
         $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
 
         $customer = $reservation ? User::find($reservation->customernumber) : null;
 
-        // 7. Build preview data
         $reading = (object) [
             'kwhNo' => $currentReading,
             'meter_number' => $meterNumber,
@@ -253,7 +266,6 @@ class MeterController extends Controller
             'new_meter_number' => false,
         ];
 
-        // 8. Return to preview view
         return view('meters.preview', [
             'reading' => $reading,
             'site' => $site,
@@ -265,24 +277,12 @@ class MeterController extends Controller
             'reservation_id' => $reservation->id ?? '',
         ]);
     }
+
     private function getClaudePromptMessage(string $type = 'meter_page', string $imageUrl = ''): string
     {
         $template = DB::table('prompt_templates')->where('type', $type)->select('user_prompt')->first();
 
-        $userPrompt =
-            $template->user_prompt ??
-            <<<DEFAULT
-            From this electric meter image ($imageUrl), extract and return a JSON with the following fields:
-
-            {
-              "siteid": "<value from large sticker label usually in black or white>",
-              "meter_number": "<printed or stamped number near the bottom of the meter, e.g., 46193471>",
-              "reading": <the large numeric display at the top of the meter>
-            }
-
-            Always return your best guess, even if some values are unclear. Respond only with valid JSON and no explanation.
-            DEFAULT;
-
+        $userPrompt = $template->user_prompt;
         if (!str_contains($userPrompt, $imageUrl)) {
             $userPrompt .= "\n\nImage: $imageUrl";
         }
