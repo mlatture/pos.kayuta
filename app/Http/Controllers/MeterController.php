@@ -59,7 +59,7 @@ class MeterController extends Controller
             'x-api-key' => env('CLAUDE_API_KEY'),
             'anthropic-version' => '2023-06-01',
         ])->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-3-sonnet-20240229',
+            'model' => 'claude-3-haiku-20240307',
             'max_tokens' => 1024,
             'temperature' => 0,
             'messages' => [
