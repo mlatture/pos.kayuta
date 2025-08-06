@@ -273,4 +273,24 @@ class SeasonalSettingController extends Controller
 
         return view('admin.seasonal.statements', compact('statements'));
     }
+
+    public function viewContract($email) 
+    {
+        $user = User::where('email', $email)->first();
+
+        $seasonal = is_string($user->seasonal) ? json_decode($user->seasonal, true) : $user->seasonal;
+        $rateIds = collect($seasonal)->filter()->values()->all();
+
+        $rates = SeasonalRate::with('template')->whereIn('id', $rateIds)->get();
+        foreach($rates as $rate){
+            $fileName = 'contracts/' . $rate->template->name . '/contract_' . $user->l_name . '_' . $user->id . '.pdf';
+            $template = $rate->template->file;
+
+
+        }
+
+        
+
+        return view('admin.seasonal.contract', compact('user', 'rates', 'fileName', 'template'));
+    }
 }

@@ -38,10 +38,16 @@
                         <td>{{ $renewal->selected_card }}</td>
                         <td>{{ $renewal->day_of_month }}</td>
                         <td>
-                            <a href="{{ route('seasonal.user.statements', $renewal->customer_email) }}"
-                                class="btn btn-sm btn-outline-info mt-1">
-                                📄 View Statements
-                            </a>
+                            <div class="d-flex justify-content-between w-100 px-2 gap-2">
+                                <a href="{{ route('seasonal.user.statements', $renewal->customer_email) }}"
+                                    class="btn btn-sm btn-outline-info">
+                                    📄 View Statements
+                                </a>
+                                <a href="{{ route('seasonal.user.view.contract', $renewal->customer_email) }}"
+                                    class="btn btn-sm btn-outline-info">
+                                    📄 View Contract
+                                </a>
+                            </div>
                         </td>
 
 

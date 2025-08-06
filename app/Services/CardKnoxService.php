@@ -23,7 +23,7 @@ class CardKnoxService
      * @param float $amount
      * @return array Parsed response from Cardknox
      */
-    public function sale(string $cardNumber, string $cvv, string $expiry, float $amount): array
+    public function sale(string $cardNumber, string $cvv, string $expiry, float $amount, string $name, string $email): array
     {
         $xExp = str_replace('/', '', $expiry);
 
@@ -50,8 +50,8 @@ class CardKnoxService
                     'xmaskedcardnumber' => $response['xMaskedCardNumber'],
                     'method' => $response['xCardType'] ?? 'Unknown',
                     'xtoken' => $response['xToken'],
-                    'name' => $response['xName'] ?? null,
-                    'email' => $response['xEmail'] ?? null,
+                    'name' => $name ?? null,
+                    'email' => $email ?? null,
                     // 'receipt' => $response['xRefNum'] ?? null,
                     'gateway_response' => json_encode($response),
                     'created_at' => now(),
@@ -71,7 +71,7 @@ class CardKnoxService
      * @param float $amount
      * @return array Parsed response from Cardknox
      */
-    public function achSale(string $routingNumber, string $accountNumber, string $accountName, float $amount): array
+    public function achSale(string $routingNumber, string $accountNumber, string $accountName, float $amount, string $name, string $email): array
     {
         $data = [
             'xKey' => $this->apiKey,
@@ -95,8 +95,8 @@ class CardKnoxService
                 [
                     'method' => 'ach',
                     'xtoken' => $response['xToken'],
-                    'name' => $response['xName'] ?? null,
-                    'email' => $response['xEmail'] ?? null,
+                    'name' => $name ?? null,
+                    'email' => $email ?? null,
                     // 'receipt' => $response['xRefNum'] ?? null,
                     'gateway_response' => json_encode($response),
                     'created_at' => now(),

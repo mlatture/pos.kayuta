@@ -15,6 +15,8 @@ use App\Models\DocumentTemplate;
 use App\Models\ScheduledPayment;
 use App\Notifications\SeasonalRenewalLinkNotification;
 use App\Notifications\NonRenewalNotification;
+use App\Notifications\PaymentDeclinedNotification;
+use App\Notifications\PaymentReceiptNotification;
 
 use PhpOffice\PhpWord\TemplateProcessor;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -300,6 +302,11 @@ class SeasonalTransactionsController extends Controller
         $startDate = Carbon::parse($rate->payment_plan_starts);
         $endDate = Carbon::parse($rate->final_payment_due);
 
+         URL::forceRootUrl('https://book.kayuta.com');
+        $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
+        $name = $user->f_name . ' ' . $user->l_name;
+        $email = $user->email;
+
         // FULL PAYMENT PROCESSING
         if ($validated['payment_type'] === 'full') {
             $earlyDiscount = $rate->early_pay_discount ?? 0;
@@ -311,12 +318,14 @@ class SeasonalTransactionsController extends Controller
 
             $response = null;
 
+
+
             try {
                 DB::beginTransaction();
 
                 $response = match ($validated['payment_method']) {
-                    'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $discountedTotal),
-                    'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $discountedTotal),
+                    'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $discountedTotal, $name, $email),
+                    'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $discountedTotal, $name, $email),
                     default => ['xResult' => 'A'],
                 };
 
@@ -324,6 +333,8 @@ class SeasonalTransactionsController extends Controller
                     \Log::error('CardKnox Response:', $response);
 
                     DB::rollBack();
+
+                    $user->notify(new PaymentDeclinedNotification($response['xError'] ?? 'Payment failed.', $signedUrl));
                     return response()->json(
                         [
                             'message' => $response['xError'] ?? 'Payment failed.',
@@ -351,9 +362,13 @@ class SeasonalTransactionsController extends Controller
                     'day_of_month' => $dayOfMonth,
                 ]);
 
+                $user->notify(new PaymentReceiptNotification($discountedTotal, $validated['payment_method'], 'paid_in_full', now(), $signedUrl));
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
+
+                $user->notify(new PaymentDeclinedNotification($response ?? 'Payment failed.', $signedUrl));
 
                 \Log::error('CardKnox Error', [
                     'exception' => $e->getMessage(),
@@ -390,13 +405,15 @@ class SeasonalTransactionsController extends Controller
                 // Process down payment now (if provided)
                 if ($downPayment > 0) {
                     $response = match ($validated['payment_method']) {
-                        'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $downPayment),
-                        'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $downPayment),
+                        'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $downPayment, $name, $email),
+                        'ach' => $cardknox->achSale($validated['xRouting'], $validated['xACH'], $validated['xName'], $downPayment, $name, $email),
                         default => ['xResult' => 'A'],
                     };
 
                     if (($response['xResult'] ?? '') !== 'A') {
                         DB::rollBack();
+                        $user->notify(new PaymentDeclinedNotification($response['xError'] ?? 'Payment failed.', $signedUrl));
+
                         return response()->json(
                             [
                                 'message' => $response['xError'] ?? 'Down payment failed.',
@@ -445,9 +462,15 @@ class SeasonalTransactionsController extends Controller
                     'day_of_month' => $dayOfMonth,
                 ]);
 
+                
+
+                $user->notify(new PaymentReceiptNotification($downPayment, $validated['payment_method'], 'paid_deposit', now(), $signedUrl));
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
+                $user->notify(new PaymentDeclinedNotification($response['xError'] ?? $e->getMessage(), $signedUrl));
+
                 return response()->json(
                     [
                         'success' => false,
