@@ -63,6 +63,36 @@ class CardKnoxService
         return $response;
     }
 
+    public function saveSale(string $xToken, string $cvv, float $amount, string $name, string $email): array
+    {
+        $data = [
+            'xKey' => $this->apiKey,
+            'xCommand' => 'cc:sale',
+            'xVersion' => '5.0.0',
+            'xToken' => $xToken,
+            'xCVV' => $cvv,
+            'xAmount' => number_format($amount, 2, '.', ''),
+            'xSoftwareName' => 'KayutaLake',
+            'xSoftwareVersion' => '1.0',
+            'xAllowDuplicate' => 'true',
+        ];
+
+        $response = $this->send($data);
+
+        \Log::info('Cardknox cc:sale using xToken', [
+            'email' => $email,
+            'token' => $xToken,
+            'amount' => $amount,
+            'response' => $response,
+        ]);
+
+        return [
+            'success' => $response['xResult'] === 'A',
+            'message' => $response['xError'] ?? null,
+            'data' => $response,
+        ];
+    }
+
     /**
      * Process an ACH sale.
      *

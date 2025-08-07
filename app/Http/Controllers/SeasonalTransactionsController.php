@@ -271,7 +271,6 @@ class SeasonalTransactionsController extends Controller
     }
 
     // Through Api Transactions (It Triggers from Book.kayuta.com)
-
     public function storeScheduledPayments(User $user, SeasonalRate $rate, Request $request, CardKnoxService $cardknox)
     {
         $validated = $request->validate([
@@ -292,22 +291,25 @@ class SeasonalTransactionsController extends Controller
         }
 
         $rate = SeasonalRate::where('rate_price', $renewal->initial_rate)->latest()->first();
-
         if (!$rate) {
             return response()->json(['message' => 'Seasonal rate not found.'], 404);
         }
 
         $fullAmount = $renewal->final_rate;
         $dayOfMonth = $renewal->day_of_month ?? 5;
-        $startDate = Carbon::parse($rate->payment_plan_starts);
-        $endDate = Carbon::parse($rate->final_payment_due);
+        $downPayment = $validated['down_payment'] ?? 0;
 
-         URL::forceRootUrl('https://book.kayuta.com');
+        // ✅ FIXED: Start after today if down payment made
+        $startDate = $downPayment > 0 ? now()->copy()->addMonth()->startOfDay() : Carbon::parse($rate->payment_plan_starts)->startOfDay();
+
+        $endDate = Carbon::parse($rate->final_payment_due)->startOfDay();
+
+        URL::forceRootUrl('https://book.kayuta.com');
         $signedUrl = URL::temporarySignedRoute('seasonal.verify.guest', now()->addDays(14), ['user' => $user->id]);
         $name = $user->f_name . ' ' . $user->l_name;
         $email = $user->email;
 
-        // FULL PAYMENT PROCESSING
+        // === FULL PAYMENT ===
         if ($validated['payment_type'] === 'full') {
             $earlyDiscount = $rate->early_pay_discount ?? 0;
             $fullDiscount = $rate->full_payment_discount ?? 0;
@@ -317,8 +319,6 @@ class SeasonalTransactionsController extends Controller
             $discountedTotal = round($fullAmount - $discountAmount, 2);
 
             $response = null;
-
-
 
             try {
                 DB::beginTransaction();
@@ -330,28 +330,23 @@ class SeasonalTransactionsController extends Controller
                 };
 
                 if (($response['xResult'] ?? '') !== 'A') {
-                    \Log::error('CardKnox Response:', $response);
-
                     DB::rollBack();
-
+                    \Log::error('CardKnox Response:', $response);
                     $user->notify(new PaymentDeclinedNotification($response['xError'] ?? 'Payment failed.', $signedUrl));
-                    return response()->json(
-                        [
-                            'message' => $response['xError'] ?? 'Payment failed.',
-                            'success' => false,
-                        ],
-                        400,
-                    );
+                    return response()->json(['message' => $response['xError'] ?? 'Payment failed.', 'success' => false], 400);
                 }
 
                 ScheduledPayment::create([
                     'customer_email' => $user->email,
-                    'customer_name' => $user->f_name . ' ' . $user->l_name,
+                    'customer_name' => $name,
                     'payment_date' => now(),
                     'amount' => $discountedTotal,
+                    'paid_amount' => $discountedTotal,
+                    'reference_key' => $response['xRefNum'] ?? null,
                     'payment_type' => $validated['payment_method'],
                     'frequency' => 'none',
                     'status' => 'Completed',
+                    
                 ]);
 
                 $renewal->update([
@@ -363,38 +358,22 @@ class SeasonalTransactionsController extends Controller
                 ]);
 
                 $user->notify(new PaymentReceiptNotification($discountedTotal, $validated['payment_method'], 'paid_in_full', now(), $signedUrl));
-
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-
+                \Log::error('CardKnox Error', ['exception' => $e->getMessage(), 'response' => $response ?? 'No response returned']);
                 $user->notify(new PaymentDeclinedNotification($response ?? 'Payment failed.', $signedUrl));
-
-                \Log::error('CardKnox Error', [
-                    'exception' => $e->getMessage(),
-                    'response' => $response ?? 'No response returned',
-                ]);
-
-                return response()->json(
-                    [
-                        'message' => 'Error processing full payment: ' . $e->getMessage(),
-                        'success' => false,
-                    ],
-                    500,
-                );
+                return response()->json(['message' => 'Error processing full payment: ' . $e->getMessage(), 'success' => false], 500);
             }
         }
-        // INSTALLMENT PLAN PROCESSING
+
+        // === INSTALLMENT PLAN ===
         else {
-            $downPayment = $validated['down_payment'] ?? 0;
             $remaining = $fullAmount - $downPayment;
             $months = $startDate->diffInMonths($endDate);
 
             if ($months <= 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid schedule: final payment date must be after start date.',
-                ]);
+                return response()->json(['success' => false, 'message' => 'Invalid schedule: final payment date must be after start date.']);
             }
 
             $monthlyAmount = round($remaining / $months, 2);
@@ -402,7 +381,7 @@ class SeasonalTransactionsController extends Controller
 
             DB::beginTransaction();
             try {
-                // Process down payment now (if provided)
+                // Process down payment now
                 if ($downPayment > 0) {
                     $response = match ($validated['payment_method']) {
                         'credit' => $cardknox->sale($validated['xCardNum'], $validated['xCVV'], $validated['xExp'], $downPayment, $name, $email),
@@ -413,42 +392,42 @@ class SeasonalTransactionsController extends Controller
                     if (($response['xResult'] ?? '') !== 'A') {
                         DB::rollBack();
                         $user->notify(new PaymentDeclinedNotification($response['xError'] ?? 'Payment failed.', $signedUrl));
-
-                        return response()->json(
-                            [
-                                'message' => $response['xError'] ?? 'Down payment failed.',
-                                'success' => false,
-                            ],
-                            400,
-                        );
+                        return response()->json(['message' => $response['xError'] ?? 'Down payment failed.', 'success' => false], 400);
                     }
 
                     ScheduledPayment::create([
                         'customer_email' => $user->email,
-                        'customer_name' => $user->f_name . ' ' . $user->l_name,
+                        'customer_name' => $name,
                         'payment_date' => now(),
                         'amount' => $downPayment,
+                        'paid_amount' => $downPayment,
+                        'reference_key' => $response['xRefNum'] ?? null,
                         'payment_type' => $validated['payment_method'],
                         'frequency' => 'none',
                         'status' => 'Completed',
                     ]);
                 }
 
-                // Schedule future payments
+                // Schedule future payments starting next month
                 for ($i = 0; $i < $months; $i++) {
                     $dueDate = $startDate->copy()->addMonths($i)->day($dayOfMonth);
-                    if ($dueDate->lt($startDate)) {
-                        $dueDate->addMonth();
+
+                    // Handle short months (like Feb 30 fallback to Feb 28/29)
+                    if ($dueDate->day != $dayOfMonth) {
+                        $dueDate->endOfMonth();
                     }
 
                     $amount = $i === $months - 1 ? round($remaining - $totalScheduled, 2) : $monthlyAmount;
+
                     $totalScheduled += $amount;
 
                     ScheduledPayment::create([
                         'customer_email' => $user->email,
-                        'customer_name' => $user->f_name . ' ' . $user->l_name,
+                        'customer_name' => $name,
                         'payment_date' => $dueDate,
                         'amount' => $amount,
+                        'paid_amount' => 0.00,
+                        'reference_key' => null,
                         'payment_type' => $validated['payment_method'],
                         'frequency' => 'monthly',
                         'status' => 'Pending',
@@ -462,28 +441,124 @@ class SeasonalTransactionsController extends Controller
                     'day_of_month' => $dayOfMonth,
                 ]);
 
-                
-
                 $user->notify(new PaymentReceiptNotification($downPayment, $validated['payment_method'], 'paid_deposit', now(), $signedUrl));
-
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
                 $user->notify(new PaymentDeclinedNotification($response['xError'] ?? $e->getMessage(), $signedUrl));
-
-                return response()->json(
-                    [
-                        'success' => false,
-                        'message' => 'Failed to create payment schedule: ' . $e->getMessage(),
-                    ],
-                    500,
-                );
+                return response()->json(['success' => false, 'message' => 'Failed to create payment schedule: ' . $e->getMessage()], 500);
             }
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment setup complete! Redirecting in 3s...',
-        ]);
+        return response()->json(['success' => true, 'message' => 'Payment setup complete! Redirecting in 3s...']);
+    }
+
+    public function storeRemainingBalance(Request $request, $user, CardknoxService $cardknox)
+    {
+        $request->validate(
+            [
+                'selected_card' => 'required|string',
+                'cardholder_name' => 'nullable|string',
+                'expiry' => 'required|string',
+                'cvv' => 'required|max:4',
+                'amount' => 'required|numeric|min:0.01',
+            ],
+            [
+                'cvv.required' => 'CVV is required.',
+                'amount.min' => 'Amount must be greater than zero.',
+            ],
+        );
+
+        $userModel = User::findOrFail($user);
+        $amountToApply = floatval($request->amount);
+
+        // Get unpaid scheduled payments
+        $scheduled = ScheduledPayment::where('customer_email', $userModel->email)->where('status', 'Pending')->orderBy('payment_date')->get();
+
+        if ($scheduled->isEmpty()) {
+            return response()->json(['error' => 'No unpaid scheduled payments found.'], 422);
+        }
+
+        $earliest = $scheduled->first();
+        if ($amountToApply < $earliest->amount) {
+            return response()->json(
+                [
+                    'error' => 'Amount entered must be at least $' . number_format($earliest->amount, 2),
+                ],
+                422,
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // CardKnox Payment
+            $cardNumber = $request->selected_card;
+            $cvv = $request->cvv;
+            $expiry = $request->expiry;
+            $name = $request->cardholder_name ?? '';
+            $email = $userModel->email;
+
+            $isACH = str_starts_with($cardNumber, 'xRouting');
+            $isToken = strlen($cardNumber) > 20;
+
+            if ($isACH) {
+                $response = $cardknox->achSale($amountToApply, $cardNumber, $name);
+            } elseif ($isToken) {
+                $response = $cardknox->saveSale($cardNumber, $cvv, $amountToApply, $name, $email);
+            } else {
+                $response = $cardknox->sale($cardNumber, $cvv, $expiry, $amountToApply, $name, $email);
+            }
+
+            if (!$response['success']) {
+                DB::rollBack();
+                return response()->json(['error' => $response['message'] ?? 'Payment failed'], 400);
+            }
+
+            // Apply payment
+            $earliestDue = $earliest->amount;
+            $excess = $amountToApply - $earliestDue;
+
+            // Update earliest row
+            $earliest->update([
+                'paid_amount' => $amountToApply,
+                'status' => 'Completed',
+            ]);
+
+            // If overpaid, apply to next row
+            if ($excess > 0 && $scheduled->count() > 1) {
+                $next = $scheduled[1];
+                $nextPaid = $next->paid_amount ?? 0;
+                $nextDue = $next->amount - $nextPaid;
+                $newPaid = $nextPaid + $excess;
+
+                $next->update([
+                    'paid_amount' => $newPaid,
+                    'amount' => $nextDue - $excess,
+                    'status' => $newPaid >= $next->amount ? 'Completed' : 'Pending',
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment of $' . number_format($amountToApply, 2) . ' applied successfully.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Remaining balance payment error', [
+                'user' => $user,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                [
+                    'error' => 'An unexpected error occurred during payment. Please try again or contact support.',
+                ],
+                500,
+            );
+        }
     }
 }

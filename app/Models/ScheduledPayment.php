@@ -22,7 +22,9 @@ class ScheduledPayment extends Model
         'recurring',
         'frequency',
         'status',
-        'amount'
+        'amount',
+        'paid_amount',
+
 
     ];
 

@@ -25,7 +25,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('upload-receipt-logo', [ReceiptController::class, 'uploadReceiptLogo']);
 
 Route::post('seasonal/payment/{user}', [SeasonalTransactionsController::class, 'storeScheduledPayments']);
-
+Route::post('seasonal/payment/remaining-balance/{user}', [SeasonalTransactionsController::class, 'storeRemainingBalance']);
 Route::get('search-sites', [CheckAvailability::class, 'getSites']);
 Route::get('sites-and-reservations', [CheckAvailability::class, 'getReservAndSites']);
 
