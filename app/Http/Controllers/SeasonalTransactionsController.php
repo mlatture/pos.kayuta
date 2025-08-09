@@ -221,7 +221,7 @@ class SeasonalTransactionsController extends Controller
                     }
 
                     // Generate contract
-                    $fileName = "contract_{$user->l_name}_{$user->id}.pdf";
+                    $fileName = "contract_{$user->l_name}_{$user->id}.docx";
                     $contractFolder = public_path("storage/contracts/{$templateName}");
 
                     if (!file_exists($contractFolder)) {
