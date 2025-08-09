@@ -36,16 +36,19 @@
                                         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                                         $basename = pathinfo($fileName, PATHINFO_BASENAME);
 
-                                        $rowFile = public_path('storage/' . $template);
+                                        $contractUrl = asset('public/storage/' . str_replace(' ', '%20', $fileName));
+                                        $templateUrl = asset('public/storage/' . str_replace(' ', '%20', $template));
 
-                                        // PREVIEW needs a URL, not a filesystem path
-                                        $publicUrl = public_path('storage/' . $fileName);
-                                        $previewSrc =
-                                            $extension === 'docx'
-                                                ? 'https://view.officeapps.live.com/op/embed.aspx?src=' .
-                                                    urlencode($publicUrl)
-                                                : $publicUrl;
+                                        $previewSrc = null;
+                                        if (in_array($extension, ['doc', 'docx'])) {
+                                            $previewSrc =
+                                                'https://docs.google.com/gview?embedded=1&url=' .
+                                                urlencode($contractUrl);
+                                        } elseif ($extension === 'pdf') {
+                                            $previewSrc = $contractUrl;
+                                        }
                                     @endphp
+
                                     <tr class="text-center">
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $rate->rate_name }}</td>
@@ -54,14 +57,16 @@
                                                 {{ pathinfo($fileName, PATHINFO_FILENAME) }}
 
                                                 <div class="mt-2">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary me-2"
-                                                        data-bs-toggle="modal" data-bs-target="#previewModal"
-                                                        data-src="{{ $previewSrc }}"
-                                                        data-title="{{ $rate->rate_name }} — {{ $basename }}">
-                                                        📄 Preview
-                                                    </button>
+                                                    @if ($previewSrc)
+                                                        <button type="button" class="btn btn-sm btn-outline-primary me-2"
+                                                            data-bs-toggle="modal" data-bs-target="#previewModal"
+                                                            data-src="{{ $previewSrc }}"
+                                                            data-title="{{ $rate->rate_name }} — {{ $basename }}">
+                                                            📄 Preview
+                                                        </button>
+                                                    @endif
 
-                                                    <a href={{ $publicUrl }} download
+                                                    <a href="{{ $contractUrl }}" download="{{ $basename }}"
                                                         class="btn btn-sm btn-outline-secondary">
                                                         ⬇️ Download
                                                     </a>
@@ -73,11 +78,12 @@
 
 
                                         <td class="text-center">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ $rowFile }}"
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ $templateUrl }}"
                                                 download>
                                                 ⬇️ Download Template
                                             </a>
                                         </td>
+
                                     </tr>
                                 @endforeach
                             </tbody>
