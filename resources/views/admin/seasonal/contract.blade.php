@@ -33,20 +33,25 @@
                             <tbody>
                                 @foreach ($rates as $index => $rate)
                                     @php
+
+                                        $encodeSegments = function ($path) {
+                                            return implode('/', array_map('rawurlencode', explode('/', $path)));
+                                        };
+
+                                        $encodedContractPath = $encodeSegments($fileName);
+                                        $encodedTemplatePath = $encodeSegments($template);
+
+                                        // Web-accessible URLs (require `php artisan storage:link`)
+                                        $contractUrl = asset('storage/' . $encodedContractPath);
+                                        $templateUrl = asset('storage/' . $encodedTemplatePath);
+
                                         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                                         $basename = pathinfo($fileName, PATHINFO_BASENAME);
 
-                                        $contractUrl = asset('public/storage/' . str_replace(' ', '%20', $fileName));
-                                        $templateUrl = asset('public/storage/' . str_replace(' ', '%20', $template));
-
-                                        $previewSrc = null;
-                                        if (in_array($extension, ['doc', 'docx'])) {
-                                            $previewSrc =
-                                                'https://docs.google.com/gview?embedded=1&url=' .
-                                                urlencode($contractUrl);
-                                        } elseif ($extension === 'pdf') {
-                                            $previewSrc = $contractUrl;
-                                        }
+                                        // Preview: DOCX via Google Viewer, PDF directly
+                                        $previewSrc = in_array($extension, ['doc', 'docx'])
+                                            ? 'https://docs.google.com/gview?embedded=1&url=' . urlencode($contractUrl)
+                                            : $contractUrl;
                                     @endphp
 
                                     <tr class="text-center">
@@ -57,10 +62,15 @@
                                                 {{ pathinfo($fileName, PATHINFO_FILENAME) }}
 
                                                 <div class="mt-2">
-                                                    @if ($previewSrc)
+                                                    @if (in_array($extension, ['doc', 'docx']))
+                                                        <a href="https://docs.google.com/gview?embedded=1&url={{ urlencode($contractUrl) }}"
+                                                            target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                                                            📄 Preview
+                                                        </a>
+                                                    @else
                                                         <button type="button" class="btn btn-sm btn-outline-primary me-2"
                                                             data-bs-toggle="modal" data-bs-target="#previewModal"
-                                                            data-src="{{ $previewSrc }}"
+                                                            data-src="{{ $contractUrl }}"
                                                             data-title="{{ $rate->rate_name }} — {{ $basename }}">
                                                             📄 Preview
                                                         </button>
@@ -76,13 +86,16 @@
                                             <td>No Signed Docs yet</td>
                                         @endif
 
-
                                         <td class="text-center">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ $templateUrl }}"
-                                                download>
+                                            <a href="{{ $templateUrl }}" download
+                                                class="btn btn-sm btn-outline-secondary">
                                                 ⬇️ Download Template
                                             </a>
                                         </td>
+
+
+
+
 
                                     </tr>
                                 @endforeach
