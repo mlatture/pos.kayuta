@@ -35,18 +35,15 @@
                         $encodedContractPath = $encodeSegments($fileName);
                         $encodedTemplatePath = $encodeSegments($template);
 
-                        // Build public URLs under public_html/public/storage/...
-                        $contractUrl = asset('storage/' . $encodedContractPath);   // <-- CHANGED to 'storage'
-                        $templateUrl = asset('storage/' . $encodedTemplatePath);   // <-- CHANGED to 'storage'
+                        $contractUrl = public_path('storage/' . $encodedContractPath);   
+                        $templateUrl = asset('storage/' . $encodedTemplatePath);  
 
                         $ext        = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                         $basename   = pathinfo($fileName, PATHINFO_BASENAME);
                         $dispName   = pathinfo($fileName, PATHINFO_FILENAME);
                         $templateBase = pathinfo($template, PATHINFO_BASENAME);
 
-                        // Follow your preview pattern exactly (but using 'storage')
-                        // was: $templateUrl = asset('shared_storage/' . $fileName);
-                        // now: use the actual contract URL (public storage path)
+                   
                         $isDocx     = \Illuminate\Support\Str::endsWith(strtolower($fileName), '.docx');
                         $previewUrl = $isDocx
                             ? 'https://docs.google.com/viewer?embedded=true&url=' . urlencode($contractUrl)
