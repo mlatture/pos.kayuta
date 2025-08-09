@@ -285,12 +285,12 @@ class SeasonalSettingController extends Controller
         foreach($rates as $rate){
             $fileName = 'contracts/' . $rate->template->name . '/contract_' . $user->l_name . '_' . $user->id . '_signed' . '.docx';
             $template = $rate->template->file;
-
+            $templateName = $rate->template->name;
 
         }
 
         
 
-        return view('admin.seasonal.contract', compact('user', 'rates', 'fileName', 'template'));
+        return view('admin.seasonal.contract', compact('user', 'rates', 'fileName', 'template', 'templateName'));
     }
 }
