@@ -283,7 +283,7 @@ class SeasonalSettingController extends Controller
 
         $rates = SeasonalRate::with('template')->whereIn('id', $rateIds)->get();
         foreach($rates as $rate){
-            $fileName = 'contracts/' . $rate->template->name . '/contract_' . $user->l_name . '_' . $user->id . '.pdf';
+            $fileName = 'contracts/' . $rate->template->name . '/contract_' . $user->l_name . '_' . $user->id . '_signed' . '.docx';
             $template = $rate->template->file;
 
 
