@@ -99,6 +99,15 @@ class SeasonalTransactionsController extends Controller
         $documentTemplates = DocumentTemplate::all()->keyBy('id');
 
         try {
+            $hadRows = SeasonalRenewal::query()->exists();
+            if ($hadRows) {
+                SeasonalRenewal::truncate();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Seasonal renewals cleared. No records were reloaded.',
+                ]);
+            }
             DB::beginTransaction();
 
             foreach ($recipients as $user) {
@@ -141,7 +150,7 @@ class SeasonalTransactionsController extends Controller
             DB::commit();
             return response()->json([
                 'success' => true,
-                'message' => 'Seasonal renewals cleared and reloaded successfully.',
+                'message' => 'Seasonal renewals loaded (table was empty).',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -346,7 +355,6 @@ class SeasonalTransactionsController extends Controller
                     'payment_type' => $validated['payment_method'],
                     'frequency' => 'none',
                     'status' => 'Completed',
-                    
                 ]);
 
                 $renewal->update([
@@ -426,7 +434,7 @@ class SeasonalTransactionsController extends Controller
                         'customer_name' => $name,
                         'payment_date' => $dueDate,
                         'amount' => $amount,
-                        'paid_amount' => 0.00,
+                        'paid_amount' => 0.0,
                         'reference_key' => null,
                         'payment_type' => $validated['payment_method'],
                         'frequency' => 'monthly',

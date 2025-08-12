@@ -30,13 +30,13 @@
                 <div class="tab-pane fade {{ request('tab', 'form') == 'form' ? 'show active' : '' }}" id="form">
                     @include('admin.seasonal.component.upload-document')
                 </div>
-                
+
                 <div class="tab-pane fade {{ request('tab', 'rate') == 'rate' ? 'show active' : '' }}" id="rate">
                     @include('admin.seasonal.component.seasonal-rates')
                 </div>
-                
-                
-                
+
+
+
 
                 <div class="tab-pane fade {{ request('tab', 'addons') == 'addons' ? 'show active' : '' }}" id="addons">
                     @include('admin.seasonal.component.seasonal-add-ons')
@@ -51,59 +51,55 @@
 @push('js')
     <script>
         $(document).on('click', '#clearAndReloadBtn', function() {
+            const renewalCount = {{ $currentYearRenewalsCount }};
+            let htmlMessage = '';
+
+            if (renewalCount === 0) {
+                htmlMessage += `<p>No renewal records found for the current year.</p>`;
+            } else {
+                htmlMessage +=
+                    `<p>There are currently <strong>${renewalCount}</strong> renewal records for this year.</p>`;
+            }
+
             Swal.fire({
                 title: 'Are you sure?',
-                text: "This will reset the entire renewal process for the new season.",
+                html: `
+            <p>This will reset the entire renewal process for the new season.</p>
+            ${htmlMessage}
+        `,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Yes, reset it!',
                 cancelButtonText: 'Cancel'
-
             }).then((result) => {
-
-                const renewalCount = {{ $currentYearRenewalsCount }};
-                let htmlMessage = `<p>Renewals this year: <strong>${renewalCount}</strong></p>`;
-
-                if (renewalCount === 0) {
-                    htmlMessage +=
-                        `<br><p>No renewal records found for the current year.</p>`;
-                }
+                if (!result.isConfirmed) return;
 
                 $.post('{{ route('seasonal.reload') }}', {
-                    _token: '{{ csrf_token() }}'
-                }, function(res) {
-                    $.toast({
-                        heading: 'Success',
-                        text: res.message,
-                        icon: 'success',
-                        position: 'bottom-left',
-                        hideAfter: 3000,
+                        _token: '{{ csrf_token() }}'
+                    })
+                    .done(function(res) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: res.message,
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    })
+                    .fail(function(err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: err.responseJSON?.message || 'Something went wrong.',
+                            confirmButtonColor: '#dc3545'
+                        });
                     });
-                }).fail(function(err) {
-                    $.toast({
-                        heading: 'Error',
-                        text: err.responseJSON?.message || 'Something went wrong.',
-                        icon: 'error',
-                        position: 'bottom-left',
-                        hideAfter: 3000,
-                    });
-                });
-
-                Swal.fire({
-                    icon: renewalCount === 0 ? 'warning' : 'info',
-                    title: renewalCount === 0 ? 'Start of New Season' : 'Renewals Overview',
-                    html: htmlMessage,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#dc3545'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.reload();
-                    }
-                });
-            })
+            });
         });
+
         $(document).on('click', '#sendEmailBtn', function() {
             const $btn = $(this);
             const url = $btn.data('url');
