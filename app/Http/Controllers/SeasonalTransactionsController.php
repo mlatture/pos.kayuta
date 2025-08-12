@@ -130,7 +130,7 @@ class SeasonalTransactionsController extends Controller
                     $status = Str::contains(Str::lower($rate->template->name ?? ''), 'non-renewal') || Str::contains(Str::lower($rate->rate_name ?? ''), 'sent rejection') ? 'sent rejection' : 'sent offer';
 
                     $discount_percent = $rate->early_pay_discount + $rate->full_payment_discount ?? 0;
-                    SeasonalRenewal::updateOrCreate([
+                    SeasonalRenewal::create([
                         'customer_name' => $user->name ?? trim("{$user->f_name} {$user->l_name}"),
                         'customer_email' => $user->email,
                         'allow_renew' => false,
