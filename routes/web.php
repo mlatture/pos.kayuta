@@ -42,7 +42,9 @@ use App\Http\Controllers\SeasonalRenewalGuestController;
 use App\Http\Controllers\SeasonalTransactionsController;
 use App\Http\Controllers\SystemLogsController;
 use App\Http\Controllers\ReceiptController as NewReceiptController;
+use App\Http\Controllers\DocumentController;
 use App\Models\Order;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -52,10 +54,15 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        Route::prefix('documents')
+            ->group(function () {
+                Route::get('customers/{user}', [DocumentController::class, 'index'])->name('customers.documents');
+                Route::delete('{file}', [DocumentController::class, 'destroy'])->name('file.destroy');
+            });
+
         Route::get('system/logs', [SystemLogsController::class, 'index'])->name('admin.system_logs.index');
 
         Route::post('/receipt/save-settings', [NewReceiptController::class, 'saveSettings'])->name('receipt.save.settings');
-
 
         Route::post('receipt/upload/logo', [NewReceiptController::class, 'uploadReceiptLogo'])->name('receipt.upload.logo');
 
