@@ -1,109 +1,54 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="container-fluid mt-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div class="card shadow-sm rounded-3">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h4 class="mb-0">Documents — {{ $user->name ?? $user->f_name . ' ' . $user->l_name }}</h4>
 
-            {{-- <div class="d-flex align-items-center gap-2">
-                <div class="form-check me-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Category filter with icon -->
+                <div class="input-group input-group-sm" style="min-width:260px;">
+                    <span class="input-group-text bg-white"><i class="fas fa-filter"></i></span>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">All categories</option>
+                        <option value="contracts">Contracts</option>
+                        <option value="renewals">Renewals</option>
+                        <option value="non_renewals">Non Renewals</option>
+                        <option value="waivers">Waivers</option>
+                        <option value="vaccinations">Vaccinations</option>
+                        <option value="ids">IDs</option>
+                    </select>
+                </div>
+
+                <!-- Show expired as a switch -->
+                <div class="form-check form-switch ms-1">
                     <input class="form-check-input" type="checkbox" id="showExpired" checked>
                     <label class="form-check-label" for="showExpired">Show expired</label>
                 </div>
-                <select id="categoryFilter" class="form-select form-select-sm" style="min-width: 200px">
-                    <option value="">All categories</option>
-                </select>
-            </div> --}}
+
+                <!-- Bulk delete -->
+                <button id="bulkDeleteBtn" class="btn btn-sm btn-danger ms-1" disabled>
+                    <i class="fas fa-trash"></i> <span class="d-none d-sm-inline">Bulk Delete</span>
+                </button>
+            </div>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
-        <div class="table-responsive">
-            <table class="table table-hover align-middle" id="documentsTable" style="width:100%">
-                <thead class="table-light sticky-top">
-                    <tr>
-                        <th style="min-width: 280px">Name</th>
-                        <th>Category</th>
-                        <th>Expires</th>
-                        <th>Added</th>
-                        <th class="text-end" style="min-width: 220px">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($files as $f)
-                        @php
-                            $isExpired = $f->expiration_date && \Carbon\Carbon::parse($f->expiration_date)->isPast();
-                            $category = str_replace('_', ' ', $f->file_category);
-                            $openUrl = asset('storage/' . $f->file_path); // public URL (fixes public_path issue)
-                            $added = \Carbon\Carbon::parse($f->created_at)->toFormattedDateString(); // DB has DATE only
-                            $expires = $f->expiration_date
-                                ? \Carbon\Carbon::parse($f->expiration_date)->toDateString()
-                                : null;
-                            // Category badge class
-                            $catClassMap = [
-                                'contracts' => 'bg-primary',
-                                'renewals' => 'bg-info text-dark',
-                                'non renewals' => 'bg-secondary',
-                                'waivers' => 'bg-warning text-dark',
-                                'vaccinations' => 'bg-success',
-                                'ids' => 'bg-dark',
-                            ];
-                            $badgeClass = $catClassMap[strtolower($category)] ?? 'bg-light text-dark';
-                        @endphp
-                        <tr data-expired="{{ $isExpired ? '1' : '0' }}">
-                            <td class="text-truncate" style="max-width: 420px" title="{{ $f->name }}">
-                                <i class="fas fa-file-alt me-2"></i>{{ $f->name }}
-                            </td>
-                            <td>
-                                <span class="badge {{ $badgeClass }}">{{ ucwords($category) }}</span>
-                            </td>
-                            <td>
-                                @if ($isExpired)
-                                    <span class="badge bg-warning text-dark">Expired {{ $expires }}</span>
-                                @elseif($expires)
-                                    <span class="text-muted">{{ $expires }}</span>
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td>{{ $added }}</td>
-                            <td class="text-end">
-                                <div class="btn-group">
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ $openUrl }}" target="_blank"
-                                        title="Open">
-                                        <i class="fas fa-up-right-from-square"></i> Open
-                                    </a>
-                                   
-                                    @php $protected = in_array($f->file_category, ['contracts','renewals','non_renewals']); @endphp
-                                    @if (!$protected || auth()->user()->hasPermission('Delete Contracts'))
-                                        <form class="d-inline" method="POST" action="{{ route('file.destroy', $f) }}"
-                                            onsubmit="return confirm('Delete this file? This cannot be undone.')">
-                                            @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="documentsTable" class="table table-striped table-hover align-middle w-100">
+                    <thead class="table-light">
                         <tr>
-                            <td colspan="5">
-                                <div class="text-center text-muted py-4">
-                                    <i class="fas fa-folder-open fa-2x mb-2"></i>
-                                    <div>No documents found.</div>
-                                </div>
-                            </td>
+                            <th style="width:40px" class="text-center">
+                                <input type="checkbox" id="checkAll">
+                            </th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Expires</th>
+                            <th>Added</th>
+                            <th class="text-end">Actions</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-
-            <div class="mt-3">
-                {{ $files->links() }}
+                    </thead>
+                </table>
             </div>
         </div>
     </div>
@@ -121,41 +66,281 @@
             background: #f8f9fa;
         }
 
-        .text-truncate {
-            max-width: 420px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .card {
+            border-radius: 14px;
         }
 
-        .dataTables_wrapper .dt-top-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: .75rem;
+        .card-header {
+            background: #ffffff;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table thead th {
+            background-color: #f8fafc !important;
+        }
+
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Soft highlight for expired rows (if you add a 'row-expired' class in JS) */
+        tr.row-expired {
+            background-color: #fff6db !important;
+        }
+
+        /* Compact input group icon */
+        .input-group-text {
+            border-right: 0;
+        }
+
+        .input-group .form-select {
+            border-left: 0;
+        }
+
+        /* Disabled bulk delete looks intentional */
+        #bulkDeleteBtn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        /* Stack controls on small screens */
+        @media (max-width: 576px) {
+            .card-header>.d-flex:last-child {
+                width: 100%;
+            }
+
+            .input-group {
+                flex: 1 1 auto;
+            }
+
+            #bulkDeleteBtn {
+                width: 100%;
+            }
         }
     </style>
 @endpush
 
 @push('js')
     <script>
-        $(document).ready(function() {
-            $('.table').DataTable({
-                responsive: true,
-                stateSave: true,
-                dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
-                buttons: [
-                    'colvis',
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
+        $(function() {
+            const selected = new Set();
 
-                language: {
-                    search: 'Search: ',
-                    lengthMenu: 'Show _MENU_ entries',
+            const table = $('#documentsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('customers.documents.data', $user->id) }}',
+                    data: function(d) {
+                        d.category = $('#categoryFilter').val() || '';
+                        d.show_expired = $('#showExpired').is(':checked') ? 1 : 0;
+                    }
                 },
-                pageLength: 10
+                columns: [{
+                        data: 'checkbox',
+                        name: 'checkbox',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'category_badge',
+                        name: 'file_category',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'expires_h',
+                        name: 'expiration_date',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'added_h',
+                        name: 'created_at'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-end'
+                    },
+                ],
+                order: [
+                    [4, 'desc']
+                ],
+                pageLength: 10,
+                responsive: true,
+                drawCallback: function() {
+                    // re-check rows we had selected
+                    $('#documentsTable .row-check').each(function() {
+                        const id = $(this).data('id');
+                        if (selected.has(id)) $(this).prop('checked', true);
+                    });
+                    $('#checkAll').prop('checked', false);
+                    toggleBulkButton();
+                },
+                createdRow: function(row) {
+                    $('td:eq(0)', row).addClass('text-center');
+                }
             });
 
-        })
+            // Filters
+            $('#categoryFilter, #showExpired').on('change', function() {
+                table.ajax.reload();
+            });
+
+            // Single select
+            $(document).on('change', '.row-check', function() {
+                const id = $(this).data('id');
+                if (this.checked) selected.add(id);
+                else selected.delete(id);
+                toggleBulkButton();
+            });
+
+            // Check all
+            $('#checkAll').on('change', function() {
+                const checked = this.checked;
+                $('#documentsTable .row-check').each(function() {
+                    $(this).prop('checked', checked).trigger('change');
+                });
+            });
+
+            function toggleBulkButton() {
+                $('#bulkDeleteBtn').prop('disabled', selected.size === 0);
+            }
+
+            // ---- SweetAlert helpers ----
+            const showLoading = (title = 'Working...') =>
+                Swal.fire({
+                    title,
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
+
+            const toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+
+            // Single delete (SweetAlert confirm)
+            $(document).on('click', '.btn-single-del', function() {
+                const url = $(this).data('url');
+
+                Swal.fire({
+                    title: 'Delete this file?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((res) => {
+                    if (!res.isConfirmed) return;
+
+                    showLoading('Deleting...');
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _method: 'DELETE',
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function() {
+                            Swal.close();
+                            toast.fire({
+                                icon: 'success',
+                                title: 'File deleted'
+                            });
+                            table.ajax.reload(null, false);
+                        },
+                        error: function(xhr) {
+                            Swal.close();
+                            const msg = xhr.status === 403 ?
+                                'You do not have permission to delete this file.' :
+                                (xhr.responseJSON?.message || 'Delete failed.');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Delete failed',
+                                text: msg
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Bulk delete (SweetAlert confirm)
+            $('#bulkDeleteBtn').on('click', function() {
+                if (selected.size === 0) return;
+
+                Swal.fire({
+                    title: `Delete ${selected.size} file(s)?`,
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete all',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((res) => {
+                    if (!res.isConfirmed) return;
+
+                    showLoading('Deleting...');
+                    $.ajax({
+                        url: '{{ route('file.bulkDestroy') }}',
+                        type: 'POST',
+                        data: {
+                            ids: Array.from(selected),
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(res) {
+                            Swal.close();
+                            if (res && res.success) {
+                                const failedCount = res.failed ? Object.keys(res.failed)
+                                    .length : 0;
+                                const msg = `Deleted: ${res.deleted_count}` + (
+                                    failedCount ? ` | Failed: ${failedCount}` : '');
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Bulk delete complete',
+                                    text: msg
+                                });
+                                selected.clear();
+                                $('#checkAll').prop('checked', false);
+                                table.ajax.reload(null, false);
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Bulk delete failed',
+                                    text: (res && res.message) ? res.message :
+                                        'Unknown error'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.close();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Bulk delete failed',
+                                text: xhr.responseJSON?.message ||
+                                    'Unknown error'
+                            });
+                        }
+                    });
+                });
+            });
+
+        });
     </script>
 @endpush

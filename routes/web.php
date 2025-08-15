@@ -54,11 +54,15 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
-        Route::prefix('documents')
-            ->group(function () {
-                Route::get('customers/{user}', [DocumentController::class, 'index'])->name('customers.documents');
-                Route::delete('{file}', [DocumentController::class, 'destroy'])->name('file.destroy');
-            });
+        Route::prefix('documents')->group(function () {
+            Route::get('customers/{user}', [DocumentController::class, 'index'])->name('customers.documents');
+            Route::get('customers/{user}/data', [DocumentController::class, 'data'])->name('customers.documents.data');
+
+            Route::delete('{file}', [DocumentController::class, 'destroy'])->name('file.destroy');
+
+            // Bulk delete 
+            Route::post('bulk-delete', [DocumentController::class, 'bulkDestroy'])->name('file.bulkDestroy');
+        });
 
         Route::get('system/logs', [SystemLogsController::class, 'index'])->name('admin.system_logs.index');
 
