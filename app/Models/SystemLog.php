@@ -32,4 +32,6 @@ class SystemLog extends Model
         'after' => 'array',
         'created_at' => 'datetime',
     ];
+
+    
 }
