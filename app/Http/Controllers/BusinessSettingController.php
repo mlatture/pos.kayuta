@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\BusinessSettings;
 use App\Models\Setting;
+use Illuminate\Support\Facades\DB;
 class BusinessSettingController extends Controller
 {
-    //
-
-    public function index()
+    public function index(Request $request)
     {
-        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN', 'cancellation', 'electric_meter_rate'];
+        $settingKeys = ['maintenance_mode', 'company_name', 'company_phone', 'company_email', 'company_address', 'map_url', 'default_location', 'timezone', 'country', 'company_copyright_text', 'decimal_point_settings', 'colors', 'company_web_logo', 'company_mobile_logo', 'company_footer_logo', 'loader_gif', 'company_fav_icon', 'cart_hold_time', 'dynamic_pricing', 'FB_PIXEL_ID', 'FB_ACCESS_TOKEN', 'cancellation', 'electric_meter_rate', 'platform_fee_percent', 'platform_fee_fixed'];
 
         $rawSettings = BusinessSettings::whereIn('type', $settingKeys)->pluck('value', 'type');
 
@@ -43,6 +42,15 @@ class BusinessSettingController extends Controller
 
             $settings2[$key] = $row->$key ?? null;
         }
+        
+        $q = DB::table('booking_channels')
+            ->select('id','property_id','channel_id','name','status','sandbox','last_used_at','created_at')
+            ->when($request->get('status'), fn($qq,$s)=>$qq->where('status',$s))
+            ->when($request->get('channel_id'), fn($qq,$cid)=>$qq->where('channel_id',$cid))
+            ->orderByDesc('created_at');
+
+        $settings['items'] = $q->paginate(25);
+        $settings['filters'] = $request->only(['status','channel_id']);
 
         return view('settings.index', compact('settings', 'settings2'));
     }
@@ -71,7 +79,7 @@ class BusinessSettingController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'General Settings Updated Successfully!');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'general')->with('success', 'General Settings Updated Successfully!');
     }
 
     public function cookieUpdate(Request $request)
@@ -83,21 +91,21 @@ class BusinessSettingController extends Controller
 
         BusinessSettings::set('cookie_setting', json_encode($data));
 
-        return redirect()->back()->with('success', 'Cookie Settings updated.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'cookie')->with('success', 'Cookie Settings updated.');
     }
 
     public function dynamicPricingUpdate(Request $request)
     {
         BusinessSettings::set('dynamic_pricing', $request->has('togglePricing') ? 1 : 0);
 
-        return redirect()->back()->with('success', 'Dynamic pricing settings updated.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'pricing')->with('success', 'Dynamic pricing settings updated.');
     }
 
     public function searchUpdate(Request $request)
     {
         Setting::gridViewUpdate('is_grid_view', $request->has('grid_view') ? '1' : '0');
 
-        return redirect()->back()->with('success', 'Search Settings updated.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'search')->with('success', 'Search Settings updated.');
     }
 
     public function cartUpdate(Request $request)
@@ -123,7 +131,7 @@ class BusinessSettingController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Cart Settings updated Successfully.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'cart')->with('success', 'Cart Settings updated Successfully.');
     }
 
     public function toggleMaintenance(Request $request)
@@ -158,7 +166,7 @@ class BusinessSettingController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Cancellation settings updated.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'cancellation')->with('success', 'Cancellation settings updated.');
     }
 
     public function electricMeterRateUpdate(Request $request)
@@ -181,6 +189,20 @@ class BusinessSettingController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Electric Meter Rate updated successfully.');
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'utility')->with('success', 'Electric Meter Rate updated successfully.');
+    }
+    
+    public function platformFeeUpdate(Request $request)
+    {
+        $settings = [
+            'platform_fee_percent' => 0,
+            'platform_fee_fixed'   => 0,
+        ];
+        
+        foreach ($settings as $key => $default) {
+            BusinessSettings::set($key, $request->input($key, $default));
+        }
+
+        return redirect()->to(route('admin.business-settings.index') . '#' . 'platformFee')->with('success', 'Platform fee settings updated.');
     }
 }

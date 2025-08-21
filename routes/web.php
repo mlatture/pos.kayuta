@@ -44,6 +44,7 @@ use App\Http\Controllers\SystemLogsController;
 use App\Http\Controllers\ReceiptController as NewReceiptController;
 use App\Http\Controllers\DocumentController;
 use App\Models\Order;
+use App\Http\Controllers\ApiChannelController;
 
 Route::get('/', function () {
     return redirect('/admin');
@@ -298,6 +299,10 @@ Route::prefix('admin')
         Route::post('cart-settings/update', [BusinessSettingController::class, 'cartUpdate'])->name('admin.cart-settings.update');
         Route::post('electric-meter-rate/update', [BusinessSettingController::class, 'electricMeterRateUpdate'])->name('admin.electric-meter-rate.update');
         Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
+        Route::post('platform-fee-settings/update', [BusinessSettingController::class, 'platformFeeUpdate'])->name('admin.platform-fee-settings.update');
+        Route::post('api-channels', [ApiChannelController::class,'store'])->name('admin.api_channels.store');
+        Route::post('api-channels/{id}/rotate', [ApiChannelController::class,'rotate'])->name('admin.api_channels.rotate');
+        Route::post('api-channels/{id}/revoke', [ApiChannelController::class,'revoke'])->name('admin.api_channels.revoke');
         Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
         Route::post('settinfs/cancellation-fee', [BusinessSettingController::class, 'cancellationUpdate'])->name('admin.cancellation-settings.update');
         Route::post('settings/toggle-maintenance', [BusinessSettingController::class, 'toggleMaintenance'])->name('admin.settings.toggle-maintenance');

@@ -1,4 +1,4 @@
-<div class="tab-pane fade show active" id="utility" role="tabpanel" aria-labelledby="utility-tab">
+<div class="tab-pane fade" id="utility" role="tabpanel" aria-labelledby="utility-tab">
 
 
     <div class="d-grid gap-3 mb-4" style="grid-template-columns: repeat(3, 1fr);">
