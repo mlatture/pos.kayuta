@@ -4,6 +4,25 @@
             <div class="card shadow-sm">
                 
                 <div class="card-body">
+                    
+                    {{-- Error Alerts --}}
+                    @if ($errors->has('general'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ $errors->first('general') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
+                    
+                    @if ($errors->any() && !$errors->has('general'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            Please fix the errors below and try again.
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
 
                     {{-- One-time Key Alerts --}}
                     @if(session('created_key_plain'))
@@ -138,35 +157,56 @@
                         <div class="form-row">
                             <div class="form-group col-md-3">
                                 <label for="property_id">Property ID <span class="text-danger">*</span></label>
-                                <input required type="number" name="property_id" id="property_id" class="form-control" placeholder="e.g., 2001">
+                                <input required type="number" name="property_id" id="property_id"
+                                       class="form-control @error('property_id') is-invalid @enderror"
+                                       value="{{ old('property_id') }}" placeholder="e.g., 2001">
+                                @error('property_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="form-group col-md-3">
                                 <label for="channel_id">Channel ID <span class="text-danger">*</span></label>
-                                <input required type="number" name="channel_id" id="channel_id" class="form-control" placeholder="e.g., 101">
+                                <input required type="number" name="channel_id" id="channel_id"
+                                       class="form-control @error('channel_id') is-invalid @enderror"
+                                       value="{{ old('channel_id') }}" placeholder="e.g., 101">
+                                @error('channel_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="form-group col-md-3">
                                 <label for="code">Code <span class="text-danger">*</span></label>
-                                <input required type="text" name="code" id="code" class="form-control" placeholder="e.g., AFFIL">
+                                <input required type="text" name="code" id="code"
+                                       class="form-control @error('code') is-invalid @enderror"
+                                       value="{{ old('code') }}" placeholder="e.g., AFFIL">
+                                @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="form-group col-md-3">
                                 <label for="name">Name <span class="text-danger">*</span></label>
-                                <input required type="text" name="name" id="name" class="form-control" placeholder="Partner / Service name">
+                                <input required type="text" name="name" id="name"
+                                       class="form-control @error('name') is-invalid @enderror"
+                                       value="{{ old('name') }}" placeholder="Partner / Service name">
+                                @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group col-md-3">
                                 <label for="rate_limit_per_minute">Rate Limit / min</label>
-                                <input type="number" name="rate_limit_per_minute" id="rate_limit_per_minute" class="form-control" placeholder="Default 100">
+                                <input type="number" name="rate_limit_per_minute" id="rate_limit_per_minute"
+                                       class="form-control @error('rate_limit_per_minute') is-invalid @enderror"
+                                       value="{{ old('rate_limit_per_minute') }}" placeholder="Default 100">
+                                @error('rate_limit_per_minute') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
                             </div>
                             <div class="form-group col-md-3">
                                 <label for="rate_burst_per_minute">Burst / min</label>
-                                <input type="number" name="rate_burst_per_minute" id="rate_burst_per_minute" class="form-control" placeholder="Default 300">
+                                <input type="number" name="rate_burst_per_minute" id="rate_burst_per_minute"
+                                       class="form-control @error('rate_burst_per_minute') is-invalid @enderror"
+                                       value="{{ old('rate_burst_per_minute') }}" placeholder="Default 300">
+                                @error('rate_burst_per_minute') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="form-group col-md-3">
                                 <div class="custom-control custom-checkbox mt-4">
-                                    <input type="checkbox" class="custom-control-input" id="sandbox" name="sandbox" value="1">
+                                    <input type="checkbox" class="custom-control-input" id="sandbox" name="sandbox" value="1"
+                                           {{ old('sandbox') ? 'checked' : '' }}>
                                     <label class="custom-control-label" for="sandbox">Sandbox</label>
+                                    @error('sandbox') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                                 </div>
                             </div>
                         </div>
