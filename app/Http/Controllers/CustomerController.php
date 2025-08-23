@@ -7,7 +7,14 @@ use App\Http\Requests\CustomerStoreRequest;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Reservation;
+use Illuminate\Support\Facades\DB;
+use App\Models\CardOnFile;
+use App\Models\Receipt;
+use App\Models\CartReservation;
+use App\Models\SystemLog;
 use App\Models\SeasonalRate;
+use App\Models\GiftCard;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +44,6 @@ class CustomerController extends Controller
             if ($request->only_seasonal) {
                 $customers->whereJsonLength('seasonal', '>', 0);
             }
-        
 
             return DataTables::of($customers)
                 ->addIndexColumn()
@@ -238,5 +244,81 @@ class CustomerController extends Controller
         $user->seasonal = $request->input('seasonal', []);
         $user->save();
         return response()->json(['success' => true, 'message' => 'Seasonal updated successfully.']);
+    }
+
+    public function account(User $customer)
+    {
+        return view('admin.customers.account', compact('customer'));
+    }
+
+    public function balance(User $customer)
+    {
+        $rDue = (float) Reservation::where('customernumber', $customer->id)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!==', 'Cancelled');
+            })
+            ->sum(DB::raw('COALESCE(totalcharges,0) - COALESCE(totalpayments,0)'));
+
+        $uDue = 0.0;
+        $sDue = 0.0;
+        $pDue = 0.0;
+        $gCredit = 0.0;
+
+        $total = round($rDue + $uDue + $sDue + $pDue - $gCredit, 2);
+
+        return response()->json([
+            'success' => true,
+            'total' => $total,
+            'parts' => [
+                'r' => ['due' => $rDue],
+                'u' => ['due' => $uDue],
+                's' => ['due' => $sDue],
+                'p' => ['due' => $pDue],
+                'g' => ['credit' => $gCredit],
+            ],
+        ]);
+    }
+
+    public function receipts(User $customer)
+    {
+        $rows = Reservation::where('customernumber', $customer->id)
+            ->select([DB::raw('COALESCE(created, created_at, createdate) as d'), 'status', 'confirmation', 'xconfnum', 'rid', 'id', 'totalpayments'])
+            ->orderByDesc('d')
+            ->limit(10)
+            ->get()
+            ->map(function ($r) {
+                $status = (string) ($r->status ?? 'N/A');
+                $cls = match ($status) {
+                    'Paid', 'Success', 'Confirmed' => 'bg-success',
+                    'Pending', 'Processing' => 'bg-warning text-dark',
+                    'Cancelled', 'Failed' => 'bg-danger',
+                    default => 'bg-secondary',
+                };
+
+                $reference = $r->confirmation ?: ($r->xconfnum ?: ($r->rid ?: $r->id));
+
+                return [
+                    'date' => $this->fmtDate($r->d),
+                    'type' => 'Reservation',
+                    'reference' => (string) $reference,
+                    'amount' => (float) ($r->totalpayments ?? 0),
+                    'status_badge' => '<span class="badge ' . $cls . '">' . e($status) . '</span>',
+                ];
+            });
+
+        return response()->json(['rows' => $rows]);
+    }
+
+    protected function fmtDate($value, $format = 'Y-m-d')
+    {
+        if (!$value) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($value)->format($format);
+        } catch (\Exception $e) {
+            return $value; // fallback if parsing fails
+        }
     }
 }

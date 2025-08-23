@@ -55,13 +55,26 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        Route::prefix('customers/{customer}/account')->group(function () {
+            Route::get('/', [CustomerController::class, 'account'])->name('admin.customers.account');
+
+            Route::get('/balance', [CustomerController::class, 'balance'])->name('admin.customers.account.balance');
+
+            Route::get('/receipts', [CustomerController::class, 'receipts'])->name('admin.customers.account.receipts');
+
+            Route::get('/email/template', [CustomerController::class, 'emailTemplate'])->name('admin.customers.account.email.template');
+
+            // send email
+            Route::post('/email/send', [CustomerController::class, 'sendConfirmationEmail'])->name('admin.customers.account.email.send');
+        });
+
         Route::prefix('documents')->group(function () {
             Route::get('customers/{user}', [DocumentController::class, 'index'])->name('customers.documents');
             Route::get('customers/{user}/data', [DocumentController::class, 'data'])->name('customers.documents.data');
 
             Route::delete('{file}', [DocumentController::class, 'destroy'])->name('file.destroy');
 
-            // Bulk delete 
+            // Bulk delete
             Route::post('bulk-delete', [DocumentController::class, 'bulkDestroy'])->name('file.bulkDestroy');
         });
 
@@ -300,9 +313,9 @@ Route::prefix('admin')
         Route::post('electric-meter-rate/update', [BusinessSettingController::class, 'electricMeterRateUpdate'])->name('admin.electric-meter-rate.update');
         Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
         Route::post('platform-fee-settings/update', [BusinessSettingController::class, 'platformFeeUpdate'])->name('admin.platform-fee-settings.update');
-        Route::post('api-channels', [ApiChannelController::class,'store'])->name('admin.api_channels.store');
-        Route::post('api-channels/{id}/rotate', [ApiChannelController::class,'rotate'])->name('admin.api_channels.rotate');
-        Route::post('api-channels/{id}/revoke', [ApiChannelController::class,'revoke'])->name('admin.api_channels.revoke');
+        Route::post('api-channels', [ApiChannelController::class, 'store'])->name('admin.api_channels.store');
+        Route::post('api-channels/{id}/rotate', [ApiChannelController::class, 'rotate'])->name('admin.api_channels.rotate');
+        Route::post('api-channels/{id}/revoke', [ApiChannelController::class, 'revoke'])->name('admin.api_channels.revoke');
         Route::post('cookie-settings/update', [BusinessSettingController::class, 'cookieUpdate'])->name('admin.cookie-settings.update');
         Route::post('settinfs/cancellation-fee', [BusinessSettingController::class, 'cancellationUpdate'])->name('admin.cancellation-settings.update');
         Route::post('settings/toggle-maintenance', [BusinessSettingController::class, 'toggleMaintenance'])->name('admin.settings.toggle-maintenance');

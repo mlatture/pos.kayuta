@@ -8,10 +8,17 @@
         <div class="card shadow">
             <div class="card-header d-flex align-items-center bg-primary text-white">
                 <h3 class="mb-0">{{ $customer->f_name }} {{ $customer->l_name }}</h3>
-                <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-light ms-auto "
-                    style="color:black !important">
-                    <i class="fas fa-edit"></i> Edit Customer
-                </a>
+
+                <div class="ms-auto">
+                    <a href="{{ route('admin.customers.account', $customer->id) }}" class="btn btn-light ms-auto "
+                        style="color:black !important">
+                        <i class="fas fa-user"></i> View Account
+                    </a>
+                    <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-light ms-auto "
+                        style="color:black !important">
+                        <i class="fas fa-edit"></i> Edit Customer
+                    </a>
+                </div>
             </div>
 
             <div class="card-body">
