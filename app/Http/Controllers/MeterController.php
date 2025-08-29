@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
 
-
 class MeterController extends Controller
 {
     public function index()
@@ -34,114 +33,198 @@ class MeterController extends Controller
         return view('meters.index', compact('overdueSites'));
     }
 
+    private function getClaudePromptMessage(string $type = 'meter_page', string $imageUrl = ''): string
+    {
+        $template = DB::table('prompt_templates')->where('type', $type)->select('user_prompt')->first();
+
+        $userPrompt = trim($template->user_prompt ?? '');
+
+        $strict = <<<EOT
+
+        Return ONLY this JSON exactly, no prose:
+
+        {
+          "meter_number": "<digits only>",
+          "reading": "<numeric reading (kWh)>",
+          "manufacturer": "<string or empty>",
+          "meter_style": "<string or empty>"
+        }
+        EOT;
+
+        // Never duplicate the image URL; add if absent.
+        if ($imageUrl && !str_contains($userPrompt, $imageUrl)) {
+            $userPrompt .= "\n\nImage: {$imageUrl}";
+        }
+
+        return $userPrompt . "\n\n" . $strict;
+    }
+
+  
     public function read(Request $request)
     {
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
 
-        // 1. Store file
+        // 1) Store file
         if ($request->hasFile('photo')) {
-            $path = Readings::storeFile($request->file('photo'));
-        } elseif ($request->filled('existing_image')) {
-            $path = $request->input('existing_image');
-            return back()->with('Warning', 'That Doesn`t seem right, try again.');
+            $path = Readings::storeFile($request->file('photo')); // update helper to static on Readings
+        } else {
+            return back()->with('warning', 'Please choose a photo.');
         }
 
         if (!$path || !file_exists(public_path('storage/' . $path))) {
-            return back()->with('Error', 'Image not found.');
+            return back()->with('error', 'Image not found.');
         }
 
         $imagePath = public_path('storage/' . $path);
+        $imageBytes = @file_get_contents($imagePath);
+        if ($imageBytes === false) {
+            return back()->with('error', 'Unable to read uploaded image.');
+        }
 
-        // 2. Convert image to base64 (without data URI prefix)
-        $imageData = file_get_contents($imagePath);
-        $base64 = base64_encode($imageData);
+        $base64 = base64_encode($imageBytes);
 
-        // 3. Build Claude message format with base64 image
+        // 2) Build prompt
+        $imageUrl = asset('storage/' . $path);
+        $textPrompt = $this->getClaudePromptMessage('meter_page', $imageUrl);
 
-        $textPrompt = $this->getClaudePromptMessage('meter_page', asset('storage/' . $path));
-
-        $claudeMessages = [
-            [
-                'role' => 'user',
-                'content' => [
-                    ['type' => 'text', 'text' => $textPrompt],
-                    [
-                        'type' => 'image',
-                        'source' => [
-                            'type' => 'base64',
-                            'media_type' => 'image/jpeg', // you may adjust to image/png
-                            'data' => $base64,
+        $payload = [
+            'model' => 'claude-3-5-sonnet-20250514', // keep/to your latest known
+            'max_tokens' => 512,
+            'temperature' => 0,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => $textPrompt],
+                        [
+                            'type' => 'image',
+                            'source' => [
+                                'type' => 'base64',
+                                'media_type' => 'image/jpeg', // or detect from $request->file('photo')->getMimeType()
+                                'data' => $base64,
+                            ],
                         ],
                     ],
                 ],
             ],
         ];
 
-        // 4. Claude API call
+        $t0 = microtime(true);
         $response = Http::withHeaders([
             'x-api-key' => env('CLAUDE_API_KEY'),
             'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-sonnet-4-20250514',
-            'max_tokens' => 1024,
-            'temperature' => 0,
-            'messages' => $claudeMessages,
-        ]);
+        ])->post('https://api.anthropic.com/v1/messages', $payload);
+        $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+
+        if (!$response->ok()) {
+            Log::error('Claude API error', ['status' => $response->status(), 'body' => $response->body()]);
+            return back()->with('error', 'Scan failed. Please retake a clearer photo.');
+        }
 
         $data = $response->json();
-        $content = $data['content'][0]['text'] ?? null;
+        $contentBlocks = $data['content'] ?? [];
+        $rawText = '';
+        foreach ($contentBlocks as $blk) {
+            if (($blk['type'] ?? '') === 'text') {
+                $rawText .= $blk['text'] . "\n";
+            }
+        }
 
-        if (!$content || !str_contains($content, '{')) {
+        // 3) Robust JSON extraction
+        if (!Str::contains($rawText, '{')) {
             session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Model did not return JSON. Please review.');
         }
 
-        $jsonString = substr($content, strpos($content, '{'), strrpos($content, '}') - strpos($content, '{') + 1);
-        $parsed = json_decode($jsonString, true);
-
-        $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
-        $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
-
-        if (!$meterNumber || !$currentReading) {
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
+        // first top-level JSON object
+        if (!preg_match('/\{.*\}/s', $rawText, $m)) {
+            session()->flash('retry_path', $path);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Unparseable response. Please review.');
         }
 
-        // 5. Proceed to next logic
-        $site = Site::where('meter_number', $meterNumber)->first();
-        if (!$site) {
-            return redirect()->route('meters.unregistered', [
-                'meter_number' => $meterNumber,
-                'reading' => $currentReading,
-                'image' => $path,
-                'date' => now()->toDateString(),
-            ]);
+        $parsed = json_decode($m[0], true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            session()->flash('retry_path', $path);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Invalid JSON returned by AI.');
         }
 
-        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
-        $previousKwh = $lastReading?->kwhNo ?? 0;
-        $previousDate = $lastReading?->date ?? now();
-        $usage = $currentReading - $previousKwh;
-        $days = now()->diffInDays(Carbon::parse($previousDate));
-        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
-        $total = $usage * $rate;
+        $aiMeterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
+        $aiReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
+        $manufacturer = trim($parsed['manufacturer'] ?? '');
+        $meterStyle = trim($parsed['meter_style'] ?? '');
 
-        $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+        if (!$aiMeterNumber || $aiReading === null) {
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('error', 'Missing required values (meter_number/reading).');
+        }
 
-        $customer = $reservation ? User::find($reservation->customernumber) : null;
+        // 4) New/Existing site detection
+        $site = Site::where('meter_number', $aiMeterNumber)->first();
 
-        $reading = (object) [
-            'kwhNo' => $currentReading,
-            'meter_number' => $meterNumber,
+        // 5) Persist an initial reading row (ai_* only). Admin will edit on preview.
+        $readingRow = Readings::create([
+            'meter_number' => $aiMeterNumber, // prefill user-facing fields from AI
+            'kwhNo' => $aiReading, // ditto
             'image' => $path,
             'date' => now()->toDateString(),
-            'siteid' => $site->siteid,
+            'siteid' => $site->siteid ?? null,
+
+            'ai_meter_number' => $aiMeterNumber,
+            'ai_meter_reading' => $aiReading,
+            'ai_success' => true, // default true; UI change will flip to false
+            'ai_fixed' => false,
+
+            'manufacturer' => $manufacturer ?: null,
+            'meter_style' => $meterStyle ?: null,
+
+            'prompt_version' => 'meter_page/v1', // optional, or from prompt_templates
+            'model_version' => (string) ($payload['model'] ?? ''),
+            'ai_latency_ms' => $latencyMs,
+        ]);
+
+        // 6) Compute billing metrics (but DO NOT allow send if new meter)
+        $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
+
+        $previousKwh = $last?->kwhNo ?? 0;
+        $previousDate = $last?->date ?? now();
+        $days = max(1, now()->diffInDays(Carbon::parse($previousDate)));
+        $usage = $aiReading - $previousKwh;
+
+        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
+        $total = $usage * $rate;
+
+        // Threshold (per spec): daily rate threshold from business_settings
+        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $threshold = ($thirtyDayCap / 30.0) * $days;
+
+        $reservation = null;
+        $customer = null;
+        if ($site) {
+            $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+            $customer = $reservation ? User::find($reservation->customernumber) : null;
+        }
+
+        // New meter rule: if no site attached, treat as unregistered/new meter
+        $isNewMeter = !$site;
+
+        // 7) Build preview DTO (object) for view
+        $reading = (object) [
+            'id' => $readingRow->id,
+            'kwhNo' => $readingRow->kwhNo,
+            'meter_number' => $readingRow->meter_number,
+            'ai_meter_number' => $readingRow->ai_meter_number,
+            'ai_meter_reading' => $readingRow->ai_meter_reading,
+            'image' => $readingRow->image,
+            'date' => $readingRow->date,
+            'siteid' => $readingRow->siteid,
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
             'previousKwh' => $previousKwh,
-            'new_meter_number' => false,
+            'new_meter_number' => $isNewMeter,
+            'days' => $days,
+            'threshold' => $threshold,
         ];
 
         return view('meters.preview', [
@@ -151,119 +234,175 @@ class MeterController extends Controller
             'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
             'start_date' => Carbon::parse($previousDate)->toDateString(),
             'end_date' => now()->toDateString(),
-            'days' => $days,
             'reservation_id' => $reservation->id ?? '',
         ]);
     }
 
-   public function scan(Request $request)
+     public function scan(Request $request)
     {
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
 
-        // 1. Store file
+        // 1) Store file
         if ($request->hasFile('photo')) {
-            $path = Readings::storeFile($request->file('photo'));
-        } elseif ($request->filled('existing_image')) {
-            $path = $request->input('existing_image');
-            return back()->with('Warning', 'That Doesn`t seem right, try again.');
+            $path = Readings::storeFile($request->file('photo')); // update helper to static on Readings
+        } else {
+            return back()->with('warning', 'Please choose a photo.');
         }
 
         if (!$path || !file_exists(public_path('storage/' . $path))) {
-            return back()->with('Error', 'Image not found.');
+            return back()->with('error', 'Image not found.');
         }
 
         $imagePath = public_path('storage/' . $path);
+        $imageBytes = @file_get_contents($imagePath);
+        if ($imageBytes === false) {
+            return back()->with('error', 'Unable to read uploaded image.');
+        }
 
-        // 2. Convert image to base64 (without data URI prefix)
-        $imageData = file_get_contents($imagePath);
-        $base64 = base64_encode($imageData);
+        $base64 = base64_encode($imageBytes);
 
-        // 3. Build Claude message format with base64 image
+        // 2) Build prompt
+        $imageUrl = asset('storage/' . $path);
+        $textPrompt = $this->getClaudePromptMessage('meter_page', $imageUrl);
 
-        $textPrompt = $this->getClaudePromptMessage('meter_page', asset('storage/' . $path));
-
-        $claudeMessages = [
-            [
-                'role' => 'user',
-                'content' => [
-                    ['type' => 'text', 'text' => $textPrompt],
-                    [
-                        'type' => 'image',
-                        'source' => [
-                            'type' => 'base64',
-                            'media_type' => 'image/jpeg', // you may adjust to image/png
-                            'data' => $base64,
+        $payload = [
+            'model' => 'claude-3-5-sonnet-20250514', // keep/to your latest known
+            'max_tokens' => 512,
+            'temperature' => 0,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => $textPrompt],
+                        [
+                            'type' => 'image',
+                            'source' => [
+                                'type' => 'base64',
+                                'media_type' => 'image/jpeg', // or detect from $request->file('photo')->getMimeType()
+                                'data' => $base64,
+                            ],
                         ],
                     ],
                 ],
             ],
         ];
 
-        // 4. Claude API call
+        $t0 = microtime(true);
         $response = Http::withHeaders([
             'x-api-key' => env('CLAUDE_API_KEY'),
             'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-sonnet-4-20250514',
-            'max_tokens' => 1024,
-            'temperature' => 0,
-            'messages' => $claudeMessages,
-        ]);
+        ])->post('https://api.anthropic.com/v1/messages', $payload);
+        $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+
+        if (!$response->ok()) {
+            Log::error('Claude API error', ['status' => $response->status(), 'body' => $response->body()]);
+            return back()->with('error', 'Scan failed. Please retake a clearer photo.');
+        }
 
         $data = $response->json();
-        $content = $data['content'][0]['text'] ?? null;
+        $contentBlocks = $data['content'] ?? [];
+        $rawText = '';
+        foreach ($contentBlocks as $blk) {
+            if (($blk['type'] ?? '') === 'text') {
+                $rawText .= $blk['text'] . "\n";
+            }
+        }
 
-        if (!$content || !str_contains($content, '{')) {
+        // 3) Robust JSON extraction
+        if (!Str::contains($rawText, '{')) {
             session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data]);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Model did not return JSON. Please review.');
         }
 
-        $jsonString = substr($content, strpos($content, '{'), strrpos($content, '}') - strpos($content, '{') + 1);
-        $parsed = json_decode($jsonString, true);
-
-        $meterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
-        $currentReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
-
-        if (!$meterNumber || !$currentReading) {
-            return view('meters.gpt_debug', ['raw' => $content, 'response' => $data])->with('error', 'Missing required values.');
+        // first top-level JSON object
+        if (!preg_match('/\{.*\}/s', $rawText, $m)) {
+            session()->flash('retry_path', $path);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Unparseable response. Please review.');
         }
 
-        // 5. Proceed to next logic
-        $site = Site::where('meter_number', $meterNumber)->first();
-        if (!$site) {
-            return redirect()->route('meters.unregistered', [
-                'meter_number' => $meterNumber,
-                'reading' => $currentReading,
-                'image' => $path,
-                'date' => now()->toDateString(),
-            ]);
+        $parsed = json_decode($m[0], true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            session()->flash('retry_path', $path);
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Invalid JSON returned by AI.');
         }
 
-        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
-        $previousKwh = $lastReading?->kwhNo ?? 0;
-        $previousDate = $lastReading?->date ?? now();
-        $usage = $currentReading - $previousKwh;
-        $days = now()->diffInDays(Carbon::parse($previousDate));
-        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
-        $total = $usage * $rate;
+        $aiMeterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
+        $aiReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
+        $manufacturer = trim($parsed['manufacturer'] ?? '');
+        $meterStyle = trim($parsed['meter_style'] ?? '');
 
-        $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+        if (!$aiMeterNumber || $aiReading === null) {
+            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('error', 'Missing required values (meter_number/reading).');
+        }
 
-        $customer = $reservation ? User::find($reservation->customernumber) : null;
+        // 4) New/Existing site detection
+        $site = Site::where('meter_number', $aiMeterNumber)->first();
 
-        $reading = (object) [
-            'kwhNo' => $currentReading,
-            'meter_number' => $meterNumber,
+        // 5) Persist an initial reading row (ai_* only). Admin will edit on preview.
+        $readingRow = Readings::create([
+            'meter_number' => $aiMeterNumber, // prefill user-facing fields from AI
+            'kwhNo' => $aiReading, // ditto
             'image' => $path,
             'date' => now()->toDateString(),
-            'siteid' => $site->siteid,
+            'siteid' => $site->siteid ?? null,
+
+            'ai_meter_number' => $aiMeterNumber,
+            'ai_meter_reading' => $aiReading,
+            'ai_success' => true, // default true; UI change will flip to false
+            'ai_fixed' => false,
+
+            'manufacturer' => $manufacturer ?: null,
+            'meter_style' => $meterStyle ?: null,
+
+            'prompt_version' => 'meter_page/v1', // optional, or from prompt_templates
+            'model_version' => (string) ($payload['model'] ?? ''),
+            'ai_latency_ms' => $latencyMs,
+        ]);
+
+        // 6) Compute billing metrics (but DO NOT allow send if new meter)
+        $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
+
+        $previousKwh = $last?->kwhNo ?? 0;
+        $previousDate = $last?->date ?? now();
+        $days = max(1, now()->diffInDays(Carbon::parse($previousDate)));
+        $usage = $aiReading - $previousKwh;
+
+        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
+        $total = $usage * $rate;
+
+        // Threshold (per spec): daily rate threshold from business_settings
+        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $threshold = ($thirtyDayCap / 30.0) * $days;
+
+        $reservation = null;
+        $customer = null;
+        if ($site) {
+            $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+            $customer = $reservation ? User::find($reservation->customernumber) : null;
+        }
+
+        // New meter rule: if no site attached, treat as unregistered/new meter
+        $isNewMeter = !$site;
+
+        // 7) Build preview DTO (object) for view
+        $reading = (object) [
+            'id' => $readingRow->id,
+            'kwhNo' => $readingRow->kwhNo,
+            'meter_number' => $readingRow->meter_number,
+            'ai_meter_number' => $readingRow->ai_meter_number,
+            'ai_meter_reading' => $readingRow->ai_meter_reading,
+            'image' => $readingRow->image,
+            'date' => $readingRow->date,
+            'siteid' => $readingRow->siteid,
             'usage' => $usage,
             'rate' => $rate,
             'total' => $total,
             'previousKwh' => $previousKwh,
-            'new_meter_number' => false,
+            'new_meter_number' => $isNewMeter,
+            'days' => $days,
+            'threshold' => $threshold,
         ];
 
         return view('meters.preview', [
@@ -273,21 +412,8 @@ class MeterController extends Controller
             'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
             'start_date' => Carbon::parse($previousDate)->toDateString(),
             'end_date' => now()->toDateString(),
-            'days' => $days,
             'reservation_id' => $reservation->id ?? '',
         ]);
-    }
-
-    private function getClaudePromptMessage(string $type = 'meter_page', string $imageUrl = ''): string
-    {
-        $template = DB::table('prompt_templates')->where('type', $type)->select('user_prompt')->first();
-
-        $userPrompt = $template->user_prompt;
-        if (!str_contains($userPrompt, $imageUrl)) {
-            $userPrompt .= "\n\nImage: $imageUrl";
-        }
-
-        return $userPrompt;
     }
 
     public function unregister(Request $request)
@@ -385,83 +511,198 @@ class MeterController extends Controller
     public function send(Request $request)
     {
         $request->validate([
+            'reading_id' => 'nullable|integer|exists:electric_readings,id',
             'meter_number' => 'required|string',
             'image' => 'required|string',
             'kwhNo' => 'required|numeric',
             'prevkwhNo' => 'required|numeric',
-            'total' => 'required|numeric',
-            'siteid' => 'required|string',
-            'usage' => 'required|string',
+            'siteid' => 'nullable|string',
             'reservation_id' => 'nullable|exists:reservations,id',
             'customer_id' => 'nullable|exists:users,id',
-            'rate' => 'nullable|numeric',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
+            'ai_success' => 'nullable',
+            'training_opt_in' => 'nullable|boolean',
+            'override_send' => 'nullable|boolean',
         ]);
 
-        $rate = $request->rate ?? BusinessSettings::where('type', 'electric_meter_rate')->value('value');
-        $readingDate = Carbon::now();
+        // Normalize inputs
+        $meterNumber = preg_replace('/\D/', '', (string) $request->meter_number);
+        $currentKwh = (float) $request->kwhNo;
+        $prevKwh = (float) $request->prevkwhNo;
+        $customerId = $request->input('customer_id');
+        $reservationId = $request->input('reservation_id');
+        $image = $request->image;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+        $days = max(1, $start->diffInDays($end) + 1);
 
-        // CASE 1: No customer — update existing reading
-        if (!$request->filled('customer_id')) {
-            $latestReading = Readings::where('meter_number', $request->meter_number)->latest('date')->first();
+        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
+        $serverPrevKwh = $lastReading?->kwhNo ?? 0.0;
+        $serverPrevDate = $lastReading?->date ? Carbon::parse($lastReading->date) : $start->copy()->subDay();
+        $prevKwh = max($prevKwh, $serverPrevKwh);
 
-            if ($latestReading) {
-                $latestReading->update([
-                    'kwhNo' => $request->kwhNo,
-                    'image' => $request->image,
-                    'date' => $readingDate,
-                ]);
-            }
+        $usage = $currentKwh - $prevKwh;
 
-            if ($latestReading->kwhNo >= $request->kwhNo) {
-                return redirect()->route('meters.index')->with('warning', 'New reading must be greater than the last reading.');
-            }
-
-            return redirect()->route('meters.index')->with('info', 'Reading updated (no customer found).');
+        // Monotonic check
+        if ($usage <= 0) {
+            return back()->with('error', 'New reading must be greater than the last reading.');
         }
 
-        // CASE 2: Customer exists — save reading + bill + send mail
-        $reading = Readings::create([
-            'kwhNo' => $request->kwhNo,
-            'meter_number' => $request->meter_number,
-            'image' => $request->image,
-            'date' => $readingDate,
-        ]);
+        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
+        $total = $usage * $rate;
 
-        if ($request->filled('customer_id')) {
-            Bills::create([
-                'reservation_id' => $request->reservation_id,
-                'customer_id' => $request->customer_id,
-                'kwh_used' => $request->usage,
-                'rate' => $rate,
-                'total_cost' => $request->total,
-                'reading_dates' => json_encode([
-                    'start' => $request->start_date,
-                    'end' => $request->end_date,
-                ]),
-                'auto_email' => true,
+        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $threshold = ($thirtyDayCap / 30.0) * $days;
+
+        $site = Site::where('meter_number', $meterNumber)->first();
+        $isNewMeter = !$site;
+
+        if ($total <= 0) {
+            return back()->with('error', 'Zero/negative bill cannot be sent. Please verify the rate in Business Settings.');
+        }
+
+        if ($total > $threshold && !$request->boolean('override_send')) {
+            $this->systemLog('Bill Validation', [
+                'meter_number' => $meterNumber,
+                'reading_id' => $request->input('reading_id'),
+                'total' => $total,
+                'threshold' => $threshold,
+                'days' => $days,
+                'action' => 'blocked_without_override',
+            ]);
+            return back()->with('warning', 'Bill exceeds the threshold. Tick "Send anyway?" to proceed if legitimate.');
+        }
+
+        if ($isNewMeter || !$customerId) {
+            $reading = $request->filled('reading_id') ? Readings::findOrFail($request->reading_id) : new Readings();
+
+            $reading->fill([
+                'meter_number' => $meterNumber,
+                'kwhNo' => $currentKwh,
+                'image' => $image,
+                'date' => Carbon::now()->toDateString(),
+                'siteid' => $site?->siteid, // null if new meter
             ]);
 
-            $customer = User::find($request->customer_id);
-            if ($customer && $customer->email) {
-                Mail::to($customer->email)->send(
-                    new ElectricBillGenerated([
-                        'customer' => $customer,
-                        'site_no' => $request->siteid,
-                        'current_reading' => $request->kwhNo,
-                        'previous_reading' => $request->prevkwhNo,
-                        'usage' => $request->usage,
-                        'total' => $request->total,
-                        'rate' => $rate,
-                        'days' => $request->days,
-                        'start_date' => $request->start_date,
-                        'end_date' => $request->end_date,
-                    ]),
-                );
+            if ($request->has('ai_success') && $request->input('ai_success') === 'false') {
+                $reading->ai_success = false;
+                $reading->ai_fixed = true;
+                if ($request->boolean('training_opt_in')) {
+                    $this->systemLog('AI Training', [
+                        'reading_id' => $reading->id,
+                        'meter_number' => $meterNumber,
+                        'image' => $image,
+                    ]);
+                }
             }
+
+            $reading->save();
+
+            $msg = $isNewMeter ? 'Reading saved. New meter detected — guest billing disabled.' : 'Reading saved (no customer found).';
+
+            return redirect()->route('meters.index')->with('info', $msg);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $meterNumber, $currentKwh, $image, $site, $customerId, $reservationId, $usage, $rate, $total, $start, $end, $days, $threshold) {
+                if ($request->filled('siteid') && $site && $site->siteid != $request->siteid) {
+                    $oldSite = Site::where('siteid', $request->siteid)->first();
+                    if ($oldSite && $oldSite->meter_number === $meterNumber) {
+                        $oldSite->meter_number = null;
+                        $oldSite->save();
+                    }
+                    $this->systemLog('Meter Reassigned', [
+                        'from_siteid' => $oldSite?->siteid,
+                        'to_siteid' => $site->siteid,
+                        'meter_number' => $meterNumber,
+                    ]);
+                }
+
+                $reading = $request->filled('reading_id') ? Readings::findOrFail($request->reading_id) : new Readings();
+
+                $reading->fill([
+                    'meter_number' => $meterNumber,
+                    'kwhNo' => $currentKwh,
+                    'image' => $image,
+                    'date' => Carbon::now()->toDateString(),
+                    'siteid' => $site?->siteid,
+                ]);
+
+                if ($request->has('ai_success') && $request->input('ai_success') === 'false') {
+                    $reading->ai_success = false;
+                    $reading->ai_fixed = true;
+                    if ($request->boolean('training_opt_in')) {
+                        $this->systemLog('AI Training', [
+                            'reading_id' => $reading->id,
+                            'meter_number' => $meterNumber,
+                            'image' => $image,
+                        ]);
+                    }
+                }
+                $reading->save();
+
+                Bills::create([
+                    'reservation_id' => $reservationId,
+                    'customer_id' => $customerId,
+                    'kwh_used' => $usage,
+                    'rate' => $rate,
+                    'total_cost' => $total,
+                    'reading_dates' => json_encode([
+                        'start' => $start->toDateString(),
+                        'end' => $end->toDateString(),
+                    ]),
+                    'auto_email' => true,
+                ]);
+
+                if ($total > $threshold && $request->boolean('override_send')) {
+                    $this->systemLog('Bill Validation', [
+                        'reading_id' => $reading->id,
+                        'total' => $total,
+                        'threshold' => $threshold,
+                        'days' => $days,
+                        'action' => 'override_send',
+                    ]);
+                }
+
+                // Email customer
+                $customer = User::find($customerId);
+                if ($customer && $customer->email) {
+                    Mail::to($customer->email)->send(
+                        new ElectricBillGenerated([
+                            'customer' => $customer,
+                            'site_no' => $site?->siteid,
+                            'current_reading' => $currentKwh,
+                            'previous_reading' => $request->prevkwhNo, // display value
+                            'usage' => $usage,
+                            'total' => $total,
+                            'rate' => $rate,
+                            'days' => $days,
+                            'start_date' => $start->toDateString(),
+                            'end_date' => $end->toDateString(),
+                        ]),
+                    );
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Send meter bill failed', ['err' => $e->getMessage()]);
+            return back()->with('error', 'Failed to save and send bill.');
         }
 
         return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
+    }
+
+    private function systemLog(string $type, array $payload = []): void
+    {
+        try {
+            DB::table('system_logs')->insert([
+                'transaction_type' => $type,
+                'payload' => json_encode($payload),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('system_log insert failed', ['type' => $type, 'err' => $e->getMessage()]);
+        }
     }
 }
