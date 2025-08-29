@@ -20,6 +20,7 @@ use App\Mail\ElectricBillGenerated;
 
 use Illuminate\Support\Facades\Log;
 
+
 class MeterController extends Controller
 {
     public function index()
@@ -86,6 +87,7 @@ class MeterController extends Controller
         }
 
         $base64 = base64_encode($imageBytes);
+
 
         // 2) Build prompt
         $imageUrl = asset('storage/' . $path);
