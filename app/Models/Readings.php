@@ -9,9 +9,23 @@ class Readings extends Model
 {
     use HasFactory;
 
-    protected $table = 'readings';
+    protected $table = 'electric_readings';
 
-    protected $fillable = ['kwhNo', 'image', 'date', 'siteno', 'status', 'bill', 'customer_id', 'meter_number'];
+    protected $fillable = [
+        'kwhNo',
+        'meter_number',
+        'image',
+        'date',
+        'meter_style',
+        'manufacturer',
+        'ai_meter_number',
+        'ai_meter_reading',
+        'ai_success',
+        'ai_fixed',
+        'prompt_version',
+        'model_version',
+        'ai_latency_ms',
+    ];
 
     public static function storeFile($file, $folder = 'meter_images')
     {
