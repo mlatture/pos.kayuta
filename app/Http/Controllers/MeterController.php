@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
 
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
 
 class MeterController extends Controller
 {
@@ -33,45 +33,31 @@ class MeterController extends Controller
             ->pluck('meter_number');
 
         $overdueSites = Site::whereIn('meter_number', $overDueMeterNumbers)->get();
-        return view('meters.index', compact('overdueSites'));
+
+        $getLatestMN = Readings::whereIn('id', function ($q) {
+            $q->selectRaw('MAX(id)')->from('electric_readings')->groupBy('meter_number');
+        })->get();
+
+        return view('meters.index', compact('overdueSites', 'getLatestMN'));
     }
 
-    private function getClaudePromptMessage(string $type = 'meter_page', string $imageUrl = ''): string
+    private function getClaudePromptMessage(string $type = 'meter_page'): string
     {
         $template = DB::table('prompt_templates')->where('type', $type)->select('user_prompt')->first();
 
         $userPrompt = trim($template->user_prompt ?? '');
 
-        $strict = <<<EOT
-
-        Return ONLY this JSON exactly, no prose:
-
-        {
-          "meter_number": "<digits only>",
-          "reading": "<numeric reading (kWh)>",
-          "manufacturer": "<string or empty>",
-          "meter_style": "<string or empty>"
-        }
-        EOT;
-
-        // Never duplicate the image URL; add if absent.
-        if ($imageUrl && !str_contains($userPrompt, $imageUrl)) {
-            $userPrompt .= "\n\nImage: {$imageUrl}";
-        }
-
-        return $userPrompt . "\n\n" . $strict;
+        return $userPrompt;
     }
 
-  
     public function read(Request $request)
     {
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
 
-        // 1) Store file
         if ($request->hasFile('photo')) {
-            $path = Readings::storeFile($request->file('photo')); // update helper to static on Readings
+            $path = Readings::storeFile($request->file('photo'));
         } else {
             return back()->with('warning', 'Please choose a photo.');
         }
@@ -87,16 +73,14 @@ class MeterController extends Controller
         }
 
         $base64 = base64_encode($imageBytes);
+        $mimeType = $request->file('photo')->getMimeType();
 
-
-        // 2) Build prompt
-        $imageUrl = asset('storage/' . $path);
-        $textPrompt = $this->getClaudePromptMessage('meter_page', $imageUrl);
+        $textPrompt = $this->getClaudePromptMessage('meter_page');
 
         $payload = [
-            'model' => 'claude-3-5-sonnet-20250514', // keep/to your latest known
-            'max_tokens' => 512,
-            'temperature' => 0,
+            'model' => 'claude-sonnet-4-20250514',
+            'max_tokens' => 400,
+            'temperature' => 0.1,
             'messages' => [
                 [
                     'role' => 'user',
@@ -106,7 +90,7 @@ class MeterController extends Controller
                             'type' => 'image',
                             'source' => [
                                 'type' => 'base64',
-                                'media_type' => 'image/jpeg', // or detect from $request->file('photo')->getMimeType()
+                                'media_type' => $mimeType,
                                 'data' => $base64,
                             ],
                         ],
@@ -115,79 +99,140 @@ class MeterController extends Controller
             ],
         ];
 
-        $t0 = microtime(true);
-        $response = Http::withHeaders([
-            'x-api-key' => env('CLAUDE_API_KEY'),
-            'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', $payload);
-        $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+        // 4) API call with enhanced error handling
+        $maxRetries = 10;
+        $attempt = 0;
 
-        if (!$response->ok()) {
-            Log::error('Claude API error', ['status' => $response->status(), 'body' => $response->body()]);
-            return back()->with('error', 'Scan failed. Please retake a clearer photo.');
-        }
+        do {
+            $attempt++;
+            $t0 = microtime(true);
 
-        $data = $response->json();
+            try {
+                $response = Http::timeout(45)
+                    ->withHeaders([
+                        'x-api-key' => env('CLAUDE_API_KEY'),
+                        'anthropic-version' => '2023-06-01',
+                    ])
+                    ->post('https://api.anthropic.com/v1/messages', $payload);
+
+                $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+
+                if ($response->ok()) {
+                    $result = $this->processAIResponse($response->json(), $path, $latencyMs, $attempt);
+
+                    if ($result['success']) {
+                        return $result['response'];
+                    }
+
+                    // If parsing failed but we have retries left, modify prompt based on error type
+                    if ($attempt < $maxRetries) {
+                        $errorMsg = implode(', ', $result['errors'] ?? []);
+
+                        if (strpos($errorMsg, 'Meter number') !== false) {
+                            // Specific retry for meter number issues
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: You failed to find the meter serial number. " . 'LOOK CAREFULLY at the white label below the black kWh counter. ' . "The meter serial number is printed on this white label, usually 8+ digits like '80678828'. " . 'DO NOT use the kWh reading (04684) as the meter number. ' . $textPrompt;
+                        } else {
+                            // General retry
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: Previous error: {$errorMsg}. " . $textPrompt . "\n\nBe extra careful with number identification.";
+                        }
+                    }
+                } else {
+                    Log::warning("Claude API HTTP error on attempt {$attempt}", [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                }
+            } catch (Exception $e) {
+                Log::error("Claude API exception on attempt {$attempt}", [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            if ($attempt < $maxRetries) {
+                sleep(1); // Brief delay between retries
+            }
+        } while ($attempt < $maxRetries);
+
+        // All attempts failed
+        Log::error('Claude API failed after all retries', [
+            'attempts' => $maxRetries,
+            'image_path' => $path,
+        ]);
+
+        return back()->with('error', 'AI scanning failed after multiple attempts. Please ensure the meter image is clear and try again.');
+    }
+
+    private function processAIResponse(array $data, string $path, int $latencyMs, int $attempt): array
+    {
         $contentBlocks = $data['content'] ?? [];
         $rawText = '';
+
         foreach ($contentBlocks as $blk) {
             if (($blk['type'] ?? '') === 'text') {
                 $rawText .= $blk['text'] . "\n";
             }
         }
 
-        // 3) Robust JSON extraction
-        if (!Str::contains($rawText, '{')) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Model did not return JSON. Please review.');
+        // Enhanced JSON extraction
+        $jsonPattern = '/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/s';
+        if (!preg_match($jsonPattern, $rawText, $matches)) {
+            Log::warning("No JSON found in AI response (attempt {$attempt})", [
+                'raw_text' => $rawText,
+            ]);
+            return ['success' => false, 'error' => 'No JSON in response'];
         }
 
-        // first top-level JSON object
-        if (!preg_match('/\{.*\}/s', $rawText, $m)) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Unparseable response. Please review.');
-        }
-
-        $parsed = json_decode($m[0], true);
+        $parsed = json_decode($matches[0], true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Invalid JSON returned by AI.');
+            Log::warning("Invalid JSON from AI (attempt {$attempt})", [
+                'json_error' => json_last_error_msg(),
+                'raw_json' => $matches[0],
+            ]);
+            return ['success' => false, 'error' => 'Invalid JSON format'];
         }
 
+        // Enhanced validation
+        $validation = $this->validateMeterData($parsed);
+        if (!$validation['valid']) {
+            Log::warning("AI data validation failed (attempt {$attempt})", [
+                'validation_errors' => $validation['errors'],
+                'parsed_data' => $parsed,
+            ]);
+            return ['success' => false, 'error' => implode(', ', $validation['errors'])];
+        }
+
+        // Extract validated data
         $aiMeterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
-        $aiReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
+        $aiReading = (float) ($parsed['reading'] ?? 0);
         $manufacturer = trim($parsed['manufacturer'] ?? '');
         $meterStyle = trim($parsed['meter_style'] ?? '');
+        $confidence = trim($parsed['confidence'] ?? 'medium');
+        $notes = trim($parsed['notes'] ?? '');
 
-        if (!$aiMeterNumber || $aiReading === null) {
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('error', 'Missing required values (meter_number/reading).');
-        }
-
-        // 4) New/Existing site detection
+        // 5) Database operations (same as your existing logic)
         $site = Site::where('meter_number', $aiMeterNumber)->first();
 
-        // 5) Persist an initial reading row (ai_* only). Admin will edit on preview.
         $readingRow = Readings::create([
-            'meter_number' => $aiMeterNumber, // prefill user-facing fields from AI
-            'kwhNo' => $aiReading, // ditto
+            'meter_number' => $aiMeterNumber,
+            'kwhNo' => $aiReading,
             'image' => $path,
             'date' => now()->toDateString(),
             'siteid' => $site->siteid ?? null,
-
             'ai_meter_number' => $aiMeterNumber,
             'ai_meter_reading' => $aiReading,
-            'ai_success' => true, // default true; UI change will flip to false
+            'ai_success' => true,
             'ai_fixed' => false,
-
             'manufacturer' => $manufacturer ?: null,
             'meter_style' => $meterStyle ?: null,
-
-            'prompt_version' => 'meter_page/v1', // optional, or from prompt_templates
-            'model_version' => (string) ($payload['model'] ?? ''),
+            'ai_confidence' => $confidence,
+            'ai_notes' => $notes,
+            'ai_attempts' => $attempt,
+            'prompt_version' => 'optimized/v2',
+            'model_version' => 'claude-sonnet-4-20250514',
             'ai_latency_ms' => $latencyMs,
         ]);
 
-        // 6) Compute billing metrics (but DO NOT allow send if new meter)
+        // 6) Continue with your existing billing calculations...
         $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
 
         $previousKwh = $last?->kwhNo ?? 0;
@@ -198,7 +243,6 @@ class MeterController extends Controller
         $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
         $total = $usage * $rate;
 
-        // Threshold (per spec): daily rate threshold from business_settings
         $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
         $threshold = ($thirtyDayCap / 30.0) * $days;
 
@@ -209,16 +253,18 @@ class MeterController extends Controller
             $customer = $reservation ? User::find($reservation->customernumber) : null;
         }
 
-        // New meter rule: if no site attached, treat as unregistered/new meter
         $isNewMeter = !$site;
 
-        // 7) Build preview DTO (object) for view
+        // 7) Build preview response
         $reading = (object) [
             'id' => $readingRow->id,
             'kwhNo' => $readingRow->kwhNo,
             'meter_number' => $readingRow->meter_number,
             'ai_meter_number' => $readingRow->ai_meter_number,
             'ai_meter_reading' => $readingRow->ai_meter_reading,
+            'ai_confidence' => $confidence,
+            'ai_notes' => $notes,
+            'ai_attempts' => $attempt,
             'image' => $readingRow->image,
             'date' => $readingRow->date,
             'siteid' => $readingRow->siteid,
@@ -231,26 +277,59 @@ class MeterController extends Controller
             'threshold' => $threshold,
         ];
 
-        return view('meters.preview', [
-            'reading' => $reading,
-            'site' => $site,
-            'customer' => $customer,
-            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
-            'start_date' => Carbon::parse($previousDate)->toDateString(),
-            'end_date' => now()->toDateString(),
-            'reservation_id' => $reservation->id ?? '',
-        ]);
+        return [
+            'success' => true,
+            'response' => view('meters.preview', [
+                'reading' => $reading,
+                'site' => $site,
+                'customer' => $customer,
+                'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
+                'start_date' => Carbon::parse($previousDate)->toDateString(),
+                'end_date' => now()->toDateString(),
+                'reservation_id' => $reservation->id ?? '',
+            ]),
+        ];
     }
 
-     public function scan(Request $request)
+    private function validateMeterData(array $data): array
+    {
+        $errors = [];
+
+        $meterNumber = preg_replace('/\D/', '', trim($data['meter_number'] ?? ''));
+        if (!$meterNumber) {
+            $errors[] = 'Missing meter number';
+        } elseif (strlen($meterNumber) < 6 || strlen($meterNumber) > 12) {
+            $errors[] = 'Invalid meter number length (should be 6-12 digits)';
+        }
+
+        // Validate reading
+        $reading = $data['reading'] ?? null;
+        if ($reading === null || !is_numeric($reading)) {
+            $errors[] = 'Missing or invalid kWh reading';
+        } elseif ((float) $reading < 0 || (float) $reading > 999999) {
+            $errors[] = 'kWh reading out of reasonable range (0-999999)';
+        }
+
+        // Validate confidence level
+        $confidence = strtolower(trim($data['confidence'] ?? ''));
+        if (!in_array($confidence, ['high', 'medium', 'low'])) {
+            $errors[] = 'Invalid confidence level';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+        ];
+    }
+
+    public function scan(Request $request)
     {
         $request->validate([
             'photo' => 'required|image|max:5120',
         ]);
 
-        // 1) Store file
         if ($request->hasFile('photo')) {
-            $path = Readings::storeFile($request->file('photo')); // update helper to static on Readings
+            $path = Readings::storeFile($request->file('photo'));
         } else {
             return back()->with('warning', 'Please choose a photo.');
         }
@@ -266,15 +345,14 @@ class MeterController extends Controller
         }
 
         $base64 = base64_encode($imageBytes);
+        $mimeType = $request->file('photo')->getMimeType();
 
-        // 2) Build prompt
-        $imageUrl = asset('storage/' . $path);
-        $textPrompt = $this->getClaudePromptMessage('meter_page', $imageUrl);
+        $textPrompt = $this->getClaudePromptMessage('meter_page');
 
         $payload = [
-            'model' => 'claude-3-5-sonnet-20250514', // keep/to your latest known
-            'max_tokens' => 512,
-            'temperature' => 0,
+            'model' => 'claude-sonnet-4-20250514',
+            'max_tokens' => 400,
+            'temperature' => 0.1,
             'messages' => [
                 [
                     'role' => 'user',
@@ -284,7 +362,7 @@ class MeterController extends Controller
                             'type' => 'image',
                             'source' => [
                                 'type' => 'base64',
-                                'media_type' => 'image/jpeg', // or detect from $request->file('photo')->getMimeType()
+                                'media_type' => $mimeType,
                                 'data' => $base64,
                             ],
                         ],
@@ -293,131 +371,67 @@ class MeterController extends Controller
             ],
         ];
 
-        $t0 = microtime(true);
-        $response = Http::withHeaders([
-            'x-api-key' => env('CLAUDE_API_KEY'),
-            'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', $payload);
-        $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+        // 4) API call with enhanced error handling
+        $maxRetries = 3;
+        $attempt = 0;
 
-        if (!$response->ok()) {
-            Log::error('Claude API error', ['status' => $response->status(), 'body' => $response->body()]);
-            return back()->with('error', 'Scan failed. Please retake a clearer photo.');
-        }
+        do {
+            $attempt++;
+            $t0 = microtime(true);
 
-        $data = $response->json();
-        $contentBlocks = $data['content'] ?? [];
-        $rawText = '';
-        foreach ($contentBlocks as $blk) {
-            if (($blk['type'] ?? '') === 'text') {
-                $rawText .= $blk['text'] . "\n";
+            try {
+                $response = Http::timeout(45)
+                    ->withHeaders([
+                        'x-api-key' => env('CLAUDE_API_KEY'),
+                        'anthropic-version' => '2023-06-01',
+                    ])
+                    ->post('https://api.anthropic.com/v1/messages', $payload);
+
+                $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+
+                if ($response->ok()) {
+                    $result = $this->processAIResponse($response->json(), $path, $latencyMs, $attempt);
+
+                    if ($result['success']) {
+                        return $result['response'];
+                    }
+
+                    // If parsing failed but we have retries left, modify prompt based on error type
+                    if ($attempt < $maxRetries) {
+                        $errorMsg = implode(', ', $result['errors'] ?? []);
+
+                        if (strpos($errorMsg, 'Meter number') !== false) {
+                            // Specific retry for meter number issues
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: You failed to find the meter serial number. " . 'LOOK CAREFULLY at the white label below the black kWh counter. ' . "The meter serial number is printed on this white label, usually 8+ digits like '80678828'. " . 'DO NOT use the kWh reading (04684) as the meter number. ' . $textPrompt;
+                        } else {
+                            // General retry
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: Previous error: {$errorMsg}. " . $textPrompt . "\n\nBe extra careful with number identification.";
+                        }
+                    }
+                } else {
+                    Log::warning("Claude API HTTP error on attempt {$attempt}", [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                }
+            } catch (Exception $e) {
+                Log::error("Claude API exception on attempt {$attempt}", [
+                    'error' => $e->getMessage(),
+                ]);
             }
-        }
 
-        // 3) Robust JSON extraction
-        if (!Str::contains($rawText, '{')) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Model did not return JSON. Please review.');
-        }
+            if ($attempt < $maxRetries) {
+                sleep(1); // Brief delay between retries
+            }
+        } while ($attempt < $maxRetries);
 
-        // first top-level JSON object
-        if (!preg_match('/\{.*\}/s', $rawText, $m)) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Unparseable response. Please review.');
-        }
-
-        $parsed = json_decode($m[0], true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            session()->flash('retry_path', $path);
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('warning', 'Invalid JSON returned by AI.');
-        }
-
-        $aiMeterNumber = preg_replace('/\D/', '', trim($parsed['meter_number'] ?? ''));
-        $aiReading = isset($parsed['reading']) ? (float) $parsed['reading'] : null;
-        $manufacturer = trim($parsed['manufacturer'] ?? '');
-        $meterStyle = trim($parsed['meter_style'] ?? '');
-
-        if (!$aiMeterNumber || $aiReading === null) {
-            return view('meters.gpt_debug', ['raw' => $rawText, 'response' => $data])->with('error', 'Missing required values (meter_number/reading).');
-        }
-
-        // 4) New/Existing site detection
-        $site = Site::where('meter_number', $aiMeterNumber)->first();
-
-        // 5) Persist an initial reading row (ai_* only). Admin will edit on preview.
-        $readingRow = Readings::create([
-            'meter_number' => $aiMeterNumber, // prefill user-facing fields from AI
-            'kwhNo' => $aiReading, // ditto
-            'image' => $path,
-            'date' => now()->toDateString(),
-            'siteid' => $site->siteid ?? null,
-
-            'ai_meter_number' => $aiMeterNumber,
-            'ai_meter_reading' => $aiReading,
-            'ai_success' => true, // default true; UI change will flip to false
-            'ai_fixed' => false,
-
-            'manufacturer' => $manufacturer ?: null,
-            'meter_style' => $meterStyle ?: null,
-
-            'prompt_version' => 'meter_page/v1', // optional, or from prompt_templates
-            'model_version' => (string) ($payload['model'] ?? ''),
-            'ai_latency_ms' => $latencyMs,
+        // All attempts failed
+        Log::error('Claude API failed after all retries', [
+            'attempts' => $maxRetries,
+            'image_path' => $path,
         ]);
 
-        // 6) Compute billing metrics (but DO NOT allow send if new meter)
-        $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
-
-        $previousKwh = $last?->kwhNo ?? 0;
-        $previousDate = $last?->date ?? now();
-        $days = max(1, now()->diffInDays(Carbon::parse($previousDate)));
-        $usage = $aiReading - $previousKwh;
-
-        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
-        $total = $usage * $rate;
-
-        // Threshold (per spec): daily rate threshold from business_settings
-        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
-        $threshold = ($thirtyDayCap / 30.0) * $days;
-
-        $reservation = null;
-        $customer = null;
-        if ($site) {
-            $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
-            $customer = $reservation ? User::find($reservation->customernumber) : null;
-        }
-
-        // New meter rule: if no site attached, treat as unregistered/new meter
-        $isNewMeter = !$site;
-
-        // 7) Build preview DTO (object) for view
-        $reading = (object) [
-            'id' => $readingRow->id,
-            'kwhNo' => $readingRow->kwhNo,
-            'meter_number' => $readingRow->meter_number,
-            'ai_meter_number' => $readingRow->ai_meter_number,
-            'ai_meter_reading' => $readingRow->ai_meter_reading,
-            'image' => $readingRow->image,
-            'date' => $readingRow->date,
-            'siteid' => $readingRow->siteid,
-            'usage' => $usage,
-            'rate' => $rate,
-            'total' => $total,
-            'previousKwh' => $previousKwh,
-            'new_meter_number' => $isNewMeter,
-            'days' => $days,
-            'threshold' => $threshold,
-        ];
-
-        return view('meters.preview', [
-            'reading' => $reading,
-            'site' => $site,
-            'customer' => $customer,
-            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
-            'start_date' => Carbon::parse($previousDate)->toDateString(),
-            'end_date' => now()->toDateString(),
-            'reservation_id' => $reservation->id ?? '',
-        ]);
+        return back()->with('error', 'AI scanning failed after multiple attempts. Please ensure the meter image is clear and try again.');
     }
 
     public function unregister(Request $request)
@@ -578,17 +592,11 @@ class MeterController extends Controller
             return back()->with('warning', 'Bill exceeds the threshold. Tick "Send anyway?" to proceed if legitimate.');
         }
 
-        if ($isNewMeter || !$customerId) {
+        $action = $request->string('action')->lower()->toString();
+
+        if ($action === 'save') {
             $reading = $request->filled('reading_id') ? Readings::findOrFail($request->reading_id) : new Readings();
-
-            $reading->fill([
-                'meter_number' => $meterNumber,
-                'kwhNo' => $currentKwh,
-                'image' => $image,
-                'date' => Carbon::now()->toDateString(),
-                'siteid' => $site?->siteid, // null if new meter
-            ]);
-
+          
             if ($request->has('ai_success') && $request->input('ai_success') === 'false') {
                 $reading->ai_success = false;
                 $reading->ai_fixed = true;
@@ -600,12 +608,7 @@ class MeterController extends Controller
                     ]);
                 }
             }
-
-            $reading->save();
-
-            $msg = $isNewMeter ? 'Reading saved. New meter detected — guest billing disabled.' : 'Reading saved (no customer found).';
-
-            return redirect()->route('meters.index')->with('info', $msg);
+            return redirect()->route('meters.index')->with('info', 'Reading saved.');
         }
 
         try {

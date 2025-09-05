@@ -21,11 +21,11 @@
 
                 <div class="col-md-6 d-flex flex-column gap-2">
                     {{-- Retry same image (sends user back to scan flow) --}}
-                    <form action="{{ route('meters.scan') }}" method="POST" id="retry-form">
+                    {{-- <form action="{{ route('meters.scan') }}" method="POST" id="retry-form">
                         @csrf
                         <input type="hidden" name="existing_image" value="{{ $reading->image }}">
                         <button type="submit" class="btn btn-warning w-100">🔁 That doesn't seem right, try again</button>
-                    </form>
+                    </form> --}}
 
                     {{-- Take another picture --}}
                     <form action="{{ route('meters.scan') }}" method="POST" enctype="multipart/form-data"
@@ -102,7 +102,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <p><strong>Previous Reading:</strong> {{ number_format($reading->previousKwh, 2) }} kWh</p>
-                        <p><strong>Usage:</strong> {{ number_format($reading->usage, 2) }} kWh over {{ $days }}
+                        <p><strong>Usage:</strong> {{ number_format($reading->usage, 2) }} kWh over {{ $reading->days }}
                             days</p>
                     </div>
                     <div class="col-md-6">
@@ -131,12 +131,12 @@
                     </div>
                 @endif
 
-                @if (isset($reading->threshold) && $reading->total > $reading->threshold)
+                {{-- @if (isset($reading->threshold) && $reading->total > $reading->threshold)
                     <div class="alert alert-warning">
                         This seems like it could be wrong.
                         <div class="small text-muted mb-2">
                             {{ config('settings.currency_symbol', '$') }}{{ number_format($reading->total, 2) }}
-                            exceeds the {{ $days }}-day threshold of
+                            exceeds the {{ $reading->days }}-day threshold of
                             {{ config('settings.currency_symbol', '$') }}{{ number_format($reading->threshold, 2) }}.
                         </div>
                         <div class="form-check">
@@ -145,30 +145,44 @@
                             <label class="form-check-label" for="override_send">Send anyway?</label>
                         </div>
                     </div>
+                @endif --}}
+
+                <input type="hidden" id="ai_success" name="ai_success" value="true">
+                <input type="hidden" name="reading_id" value="{{ $reading->id ?? '' }}">
+
+                <input type="hidden" name="reservation_id" value="{{ $reservation_id }}">
+                @if ($customer)
+                    <input type="hidden" name="customer_id" value="{{ $customer->id }}">
                 @endif
 
-                {{-- Hidden fields to keep your existing downstream handling intact --}}
                 <input type="hidden" name="new_meter_number" value="{{ $reading->new_meter_number ? 1 : 0 }}">
                 <input type="hidden" name="image" value="{{ $reading->image }}">
                 <input type="hidden" name="prevkwhNo" value="{{ $reading->previousKwh }}">
                 <input type="hidden" name="siteid" value="{{ $reading->siteid }}">
-                <input type="hidden" name="reservation_id" value="{{ $reservation_id }}">
                 <input type="hidden" name="usage" value="{{ $reading->usage }}">
                 <input type="hidden" name="rate" value="{{ $reading->rate }}">
-                <input type="hidden" name="days" value="{{ $days }}">
+                <input type="hidden" name="days" value="{{ $reading->days }}">
                 <input type="hidden" name="start_date" value="{{ $start_date }}">
                 <input type="hidden" name="end_date" value="{{ $end_date }}">
+
+                <input type="hidden" name="action" id="form-action" value="save">
 
                 <div class="d-flex gap-3">
                     <a href="{{ route('meters.index') }}" class="btn btn-outline-secondary">Cancel</a>
 
-                    @php
-                        $disableSend = $reading->new_meter_number || $reading->total <= 0;
-                    @endphp
-                    <button type="submit" class="btn btn-success" {{ $disableSend ? 'disabled' : '' }}>
-                        {{ $reading->new_meter_number || !$customer ? 'Save' : 'Save and Send Bill' }}
+                    <button type="button" class="btn btn-primary"
+                        onclick="window.location.href='{{ route('meters.index') }}'">
+                        Save
+                    </button>
+
+
+                    <button type="submit" class="btn btn-success" @disabled(!$customer)
+                        onclick="document.getElementById('form-action').value='send'">
+                        Save and Send Bill
                     </button>
                 </div>
+
+
             </form>
         </div>
     </div>
@@ -176,6 +190,29 @@
 
 @push('js')
     <script>
+        document.getElementById('confirm-form').addEventListener('submit', function(e) {
+            const action = document.getElementById('form-action')?.value || 'save';
+
+            // Never block plain "Save"
+            if (action === 'save') return;
+
+            // Only enforce rules for "Send"
+            const thresholdExceeded =
+                {{ isset($reading->threshold) && $reading->total > $reading->threshold ? 'true' : 'false' }};
+            const totalIsZeroOrNegative = {{ $reading->total <= 0 ? 'true' : 'false' }};
+            const overrideBox = document.getElementById('override_send');
+
+            if (totalIsZeroOrNegative) {
+                e.preventDefault();
+                alert('Total is zero or negative. You can Save, but cannot Send.');
+                return;
+            }
+            if (thresholdExceeded && !overrideBox?.checked) {
+                e.preventDefault();
+                alert('Bill exceeds the threshold. Tick "Send anyway?" to proceed.');
+            }
+        });
+
         function showLoading() {
             document.getElementById('loading-overlay').style.display = 'flex';
         }
@@ -207,21 +244,6 @@
             if (!el) return;
             el.addEventListener('input', markAiFailed);
             el.addEventListener('change', markAiFailed);
-        });
-
-        document.getElementById('confirm-form').addEventListener('submit', function(e) {
-            const overrideBox = document.getElementById('override_send');
-            const thresholdExceeded =
-                {{ isset($reading->threshold) && $reading->total > $reading->threshold ? 'true' : 'false' }};
-            const blocked = {{ $reading->new_meter_number || $reading->total <= 0 ? 'true' : 'false' }};
-            if (blocked) {
-                e.preventDefault();
-                return;
-            }
-            if (thresholdExceeded && !overrideBox?.checked) {
-                e.preventDefault();
-                alert('Bill exceeds the threshold. Tick "Send anyway?" to proceed.');
-            }
         });
     </script>
 @endpush
