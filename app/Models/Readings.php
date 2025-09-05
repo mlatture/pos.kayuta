@@ -25,6 +25,9 @@ class Readings extends Model
         'prompt_version',
         'model_version',
         'ai_latency_ms',
+        'ai_confidence',
+        'ai_notes',
+        'ai_attempts'
     ];
 
     public static function storeFile($file, $folder = 'meter_images')
