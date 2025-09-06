@@ -254,5 +254,10 @@ return [
             'name' => 'System Logs',
             'value' => 'system_logs'
         ],
+
+        'reservation_mgmt' => [
+            'name' => 'Check Availability',
+            'value' => 'reservation_mgmt'
+        ]
     ]
 ];
