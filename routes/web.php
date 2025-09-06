@@ -43,6 +43,8 @@ use App\Http\Controllers\SeasonalTransactionsController;
 use App\Http\Controllers\SystemLogsController;
 use App\Http\Controllers\ReceiptController as NewReceiptController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ReservationManagementController;
+
 use App\Models\Order;
 use App\Http\Controllers\ApiChannelController;
 
@@ -55,6 +57,25 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+        // Reservation Management
+        Route::prefix('manage/reservation')
+            ->middleware('can:reservation-management')
+            ->group(function () {
+                Route::get('{admin}', [ReservationManagementController::class, 'index'])->name('admin.reservation_mgmt.index');
+                Route::post('{admin}/availability', [ReservationManagementController::class, 'availability'])->name('admin.reservation_mgmt.availability');
+                Route::post('{admin}/cart/add', [ReservationManagementController::class, 'addToCart'])->name('admin.reservation_mgmt.cart.add');
+
+                Route::get('{admin}/cart', [ReservationManagementController::class, 'cart'])->name('admin.reservation_mgmt.cart');
+
+                Route::post('{admin}/customer/search', [ReservationManagementController::class, 'customerSearch'])->name('admin.reservation_mgmt.customer.search');
+
+                Route::post('{admin}/customer/create', [ReservationManagementController::class, 'customerCreate'])->name('admin.reservation_mgmt.customer.create');
+
+                Route::post('{admin}/coupon/apply', [ReservationManagementController::class, 'applyCoupon'])->name('admin.reservation_mgmt.coupon.apply');
+
+                Route::post('{admin}/checkout', [ReservationManagementController::class, 'checkout'])->name('admin.reservation_mgmt.checkout');
+            });
+
         Route::prefix('customers/{customer}/account')->group(function () {
             Route::get('/', [CustomerController::class, 'account'])->name('admin.customers.account');
 

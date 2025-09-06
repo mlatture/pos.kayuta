@@ -25,6 +25,9 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        Gate::define('reservation-management', function ($user) {
+            return $user->hasPermission('reservation_mgmt');
+        });
         //
     }
 }

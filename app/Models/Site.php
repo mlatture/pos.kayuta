@@ -19,7 +19,6 @@ class Site extends Model
     private $cit = ' 15:00:00';
     private $cot = ' 10:00:00';
 
-    
     protected $casts = [
         'images' => 'array',
         'rigtypes' => 'array',
@@ -27,6 +26,16 @@ class Site extends Model
     ];
 
     protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline', 'images'];
+
+    public function siteClass()
+    {
+        return $this->belongsTo(SiteClass::class, 'siteclass', 'siteclass');
+    }
+
+    public function siteHookup()
+    {
+        return $this->belongsTo(SiteHookup::class, 'hookup', 'sitehookup');
+    }
 
     public static function getIncomePersite($filters = [])
     {
