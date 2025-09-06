@@ -74,6 +74,8 @@ Route::prefix('admin')
                 Route::post('{admin}/coupon/apply', [ReservationManagementController::class, 'applyCoupon'])->name('admin.reservation_mgmt.coupon.apply');
 
                 Route::post('{admin}/checkout', [ReservationManagementController::class, 'checkout'])->name('admin.reservation_mgmt.checkout');
+
+                Route::post('{admin}/giftcard/lookup', [ReservationManagementController::class, 'giftCardLookup'])->name('admin.reservation_mgmt.giftcard.lookup');
             });
 
         Route::prefix('customers/{customer}/account')->group(function () {
