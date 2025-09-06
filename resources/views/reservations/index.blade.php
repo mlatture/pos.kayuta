@@ -12,6 +12,11 @@
                     <label class="form-check-label mt-1" for="seasonalFilter">Show Seasonal Sites</label>
                 </h4>
             </div>
+            <div class="me-3 d-flex justify-content-center align-items-center">
+                <h4>
+                    <a  class="btn btn-primary" href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">Check Availability</a>
+                </h4>
+            </div>
         </div>
     </div>
 @endsection
