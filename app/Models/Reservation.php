@@ -20,7 +20,7 @@ class Reservation extends Model
 
     protected $fillable = [
        'xconfnum', 'cartid', 'siteid', 'customernumber', 'cid', 'cod', 'siteclass',  'total',
-       'fname', 'lname', 'email', 'status', 'reason', 'nights', 'createdby', 'subtotal', 'taxrate', 'totaltax',
+       'fname', 'lname', 'email', 'status', 'reason', 'nights', 'createdby', 'subtotal', 'taxrate', 'totaltax', 
        'base', 'sitelock', 'riglength', 'rigtype', 'checkedin', 'checkedout'
     ];
 

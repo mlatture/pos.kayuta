@@ -330,15 +330,6 @@
                         </a></li>
                 @endHasPermission
 
-                @hasPermission(config('constants.role_modules.reservation_mgmt.value'))
-                    <li><a class="dropdown-item" href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id] ) }}">
-                            <i class="fa-solid fa-table-columns"></i> <span>
-                                {{ config('constants.role_modules.reservation_mgmt.name') }}
-                            </span>
-                        </a></li>
-                @endHasPermission
-
-
 
 
  --}}
