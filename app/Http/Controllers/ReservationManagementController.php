@@ -73,6 +73,7 @@ class ReservationManagementController extends Controller
 
                 $raw = $getTax->tax ?? 0;
 
+
                 $taxPercent = (float) preg_replace('/[^0-9.\-]/', '', (string) $raw);
 
                 $taxRate = $taxPercent > 1 ? $taxPercent / 100.0 : $taxPercent;
@@ -87,10 +88,20 @@ class ReservationManagementController extends Controller
                 $taxAmt = round($taxableBase * $taxRate, 2);
                 $total = round($taxableBase + $taxAmt, 2);
 
+                $rawType = (string) $site->siteclass;
+                $typeDisplay = preg_replace('/_+/', ' ', $rawType);
+
+                $isRv = (bool) optional($site->siteClass)->showriglength || stripos($rawType, 'rv') !== false;
+
+                $fits = $isRv ? (isset($rigLen) ? is_null($site->maxlength) || (int) $site->maxlength >= (int) $rigLen : true) : false;
+
+
                 return [
                     'id' => (int) $site->id,
                     'name' => $site->sitename,
                     'type' => $site->siteclass,
+                    'type_display' => $typeDisplay,
+                    'is_rv' => $isRv,
                     'hookup' => optional($site->siteHookup)->sitehookup,
                     'available_online' => (bool) $site->availableonline,
                     'fits' => $fits,

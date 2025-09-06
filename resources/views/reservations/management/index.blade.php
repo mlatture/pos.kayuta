@@ -291,7 +291,6 @@
                 }
             };
 
-            // ---------- [Add-to-Cart UX helpers: only additions] ----------
             function initTooltips() {
                 document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
                     const t = bootstrap.Tooltip.getInstance(el);
@@ -301,14 +300,11 @@
             }
 
             function enableAddButtonsAfterCustomerSelected() {
-                // Replace disabled tooltip wrappers with live Add buttons
                 $('#resultsTable [data-role="add-wrap"]').each(function() {
                     $(this).replaceWith(
                         '<button class="btn btn-sm btn-outline-primary btnAdd">Add to Cart</button>');
                 });
-                // After replacement, no tooltip needed
             }
-            // --------------------------------------------------------------
 
             function recalcTotals() {
                 let subtotal = 0,
@@ -341,7 +337,7 @@
                         <div class="d-flex justify-content-between">
                             <strong>${it.site_name}</strong><span>${it.checkin} → ${it.checkout}</span>
                         </div>
-                        <div class="small text-muted">${it.site_type}${it.available_online ? '' : ' • Offline-only'}</div>
+                        <div class="small text-muted">${it.available_online ? '' : ' • Offline-only'}</div>
                         <div class="d-flex justify-content-between mt-1">
                             <span>Total</span><strong>${fmt(it.price_breakdown?.total)}</strong>
                         </div>
@@ -415,18 +411,16 @@
                             const fits = item.fits ? ' <span class="badge badge-fits">Fits</span>' :
                                 '';
 
-                            // --- Add-to-Cart button logic (requires selected customer) ---
                             const addBtn = cart.customer_id ?
                                 `<button class="btn btn-sm btn-outline-primary btnAdd">Add to Cart</button>` :
                                 `<span class="d-inline-block" data-role="add-wrap" data-bs-toggle="tooltip" data-bs-title="Select a customer first">
                                       <button class="btn btn-sm btn-outline-secondary" disabled aria-disabled="true">Add to Cart</button>
                                    </span>`;
-                            // -------------------------------------------------------------
 
                             return `
                             <tr data-id="${item.id}" data-json='${JSON.stringify(item)}'>
                                 <td><strong>${item.name}</strong></td>
-                                <td>${item.type ?? ''}</td>
+                                <td>${item.type_display ?? ''}</td>
                                 <td>${status}${fits}</td>
                                 <td class="text-end">${fmt(item.pricing?.nightly)}</td>
                                 <td class="text-end">${fmt(item.pricing?.tax)}</td>
