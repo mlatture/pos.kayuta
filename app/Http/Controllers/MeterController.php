@@ -11,12 +11,15 @@ use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Bills;
 use App\Models\BusinessSettings;
+use App\Models\ElectricBill;
+
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
+
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -232,7 +235,6 @@ class MeterController extends Controller
             'ai_latency_ms' => $latencyMs,
         ]);
 
-        // 6) Continue with your existing billing calculations...
         $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
 
         $previousKwh = $last?->kwhNo ?? 0;
@@ -249,7 +251,7 @@ class MeterController extends Controller
         $reservation = null;
         $customer = null;
         if ($site) {
-            $reservation = Reservation::where('siteid', $site->siteid)->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
+            $reservation = Reservation::where('siteid', $site->siteid)->latest()->first();
             $customer = $reservation ? User::find($reservation->customernumber) : null;
         }
 
@@ -276,6 +278,7 @@ class MeterController extends Controller
             'days' => $days,
             'threshold' => $threshold,
         ];
+
 
         return [
             'success' => true,
@@ -526,177 +529,138 @@ class MeterController extends Controller
         ]);
     }
 
-    public function send(Request $request)
+    public function send(Request $r)
     {
-        $request->validate([
-            'reading_id' => 'nullable|integer|exists:electric_readings,id',
+        $r->validate([
+            'reading_id' => 'required|exists:electric_readings,id',
             'meter_number' => 'required|string',
-            'image' => 'required|string',
             'kwhNo' => 'required|numeric',
-            'prevkwhNo' => 'required|numeric',
-            'siteid' => 'nullable|string',
-            'reservation_id' => 'nullable|exists:reservations,id',
-            'customer_id' => 'nullable|exists:users,id',
+            'prevkwhNo' => 'nullable|numeric',
+            'rate' => 'required|numeric',
+            'days' => 'required|integer|min:1',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'ai_success' => 'nullable',
-            'training_opt_in' => 'nullable|boolean',
+            'customer_id' => 'nullable|exists:users,id',
             'override_send' => 'nullable|boolean',
+            'ai_success' => 'required',
+            'ai_fixed' => 'nullable',
+            'training_opt_in' => 'nullable|boolean',
+            'new_meter_number' => 'required|boolean',
+            'siteid' => 'nullable|string', 
         ]);
 
-        // Normalize inputs
-        $meterNumber = preg_replace('/\D/', '', (string) $request->meter_number);
-        $currentKwh = (float) $request->kwhNo;
-        $prevKwh = (float) $request->prevkwhNo;
-        $customerId = $request->input('customer_id');
-        $reservationId = $request->input('reservation_id');
-        $image = $request->image;
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end = Carbon::parse($request->end_date)->endOfDay();
-        $days = max(1, $start->diffInDays($end) + 1);
+        $reading = Readings::findOrFail($r->reading_id);
 
-        $lastReading = Readings::where('meter_number', $meterNumber)->latest('date')->first();
-        $serverPrevKwh = $lastReading?->kwhNo ?? 0.0;
-        $serverPrevDate = $lastReading?->date ? Carbon::parse($lastReading->date) : $start->copy()->subDay();
-        $prevKwh = max($prevKwh, $serverPrevKwh);
+        $reading->meter_number = preg_replace('/\D/', '', $r->meter_number);
+        $reading->kwhNo = (float) $r->kwhNo;
+        $reading->ai_success = filter_var($r->ai_success, FILTER_VALIDATE_BOOLEAN);
+        $reading->ai_fixed = filter_var($r->ai_fixed ?? false, FILTER_VALIDATE_BOOLEAN);
+        $reading->training_opt_in = filter_var($r->training_opt_in ?? false, FILTER_VALIDATE_BOOLEAN);
+        $reading->save();
 
-        $usage = $currentKwh - $prevKwh;
-
-        // Monotonic check
-        if ($usage <= 0) {
-            return back()->with('error', 'New reading must be greater than the last reading.');
+        if ($r->boolean('new_meter_number') === true) {
+            $this->logAudit('Bill Validation', 'New meter detected: billing blocked', [
+                'reading_id' => $reading->id,
+                'meter_number' => $reading->meter_number,
+            ]);
+            return back()->with('warning', 'New meter detected. You can Save, but cannot Send.');
         }
 
-        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
-        $total = $usage * $rate;
-
-        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
-        $threshold = ($thirtyDayCap / 30.0) * $days;
-
-        $site = Site::where('meter_number', $meterNumber)->first();
-        $isNewMeter = !$site;
+        $usage = (float) $r->kwhNo - (float) ($r->prevkwhNo ?? 0);
+        $total = $usage * (float) $r->rate;
 
         if ($total <= 0) {
-            return back()->with('error', 'Zero/negative bill cannot be sent. Please verify the rate in Business Settings.');
+            $this->logAudit('Bill Validation', 'Zero/negative bill blocked', [
+                'reading_id' => $reading->id,
+                'total' => $total,
+            ]);
+            return back()->with('error', 'Total is zero or negative. You can Save, but cannot Send.');
         }
 
-        if ($total > $threshold && !$request->boolean('override_send')) {
-            $this->systemLog('Bill Validation', [
-                'meter_number' => $meterNumber,
-                'reading_id' => $request->input('reading_id'),
+        $cap30 = (float) (DB::table('business_settings')->where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $threshold = ($cap30 / 30.0) * (int) $r->days;
+        $override = (bool) $r->boolean('override_send');
+
+        if ($total > $threshold && !$override) {
+            $this->logAudit('Bill Validation', 'Threshold exceeded; override required', [
+                'reading_id' => $reading->id,
                 'total' => $total,
                 'threshold' => $threshold,
-                'days' => $days,
-                'action' => 'blocked_without_override',
             ]);
-            return back()->with('warning', 'Bill exceeds the threshold. Tick "Send anyway?" to proceed if legitimate.');
+            return back()->with('warning', 'Bill exceeds threshold. Tick "Send anyway?" to proceed.');
         }
 
-        $action = $request->string('action')->lower()->toString();
+        $meter = $reading->meter_number;
+        $contextSiteId = $r->siteid ?: null;
+        $currentAssigned = Site::where('meter_number', $meter)->first();
 
-        if ($action === 'save') {
-            $reading = $request->filled('reading_id') ? Readings::findOrFail($request->reading_id) : new Readings();
-          
-            if ($request->has('ai_success') && $request->input('ai_success') === 'false') {
-                $reading->ai_success = false;
-                $reading->ai_fixed = true;
-                if ($request->boolean('training_opt_in')) {
-                    $this->systemLog('AI Training', [
+        if ($contextSiteId) {
+            if ($currentAssigned && $currentAssigned->siteid !== $contextSiteId) {
+                DB::transaction(function () use ($currentAssigned, $contextSiteId, $meter, $reading) {
+                    $old = $currentAssigned->siteid;
+                    $currentAssigned->update(['meter_number' => null]);
+                    Site::where('siteid', $contextSiteId)->update(['meter_number' => $meter]);
+                    $this->logAudit('Meter Reassigned', 'Meter moved between sites', [
+                        'meter_number' => $meter,
+                        'from_site' => $old,
+                        'to_site' => $contextSiteId,
                         'reading_id' => $reading->id,
-                        'meter_number' => $meterNumber,
-                        'image' => $image,
                     ]);
-                }
+                });
+            } elseif (!$currentAssigned) {
+                Site::where('siteid', $contextSiteId)->update(['meter_number' => $meter]);
+                $this->logAudit('Meter Reassigned', 'Meter assigned to site', [
+                    'meter_number' => $meter,
+                    'to_site' => $contextSiteId,
+                    'reading_id' => $reading->id,
+                ]);
             }
-            return redirect()->route('meters.index')->with('info', 'Reading saved.');
+        } else {
+            if ($currentAssigned) {
+            } else {
+                $this->logAudit('Bill Validation', 'No site context for meter during send', [
+                    'meter_number' => $meter,
+                    'reading_id' => $reading->id,
+                ]);
+            }
         }
 
-        try {
-            DB::transaction(function () use ($request, $meterNumber, $currentKwh, $image, $site, $customerId, $reservationId, $usage, $rate, $total, $start, $end, $days, $threshold) {
-                if ($request->filled('siteid') && $site && $site->siteid != $request->siteid) {
-                    $oldSite = Site::where('siteid', $request->siteid)->first();
-                    if ($oldSite && $oldSite->meter_number === $meterNumber) {
-                        $oldSite->meter_number = null;
-                        $oldSite->save();
-                    }
-                    $this->systemLog('Meter Reassigned', [
-                        'from_siteid' => $oldSite?->siteid,
-                        'to_siteid' => $site->siteid,
-                        'meter_number' => $meterNumber,
-                    ]);
-                }
+        $bill = ElectricBill::create([
+            'reading_id' => $reading->id,
+            'meter_number' => $meter,
+            'customer_id' => $r->customer_id,
+            'start_date' => $r->start_date,
+            'end_date' => $r->end_date,
+            'usage_kwh' => $usage,
+            'rate' => (float) $r->rate,
+            'total' => $total,
+            'threshold_used' => $threshold,
+            'warning_overridden' => $override,
+            'sent_at' => now(),
+        ]);
 
-                $reading = $request->filled('reading_id') ? Readings::findOrFail($request->reading_id) : new Readings();
+        $this->logAudit('Bill Validation', 'Bill sent', [
+            'bill_id' => $bill->id,
+            'reading_id' => $reading->id,
+            'total' => $total,
+            'threshold' => $threshold,
+            'override' => $override,
+        ]);
 
-                $reading->fill([
-                    'meter_number' => $meterNumber,
-                    'kwhNo' => $currentKwh,
-                    'image' => $image,
-                    'date' => Carbon::now()->toDateString(),
-                    'siteid' => $site?->siteid,
-                ]);
 
-                if ($request->has('ai_success') && $request->input('ai_success') === 'false') {
-                    $reading->ai_success = false;
-                    $reading->ai_fixed = true;
-                    if ($request->boolean('training_opt_in')) {
-                        $this->systemLog('AI Training', [
-                            'reading_id' => $reading->id,
-                            'meter_number' => $meterNumber,
-                            'image' => $image,
-                        ]);
-                    }
-                }
-                $reading->save();
+        return redirect()->route('meters.index')->with('success', 'Bill saved and sent.');
+    }
 
-                Bills::create([
-                    'reservation_id' => $reservationId,
-                    'customer_id' => $customerId,
-                    'kwh_used' => $usage,
-                    'rate' => $rate,
-                    'total_cost' => $total,
-                    'reading_dates' => json_encode([
-                        'start' => $start->toDateString(),
-                        'end' => $end->toDateString(),
-                    ]),
-                    'auto_email' => true,
-                ]);
-
-                if ($total > $threshold && $request->boolean('override_send')) {
-                    $this->systemLog('Bill Validation', [
-                        'reading_id' => $reading->id,
-                        'total' => $total,
-                        'threshold' => $threshold,
-                        'days' => $days,
-                        'action' => 'override_send',
-                    ]);
-                }
-
-                // Email customer
-                $customer = User::find($customerId);
-                if ($customer && $customer->email) {
-                    Mail::to($customer->email)->send(
-                        new ElectricBillGenerated([
-                            'customer' => $customer,
-                            'site_no' => $site?->siteid,
-                            'current_reading' => $currentKwh,
-                            'previous_reading' => $request->prevkwhNo, // display value
-                            'usage' => $usage,
-                            'total' => $total,
-                            'rate' => $rate,
-                            'days' => $days,
-                            'start_date' => $start->toDateString(),
-                            'end_date' => $end->toDateString(),
-                        ]),
-                    );
-                }
-            });
-        } catch (\Throwable $e) {
-            Log::error('Send meter bill failed', ['err' => $e->getMessage()]);
-            return back()->with('error', 'Failed to save and send bill.');
-        }
-
-        return redirect()->route('meters.index')->with('success', 'Bill saved and emailed.');
+    private function logAudit(string $type, string $message, array $meta = []): void
+    {
+        DB::table('system_logs')->insert([
+            'transaction_type' => $type,
+            'description' => $message,
+            'before' => json_encode($meta),
+            'after' => json_encode($meta),
+            'created_at' => now(),
+            
+        ]);
     }
 
     private function systemLog(string $type, array $payload = []): void

@@ -123,7 +123,7 @@
                                             <tr>
                                                 <td>{{ $reading->id }}</td>
                                                 <td>{{ $reading->meter_number }}</td>
-                                                <td>{{ $reading->kwhNo }}</td>
+                                                <td>{{ number_format($reading->kwhNo, 0, '', '') }}</td>
                                                 <td>
                                                     @if ($reading->image)
                                                         <a href="{{ asset($reading->image) }}" target="_blank">
@@ -140,7 +140,7 @@
                                                 <td>{{ $reading->meter_style }}</td>
                                                 <td>{{ $reading->manufacturer }}</td>
                                                 <td>{{ $reading->ai_meter_number }}</td>
-                                                <td>{{ $reading->ai_meter_reading }}</td>
+                                                <td>{{ number_format($reading->ai_meter_reading, 0, '', '')}}</td>
                                                 <td>
                                                     <span
                                                         class="badge bg-{{ $reading->ai_success ? 'success' : 'danger' }}">

@@ -30,6 +30,18 @@ class Readings extends Model
         'ai_attempts'
     ];
 
+    protected $casts = [
+        'ai_success' => 'boolean',
+        'ai_fixed' => 'boolean',
+        'ai_attempts' => 'integer',
+        'ai_meter_reading' => 'decimal:3',
+        'kwhNo' => 'decimal:3',
+        'training_opt_in' => 'boolean',
+        
+    ];
+
+    
+
     public static function storeFile($file, $folder = 'meter_images')
     {
         if ($file instanceof \Illuminate\Http\UploadedFile) {

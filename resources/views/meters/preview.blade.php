@@ -131,7 +131,7 @@
                     </div>
                 @endif
 
-                {{-- @if (isset($reading->threshold) && $reading->total > $reading->threshold)
+                @if (isset($reading->threshold) && $reading->total > $reading->threshold)
                     <div class="alert alert-warning">
                         This seems like it could be wrong.
                         <div class="small text-muted mb-2">
@@ -145,9 +145,12 @@
                             <label class="form-check-label" for="override_send">Send anyway?</label>
                         </div>
                     </div>
-                @endif --}}
+                @endif
+
 
                 <input type="hidden" id="ai_success" name="ai_success" value="true">
+                <input type="hidden" id="ai_fixed" name="ai_fixed" value="false">
+
                 <input type="hidden" name="reading_id" value="{{ $reading->id ?? '' }}">
 
                 <input type="hidden" name="reservation_id" value="{{ $reservation_id }}">
@@ -233,12 +236,10 @@
         });
 
         function markAiFailed() {
-            const aiHidden = document.getElementById('ai_success');
-            const trainer = document.getElementById('training_checkbox_container');
-            if (aiHidden) aiHidden.value = 'false';
-            if (trainer) trainer.classList.remove('d-none');
+            document.getElementById('ai_success').value = 'false';
+            document.getElementById('ai_fixed').value = 'true';
+            document.getElementById('training_checkbox_container')?.classList.remove('d-none');
         }
-
         ['meter_number', 'meter_reading'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
