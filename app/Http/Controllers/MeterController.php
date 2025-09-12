@@ -101,9 +101,10 @@ class MeterController extends Controller
             ],
         ];
 
-        // 4) API call with enhanced error handling
-        $maxRetries = 10;
+        $maxRetries = 2;
         $attempt = 0;
+        $lastError = 'Unknown AI error';
+        $lastLatencyMs = 0;
 
         do {
             $attempt++;
@@ -117,51 +118,121 @@ class MeterController extends Controller
                     ])
                     ->post('https://api.anthropic.com/v1/messages', $payload);
 
-                $latencyMs = (int) ((microtime(true) - $t0) * 1000);
+                $lastLatencyMs = (int) ((microtime(true) - $t0) * 1000);
 
                 if ($response->ok()) {
-                    $result = $this->processAIResponse($response->json(), $path, $latencyMs, $attempt, $request);
+                    $result = $this->processAIResponse($response->json(), $path, $lastLatencyMs, $attempt, $request);
 
                     if ($result['success']) {
                         return $result['response'];
                     }
 
-                    // If parsing failed but we have retries left, modify prompt based on error type
-                    if ($attempt < $maxRetries) {
-                        $errorMsg = implode(', ', $result['errors'] ?? []);
+                    // remember why it failed so we can show a helpful message later
+                    $lastError = $result['error'] ?? implode(', ', $result['errors'] ?? []) ?: 'AI parse/validation failed';
 
-                        if (strpos($errorMsg, 'Meter number') !== false) {
-                            // Specific retry for meter number issues
-                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: You failed to find the meter serial number. " . 'LOOK CAREFULLY at the white label below the black kWh counter. ' . "The meter serial number is printed on this white label, usually 8+ digits like '80678828'. " . 'DO NOT use the kWh reading (04684) as the meter number. ' . $textPrompt;
+                    if ($attempt < $maxRetries) {
+                        // adjust prompt for next retry
+                        if (str_contains($lastError, 'Meter number')) {
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: You failed to find the meter serial number. LOOK CAREFULLY at the white label below the black kWh counter. " . "The meter serial number is printed on this white label, usually 8+ digits like '80678828'. DO NOT use the kWh reading. " . $textPrompt;
                         } else {
-                            // General retry
-                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: Previous error: {$errorMsg}. " . $textPrompt . "\n\nBe extra careful with number identification.";
+                            $payload['messages'][0]['content'][0]['text'] = "RETRY ATTEMPT {$attempt}: Previous error: {$lastError}. " . $textPrompt . "\n\nBe extra careful with number identification.";
                         }
                     }
                 } else {
+                    $lastError = 'Claude HTTP ' . $response->status();
                     Log::warning("Claude API HTTP error on attempt {$attempt}", [
                         'status' => $response->status(),
                         'body' => $response->body(),
                     ]);
                 }
-            } catch (Exception $e) {
-                Log::error("Claude API exception on attempt {$attempt}", [
-                    'error' => $e->getMessage(),
-                ]);
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                Log::error("Claude API exception on attempt {$attempt}", ['error' => $e->getMessage()]);
             }
 
             if ($attempt < $maxRetries) {
-                sleep(1); // Brief delay between retries
+                sleep(1);
             }
         } while ($attempt < $maxRetries);
 
-        // All attempts failed
-        Log::error('Claude API failed after all retries', [
+        // === Fallback: AI failed after all retries —> still render preview for manual entry ===
+        Log::error('Claude AI failed after all retries; going to manual preview', [
             'attempts' => $maxRetries,
             'image_path' => $path,
+            'last_error' => $lastError,
         ]);
 
-        return back()->with('error', 'AI scanning failed after multiple attempts. Please ensure the meter image is clear and try again.');
+        return $this->fallbackManualPreview($path, $lastLatencyMs, $attempt, $lastError);
+    }
+
+    private function fallbackManualPreview(string $path, int $latencyMs, int $attempt, string $lastError)
+    {
+        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
+        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $days = 1;
+        $threshold = ($thirtyDayCap / 30.0) * $days;
+
+        $draft = [
+            'meter_number' => '', 
+            'kwhNo' => 0,
+            'image' => $path,
+            'date' => now()->toDateString(),
+            'ai_meter_number' => null,
+            'ai_meter_reading' => null,
+            'ai_success' => false,
+            'ai_fixed' => false,
+            'manufacturer' => null,
+            'meter_style' => null,
+            'ai_confidence' => 'low',
+            'ai_notes' => 'AI scanning failed: ' . $lastError,
+            'ai_attempts' => $attempt,
+            'prompt_version' => 'optimized/v2',
+            'model_version' => 'claude-sonnet-4-20250514',
+            'ai_latency_ms' => $latencyMs,
+
+            // derived
+            'previousKwh' => 0,
+            'days' => $days,
+            'usage' => 0,
+            'rate' => $rate,
+            'total' => 0,
+            'threshold' => $threshold,
+            'siteid' => null,
+        ];
+
+        session(['electric_reading_draft' => $draft]);
+
+        $reading = (object) [
+            'id' => null,
+            'kwhNo' => $draft['kwhNo'],
+            'meter_number' => $draft['meter_number'],
+            'ai_meter_number' => $draft['ai_meter_number'],
+            'ai_meter_reading' => $draft['ai_meter_reading'],
+            'ai_confidence' => $draft['ai_confidence'],
+            'ai_notes' => $draft['ai_notes'],
+            'ai_attempts' => $draft['ai_attempts'],
+            'image' => $draft['image'],
+            'date' => $draft['date'],
+            'siteid' => $draft['siteid'],
+            'usage' => $draft['usage'],
+            'rate' => $draft['rate'],
+            'total' => $draft['total'],
+            'previousKwh' => $draft['previousKwh'],
+            'new_meter_number' => true,
+            'days' => $draft['days'],
+            'threshold' => $draft['threshold'],
+        ];
+
+        return view('meters.preview', [
+            'reading' => $reading,
+            'site' => null,
+            'customer' => null,
+            'customer_name' => null,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'reservation_id' => '',
+            'ai_failed' => true,
+        ]);
     }
 
     private function processAIResponse(array $data, string $path, int $latencyMs, int $attempt, string $request): array
