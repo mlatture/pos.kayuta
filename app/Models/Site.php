@@ -25,7 +25,7 @@ class Site extends Model
         'amenities' => 'array',
     ];
 
-    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline', 'images'];
+    protected $fillable = ['sitename', 'siteclass', 'seasonal', 'siteid', 'available', 'availableonline', 'images', 'meter_number'];
 
     public function siteClass()
     {

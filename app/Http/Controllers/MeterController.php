@@ -13,16 +13,15 @@ use App\Models\Bills;
 use App\Models\BusinessSettings;
 use App\Models\ElectricBill;
 
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ElectricBillGenerated;
 
-
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MeterController extends Controller
 {
@@ -121,7 +120,7 @@ class MeterController extends Controller
                 $latencyMs = (int) ((microtime(true) - $t0) * 1000);
 
                 if ($response->ok()) {
-                    $result = $this->processAIResponse($response->json(), $path, $latencyMs, $attempt);
+                    $result = $this->processAIResponse($response->json(), $path, $latencyMs, $attempt, $request);
 
                     if ($result['success']) {
                         return $result['response'];
@@ -165,7 +164,7 @@ class MeterController extends Controller
         return back()->with('error', 'AI scanning failed after multiple attempts. Please ensure the meter image is clear and try again.');
     }
 
-    private function processAIResponse(array $data, string $path, int $latencyMs, int $attempt): array
+    private function processAIResponse(array $data, string $path, int $latencyMs, int $attempt, string $request): array
     {
         $contentBlocks = $data['content'] ?? [];
         $rawText = '';
@@ -212,15 +211,25 @@ class MeterController extends Controller
         $confidence = trim($parsed['confidence'] ?? 'medium');
         $notes = trim($parsed['notes'] ?? '');
 
-        // 5) Database operations (same as your existing logic)
+        // 5) No Database operations
         $site = Site::where('meter_number', $aiMeterNumber)->first();
+        $last = Readings::where('meter_number', $aiMeterNumber)->latest('date')->first();
+        $previousKwh = $last?->kwhNo ?? 0;
+        $previousDate = $last?->date ?? now();
+        $days = max(1, now()->diffInDays(Carbon::parse($previousDate)));
+        $usage = $aiReading - $previousKwh;
 
-        $readingRow = Readings::create([
+        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
+        $total = $usage * $rate;
+
+        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
+        $threshold = ($thirtyDayCap / 30.0) * $days;
+
+        $draft = [
             'meter_number' => $aiMeterNumber,
             'kwhNo' => $aiReading,
             'image' => $path,
             'date' => now()->toDateString(),
-            'siteid' => $site->siteid ?? null,
             'ai_meter_number' => $aiMeterNumber,
             'ai_meter_reading' => $aiReading,
             'ai_success' => true,
@@ -233,20 +242,17 @@ class MeterController extends Controller
             'prompt_version' => 'optimized/v2',
             'model_version' => 'claude-sonnet-4-20250514',
             'ai_latency_ms' => $latencyMs,
-        ]);
+            'previousKwh' => $previousKwh,
+            'days' => $days,
+            'usage' => $usage,
+            'rate' => $rate,
+            'total' => $total,
+            'threshold' => $threshold,
+            'siteid' => $site->siteid ?? null,
+            'assign_siteid' => $request['assign_siteid'] ?? null,
+        ];
 
-        $last = Readings::where('meter_number', $aiMeterNumber)->where('id', '<', $readingRow->id)->latest('date')->first();
-
-        $previousKwh = $last?->kwhNo ?? 0;
-        $previousDate = $last?->date ?? now();
-        $days = max(1, now()->diffInDays(Carbon::parse($previousDate)));
-        $usage = $aiReading - $previousKwh;
-
-        $rate = (float) (BusinessSettings::where('type', 'electric_meter_rate')->value('value') ?? 0);
-        $total = $usage * $rate;
-
-        $thirtyDayCap = (float) (BusinessSettings::where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
-        $threshold = ($thirtyDayCap / 30.0) * $days;
+        session(['electric_reading_draft' => $draft]);
 
         $reservation = null;
         $customer = null;
@@ -257,28 +263,26 @@ class MeterController extends Controller
 
         $isNewMeter = !$site;
 
-        // 7) Build preview response
         $reading = (object) [
-            'id' => $readingRow->id,
-            'kwhNo' => $readingRow->kwhNo,
-            'meter_number' => $readingRow->meter_number,
-            'ai_meter_number' => $readingRow->ai_meter_number,
-            'ai_meter_reading' => $readingRow->ai_meter_reading,
-            'ai_confidence' => $confidence,
-            'ai_notes' => $notes,
-            'ai_attempts' => $attempt,
-            'image' => $readingRow->image,
-            'date' => $readingRow->date,
-            'siteid' => $readingRow->siteid,
-            'usage' => $usage,
-            'rate' => $rate,
-            'total' => $total,
-            'previousKwh' => $previousKwh,
+            'id' => null,
+            'kwhNo' => $draft['kwhNo'],
+            'meter_number' => $draft['meter_number'],
+            'ai_meter_number' => $draft['ai_meter_number'],
+            'ai_meter_reading' => $draft['ai_meter_reading'],
+            'ai_confidence' => $draft['ai_confidence'],
+            'ai_notes' => $draft['ai_notes'],
+            'ai_attempts' => $draft['ai_attempts'],
+            'image' => $draft['image'],
+            'date' => $draft['date'],
+            'siteid' => $draft['siteid'],
+            'usage' => $draft['usage'],
+            'rate' => $draft['rate'],
+            'total' => $draft['total'],
+            'previousKwh' => $draft['previousKwh'],
             'new_meter_number' => $isNewMeter,
-            'days' => $days,
-            'threshold' => $threshold,
+            'days' => $draft['days'],
+            'threshold' => $draft['threshold'],
         ];
-
 
         return [
             'success' => true,
@@ -287,11 +291,103 @@ class MeterController extends Controller
                 'site' => $site,
                 'customer' => $customer,
                 'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
-                'start_date' => Carbon::parse($previousDate)->toDateString(),
+                'start_date' => \Carbon\Carbon::parse($previousDate)->toDateString(),
                 'end_date' => now()->toDateString(),
                 'reservation_id' => $reservation->id ?? '',
+                'draft_token' => csrf_token(),
             ]),
         ];
+    }
+
+    public function saveReading(Request $r)
+    {
+        $isAjax = $r->ajax() || $r->wantsJson();
+
+        $draft = session('electric_reading_draft');
+        if (!$draft) {
+            return $isAjax ? response()->json(['ok' => false, 'message' => 'Draft not found. Please rescan the meter photo.'], 400) : back()->with('error', 'Draft not found. Please rescan the meter photo.');
+        }
+
+        $r->validate([
+            'meter_number' => 'required|string',
+            'kwhNo' => 'required|numeric',
+            'ai_success' => 'required',
+            'ai_fixed' => 'nullable',
+            'training_opt_in' => 'nullable|boolean',
+            'assign_siteid' => 'nullable|string',
+        ]);
+
+        $meterNumber = preg_replace('/\D/', '', $r->meter_number);
+        $draft['meter_number'] = $meterNumber;
+        $draft['kwhNo'] = (float) $r->kwhNo;
+        $draft['ai_success'] = filter_var($r->ai_success, FILTER_VALIDATE_BOOLEAN);
+        $draft['ai_fixed'] = filter_var($r->ai_fixed ?? false, FILTER_VALIDATE_BOOLEAN);
+        $draft['training_opt_in'] = filter_var($r->training_opt_in ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $targetSiteId = $r->input('assign_siteid');
+
+        if ($targetSiteId) {
+            DB::transaction(function () use ($targetSiteId, $meterNumber) {
+                $current = Site::where('meter_number', $meterNumber)->lockForUpdate()->first();
+                $target = Site::where('siteid', $targetSiteId)->lockForUpdate()->first();
+
+                if (!$target) {
+                    throw new \RuntimeException('Target site not found.');
+                }
+
+                if ($current && $current->siteid !== $target->siteid) {
+                    $current->update(['meter_number' => null]);
+                    SystemLog::create([
+                        'transaction_type' => 'Meter Reassigned',
+                        'details' => json_encode([
+                            'meter_number' => $meterNumber,
+                            'from_site' => $current->siteid,
+                            'to_site' => $target->siteid,
+                        ]),
+                    ]);
+                }
+
+                $target = Site::where('siteid', $targetSiteId)->first();
+
+                if ($target) {
+                    $target->update([
+                        'meter_number' => $meterNumber,
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+        }
+
+        $readingRow = Readings::create([
+            'meter_number' => $draft['meter_number'],
+            'kwhNo' => $draft['kwhNo'],
+            'image' => $draft['image'],
+            'date' => $draft['date'],
+            'ai_meter_number' => $draft['ai_meter_number'],
+            'ai_meter_reading' => $draft['ai_meter_reading'],
+            'ai_success' => $draft['ai_success'],
+            'ai_fixed' => $draft['ai_fixed'],
+            'manufacturer' => $draft['manufacturer'],
+            'meter_style' => $draft['meter_style'],
+            'ai_confidence' => $draft['ai_confidence'],
+            'ai_notes' => $draft['ai_notes'],
+            'ai_attempts' => $draft['ai_attempts'],
+            'prompt_version' => $draft['prompt_version'],
+            'model_version' => $draft['model_version'],
+            'ai_latency_ms' => $draft['ai_latency_ms'],
+        ]);
+
+        $r->session()->forget('electric_reading_draft');
+
+        if ($isAjax) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Meter reading saved.',
+                'redirect_url' => route('meters.index'),
+                'reading_id' => $readingRow->id,
+            ]);
+        }
+        return redirect()->route('meters.index')->with('success', 'Meter reading saved.');
     }
 
     private function validateMeterData(array $data): array
@@ -437,102 +533,12 @@ class MeterController extends Controller
         return back()->with('error', 'AI scanning failed after multiple attempts. Please ensure the meter image is clear and try again.');
     }
 
-    public function unregister(Request $request)
-    {
-        return view('meters.unregistered', [
-            'meter_number' => $request->meter_number,
-            'reading' => $request->reading,
-            'image' => $request->image,
-            'date' => $request->date,
-        ]);
-    }
-
-    public function register(Request $request)
-    {
-        $request->validate([
-            'siteid' => 'required|string|exists:sites,siteid',
-            'meter_number' => 'required|string',
-            'kwhNo' => 'required|numeric',
-            'image' => 'required|string',
-            'date' => 'required|date',
-        ]);
-
-        $newMeterNumber = $request->meter_number;
-        $site = Site::where('siteid', $request->siteid)->firstOrFail();
-
-        $conflictSite = Site::where('meter_number', $newMeterNumber)->where('siteid', '!=', $site->siteid)->first();
-
-        if ($conflictSite) {
-            $conflictSite->meter_number = null;
-            $conflictSite->save();
-        }
-
-        $site->meter_number = $newMeterNumber;
-        $site->save();
-
-        return redirect()
-            ->route('meters.preview.fromSession')
-            ->with('reading_data', [
-                'kwhNo' => $request->kwhNo,
-                'meter_number' => $newMeterNumber,
-                'image' => $request->image,
-                'date' => $request->date,
-                'siteid' => $site->siteid,
-            ]);
-    }
-
-    public function previewFromSession()
-    {
-        $data = session('reading_data');
-
-        if (!$data) {
-            return redirect()->route('meters.index')->with('error', 'No reading data available.');
-        }
-
-        $site = Site::where('siteid', $data['siteid'])->first();
-        $lastReading = Readings::where('meter_number', $data['meter_number'])->latest('date')->first();
-
-        $previousKwh = $lastReading?->kwhNo ?? 0;
-        $previousDate = $lastReading?->date ?? now();
-        $usage = $data['kwhNo'] - $previousKwh;
-        $days = now()->diffInDays(\Carbon\Carbon::parse($previousDate));
-        $rate = BusinessSettings::where('type', 'electric_meter_rate')->value('value');
-
-        $total = $usage * $rate;
-
-        $reservation = Reservation::where('siteid', $data['siteid'])->whereDate('cid', '<=', now())->whereDate('cod', '>=', now())->first();
-
-        $customer = $reservation ? User::find($reservation->customernumber) : null;
-
-        $reading = (object) [
-            'kwhNo' => $data['kwhNo'],
-            'meter_number' => $data['meter_number'],
-            'image' => $data['image'],
-            'date' => $data['date'],
-            'siteid' => $data['siteid'],
-            'usage' => $usage,
-            'rate' => $rate,
-            'total' => $total,
-            'previousKwh' => $previousKwh,
-            'new_meter_number' => true,
-        ];
-
-        return view('meters.preview', [
-            'reading' => $reading,
-            'site' => $site,
-            'customer' => $customer,
-            'customer_name' => $customer ? trim($customer->f_name . ' ' . $customer->l_name) : null,
-            'start_date' => Carbon::parse($previousDate)->toDateString(),
-            'end_date' => now()->toDateString(),
-            'days' => $days,
-            'reservation_id' => $reservation->id ?? '',
-        ]);
-    }
-
     public function send(Request $r)
     {
+        $isAjax = $r->ajax() || $r->wantsJson();
+
         $r->validate([
-            'reading_id' => 'required|exists:electric_readings,id',
+            'reading_id' => 'nullable|exists:electric_readings,id',
             'meter_number' => 'required|string',
             'kwhNo' => 'required|numeric',
             'prevkwhNo' => 'nullable|numeric',
@@ -546,24 +552,42 @@ class MeterController extends Controller
             'ai_fixed' => 'nullable',
             'training_opt_in' => 'nullable|boolean',
             'new_meter_number' => 'required|boolean',
-            'siteid' => 'nullable|string', 
+            'siteid' => 'nullable|string',
         ]);
 
-        $reading = Readings::findOrFail($r->reading_id);
+        $meter = preg_replace('/\D/', '', (string) $r->meter_number);
+
+        $reading = null;
+
+        if ($r->filled('reading_id')) {
+            $reading = Readings::find($r->reading_id);
+        }
+
+        if (!$reading && $meter) {
+            $reading = Readings::where('meter_number', $meter)->orderByDesc('date')->orderByDesc('id')->first();
+        }
+
+        if (!$reading) {
+            $msg = 'Reading not found. Save the reading first, then send the bill.';
+            return $r->ajax() || $r->wantsJson() ? response()->json(['ok' => false, 'message' => $msg], 404) : back()->with('error', $msg);
+        }
 
         $reading->meter_number = preg_replace('/\D/', '', $r->meter_number);
         $reading->kwhNo = (float) $r->kwhNo;
         $reading->ai_success = filter_var($r->ai_success, FILTER_VALIDATE_BOOLEAN);
         $reading->ai_fixed = filter_var($r->ai_fixed ?? false, FILTER_VALIDATE_BOOLEAN);
-        $reading->training_opt_in = filter_var($r->training_opt_in ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (Schema::hasColumn($reading->getTable(), 'training_opt_in')) {
+            $reading->training_opt_in = filter_var($r->training_opt_in ?? false, FILTER_VALIDATE_BOOLEAN);
+        }
         $reading->save();
 
         if ($r->boolean('new_meter_number') === true) {
             $this->logAudit('Bill Validation', 'New meter detected: billing blocked', [
-                'reading_id' => $reading->id,
                 'meter_number' => $reading->meter_number,
+                'reading_id' => $reading->id,
             ]);
-            return back()->with('warning', 'New meter detected. You can Save, but cannot Send.');
+            $msg = 'New meter detected. You can Save, but cannot Send.';
+            return $isAjax ? response()->json(['ok' => false, 'message' => $msg], 400) : back()->with('warning', $msg);
         }
 
         $usage = (float) $r->kwhNo - (float) ($r->prevkwhNo ?? 0);
@@ -574,7 +598,8 @@ class MeterController extends Controller
                 'reading_id' => $reading->id,
                 'total' => $total,
             ]);
-            return back()->with('error', 'Total is zero or negative. You can Save, but cannot Send.');
+            $msg = 'Total is zero or negative. You can Save, but cannot Send.';
+            return $isAjax ? response()->json(['ok' => false, 'message' => $msg], 400) : back()->with('error', $msg);
         }
 
         $cap30 = (float) (DB::table('business_settings')->where('type', 'electric_bill_high_threshold_30day')->value('value') ?? 150);
@@ -587,37 +612,50 @@ class MeterController extends Controller
                 'total' => $total,
                 'threshold' => $threshold,
             ]);
-            return back()->with('warning', 'Bill exceeds threshold. Tick "Send anyway?" to proceed.');
+            $msg = 'Bill exceeds threshold. Tick "Send anyway?" to proceed.';
+            return $isAjax ? response()->json(['ok' => false, 'message' => $msg], 409) : back()->with('warning', $msg);
         }
 
         $meter = $reading->meter_number;
         $contextSiteId = $r->siteid ?: null;
-        $currentAssigned = Site::where('meter_number', $meter)->first();
 
         if ($contextSiteId) {
-            if ($currentAssigned && $currentAssigned->siteid !== $contextSiteId) {
-                DB::transaction(function () use ($currentAssigned, $contextSiteId, $meter, $reading) {
-                    $old = $currentAssigned->siteid;
-                    $currentAssigned->update(['meter_number' => null]);
-                    Site::where('siteid', $contextSiteId)->update(['meter_number' => $meter]);
-                    $this->logAudit('Meter Reassigned', 'Meter moved between sites', [
-                        'meter_number' => $meter,
-                        'from_site' => $old,
-                        'to_site' => $contextSiteId,
-                        'reading_id' => $reading->id,
-                    ]);
+            try {
+                DB::transaction(function () use ($contextSiteId, $meter, $reading) {
+                    $current = Site::where('meter_number', $meter)->lockForUpdate()->first();
+                    $target = Site::where('siteid', $contextSiteId)->lockForUpdate()->first();
+
+                    if (!$target) {
+                        throw new \RuntimeException('Target site not found.');
+                    }
+
+                    if ($current && $current->siteid !== $target->siteid) {
+                        $old = $current->siteid;
+                        $current->update(['meter_number' => null]);
+                        $target->update(['meter_number' => $meter]);
+
+                        $this->logAudit('Meter Reassigned', 'Meter moved between sites', [
+                            'meter_number' => $meter,
+                            'from_site' => $old,
+                            'to_site' => $target->siteid,
+                            'reading_id' => $reading->id,
+                        ]);
+                    } elseif (!$current) {
+                        $target->update(['meter_number' => $meter]);
+                        $this->logAudit('Meter Reassigned', 'Meter assigned to site', [
+                            'meter_number' => $meter,
+                            'to_site' => $target->siteid,
+                            'reading_id' => $reading->id,
+                        ]);
+                    }
                 });
-            } elseif (!$currentAssigned) {
-                Site::where('siteid', $contextSiteId)->update(['meter_number' => $meter]);
-                $this->logAudit('Meter Reassigned', 'Meter assigned to site', [
-                    'meter_number' => $meter,
-                    'to_site' => $contextSiteId,
-                    'reading_id' => $reading->id,
-                ]);
+            } catch (\Throwable $e) {
+                $msg = 'Site reassignment failed: ' . $e->getMessage();
+                return $isAjax ? response()->json(['ok' => false, 'message' => $msg], 422) : back()->with('error', $msg);
             }
         } else {
-            if ($currentAssigned) {
-            } else {
+            $currentAssigned = Site::where('meter_number', $meter)->first();
+            if (!$currentAssigned) {
                 $this->logAudit('Bill Validation', 'No site context for meter during send', [
                     'meter_number' => $meter,
                     'reading_id' => $reading->id,
@@ -647,7 +685,15 @@ class MeterController extends Controller
             'override' => $override,
         ]);
 
-
+        // 7) Respond
+        if ($isAjax) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Bill saved and sent.',
+                'redirect_url' => route('meters.index'),
+                'bill_id' => $bill->id,
+            ]);
+        }
         return redirect()->route('meters.index')->with('success', 'Bill saved and sent.');
     }
 
@@ -659,7 +705,6 @@ class MeterController extends Controller
             'before' => json_encode($meta),
             'after' => json_encode($meta),
             'created_at' => now(),
-            
         ]);
     }
 
