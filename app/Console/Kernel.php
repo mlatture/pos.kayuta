@@ -8,6 +8,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Http\Controllers\NewReservationController;
 
 use App\Console\Commands\SendPaymentReminders;
+use App\Console\Commands\OptimizedElectricPrompts;
 class Kernel extends ConsoleKernel
 {
     /**
@@ -28,6 +29,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
 
         $schedule->command(SendPaymentReminders::class)->daily();
+        $schedule->command('electric:optimize-prompts --min=8')->dailyAt('03:30')->onOneServer();
         $schedule
             ->call(function () {
                 (new App\Http\Controllers\NewReservationController())->deleteCart();

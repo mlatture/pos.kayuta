@@ -3,6 +3,8 @@
 @section('title', 'Reservation Management — Check Availability')
 
 @push('css')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
     <style>
         .table td,
         .table th {
@@ -29,7 +31,7 @@
             <h1 class="h4 mb-0">Reservation Management <span class="text-muted">/ Check Availability</span></h1>
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary btn-sm" id="btnRefresh">Refresh</button>
-                <a class="btn btn-outline-primary btn-sm"  href="{{ route('reservations.index') }}">Back</a>
+                <a class="btn btn-outline-primary btn-sm" href="{{ route('reservations.index') }}">Back</a>
             </div>
         </div>
 
@@ -39,22 +41,29 @@
                 <form id="availabilityForm" class="row g-3 align-items-end" method="POST"
                     action="{{ route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id]) }}">
                     @csrf
-                    <div class="col-12 col-md-3">
-                        <label class="form-label">Check-in</label>
-                        <input type="date" class="form-control" name="checkin" required>
+
+                    {{-- Dates (wide) --}}
+                    <div class="col-12 col-md-5">
+                        <label class="form-label">Dates</label>
+                        <input type="text" class="form-control" id="dateRange" placeholder="MM/DD/YYYY — MM/DD/YYYY"
+                            autocomplete="off" required>
+                        <!-- Hidden fields kept for server compatibility -->
+                        <input type="hidden" name="checkin" id="checkinHidden">
+                        <input type="hidden" name="checkout" id="checkoutHidden">
+                        <div class="form-text">Select check-in and check-out (MM/DD/YYYY).</div>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label class="form-label">Check-out</label>
-                        <input type="date" class="form-control" name="checkout" required>
-                    </div>
+
+                    {{-- Rig length --}}
                     <div class="col-6 col-md-2">
                         <label class="form-label">Rig length (ft)</label>
                         <input type="number" class="form-control" name="rig_length" min="0" max="100"
-                            placeholder="e.g. 32">
-                        <div class="form-text">Validates vs site spec</div>
+                            placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
+                        <div class="form-text">Matches site max length</div>
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label">Site type</label>
+
+                    {{-- Site class --}}
+                    <div class="col-6 col-md-3">
+                        <label class="form-label">Site Class</label>
                         <select class="form-select" name="site_id">
                             <option value="">Any</option>
                             @foreach ($siteTypes as $type)
@@ -62,21 +71,28 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-6 col-md-2 form-check ps-4">
-                        <input class="form-check-input" type="checkbox" value="1" id="include_offline"
-                            name="include_offline" checked>
-                        <label class="form-check-label" for="include_offline">Include offline sites</label>
+
+                    {{-- Include offline --}}
+                    <div class="col-12 col-md-2 d-flex align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="include_offline"
+                                name="include_offline" checked>
+                            <label class="form-check-label ms-2" for="include_offline">Include offline</label>
+                        </div>
                     </div>
-                    <div class="col-12 col-md-2 ms-auto text-end">
-                        <button type="submit" class="btn btn-primary w-100" id="btnSearch">
-                            <span class="spinner-border spinner-border-sm d-none" id="searchSpinner" role="status"
-                                aria-hidden="true"></span>
-                            Check Availability
-                        </button>
+
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+
+                            <div class="text-muted small align-self-center">
+                                Tip: availability checks automatically when you change any filter.
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
+
 
         <div class="alert alert-info d-flex align-items-center gap-3 py-2 mb-3 d-none" id="selectCustomerHint">
             <div><strong>Heads up:</strong> select a customer to enable “Add to Cart”.</div>
@@ -92,12 +108,8 @@
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>
                             Available Sites
-
-
                         </strong>
                         <span class="badge rounded-pill bg-secondary d-none" id="nightsBadge">0 nights</span>
-
-
                     </div>
 
                     <div class="card-body p-0">
@@ -109,7 +121,6 @@
                                         <th>Type</th>
                                         <th>Status</th>
                                         <th class="text-end">Nightly</th>
-
                                         <th class="text-end">Taxes</th>
                                         <th class="text-end">Total</th>
                                         <th></th>
@@ -237,6 +248,48 @@
 @endsection
 
 @push('js')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        flatpickr("#dateRange", {
+            mode: "range",
+            dateFormat: "m/d/Y",
+            allowInput: true,
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates && selectedDates.length === 2) {
+                    const d1 = selectedDates[0];
+                    const d2 = selectedDates[1];
+
+                    const toIso = d =>
+                        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                    document.getElementById('checkinHidden').value = toIso(d1);
+                    document.getElementById('checkoutHidden').value = toIso(d2);
+
+                    document.getElementById('dateRange').value =
+                        `${instance.formatDate(d1, 'm/d/Y')} — ${instance.formatDate(d2, 'm/d/Y')}`;
+
+                    if (window.__availabilityTrigger) window.__availabilityTrigger();
+                } else {
+                    document.getElementById('checkinHidden').value = '';
+                    document.getElementById('checkoutHidden').value = '';
+                    if (window.__availabilityTrigger) window.__availabilityTrigger();
+                }
+            }
+        });
+
+        (function() {
+            const ci = document.getElementById('checkinHidden').value;
+            const co = document.getElementById('checkoutHidden').value;
+            if (ci && co) {
+                const d1 = new Date(ci + 'T00:00:00');
+                const d2 = new Date(co + 'T00:00:00');
+                const fp = document.querySelector('#dateRange')._flatpickr;
+                if (fp) fp.setDate([d1, d2], true);
+            }
+        })();
+    </script>
+
     <script>
         (function() {
             const routes = {
@@ -247,12 +300,10 @@
                 custCreate: @json(route('admin.reservation_mgmt.customer.create', ['admin' => auth()->user()->id])),
                 couponApply: @json(route('admin.reservation_mgmt.coupon.apply', ['admin' => auth()->user()->id])),
                 checkout: @json(route('admin.reservation_mgmt.checkout', ['admin' => auth()->user()->id])),
-                giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
-
+                giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id]))
             };
 
-            // Simple debounce
-            const debounce = (fn, d = 250) => {
+            const debounce = (fn, d = 300) => {
                 let t;
                 return (...args) => {
                     clearTimeout(t);
@@ -261,7 +312,6 @@
             };
 
             const $form = $('#availabilityForm');
-            const $btnSearch = $('#btnSearch');
             const $spinner = $('#searchSpinner');
             const $tbody = $('#resultsTable tbody');
             const $cartBody = $('#cartBody');
@@ -275,8 +325,8 @@
                 style: 'currency',
                 currency: 'USD'
             }).format(n || 0);
+
             const setLoading = (b) => {
-                $btnSearch.prop('disabled', b);
                 $spinner.toggleClass('d-none', !b);
             };
 
@@ -359,15 +409,33 @@
 
             $('#btnRefresh').on('click', () => location.reload());
 
-            // Open Customer modal
             $('#btnCustomer, #btnOpenCustomer').on('click', () => $customerModal.show());
 
-            // Availability search
-            $form.on('submit', function(e) {
-                e.preventDefault();
+            let _inFlightAvailability = null;
+
+            function runAvailabilitySearch() {
+
+                const ci = $form.find('[name="checkin"]').val();
+                const co = $form.find('[name="checkout"]').val();
+
+                if (!ci || !co) {
+                    $tbody.html(
+                        `<tr><td colspan="7" class="text-center py-4 text-muted">Enter check-in and check-out to see availability…</td></tr>`
+                    );
+                    return;
+                }
+
+                if (_inFlightAvailability && _inFlightAvailability.readyState !== 4) {
+                    try {
+                        _inFlightAvailability.abort();
+                    } catch (e) {}
+                    _inFlightAvailability = null;
+                }
+
                 setLoading(true);
                 $tbody.html(`<tr><td colspan="7" class="text-center py-4">Searching…</td></tr>`);
-                $.post(routes.availability, $form.serialize())
+
+                _inFlightAvailability = $.post(routes.availability, $form.serialize())
                     .done(res => {
                         const $badge = $('#nightsBadge');
 
@@ -391,8 +459,7 @@
                         }
 
                         if (Number.isFinite(nights)) {
-                            $badge.text(`${nights} ${nights === 1 ? 'night' : 'nights'}`).removeClass(
-                                'd-none');
+                            $badge.text(`${nights} ${nights === 1 ? 'night' : 'nights'}`).removeClass('d-none');
                         } else {
                             $badge.addClass('d-none').text('');
                         }
@@ -408,14 +475,13 @@
                             const status = item.available_online ?
                                 '<span class="badge badge-online">Online</span>' :
                                 '<span class="badge badge-offline">Offline</span>';
-                            const fits = item.fits ? ' <span class="badge badge-fits">Fits</span>' :
-                                '';
+                            const fits = item.fits ? ' <span class="badge badge-fits">Fits</span>' : '';
 
                             const addBtn = cart.customer_id ?
                                 `<button class="btn btn-sm btn-outline-primary btnAdd">Add to Cart</button>` :
                                 `<span class="d-inline-block" data-role="add-wrap" data-bs-toggle="tooltip" data-bs-title="Select a customer first">
-                                      <button class="btn btn-sm btn-outline-secondary" disabled aria-disabled="true">Add to Cart</button>
-                                   </span>`;
+                                    <button class="btn btn-sm btn-outline-secondary" disabled aria-disabled="true">Add to Cart</button>
+                                </span>`;
 
                             return `
                             <tr data-id="${item.id}" data-json='${JSON.stringify(item)}'>
@@ -431,26 +497,51 @@
 
                         $tbody.html(rows);
 
-                        // Init tooltips for disabled Add buttons
                         initTooltips();
 
-                        // Show the hint if no customer selected yet
                         if (!cart.customer_id) {
                             $('#selectCustomerHint').removeClass('d-none');
                         }
                     })
                     .fail(xhr => {
+                        if (xhr && xhr.statusText === 'abort') {
+                            return;
+                        }
                         $tbody.html(
                             `<tr><td colspan="7" class="text-danger text-center py-4">${xhr.responseJSON?.message || 'Search failed.'}</td></tr>`
                         );
                     })
-                    .always(() => setLoading(false));
+                    .always(() => {
+                        setLoading(false);
+                        _inFlightAvailability = null;
+                    });
+            }
+
+            window.__availabilityTrigger = debounce(() => runAvailabilitySearch(), 300);
+
+            $form.off('submit.avail').on('submit.avail', function(e) {
+                e.preventDefault();
+                runAvailabilitySearch();
             });
+
+            $form.find('[name="rig_length"]').off('input.avail').on('input.avail', debounce(() =>
+                runAvailabilitySearch(), 450));
+            $form.find('[name="site_id"]').off('change.avail').on('change.avail', debounce(() =>
+                runAvailabilitySearch(), 250));
+            $form.find('[name="include_offline"]').off('change.avail').on('change.avail', debounce(() =>
+                runAvailabilitySearch(), 250));
+
+            setTimeout(() => {
+                const ci = $form.find('[name="checkin"]').val();
+                const co = $form.find('[name="checkout"]').val();
+                const rl = $form.find('[name="rig_length"]').val();
+                const sid = $form.find('[name="site_id"]').val();
+                if ((ci && co) || rl || sid) runAvailabilitySearch();
+            }, 200);
 
             let cartToken = null;
 
             $('#resultsTable').on('click', '.btnAdd', function() {
-                // Safety guard: require selected customer
                 if (!cart.customer_id) {
                     $('#selectCustomerHint').removeClass('d-none');
                     $('#customerModal').modal('show');
@@ -516,7 +607,6 @@
                 }
 
                 function doSearch(q) {
-                    // cancel previous request if still running
                     if (inFlightReq && inFlightReq.readyState !== 4) inFlightReq.abort();
 
                     inFlightReq = $.ajax({
@@ -528,7 +618,6 @@
                             },
                         })
                         .done(res => {
-                            // ensure we’re still showing results for the same query
                             if ($input.val().trim() === q) renderResults(res);
                         })
                         .fail((xhr, status) => {
@@ -549,10 +638,8 @@
                     searchTimer = setTimeout(() => doSearch(q), 300);
                 }
 
-                // bind once, namespaced to avoid duplicates
                 $input.off('input.customer').on('input.customer', schedule);
 
-                // optional: tidy up on modal hide/show
                 $('#customerModal')
                     .off('shown.bs.modal.customer hidden.bs.modal.customer')
                     .on('shown.bs.modal.customer', () => $input.trigger('focus'))
@@ -571,7 +658,6 @@
                 const $nameCust = $('#forUser');
                 if (cart.customer_id) {
                     $nameCust.removeClass('d-none').text(`For: ${cart.customer_name}`);
-                    // Enable Add-to-Cart buttons that were disabled
                     if (typeof enableAddButtonsAfterCustomerSelected === 'function') {
                         enableAddButtonsAfterCustomerSelected();
                     }
@@ -585,15 +671,12 @@
                 $('#customerModal').modal('hide');
             }
 
-
             $('#customerResults').on('click', '.selCustomer', function() {
                 cart.customer_id = $(this).data('id');
                 cart.customer_name = $(this).data('name');
                 $nameCust = $('#forUser');
-                console.log('Selected customer ID:', cart.customer_id);
                 if (cart.customer_id) {
                     $nameCust.removeClass('d-none').text(`For: ${cart.customer_name || '(selected)'}`);
-                    console.log('Cart customer ID:', [cart.customer_id, cart.customer_name]);
                     enableAddButtonsAfterCustomerSelected();
                     $('#selectCustomerHint').addClass('d-none');
                 } else {
@@ -619,10 +702,8 @@
             });
 
 
-            // Quick path from hint banner to modal
             $('#hintSelectCustomer').on('click', () => $('#customerModal').modal('show'));
 
-            // Checkout
             $('#btnCheckout').on('click', function() {
                 $('#tSubtotal').text(fmt(cart.totals.subtotal));
                 $('#tDiscounts').text('-' + fmt(cart.totals.discounts));
@@ -649,7 +730,6 @@
                     .fail(xhr => alert(xhr.responseJSON?.message || 'Coupon invalid'));
             });
 
-            // Lookup gift card and validate balance
             $('#checkoutModal').on('click', '#btnLookupGiftcard', function() {
                 const code = ($('#giftCardCode').val() || '').trim();
                 if (!code) {
@@ -674,13 +754,6 @@
                     .always(() => $btn.prop('disabled', false));
             });
 
-
-
-
-
-
-
-            // Payment input switching
             $('#checkoutModal').on('click', 'button[data-method]', function() {
                 const method = $(this).data('method');
                 let html = '';
@@ -692,7 +765,6 @@
                         <button class="btn btn-outline-secondary" id="btnLookupGiftcard">Lookup</button>
                     </div>
                     <div class="mt-2 small" id="giftCardInfo"></div>`;
-
                 } else if (method === 'ach') {
                     html = `
                     <div class="row g-2 mt-3">
@@ -713,7 +785,6 @@
                 $('#paymentInputs').html(html).data('method', method);
             });
 
-            // Place order
             $('#btnPlaceOrder').on('click', function() {
                 const method = $('#paymentInputs').data('method') || 'credit_card';
                 const payload = {
@@ -752,7 +823,6 @@
                                 );
                                 return;
                             }
-                            // ok to proceed
                             doCheckout(payload);
                         })
                         .fail(xhr => {
@@ -761,7 +831,6 @@
                     return;
                 }
 
-
                 doCheckout(payload);
 
             });
@@ -769,10 +838,48 @@
             function doCheckout(payload) {
                 $.post(routes.checkout, payload)
                     .done(res => {
-                        alert(res.message || 'Success');
-                        location.reload();
+                        const message = res?.message || 'Order placed successfully.';
+                        let timerInterval;
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            html: `
+                    <p>${message}</p>
+                    <p class="small text-muted">Page will refresh in <b></b> seconds.</p>
+                `,
+                            timer: 4000, // auto close after 4s
+                            timerProgressBar: true,
+                            showCancelButton: true,
+                            confirmButtonText: 'Reload now',
+                            cancelButtonText: 'Stay here',
+                            didOpen: () => {
+                                const b = Swal.getPopup().querySelector('b');
+                                let timeLeft = 4;
+                                b.textContent = timeLeft;
+                                timerInterval = setInterval(() => {
+                                    timeLeft--;
+                                    b.textContent = timeLeft;
+                                }, 1000);
+                            },
+                            willClose: () => {
+                                clearInterval(timerInterval);
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload(); // user clicked Reload now
+                            } else if (result.dismiss === Swal.DismissReason.timer) {
+                                location.reload(); // auto reload after timer
+                            }
+                        });
                     })
-                    .fail(xhr => alert(xhr.responseJSON?.message || 'Checkout failed'));
+                    .fail(xhr => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Checkout failed',
+                            text: xhr.responseJSON?.message || 'Something went wrong.'
+                        });
+                    });
             }
 
         })();
