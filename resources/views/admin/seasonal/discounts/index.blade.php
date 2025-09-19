@@ -1,15 +1,39 @@
+{{-- resources/views/admin/seasonal_discounts/index.blade.php --}}
 @extends('layouts.admin')
 
 @section('title', "Seasonal Discounts — {$customer->f_name} {$customer->l_name} — {$year}")
 
 @section('content')
     <style>
+        html,
+        body {
+            height: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .page-content,
+        .content,
+        .container,
+        .main,
+        .page-wrapper {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            box-sizing: border-box !important;
+            margin-left: 0 !important;
+        }
+
+
         .card {
-            background: #fff;
-            border: 1px solid #e6e6e6;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .card.aside,
+        aside.card {
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .muted {
@@ -21,15 +45,14 @@
             font-size: .9rem;
         }
 
-
-
         .btn {
             display: inline-block;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 14px;
+            border-radius: 8px;
             text-decoration: none;
             border: 0;
             cursor: pointer;
+            font-size: 0.95rem;
         }
 
         .btn-primary {
@@ -46,14 +69,25 @@
         .grid {
             display: grid;
             gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        @media(min-width:900px) {
-            .grid-2 {
+        .grid.grid-2 {
+            grid-template-columns: 1fr;
+        }
+
+
+        @media (min-width: 900px) {
+            .grid.grid-2 {
                 grid-template-columns: 1fr 360px;
+                max-width: 1100px;
+                margin: 0 auto;
             }
         }
 
+
+        /* table styles (desktop) */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -61,21 +95,277 @@
 
         table th,
         table td {
-            padding: 8px 10px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f3f4f6;
             text-align: left;
+            vertical-align: middle;
         }
 
         .muted-small {
             color: #6b7280;
             font-size: .9rem;
         }
+
+        @media (min-width: 861px) {
+            .discount-cards {
+                display: none;
+            }
+        }
+
+
+        @media (max-width: 860px) {
+            table {
+                display: none;
+            }
+
+            .discount-cards {
+                display: block;
+            }
+
+            .discount-card {
+                border: 1px solid #eef2ff;
+                background: #fff;
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+            }
+
+            .btn {
+                min-height: 44px;
+            }
+        }
+
+
+        /* ---------- Mobile transforms ---------- */
+        @media (max-width: 860px) {
+            table {
+                display: none;
+            }
+
+            /* hide desktop table on small devices */
+            .discount-cards {
+                display: block;
+            }
+
+            .discount-card {
+                border: 1px solid #eef2ff;
+                background: #ffffff;
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+            }
+
+            .discount-row {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .discount-meta {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .discount-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-top: 8px;
+            }
+
+            .btn {
+                padding: 10px;
+                min-height: 44px;
+            }
+
+            /* touch target */
+            .btn.block {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (min-width:861px) {
+            .discount-cards {
+                display: none;
+            }
+        }
+
+        #addModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1200;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        /* Modal document */
+        #addModal .modal-inner {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(2, 6, 23, 0.12);
+            box-sizing: border-box;
+        }
+
+        /* Header close */
+        #addModal .close-btn {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            border: 0;
+            background: transparent;
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        /* Form layout */
+        #addModal .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        #addModal .form-row .col {
+            box-sizing: border-box;
+        }
+
+        #addModal input[type="number"],
+        #addModal select,
+        #addModal textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e6e6e6;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        #addModal label {
+            display: block;
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        /* Buttons */
+        #addModal .btn {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        #addModal .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        #addModal .btn-ghost {
+            background: transparent;
+            border: 1px solid #e5e7eb;
+            color: #111827;
+        }
+
+        /* Preview area */
+        #addModal .preview {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        /* Mobile: full-screen dialog */
+        @media (max-width:640px) {
+            #addModal {
+                align-items: flex-end;
+                justify-content: center;
+                padding: 0;
+            }
+
+            #addModal .modal-inner {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                border-radius: 0;
+                padding: 18px 14px;
+                overflow: auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            #addModal .close-btn {
+                right: 10px;
+                top: 10px;
+            }
+
+            #addModal .modal-footer {
+                position: sticky;
+                bottom: 0;
+                background: linear-gradient(transparent, #fff);
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
+
+            #addModal .form-row {
+                flex-direction: column;
+            }
+        }
+
+        /* Small helpers */
+        .muted-small {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+
+        /* badges */
+        .badge-pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background: #ecfdf5;
+            color: #064e3b;
+            padding: 6px 10px;
+            border-radius: 999px;
+        }
+
+        .badge-inactive {
+            background: #fff1f2;
+            color: #7f1d1d;
+            padding: 6px 10px;
+            border-radius: 999px;
+        }
     </style>
 
-
-
+    {{-- Validation errors --}}
     @if ($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger" role="alert" style="margin-bottom:12px;">
             <ul class="mb-0">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -84,26 +374,24 @@
         </div>
     @endif
 
-
-    <div class="grid grid-2" style="margin-bottom:16px;">
+    <div class="grid grid-2 p-4" style="margin-bottom:16px;">
         <!-- left: discount list + actions -->
-
-
-        <div class="card">
+        <div class="card p-2">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <div>
                     <h2 style="margin:0;">Discounts — {{ $customer->name }}</h2>
                     <div class="muted small">Season: <strong>{{ $year }}</strong></div>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <button id="openAddBtn" class="btn btn-primary">Add discount</button>
+                    <button id="openAddBtn" class="btn btn-primary" aria-haspopup="dialog" aria-controls="addModal">Add
+                        discount</button>
                     <a href="{{ route('seasonal.customer.discounts.index', [$customer->id, 'year' => $year]) }}"
                         class="btn btn-ghost">Refresh</a>
                 </div>
             </div>
 
             {{-- Summary --}}
-            <div class="card" style="margin-bottom:12px;">
+            <div class="card p-2" style="margin-bottom:12px; ">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div class="muted-small">Base rate</div>
@@ -120,8 +408,7 @@
                     <div style="text-align:right;">
                         <div class="muted-small">Total discounts removed</div>
                         <div style="font-weight:600;">
-                            $<span
-                                id="removedTotalClient">{{ number_format($applied['percent_removed'] ?? (0 + $applied['dollar_removed'] ?? 0), 2) }}</span>
+                            $<span id="removedTotalClient">{{ number_format($applied['total_removed'] ?? 0, 2) }}</span>
                         </div>
 
                         <div class="muted-small" style="margin-top:6px;">Final</div>
@@ -136,9 +423,8 @@
                 </div>
             </div>
 
-            {{-- Discount table --}}
             <div>
-                <table>
+                <table aria-hidden="false">
                     <thead>
                         <tr>
                             <th>Type</th>
@@ -151,12 +437,12 @@
                     <tbody id="discountList">
                         @forelse($discounts as $d)
                             <tr data-id="{{ $d->id }}" data-type="{{ $d->discount_type }}"
-                                data-value="{{ $d->discount_value }}" data-desc="{{ htmlspecialchars($d->description) }}">
+                                data-value="{{ $d->discount_value }}" data-desc="{{ e($d->description) }}">
                                 <td>
                                     @if ($d->discount_type === 'percentage')
-                                        <span class="badge rounded-pill bg-primary">Percent</span>
+                                        <span class="badge-pill">Percent</span>
                                     @else
-                                        <span class="badge rounded-pill bg-info">$ Dollar</span>
+                                        <span class="badge-pill">$ Dollar</span>
                                     @endif
                                 </td>
                                 <td>
@@ -169,27 +455,24 @@
                                 <td class="small">{{ $d->description }}</td>
                                 <td>
                                     @if ($d->is_active)
-                                        <span class="badge rounded-pill bg-success">Active</span>
+                                        <span class="badge-active">Active</span>
                                     @else
-                                        <span class="badge rounded-pill bg-danger">Inactive</span>
+                                        <span class="badge-inactive">Inactive</span>
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Deactivate form --}}
                                     <form action="{{ route('seasonal.customer.discounts.deactivate', $d->id) }}"
                                         method="POST" style="display:inline;">
                                         @csrf
-                                        <button type="submit" class="btn btn-ghost small"
+                                        <button type="submit" class="btn btn-ghost"
                                             title="Deactivate this discount">Deactivate</button>
                                     </form>
 
-                                    {{-- Delete form --}}
                                     <form action="{{ route('seasonal.customer.discounts.destroy', $d->id) }}"
                                         method="POST" style="display:inline;">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn"
-                                            style="background:#ef4444; color:#fff; border-radius:6px; margin-left:8px;"
-                                            title="Permanently delete">Delete</button>
+                                            style="background:#ef4444;color:#fff;border-radius:6px;margin-left:8px;">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -200,11 +483,13 @@
                         @endforelse
                     </tbody>
                 </table>
+
+
             </div>
         </div>
 
         <!-- right: preview & instructions -->
-        <aside class="card" aria-labelledby="previewHeading">
+        <aside class="card p-2" aria-labelledby="previewHeading">
             <h3 id="previewHeading">Quick preview & instructions</h3>
 
             <p class="muted-small">When adding discounts, percentages are applied <strong>first</strong> (multiplicatively),
@@ -236,30 +521,31 @@
     </div>
 
     {{-- Add discount modal --}}
-    <div id="addModal" role="dialog" aria-modal="true"
-        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:50; align-items:center; justify-content:center;">
-        <div
-            style="width:100%; max-width:720px; margin:24px; background:#fff; border-radius:8px; padding:18px; position:relative;">
-            <button id="closeAddBtn"
+    <div id="addModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" role="document">
+            <button id="closeAddBtn" aria-label="Close"
                 style="position:absolute; right:12px; top:12px; border:0; background:transparent; font-size:1.25rem;">✕</button>
             <h3 style="margin-top:0;">Add Discount — {{ $customer->name }} ({{ $year }})</h3>
 
             @if (is_null($baseRate))
                 <div
                     style="background:#fffbeb; border:1px solid #fcefc7; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <strong>Note:</strong> This view doesn't have a base rate available. Add `base_rate` to the form data
-                    when calling from the Renewal screen so the system can enforce the 100% limit.
+                    <strong>Note:</strong> This view doesn't have a base rate available. Add <code>base_rate</code> to the
+                    form data when calling from the Renewal screen so the system can enforce the 100% limit.
                 </div>
             @endif
 
-            <form id="discountForm" action="{{ route('seasonal.customer.discounts.store') }}" method="POST">
+            <form id="discountForm" action="{{ route('seasonal.customer.discounts.store') }}" method="POST" novalidate>
                 @csrf
                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
                 <input type="hidden" name="season_year" value="{{ $year }}">
-                <div style="display:flex; gap:12px; margin-bottom:8px;">
+                {{-- ensure is_active always posted --}}
+                <input type="hidden" name="is_active" value="0">
+
+                <div style="display:flex; gap:12px; margin-bottom:8px;" class="form-row">
                     <div style="flex:1;">
                         <label class="muted-small">Type</label>
-                        <select id="discountType" name="discount_type" class="form-control" required
+                        <select id="discountType" name="discount_type" required
                             style="width:100%; padding:8px; border-radius:6px;">
                             <option value="percentage">Percentage (%)</option>
                             <option value="dollar">Dollar ($)</option>
@@ -268,8 +554,9 @@
 
                     <div style="width:160px;">
                         <label class="muted-small">Value</label>
-                        <input id="discountValue" name="discount_value" type="number" step="0.01" min="0"
-                            required placeholder="10 or 50" style="width:100%; padding:8px; border-radius:6px;">
+                        <input id="discountValue" name="discount_value" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                            type="number" step="0.01" min="0" required placeholder="10 or 50"
+                            style="width:100%; padding:8px; border-radius:6px;">
                     </div>
                 </div>
 
@@ -286,8 +573,9 @@
 
                     <div style="flex:1;">
                         <label class="muted-small">Base rate (required for client preview)</label>
-                        <input id="baseRateInput" name="base_rate" type="number" step="0.01" min="0"
-                            value="{{ $baseRate ?? '' }}" style="width:100%; padding:8px; border-radius:6px;">
+                        <input id="baseRateInput" name="base_rate" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                            type="number" step="0.01" min="0" value="{{ $baseRate ?? '' }}"
+                            style="width:100%; padding:8px; border-radius:6px;">
                     </div>
                 </div>
 
@@ -312,6 +600,7 @@
             const openBtn = document.getElementById('openAddBtn');
             const closeBtn = document.getElementById('closeAddBtn');
             const modal = document.getElementById('addModal');
+            const modalInner = modal ? modal.querySelector('.modal-inner') : null;
 
             const discountType = document.getElementById('discountType');
             const discountValue = document.getElementById('discountValue');
@@ -328,13 +617,12 @@
             const removedTotalClient = document.getElementById('removedTotalClient');
             const finalTotalClient = document.getElementById('finalTotalClient');
 
-            // collect existing discounts from table into an array (active ones only)
             function collectExistingDiscounts() {
                 const rows = document.querySelectorAll('#discountList tr[data-id]');
                 const arr = [];
                 rows.forEach(r => {
-                    const active = r.querySelector('td:nth-child(4)').innerText.toLowerCase().includes(
-                        'active');
+                    const activeText = r.querySelector('td:nth-child(4)').innerText || '';
+                    const active = activeText.toLowerCase().includes('active');
                     if (!active) return;
                     arr.push({
                         discount_type: r.getAttribute('data-type'),
@@ -346,11 +634,9 @@
                 return arr;
             }
 
-            // apply same logic as server: percents multiplicative first then dollars
             function applyDiscounts(baseRate, discounts) {
                 let remaining = baseRate;
                 let percentRemoved = 0;
-                // percent discounts
                 discounts.filter(d => d.discount_type === 'percentage').forEach(d => {
                     const p = Number(d.discount_value) || 0;
                     if (p <= 0) return;
@@ -358,7 +644,6 @@
                     remaining -= removed;
                     percentRemoved += removed;
                 });
-                // dollar discounts
                 let dollarRemoved = 0;
                 discounts.filter(d => d.discount_type === 'dollar').forEach(d => {
                     const a = Number(d.discount_value) || 0;
@@ -376,22 +661,20 @@
                 };
             }
 
-            // preview function builds a combined discounts array from existing + new, and calculates
             function recalcPreview() {
                 const baseRateVal = parseFloat(baseRateInput.value);
                 if (isNaN(baseRateVal) || baseRateVal <= 0) {
-                    previewWarning.innerText = 'Enter a valid base rate to preview and validate discounts.';
+                    if (previewWarning) previewWarning.innerText =
+                        'Enter a valid base rate to preview and validate discounts.';
                     previewRemoved.innerText = '0.00';
                     previewFinal.innerText = '—';
                     previewFinalValue.innerText = '—';
-                    submitBtn.disabled = false; // allow submit for manual back-end handling if desired
+                    submitBtn.disabled = false;
                     return;
                 }
 
-                // existing active discounts
                 const existing = collectExistingDiscounts();
 
-                // new discount
                 const newd = {
                     discount_type: discountType.value,
                     discount_value: parseFloat(discountValue.value) || 0,
@@ -399,10 +682,9 @@
                     is_active: discountActive.checked
                 };
 
-                // combine but ensure percent discounts are applied first
                 const combined = existing.concat([newd]);
 
-
+                // compute percentRemoved then dollarRequested
                 let remaining = baseRateVal;
                 let percentRemoved = 0;
                 combined.filter(d => d.discount_type === 'percentage').forEach(d => {
@@ -422,55 +704,58 @@
                 previewFinal.innerText = applied.final.toFixed(2);
                 previewFinalValue.innerText = applied.final.toFixed(2);
 
-                // update right-side totals in the main screen as well
                 if (removedTotalClient) removedTotalClient.innerText = applied.total_removed.toFixed(2);
                 if (finalTotalClient) finalTotalClient.innerText = applied.final.toFixed(2);
 
-                // warnings / validation
                 if (totalRequestedRemoval > baseRateVal + 0.0001) {
-                    previewWarning.innerHTML =
+                    if (previewWarning) previewWarning.innerHTML =
                         '<span style="color:#991b1b; font-weight:600;">Error:</span> Combined discounts exceed 100% of the base rate — adjust values.';
                     submitBtn.disabled = true;
                 } else if (totalRequestedRemoval >= baseRateVal * 0.9) {
-                    previewWarning.innerHTML =
+                    if (previewWarning) previewWarning.innerHTML =
                         '<span style="color:#b45309; font-weight:600;">Warning:</span> You are approaching the 100% discount limit.';
                     submitBtn.disabled = false;
                 } else {
-                    previewWarning.innerText = '';
+                    if (previewWarning) previewWarning.innerText = '';
                     submitBtn.disabled = false;
                 }
             }
 
-            // wire events
             openBtn.addEventListener('click', () => {
                 modal.style.display = 'flex';
-                // set default preview values
+                modal.setAttribute('aria-hidden', 'false');
                 setTimeout(() => {
+                    if (discountType) discountType.focus();
                     recalcPreview();
-                }, 40);
+                }, 50);
             });
-            closeBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-            previewBtn.addEventListener('click', recalcPreview);
 
-            // recalc as user types
+            const closeModal = () => {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                openBtn.focus();
+            };
+            closeBtn.addEventListener('click', closeModal);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    closeModal();
+                }
+            });
+
             [discountType, discountValue, discountDescription, discountActive, baseRateInput].forEach(el => {
+                if (!el) return;
                 el.addEventListener('input', recalcPreview);
                 el.addEventListener('change', recalcPreview);
             });
 
-            // safe-close when clicking backdrop
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.style.display = 'none';
+                if (e.target === modal) closeModal();
             });
 
-            // initial populate of totals on page load (use server-applied values if present)
             document.addEventListener('DOMContentLoaded', () => {
-                // if server passed applied totals, they will already be rendered. Ensure numbers normalized.
                 if (previewFinalValue && previewFinalValue.innerText.trim() === '—') {
-                    previewFinalValue.innerText =
-                        '{{ is_null($baseRate) ? '—' : number_format($applied['final'] ?? $baseRate, 2) }}';
+                    previewFinalValue.innerText = {!! json_encode(is_null($baseRate) ? '—' : number_format($applied['final'] ?? $baseRate, 2)) !!};
                 }
             });
         })();
