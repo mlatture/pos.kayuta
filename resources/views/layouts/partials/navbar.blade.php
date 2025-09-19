@@ -321,18 +321,18 @@
                         </a></li>
                 @endHasPermission
 
-{{-- 
-                @hasPermission(config('constants.role_modules.reservation_mgmt.value'))
-                    <li><a class="dropdown-item" href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id] ) }}">
+
+                {{-- @hasPermission(config('constants.role_modules.process_seasonals.value'))
+                    <li><a class="dropdown-item" href="{{ route('seasonal.customer.discounts.index', ['admin' => auth()->user()->id] ) }}">
                             <i class="fa-solid fa-table-columns"></i> <span>
-                                {{ config('constants.role_modules.reservation_mgmt.name') }}
+                                {{ config('constants.role_modules.process_seasonals.name') }}
                             </span>
                         </a></li>
-                @endHasPermission
+                @endHasPermission --}}
 
 
 
- --}}
+
 
             </ul>
         </li>

@@ -25,9 +25,19 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        $modules = config('constants.role_modules', []);
+
+
+
         Gate::define('reservation-management', function ($user) {
             return $user->hasPermission('reservation_mgmt');
         });
+
+        foreach ($modules as $key => $mod) {
+            Gate::define($mod['value'], function ($user) use ($mod) {
+                return $user->hasPermission($mod['value']);
+            });
+        }
         //
     }
 }

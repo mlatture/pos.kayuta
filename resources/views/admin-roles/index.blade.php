@@ -52,13 +52,18 @@
                                                     $moduleAccess = is_string($adminRole->module_access)
                                                         ? json_decode($adminRole->module_access, true)
                                                         : $adminRole->module_access;
+
                                                 @endphp
+
 
                                                 @if (!empty($moduleAccess) && is_array($moduleAccess))
                                                     @foreach ($moduleAccess as $access)
-                                                        <span
-                                                            class="badge badge-info">{{ ucwords(str_replace('_', ' ', $access)) }}</span>
+                                                        <span class="badge badge-info">
+                                                            {{ ucwords(str_replace('_', ' ', e($access))) }}
+                                                        </span>
                                                     @endforeach
+                                                @elseif ($adminRole->id === 1)
+                                                    <span class="text-muted">Access All</span>
                                                 @else
                                                     <span class="text-muted">No Access</span>
                                                 @endif
@@ -78,7 +83,8 @@
                                             </td>
                                             <td>
                                                 <span
-                                                    class="created_at">{{ $adminRole->created_at->format('m/d/Y') }}</span>
+                                                    class="created_at">{{ $adminRole->created_at ? $adminRole->created_at->format('m/d/Y') : '' }}</span>
+
                                             </td>
                                         </tr>
                                     @endforeach

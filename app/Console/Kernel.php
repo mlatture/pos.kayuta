@@ -36,6 +36,14 @@ class Kernel extends ConsoleKernel
             })
             ->everyMinutes();
 
+        $schedule->call(function () {
+            $year = Carbon::now()->year; 
+            Artisan::call('seasonal:copy-to-next-year', [
+                'year' => $year,
+            ]);
+        })->yearlyOn(11, 1, '02:00'); // e.g. every Nov 1st, 2AM
+
+
     }
 
     /**

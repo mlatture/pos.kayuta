@@ -45,6 +45,8 @@ use App\Http\Controllers\ReceiptController as NewReceiptController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ReservationManagementController;
 
+use App\Http\Controllers\SeasonalCustomerDiscountController;
+
 use App\Models\Order;
 use App\Http\Controllers\ApiChannelController;
 
@@ -57,6 +59,15 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+
+        Route::prefix('seasonal-customer-discounts')->group(function () {
+            Route::get('{customer}', [SeasonalCustomerDiscountController::class, 'index'])->name('seasonal.customer.discounts.index');
+            Route::post('store', [SeasonalCustomerDiscountController::class, 'store'])->name('seasonal.customer.discounts.store');
+            Route::post('{id}/deactivate', [SeasonalCustomerDiscountController::class, 'deactivate'])->name('seasonal.customer.discounts.deactivate');
+            Route::delete('{id}/destroy', [SeasonalCustomerDiscountController::class, 'destroy'])->name('seasonal.customer.discounts.destroy');
+        }) ; 
+
+
         // Reservation Management
         Route::prefix('manage/reservation')
             ->middleware('can:reservation-management')

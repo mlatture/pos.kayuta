@@ -10,7 +10,9 @@ class AdminRoleController extends Controller
 {
     public function index()
     {
-        $data['adminRoles'] = AdminRole::whereNotIn('id', [1])->where('is_pos', true)->get();
+        $data['adminRoles'] = AdminRole::where('is_pos', true)->get();
+
+        
         return view('admin-roles.index', $data);
     }
 

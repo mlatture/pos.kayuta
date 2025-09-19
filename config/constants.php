@@ -258,6 +258,11 @@ return [
         'reservation_mgmt' => [
             'name' => 'Check Availability',
             'value' => 'reservation_mgmt'
-        ]
+        ],
+
+        'process_seasonals' => [
+            'name' => 'Process Seasonals',
+            'value' => 'process_seasonals'
+        ],
     ]
 ];

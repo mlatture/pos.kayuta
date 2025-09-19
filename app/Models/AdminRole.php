@@ -16,7 +16,7 @@ class AdminRole extends Model
 
     public function getModuleAccessAttribute($value)
     {
-        return is_string($value) ? json_decode($value, true) : ($value ?? []);
+        return is_string($value) ? json_decode($value, true) : $value ?? [];
     }
 
     private function getDashboardModule()
@@ -27,5 +27,16 @@ class AdminRole extends Model
     public function admins(): HasMany
     {
         return $this->hasMany(Admin::class, 'admin_role_id');
+    }
+
+    public function getModuleAccessArrayAttribute(): array
+    {
+        return (array) $this->module_access;
+    }
+
+    public function hasPermission(string $permissionValue): bool
+    {
+        $access = $this->module_access_array;
+        return in_array($permissionValue, $access, true);
     }
 }

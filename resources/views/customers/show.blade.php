@@ -10,6 +10,10 @@
                 <h3 class="mb-0">{{ $customer->f_name }} {{ $customer->l_name }}</h3>
 
                 <div class="ms-auto">
+                    <a href="{{ route('seasonal.customer.discounts.index', $customer->id) }}" class="btn btn-light ms-auto "
+                        style="color:black !important"> 
+                        <i class="fa-solid fa-chalkboard-user"></i> Process Seasonal Discounts
+                    </a>
                     <a href="{{ route('admin.customers.account', $customer->id) }}" class="btn btn-light ms-auto "
                         style="color:black !important">
                         <i class="fas fa-user"></i> View Account
