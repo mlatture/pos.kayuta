@@ -56,9 +56,9 @@ class CopySeasonalDiscounts extends Command
             ]);
 
             SystemLog::create([
-                'action' => 'discount_copied',
+                'transaction_type' => 'discount_copied',
                 'user_id' => auth()->id() ?? null, // if run manually, might be null
-                'details' => "Discount for customer {$discount->customer_id} copied from {$year} to {$nextYear}",
+                'description' => "Discount for customer {$discount->customer_id} copied from {$year} to {$nextYear}",
                 'created_at' => Carbon::now(),
             ]);
 
