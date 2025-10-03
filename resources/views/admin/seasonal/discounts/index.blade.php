@@ -379,7 +379,7 @@
         <div class="card p-2">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <div>
-                    <h2 style="margin:0;">Discounts — {{ $customer->name }}</h2>
+                    <h2 style="margin:0;">Discounts — {{ $customer->f_name . ' ' . $customer->l_name }}</h2>
                     <div class="muted small">Season: <strong>{{ $year }}</strong></div>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
@@ -390,38 +390,7 @@
                 </div>
             </div>
 
-            {{-- Summary --}}
-            <div class="card p-2" style="margin-bottom:12px; ">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div class="muted-small">Base rate</div>
-                        <div style="font-size:1.5rem; font-weight:600;">
-                            @if (!is_null($baseRate))
-                                ${{ number_format($baseRate, 2) }}
-                            @else
-                                <span class="muted">— base rate not provided</span>
-                            @endif
-                        </div>
-                    </div>
 
-                    {{-- computed totals --}}
-                    <div style="text-align:right;">
-                        <div class="muted-small">Total discounts removed</div>
-                        <div style="font-weight:600;">
-                            $<span id="removedTotalClient">{{ number_format($applied['total_removed'] ?? 0, 2) }}</span>
-                        </div>
-
-                        <div class="muted-small" style="margin-top:6px;">Final</div>
-                        <div style="font-weight:700; font-size:1.25rem;">
-                            @if (!is_null($baseRate))
-                                $<span id="finalTotalClient">{{ number_format($applied['final'] ?? $baseRate, 2) }}</span>
-                            @else
-                                <span class="muted">Provide base rate in renewal screen</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div>
                 <table aria-hidden="false">
@@ -461,20 +430,35 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <form action="{{ route('seasonal.customer.discounts.deactivate', $d->id) }}"
-                                        method="POST" style="display:inline;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-ghost"
-                                            title="Deactivate this discount">Deactivate</button>
-                                    </form>
+                                    @if ($d->is_active)
+                                        <form action="{{ route('seasonal.customer.discounts.deactivate', $d->id) }}"
+                                            method="POST" style="display:inline;"
+                                            onsubmit="return confirm('Are you sure you want to deactivate this discount?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-ghost"
+                                                title="Deactivate this discount">Deactivate</button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('seasonal.customer.discounts.activate', $d->id) }}"
+                                            method="POST" style="display:inline;"
+                                            onsubmit="return confirm('Are you sure you want to activate this discount?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-primary"
+                                                title="Activate this discount">Activate</button>
+                                        </form>
+                                    @endif
 
+                                    {{-- Delete --}}
                                     <form action="{{ route('seasonal.customer.discounts.destroy', $d->id) }}"
-                                        method="POST" style="display:inline;">
-                                        @csrf @method('DELETE')
+                                        method="POST" style="display:inline;"
+                                        onsubmit="return confirm('Are you sure you want to permanently delete this discount?');">
+                                        @csrf
+                                        @method('DELETE')
                                         <button type="submit" class="btn"
                                             style="background:#ef4444;color:#fff;border-radius:6px;margin-left:8px;">Delete</button>
                                     </form>
                                 </td>
+
                             </tr>
                         @empty
                             <tr>
@@ -496,16 +480,7 @@
                 then dollar discounts are subtracted. The system prevents combined discounts from exceeding the base rate.
             </p>
 
-            <div style="margin-top:12px;">
-                <div class="muted-small">Live preview</div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <div style="flex:1;">
-                        <div class="muted-small">New discount preview</div>
-                        <div style="font-weight:700; font-size:1.15rem;">Final: $<span id="previewFinalValue">—</span></div>
-                        <div class="muted-small" id="previewWarning" style="margin-top:8px;"></div>
-                    </div>
-                </div>
-            </div>
+
 
             <hr style="margin:12px 0; border-color:#f3f4f6;" />
 
@@ -530,8 +505,7 @@
             @if (is_null($baseRate))
                 <div
                     style="background:#fffbeb; border:1px solid #fcefc7; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <strong>Note:</strong> This view doesn't have a base rate available. Add <code>base_rate</code> to the
-                    form data when calling from the Renewal screen so the system can enforce the 100% limit.
+                    <strong>Note:</strong> This view doesn't have a base rate available.
                 </div>
             @endif
 
@@ -571,21 +545,17 @@
                         <input id="discountActive" name="is_active" value="1" type="checkbox" checked> Active
                     </label>
 
-                    <div style="flex:1;">
+                    {{-- <div style="flex:1;">
                         <label class="muted-small">Base rate (required for client preview)</label>
                         <input id="baseRateInput" name="base_rate" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                             type="number" step="0.01" min="0" value="{{ $baseRate ?? '' }}"
                             style="width:100%; padding:8px; border-radius:6px;">
-                    </div>
+                    </div> --}}
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    <div class="muted-small small">
-                        <div>Preview removed: <strong>$<span id="previewRemoved">0.00</span></strong></div>
-                        <div>Final total: <strong>$<span id="previewFinal">0.00</span></strong></div>
-                    </div>
 
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; align-items: flex-end; gap:8px;">
                         <button id="previewBtn" type="button" class="btn btn-ghost d-none">Recalculate</button>
                         <button id="submitBtn" type="submit" class="btn btn-primary">Save discount</button>
                     </div>
@@ -606,7 +576,6 @@
             const discountValue = document.getElementById('discountValue');
             const discountDescription = document.getElementById('discountDescription');
             const discountActive = document.getElementById('discountActive');
-            const baseRateInput = document.getElementById('baseRateInput');
             const previewBtn = document.getElementById('previewBtn');
             const submitBtn = document.getElementById('submitBtn');
 
@@ -634,47 +603,29 @@
                 return arr;
             }
 
-            function applyDiscounts(baseRate, discounts) {
-                let remaining = baseRate;
+            function applyDiscounts(discounts) {
                 let percentRemoved = 0;
+                let dollarRemoved = 0;
+
                 discounts.filter(d => d.discount_type === 'percentage').forEach(d => {
                     const p = Number(d.discount_value) || 0;
-                    if (p <= 0) return;
-                    const removed = remaining * (p / 100.0);
-                    remaining -= removed;
-                    percentRemoved += removed;
+                    if (p > 0) percentRemoved += p;
                 });
-                let dollarRemoved = 0;
+
                 discounts.filter(d => d.discount_type === 'dollar').forEach(d => {
                     const a = Number(d.discount_value) || 0;
-                    if (a <= 0) return;
-                    const toRemove = Math.min(a, remaining);
-                    remaining -= toRemove;
-                    dollarRemoved += toRemove;
+                    if (a > 0) dollarRemoved += a;
                 });
 
                 return {
-                    final: Math.max(0, Math.round((remaining + Number.EPSILON) * 100) / 100),
-                    percent_removed: Math.round((percentRemoved + Number.EPSILON) * 100) / 100,
-                    dollar_removed: Math.round((dollarRemoved + Number.EPSILON) * 100) / 100,
-                    total_removed: Math.round(((percentRemoved + dollarRemoved) + Number.EPSILON) * 100) / 100
+                    percent_removed: percentRemoved,
+                    dollar_removed: dollarRemoved,
+                    total_removed: percentRemoved + dollarRemoved,
+                    final: null,
                 };
             }
 
             function recalcPreview() {
-                const baseRateVal = parseFloat(baseRateInput.value);
-                if (isNaN(baseRateVal) || baseRateVal <= 0) {
-                    if (previewWarning) previewWarning.innerText =
-                        'Enter a valid base rate to preview and validate discounts.';
-                    previewRemoved.innerText = '0.00';
-                    previewFinal.innerText = '—';
-                    previewFinalValue.innerText = '—';
-                    submitBtn.disabled = false;
-                    return;
-                }
-
-                const existing = collectExistingDiscounts();
-
                 const newd = {
                     discount_type: discountType.value,
                     discount_value: parseFloat(discountValue.value) || 0,
@@ -682,44 +633,16 @@
                     is_active: discountActive.checked
                 };
 
-                const combined = existing.concat([newd]);
-
-                // compute percentRemoved then dollarRequested
-                let remaining = baseRateVal;
-                let percentRemoved = 0;
-                combined.filter(d => d.discount_type === 'percentage').forEach(d => {
-                    const p = Number(d.discount_value) || 0;
-                    if (p <= 0) return;
-                    const removed = remaining * (p / 100.0);
-                    remaining -= removed;
-                    percentRemoved += removed;
-                });
-                const dollarRequested = combined.filter(d => d.discount_type === 'dollar').reduce((s, d) => s + (Number(
-                    d.discount_value) || 0), 0);
-                const totalRequestedRemoval = Math.round((percentRemoved + dollarRequested) * 100) / 100;
-
-                const applied = applyDiscounts(baseRateVal, combined);
+                const applied = applyDiscounts([newd]);
 
                 previewRemoved.innerText = applied.total_removed.toFixed(2);
-                previewFinal.innerText = applied.final.toFixed(2);
-                previewFinalValue.innerText = applied.final.toFixed(2);
+                previewFinal.innerText = '—';
+                previewFinalValue.innerText = '—';
+                previewWarning.innerText = '';
 
-                if (removedTotalClient) removedTotalClient.innerText = applied.total_removed.toFixed(2);
-                if (finalTotalClient) finalTotalClient.innerText = applied.final.toFixed(2);
-
-                if (totalRequestedRemoval > baseRateVal + 0.0001) {
-                    if (previewWarning) previewWarning.innerHTML =
-                        '<span style="color:#991b1b; font-weight:600;">Error:</span> Combined discounts exceed 100% of the base rate — adjust values.';
-                    submitBtn.disabled = true;
-                } else if (totalRequestedRemoval >= baseRateVal * 0.9) {
-                    if (previewWarning) previewWarning.innerHTML =
-                        '<span style="color:#b45309; font-weight:600;">Warning:</span> You are approaching the 100% discount limit.';
-                    submitBtn.disabled = false;
-                } else {
-                    if (previewWarning) previewWarning.innerText = '';
-                    submitBtn.disabled = false;
-                }
+                submitBtn.disabled = false;
             }
+
 
             openBtn.addEventListener('click', () => {
                 modal.style.display = 'flex';

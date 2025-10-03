@@ -54,6 +54,11 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title">Edit Seasonal Rates</h5>
+
+                                        <div id="seasonalDiscounts" class="ms-3"></div>
+
+
+
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
@@ -234,8 +239,39 @@
                 selectedUserId = $(this).data('id');
                 const selected = $(this).data('selected').toString().split(',');
                 $('#seasonalSelect').val(selected).trigger('change');
+
+                $('#seasonalDiscounts').html('');
+
+                let discounts = $(this).data('discounts');
+
+                // Ensure JSON string is parsed if needed
+                if (typeof discounts === 'string') {
+                    try {
+                        discounts = JSON.parse(discounts);
+                    } catch (e) {
+                        discounts = [];
+                    }
+                }
+
+                if (discounts && discounts.length > 0) {
+                    discounts.forEach(d => {
+                        let type = (d.type && d.type.value) ? d.type.value : d.type;
+                        let symbol = '';
+
+                        if (type === 'percentage') symbol = '%';
+                        else if (type === 'dollar') symbol = '$';
+
+                        $('#seasonalDiscounts').append(
+                            `<span class="badge bg-info text-dark mx-1">${type}: ${symbol}${d.value}</span>`
+                        );
+                    });
+                } else {
+                    $('#seasonalDiscounts').append('<span class="text-muted">No discounts</span>');
+                }
+
                 $('#seasonalModal').modal('show');
             });
+
 
             $.ajaxSetup({
                 headers: {

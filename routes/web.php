@@ -64,6 +64,7 @@ Route::prefix('admin')
             Route::get('{customer}', [SeasonalCustomerDiscountController::class, 'index'])->name('seasonal.customer.discounts.index');
             Route::post('store', [SeasonalCustomerDiscountController::class, 'store'])->name('seasonal.customer.discounts.store');
             Route::post('{id}/deactivate', [SeasonalCustomerDiscountController::class, 'deactivate'])->name('seasonal.customer.discounts.deactivate');
+            Route::post('{id}/activate', [SeasonalCustomerDiscountController::class, 'activate'])->name('seasonal.customer.discounts.activate');
             Route::delete('{id}/destroy', [SeasonalCustomerDiscountController::class, 'destroy'])->name('seasonal.customer.discounts.destroy');
         }) ; 
 

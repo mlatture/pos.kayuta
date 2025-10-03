@@ -8,6 +8,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Reservation;
+use App\Models\SeasonalCustomerDiscount;
+
 use Illuminate\Support\Facades\DB;
 use App\Models\CardOnFile;
 use App\Models\Receipt;
@@ -62,13 +64,54 @@ class CustomerController extends Controller
                     $rates = SeasonalRate::whereIn('id', $seasonalIds)->pluck('rate_name')->toArray();
                     $names = implode(', ', $rates);
 
-                    return '<button class="btn btn-sm btn-outline-primary edit-seasonal" data-id="' . $customer->id . '" data-selected="' . implode(',', $seasonalIds) . '">' . ($names ?: 'None') . '</button>';
-                })
+                    $discounts = SeasonalCustomerDiscount::where('customer_id', $customer->id)
+                        ->where('is_active', true)
+                        ->get()
+                        ->map(function ($d) {
+                            return [
+                                'type' => $d->discount_type,
+                                'value' => $d->discount_value,
+                            ];
+                        });
 
-                ->editColumn('created_at', function ($customer) {
-                    return Carbon::parse($customer->created_at)->format('F j, Y'); // Format date
+                    $discountBadges = '';
+                    foreach ($discounts as $discount) {
+                        $type = $discount['type'];
+                        $val = $discount['value'];
+
+                        // Choose symbol for quick indicator
+                        $symbol = '';
+                        if ($type === 'percentage') {
+                            $symbol = '%';
+                        } elseif ($type === 'dollar') {
+                            $symbol = '$';
+                        }
+
+                        $discountBadges .= '<span class="badge bg-info text-dark mx-1">' . ucfirst($type) . ': ' . $symbol . $val . '</span>';
+                    }
+
+                    return '<button class="btn btn-sm btn-outline-primary edit-seasonal"
+                        data-id="' .
+                        $customer->id .
+                        '"
+                        data-selected="' .
+                        implode(',', $seasonalIds) .
+                        '"
+                        data-discounts=\'' .
+                        json_encode($discounts) .
+                        '\'>
+                        ' .
+                        ($names ?: 'None') .
+                        '
+                    </button>
+                     <div class="mt-1">' .
+                        $discountBadges .
+                        '</div>';
                 })
-                ->rawColumns(['actions', 'seasonal_names']) // Ensures buttons render properly
+                ->editColumn('created_at', function ($customer) {
+                    return Carbon::parse($customer->created_at)->format('F j, Y');
+                })
+                ->rawColumns(['actions', 'seasonal_names'])
                 ->make(true);
         }
 

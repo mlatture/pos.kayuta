@@ -38,20 +38,19 @@ class SeasonalCustomerDiscountController extends Controller
             'description' => 'required|string|max:1000',
             'is_active' => 'required|boolean',
             'season_year' => ['required', 'digits:4', 'integer', 'min:1901', 'max:2155'],
-            'base_rate' => 'required|numeric|min:0.01',
         ]);
 
         $customerId = (int) $data['customer_id'];
         $year = (int) $data['season_year'];
-        $baseRate = (float) $data['base_rate'];
+        // $baseRate = (float) $data['base_rate'];
 
-        if ($baseRate <= 0.0) {
-            return back()
-                ->withErrors([
-                    'base_rate' => 'Base rate must be greater than zero. Discounts only apply to paid seasonal rates.',
-                ])
-                ->withInput();
-        }
+        // if ($baseRate <= 0.0) {
+        //     return back()
+        //         ->withErrors([
+        //             'base_rate' => 'Base rate must be greater than zero. Discounts only apply to paid seasonal rates.',
+        //         ])
+        //         ->withInput();
+        // }
 
         if ($data['discount_type'] === 'percentage') {
             $p = (float) $data['discount_value'];
@@ -85,23 +84,23 @@ class SeasonalCustomerDiscountController extends Controller
             ],
         ]);
 
-        $previewTotals = SeasonalDiscountService::previewTotals($baseRate, $preview);
+        // $previewTotals = SeasonalDiscountService::previewTotals($baseRate, $preview);
 
-        if (!isset($previewTotals['total_requested_removal'])) {
-            return back()
-                ->withErrors([
-                    'internal' => 'Could not calculate preview totals. Please contact the system administrator.',
-                ])
-                ->withInput();
-        }
+        // if (!isset($previewTotals['total_requested_removal'])) {
+        //     return back()
+        //         ->withErrors([
+        //             'internal' => 'Could not calculate preview totals. Please contact the system administrator.',
+        //         ])
+        //         ->withInput();
+        // }
 
-        if ($previewTotals['total_requested_removal'] - $baseRate > 0.0001) {
-            return back()
-                ->withErrors([
-                    'discount_value' => 'Combined discounts would exceed 100% of the base rate. Adjust values.',
-                ])
-                ->withInput();
-        }
+        // if ($previewTotals['total_requested_removal'] - $baseRate > 0.0001) {
+        //     return back()
+        //         ->withErrors([
+        //             'discount_value' => 'Combined discounts would exceed 100% of the base rate. Adjust values.',
+        //         ])
+        //         ->withInput();
+        // }
 
         try {
             $data['created_by'] = Auth::id();
@@ -118,8 +117,8 @@ class SeasonalCustomerDiscountController extends Controller
                 'is_active' => $discount->is_active,
                 'created_by' => $discount->created_by,
                 'created_at' => $discount->created_at->toDateTimeString(),
-                'base_rate' => $baseRate,
-                'preview_totals' => $previewTotals,
+                // 'base_rate' => $baseRate,
+                // 'preview_totals' => $previewTotals,
             ];
 
             SystemLog::create([
@@ -147,7 +146,7 @@ class SeasonalCustomerDiscountController extends Controller
                 'user_id' => Auth::id(),
                 'description' => 'Failed to create seasonal discount for customer_id ' . $customerId . ' for ' . $year . ': ' . $e->getMessage(),
                 'before' => null,
-                'after' => json_encode(['attempt' => $data, 'preview' => $previewTotals ?? null]),
+                'after' => json_encode(['attempt' => $data ?? null]),
             ]);
 
             \Log::error('Seasonal discount create failed: ' . $e->getMessage(), ['exception' => $e]);
@@ -173,6 +172,24 @@ class SeasonalCustomerDiscountController extends Controller
 
             'before' => json_encode(['discount_id' => $d->id, 'customer_id' => $d->customer_id, 'season_year' => $d->season_year, 'is_active' => true]),
             'after' => json_encode(['discount_id' => $d->id, 'customer_id' => $d->customer_id, 'season_year' => $d->season_year, 'is_active' => false]),
+        ]);
+
+        return redirect()->back()->with('success', 'Discount deactivated successfully.');
+    }
+
+    public function activate($id)
+    {
+        $d = SeasonalCustomerDiscount::findOrFail($id);
+        $d->is_active = true;
+        $d->save();
+
+        SystemLog::create([
+            'transaction_type' => 'seasonal_customer_discount.deactivated',
+            'description' => 'Deactivated seasonal discount ID #' . $d->id . ' for ' . $d->season_year,
+            'user_id' => Auth()->user()->id,
+
+            'before' => json_encode(['discount_id' => $d->id, 'customer_id' => $d->customer_id, 'season_year' => $d->season_year, 'is_active' => false]),
+            'after' => json_encode(['discount_id' => $d->id, 'customer_id' => $d->customer_id, 'season_year' => $d->season_year, 'is_active' => true]),
         ]);
 
         return redirect()->back()->with('success', 'Discount deactivated successfully.');
