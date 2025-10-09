@@ -48,38 +48,74 @@
                         <input type="text" class="form-control" id="dateRange" placeholder="MM/DD/YYYY — MM/DD/YYYY"
                             autocomplete="off" required>
                         <!-- Hidden fields kept for server compatibility -->
-                        <input type="hidden" name="checkin" id="checkinHidden">
-                        <input type="hidden" name="checkout" id="checkoutHidden">
+                        <input type="hidden" name="start_date" id="checkinHidden">
+                        <input type="hidden" name="end_date" id="checkoutHidden">
                         <div class="form-text">Select check-in and check-out (MM/DD/YYYY).</div>
                     </div>
 
                     {{-- Rig length --}}
                     <div class="col-6 col-md-2">
                         <label class="form-label">Rig length (ft)</label>
-                        <input type="number" class="form-control" name="rig_length" min="0" max="100"
+                        <input type="number" class="form-control" name="riglength" min="0" max="100"
                             placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
                         <div class="form-text">Matches site max length</div>
                     </div>
 
                     {{-- Site class --}}
-                    <div class="col-6 col-md-3">
+                    <div class="col-2 col-mb-2">
                         <label class="form-label">Site Class</label>
-                        <select class="form-select" name="site_id">
+                        <select class="form-select" name="siteclass">
                             <option value="">Any</option>
-                            @foreach ($siteTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->sitename }}</option>
+                            @foreach ($siteClasses as $classes)
+                                <option value="{{ $classes->siteclass }}">{{ $classes->siteclass }}</option>
                             @endforeach
+
+                        </select>
+                        <div class="form-text">---</div>
+                    </div>
+                    {{-- Site hookups --}}
+                    <div class="col-2 col-mb-2">
+                        <label class="form-label">Site Hookups</label>
+                        <select class="form-select" name="hookup">
+                            <option value="">Any</option>
+                            @foreach ($siteHookups as $hookup)
+                                <option value="{{ $hookup->sitehookup }}">{{ $hookup->sitehookup }}</option>
+                            @endforeach
+
+                        </select>
+                        <div class="form-text">---</div>
+                    </div>
+
+
+                    {{-- View String --}}
+                    <div class="col-2 col-mb-2">
+                        <label class="form-label">View </label>
+                        <select class="form-select" name="view">
+                            <option value="units">units</option>
+                            <option value="aggregated">aggregated</option>
+
+
                         </select>
                     </div>
 
-                    {{-- Include offline --}}
-                    <div class="col-12 col-md-2 d-flex align-items-center">
+                    <div class="col-auto me-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="pets_ok" name="pets_ok"
+                                checked>
+                            <div class="form-text">With Pets</div>
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="1" id="include_offline"
                                 name="include_offline" checked>
-                            <label class="form-check-label ms-2" for="include_offline">Include offline</label>
+                            <div class="form-text">Include Offline</div>
                         </div>
                     </div>
+
+
+
 
                     <div class="col-12">
                         <div class="d-flex gap-2">
@@ -115,15 +151,15 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0" id="resultsTable">
-                                <thead class="table-light">
+                                <thead class="table-light" id="resultsHead">
                                     <tr>
-                                        <th>Site</th>
-                                        <th>Type</th>
+                                        <th>Site ID</th>
+                                        <th>Name</th>
+                                        <th>Class</th>
+                                        <th>Hookup</th>
+                                        <th class="text-center">Max Length</th>
                                         <th>Status</th>
-                                        <th class="text-end">Nightly</th>
-                                        <th class="text-end">Taxes</th>
-                                        <th class="text-end">Total</th>
-                                        <th></th>
+                                        <th>Price Quote</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -133,6 +169,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                 </div>
@@ -251,43 +288,42 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <script>
-        flatpickr("#dateRange", {
-            mode: "range",
-            dateFormat: "m/d/Y",
-            allowInput: true,
-            onClose: function(selectedDates, dateStr, instance) {
-                if (selectedDates && selectedDates.length === 2) {
-                    const d1 = selectedDates[0];
-                    const d2 = selectedDates[1];
+        if (!document.querySelector('#dateRange')._flatpickr) {
+            flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "m/d/Y",
+                allowInput: true,
+                onClose: function(selectedDates, dateStr, instance) {
+                    if (selectedDates && selectedDates.length === 2) {
+                        const d1 = selectedDates[0];
+                        const d2 = selectedDates[1];
 
-                    const toIso = d =>
-                        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        const toIso = d =>
+                            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-                    document.getElementById('checkinHidden').value = toIso(d1);
-                    document.getElementById('checkoutHidden').value = toIso(d2);
+                        document.getElementById('checkinHidden').value = toIso(d1);
+                        document.getElementById('checkoutHidden').value = toIso(d2);
 
-                    document.getElementById('dateRange').value =
-                        `${instance.formatDate(d1, 'm/d/Y')} — ${instance.formatDate(d2, 'm/d/Y')}`;
+                        document.getElementById('dateRange').value =
+                            `${instance.formatDate(d1, 'm/d/Y')} — ${instance.formatDate(d2, 'm/d/Y')}`;
 
-                    if (window.__availabilityTrigger) window.__availabilityTrigger();
-                } else {
-                    document.getElementById('checkinHidden').value = '';
-                    document.getElementById('checkoutHidden').value = '';
-                    if (window.__availabilityTrigger) window.__availabilityTrigger();
+                        if (window.__availabilityTrigger) window.__availabilityTrigger();
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        (function() {
-            const ci = document.getElementById('checkinHidden').value;
-            const co = document.getElementById('checkoutHidden').value;
-            if (ci && co) {
-                const d1 = new Date(ci + 'T00:00:00');
-                const d2 = new Date(co + 'T00:00:00');
-                const fp = document.querySelector('#dateRange')._flatpickr;
-                if (fp) fp.setDate([d1, d2], true);
-            }
-        })();
+
+        // (function() {
+        //     const ci = document.getElementById('checkinHidden').value;
+        //     const co = document.getElementById('checkoutHidden').value;
+        //     if (ci && co) {
+        //         const d1 = new Date(ci + 'T00:00:00');
+        //         const d2 = new Date(co + 'T00:00:00');
+        //         const fp = document.querySelector('#dateRange')._flatpickr;
+        //         if (fp) fp.setDate([d1, d2], true);
+        //     }
+        // })();
     </script>
 
     <script>
@@ -415,15 +451,30 @@
 
             function runAvailabilitySearch() {
 
-                const ci = $form.find('[name="checkin"]').val();
-                const co = $form.find('[name="checkout"]').val();
+                let ci = $form.find('[name="start_date"]').val();
+                let co = $form.find('[name="end_date"]').val();
+
+                const fp = document.querySelector('#dateRange')._flatpickr;
+                if ((!ci || !co) && fp && fp.selectedDates.length === 2) {
+                    const [d1, d2] = fp.selectedDates;
+                    const toIso = d =>
+                        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    ci = toIso(d1);
+                    co = toIso(d2);
+                    $form.find('[name="start_date"]').val(ci);
+                    $form.find('[name="end_date"]').val(co);
+                }
 
                 if (!ci || !co) {
                     $tbody.html(
-                        `<tr><td colspan="7" class="text-center py-4 text-muted">Enter check-in and check-out to see availability…</td></tr>`
+                        `<tr><td colspan="7" class="text-center py-4 text-muted">
+                            Enter check-in and check-out to see availability…
+                        </td></tr>`
                     );
                     return;
                 }
+
+
 
                 if (_inFlightAvailability && _inFlightAvailability.readyState !== 4) {
                     try {
@@ -435,73 +486,130 @@
                 setLoading(true);
                 $tbody.html(`<tr><td colspan="7" class="text-center py-4">Searching…</td></tr>`);
 
-                _inFlightAvailability = $.post(routes.availability, $form.serialize())
+
+                _inFlightAvailability = $.get(routes.availability, $form.serialize())
                     .done(res => {
                         const $badge = $('#nightsBadge');
+                        const data = res?.response || {};
+                        const results = data.results || {};
 
-                        let nights = null;
-                        const raw = res && Array.isArray(res.items) && res.items[0]?.pricing?.nights;
 
-                        if (raw !== undefined && raw !== null && raw !== '') {
-                            const n = Number(raw);
-                            if (Number.isFinite(n)) nights = n;
+                        console.log('Availability results:', data.view);
+                        let nights = 1;
+                        const ci = $('[name=start_date]').val();
+                        const co = $('[name=end_date]').val();
+
+                        if (ci && co) {
+                            const d1 = new Date(ci + 'T00:00:00');
+                            const d2 = new Date(co + 'T00:00:00');
+                            nights = Math.max(1, Math.floor((d2 - d1) / 86400000));
+                        }
+                        $badge.text(`${nights} ${nights === 1 ? 'night' : 'nights'}`).removeClass('d-none');
+
+                        let headHtml = '';
+                        let rows = '';
+
+                        if (data.view === 'units' && Array.isArray(results?.units)) {
+                            headHtml = `
+                            <tr>
+                                <th>Site ID</th>
+                                <th>Name</th>
+                                <th>Class</th>
+                                <th>Hookup</th>
+                                <th class="text-center">Max Length</th>
+                                <th>Status</th>
+                                <th>Price Quote</th>
+                            </tr>
+                        `;
+
+                            rows = results.units.map(unit => {
+                                const status = unit?.status?.available ?
+                                    '<span class="badge bg-success">Available</span>' :
+                                    unit?.status?.reserved ?
+                                    '<span class="badge bg-warning text-dark">Reserved</span>' :
+                                    unit?.status?.in_cart ?
+                                    '<span class="badge bg-info text-dark">In Cart</span>' :
+                                    '<span class="badge bg-secondary">Unavailable</span>';
+
+                                return `
+                            <tr>
+                                <td><strong>${unit?.site_id ?? ''}</strong></td>
+                                <td>${unit?.name ?? ''}</td>
+                                <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
+                                <td>${unit?.hookup ?? ''}</td>
+                                <td class="text-center">${unit?.maxlength ?? ''}</td>
+                                <td>${status}</td>
+                                <td class="text-end">
+                                    ${unit?.price_quote
+                                        ? `
+                                            <div class="small">
+                                                <div><strong>Total:</strong> $${unit.price_quote.total ?? '0'}</div>
+                                                <div><strong>Avg/Night:</strong> $${unit.price_quote.avg_nightly ?? '0'}</div>
+                                                <div><strong>Nights:</strong> ${nights ?? 1}</div>
+                                            </div>
+                                        `
+                                        : '<span class="text-muted small">—</span>'
+                                    }
+                                </td>
+                            </tr>
+                        `;
+                            }).join('');
+                        } else if (data.view === 'aggregated' && Array.isArray(results.buckets)) {
+                            headHtml = `
+                            <tr>
+                                <th>Class</th>
+                                <th>Hookup</th>
+                                <th class="text-center">Available</th>
+                                <th class="text-center">Held</th>
+                                <th class="text-center">Reserved</th>
+                                <th class="text-center">Total</th>
+                                <th>Price Options</th>
+                            </tr>
+                        `;
+
+                            rows = results.buckets.map(bucket => `
+                            <tr>
+                                <td>${bucket?.class ? bucket.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
+                                <td>${bucket.hookup || ''}</td>
+                                <td class="text-center">${bucket.available ?? 0}</td>
+                                <td class="text-center">${bucket.held ?? 0}</td>
+                                <td class="text-center">${bucket.reserved ?? 0}</td>
+                                <td class="text-center">${bucket.total ?? 0}</td>
+                                <td class="text-end">
+                                    ${
+                                        Array.isArray(bucket.price_options) && bucket.price_options.length
+                                            ? bucket.price_options
+                                                .map(po => `
+                                                    <div class="small border-bottom pb-1 mb-1">
+                                                        <div><strong>Total:</strong> $${po.total ?? '0'}</div>
+                                                        <div><strong>Avg/Night:</strong> $${nights ?? '0'}</div>
+                                                    </div>
+                                                `)
+                                                .join('')
+                                            : '<span class="text-muted small">—</span>'
+                                    }
+                                </td>
+                            </tr>
+                        `).join('');
                         }
 
-                        if (nights === null) {
-                            const ci = $('[name=checkin]').val();
-                            const co = $('[name=checkout]').val();
-                            if (ci && co) {
-                                const d1 = new Date(ci + 'T00:00:00');
-                                const d2 = new Date(co + 'T00:00:00');
-                                const diff = Math.floor((d2 - d1) / 86400000);
-                                nights = Math.max(1, diff);
-                            }
-                        }
+                        $('#resultsHead').html(headHtml);
 
-                        if (Number.isFinite(nights)) {
-                            $badge.text(`${nights} ${nights === 1 ? 'night' : 'nights'}`).removeClass('d-none');
-                        } else {
-                            $badge.addClass('d-none').text('');
-                        }
 
-                        if (!res.ok || !res.items?.length) {
+                        if (!rows) {
                             $tbody.html(
                                 `<tr><td colspan="7" class="text-center py-4 text-muted">No availability found.</td></tr>`
                             );
-                            return;
+                        } else {
+                            $tbody.html(rows);
                         }
 
-                        const rows = res.items.map(item => {
-                            const status = item.available_online ?
-                                '<span class="badge badge-online">Online</span>' :
-                                '<span class="badge badge-offline">Offline</span>';
-                            const fits = item.fits ? ' <span class="badge badge-fits">Fits</span>' : '';
-
-                            const addBtn = cart.customer_id ?
-                                `<button class="btn btn-sm btn-outline-primary btnAdd">Add to Cart</button>` :
-                                `<span class="d-inline-block" data-role="add-wrap" data-bs-toggle="tooltip" data-bs-title="Select a customer first">
-                                    <button class="btn btn-sm btn-outline-secondary" disabled aria-disabled="true">Add to Cart</button>
-                                </span>`;
-
-                            return `
-                            <tr data-id="${item.id}" data-json='${JSON.stringify(item)}'>
-                                <td><strong>${item.name}</strong></td>
-                                <td>${item.type_display ?? ''}</td>
-                                <td>${status}${fits}</td>
-                                <td class="text-end">${fmt(item.pricing?.nightly)}</td>
-                                <td class="text-end">${fmt(item.pricing?.tax)}</td>
-                                <td class="text-end">${fmt(item.pricing?.total)}</td>
-                                <td class="text-end">${addBtn}</td>
-                            </tr>`;
-                        }).join('');
-
-                        $tbody.html(rows);
 
                         initTooltips();
 
-                        if (!cart.customer_id) {
-                            $('#selectCustomerHint').removeClass('d-none');
-                        }
+                        // if (!cart.customer_id) {
+                        //     $('#selectCustomerHint').removeClass('d-none');
+                        // }
                     })
                     .fail(xhr => {
                         if (xhr && xhr.statusText === 'abort') {
@@ -517,7 +625,18 @@
                     });
             }
 
-            window.__availabilityTrigger = debounce(() => runAvailabilitySearch(), 300);
+            window.__availabilityTrigger = debounce(() => {
+                const ci = $('[name="start_date"]').val();
+                const co = $('[name="end_date"]').val();
+                if (!ci || !co) return;
+
+                runAvailabilitySearch();
+            }, 300);
+
+            // $('#dateRange').on('change', window.__availabilityTrigger);
+            $('[name="riglength"], [name="siteclass"], [name="hookup"], [name="view"], [name="pets_ok"], [name="include_offline"]')
+                .on('change', window.__availabilityTrigger);
+
 
             $form.off('submit.avail').on('submit.avail', function(e) {
                 e.preventDefault();
@@ -532,8 +651,8 @@
                 runAvailabilitySearch(), 250));
 
             setTimeout(() => {
-                const ci = $form.find('[name="checkin"]').val();
-                const co = $form.find('[name="checkout"]').val();
+                const ci = $form.find('[name="start_date"]').val();
+                const co = $form.find('[name="end_date"]').val();
                 const rl = $form.find('[name="rig_length"]').val();
                 const sid = $form.find('[name="site_id"]').val();
                 if ((ci && co) || rl || sid) runAvailabilitySearch();
@@ -551,8 +670,8 @@
                 const $tr = $(this).closest('tr');
                 const item = JSON.parse($tr.attr('data-json'));
 
-                const checkin = $form.find('[name="checkin"]').val();
-                const checkout = $form.find('[name="checkout"]').val();
+                const checkin = $form.find('[name="start_date"]').val();
+                const checkout = $form.find('[name="end_date"]').val();
 
                 const payload = {
                     _token: $('input[name=_token]').val(),
