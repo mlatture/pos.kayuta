@@ -12,12 +12,16 @@ use App\Models\TaxType;
 use App\Models\CartReservation;
 use App\Models\Receipt;
 use App\Models\GiftCard;
+use App\Models\SiteHookup;
 
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 
 use App\Services\CardKnoxService;
 
@@ -26,98 +30,58 @@ class ReservationManagementController extends Controller
     public function index()
     {
         $siteTypes = Site::select('id', 'sitename')->orderBy('sitename')->get();
-        return view('reservations.management.index', compact('siteTypes'));
+
+        $siteClasses = SiteClass::orderBy('siteclass')->get();
+        $siteHookups = SiteHookup::orderBy('orderby')->get();
+        return view('reservations.management.index', compact('siteTypes', 'siteClasses', 'siteHookups'));
     }
 
     public function availability(Request $request)
     {
         $data = $request->validate([
-            'checkin' => ['required', 'date', 'before:checkout'],
-            'checkout' => ['required', 'date', 'after:checkin'],
-            'rig_length' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'site_id' => ['nullable', 'integer', 'exists:sites,id'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after:checkin'],
+            'view' => ['nullable', 'string'],
+            'siteclass' => ['nullable', 'string'],
+            'hookup' => ['nullable', 'string'],
+            'amps' => ['nullable', 'integer'],
+            'pets_ok' => ['sometimes', 'boolean'],
             'include_offline' => ['sometimes', 'boolean'],
+            'riglength' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'with_prices' => ['sometimes', 'boolean'],
         ]);
 
-        $includeOffline = (bool) ($data['include_offline'] ?? false);
-        $rigLen = isset($data['rig_length']) && $data['rig_length'] !== '' ? (int) $data['rig_length'] : null;
+        $data['with_prices'] = true;
 
-        $query = Site::query()
-            ->with(['siteClass:id,siteclass,showriglength,showhookup,showrigtype,tax,orderby', 'siteHookup:id,sitehookup,orderby'])
-            ->when($data['site_id'] ?? null, fn($q, $siteId) => $q->where('id', $siteId))
-            ->when(!$includeOffline, fn($q) => $q->where('availableonline', 1))
-            ->when($rigLen !== null, function ($q) use ($rigLen) {
-                $q->whereNotNull('maxlength')->where('maxlength', '!=', '')->where('maxlength', '>=', $rigLen);
-            })
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY')
+            ])->get(env('BOOK_API_URL') . 'v1/availability', $data);
 
-            ->orderBy('orderby');
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
 
-        if (empty($data['site_id'])) {
-            $query->limit(50);
+            Log::error('Availability API error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Failed to fetch availability data from booking service.',
+                'status' => $response->status(),
+            ], $response->status());
+        } catch (\Exception $e) {
+            Log::error('Availability proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Error connecting to booking service.',
+            ], 500);
         }
 
-        $sites = $query->get(['id', 'sitename', 'siteclass', 'hookup', 'availableonline', 'maxlength', 'ratetier', 'tax', 'tax_type_id', 'orderby']);
-
-        $checkin = Carbon::parse($data['checkin']);
-        $checkout = Carbon::parse($data['checkout']);
-        $nights = max(1, $checkin->diffInDays($checkout));
-
-        $items = $sites
-            ->map(function (Site $site) use ($rigLen, $nights) {
-                $rawType = (string) $site->siteclass;
-                $typeDisplay = preg_replace('/_+/', ' ', $rawType);
-                $isRv = (bool) optional($site->siteClass)->showriglength || stripos($rawType, 'rv') !== false;
-
-                $fits = null;
-                if ($isRv && isset($rigLen)) {
-                    $fits = is_null($site->maxlength) || (int) $site->maxlength >= (int) $rigLen;
-                } else {
-                    $fits = null;
-                }
-
-                $nightly = 0.0;
-                if (!empty($site->ratetier)) {
-                    $tier = RateTier::where('tier', $site->ratetier)->first();
-                    if ($tier) {
-                        $nightly = (float) ($tier->flatrate ?? 0);
-                    }
-                }
-
-                $getTax = TaxType::find($site->tax_type_id);
-                $raw = $getTax->tax ?? 0;
-                $taxPercent = (float) preg_replace('/[^0-9.\-]/', '', (string) $raw);
-                $taxRate = $taxPercent > 1 ? $taxPercent / 100.0 : $taxPercent;
-                $taxRate = max(0.0, min(1.0, $taxRate));
-
-                $subtotal = round(($nightly ?? 0) * $nights, 2);
-
-                $discount = 0.0;
-                $taxableBase = max(0.0, $subtotal - $discount);
-
-                $taxAmt = round($taxableBase * $taxRate, 2);
-                $total = round($taxableBase + $taxAmt, 2);
-
-                return [
-                    'id' => (int) $site->id,
-                    'name' => $site->sitename,
-                    'type' => $site->siteclass,
-                    'type_display' => $typeDisplay,
-                    'is_rv' => $isRv,
-                    'hookup' => optional($site->siteHookup)->sitehookup,
-                    'available_online' => (bool) $site->availableonline,
-                    // return fits as true/false when rig length provided, otherwise null
-                    'fits' => $fits,
-                    'maxlength' => $site->maxlength !== null ? (int) $site->maxlength : null,
-                    'pricing' => [
-                        'nightly' => $nightly,
-                        'nights' => $nights,
-                        'subtotal' => $subtotal,
-                        'tax' => $taxAmt,
-                        'total' => $total,
-                    ],
-                ];
-            })
-            ->values();
 
         return response()->json(['ok' => true, 'items' => $items]);
     }

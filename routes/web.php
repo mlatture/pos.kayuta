@@ -74,7 +74,7 @@ Route::prefix('admin')
             ->middleware('can:reservation-management')
             ->group(function () {
                 Route::get('{admin}', [ReservationManagementController::class, 'index'])->name('admin.reservation_mgmt.index');
-                Route::post('{admin}/availability', [ReservationManagementController::class, 'availability'])->name('admin.reservation_mgmt.availability');
+                Route::get('{admin}/availability', [ReservationManagementController::class, 'availability'])->name('admin.reservation_mgmt.availability');
                 Route::post('{admin}/cart/add', [ReservationManagementController::class, 'addToCart'])->name('admin.reservation_mgmt.cart.add');
 
                 Route::get('{admin}/cart', [ReservationManagementController::class, 'cart'])->name('admin.reservation_mgmt.cart');
