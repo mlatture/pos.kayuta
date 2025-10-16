@@ -22,7 +22,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-
 use App\Services\CardKnoxService;
 
 class ReservationManagementController extends Controller
@@ -38,9 +37,9 @@ class ReservationManagementController extends Controller
 
     public function availability(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after:checkin'],
+            'end_date' => ['required', 'date', 'after:start_date'],
             'view' => ['nullable', 'string'],
             'siteclass' => ['nullable', 'string'],
             'hookup' => ['nullable', 'string'],
@@ -51,16 +50,24 @@ class ReservationManagementController extends Controller
             'with_prices' => ['sometimes', 'boolean'],
         ]);
 
-        $data['with_prices'] = true;
+        // Always include with_prices
+        $validated['with_prices'] = true;
+
+        // Filter out null or empty values to avoid confusing the API
+        $query = collect($validated)
+            ->filter(function ($value) {
+                return !is_null($value) && $value !== '';
+            })
+            ->toArray();
 
         try {
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY')
-            ])->get(env('BOOK_API_URL') . 'v1/availability', $data);
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->get(env('BOOK_API_URL') . 'v1/availability', $query);
 
             if ($response->successful()) {
-                return response()->json($response->json(), 200);
+                return response()->json($response->json());
             }
 
             Log::error('Availability API error', [
@@ -68,99 +75,116 @@ class ReservationManagementController extends Controller
                 'body' => $response->body(),
             ]);
 
-            return response()->json([
-                'ok' => false,
-                'message' => 'Failed to fetch availability data from booking service.',
-                'status' => $response->status(),
-            ], $response->status());
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Failed to fetch availability data.',
+                    'status' => $response->status(),
+                ],
+                $response->status(),
+            );
         } catch (\Exception $e) {
             Log::error('Availability proxy failed', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'ok' => false,
-                'message' => 'Error connecting to booking service.',
-            ], 500);
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
         }
-
-
-        return response()->json(['ok' => true, 'items' => $items]);
     }
 
-    public function addToCart(Request $request)
+    public function cart(Request $request)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->post(env('BOOK_API_URL') . 'v1/cart', [
+                'utm_source' => 'admin_panel',
+                'utm_medium' => 'internal',
+                'utm_campaign' => 'reservation_management',
+            ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
+
+            Log::error('Cart API error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Failed to create cart from booking service.',
+                    'status' => $response->status(),
+                ],
+                $response->status(),
+            );
+        } catch (\Exception $e) {
+            Log::error('Cart API proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
+
+    public function cartItems(Request $request)
     {
         $data = $request->validate([
-            'site_id' => ['required', 'integer', 'exists:sites,id'],
-            'checkin' => ['required', 'date'],
-            'checkout' => ['required', 'date', 'after:checkin'],
-            'price_breakdown' => ['required', 'array'],
-            'customer_id' => ['nullable', 'integer', 'exists:users,id'],
-            'cart_token' => ['nullable', 'string', 'max:64'], // <-- add this
+            'cart_id' => ['required', 'integer'],
+            'token' => ['required', 'string'],
+            'site_id' => ['required', 'string'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after:start_date'],
+            'occupants' => ['nullable', 'array'],
+            'add_ons' => ['nullable', 'array'],
+            'price_quote_id' => ['nullable', 'string'],
         ]);
 
-        $site = Site::findOrFail($data['site_id']);
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->post(env('BOOK_API_URL') . 'v1/cart/items', $data);
 
-        $checkin = Carbon::parse($data['checkin'])->startOfDay();
-        $checkout = Carbon::parse($data['checkout'])->startOfDay();
-        $nights = max(1, $checkin->diffInDays($checkout));
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
 
-        $pb = $data['price_breakdown'];
-        $nightly = (float) ($pb['nightly'] ?? 0);
-        $subtotal = (float) ($pb['subtotal'] ?? $nightly * $nights);
-        $taxAmt = (float) ($pb['tax'] ?? 0);
-        $discounts = (float) ($pb['discounts'] ?? 0);
-        $total = (float) ($pb['total'] ?? max(0, $subtotal - $discounts + $taxAmt));
+            Log::error('Cart items API error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
 
-        $taxable = max(0.0, $subtotal - $discounts);
-        $taxRate = $taxable > 0 ? round($taxAmt / $taxable, 4) : 0.0;
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Failed to add items to cart.',
+                    'status' => $response->status(),
+                ],
+                $response->status(),
+            );
+        } catch (\Exception $e) {
+            Log::error('Cart items proxy failed', ['error' => $e->getMessage()]);
 
-        $cartToken = $data['cart_token'] ?? null;
-        if (!$cartToken) {
-            do {
-                $cartToken = 'CN' . mt_rand(100000, 999999);
-            } while (CartReservation::where('cartid', $cartToken)->exists());
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
         }
-
-        $customerId = $data['customer_id'] ?? null;
-        $customer = $customerId ? User::find($customerId) : null;
-
-        CartReservation::create([
-            'cid' => $checkin,
-            'cod' => $checkout,
-            'customernumber' => $customerId ? (string) $customerId : null,
-            'email' => $customer->email ?? null,
-            'hookups' => $site->hookup,
-            'cartid' => $cartToken,
-            'siteid' => (string) $site->siteid,
-            'base' => $nightly,
-            'rateadjustment' => 0.0,
-            'extracharge' => 0.0,
-            'riglength' => (int) $request->input('rig_length', 0) ?: null,
-            'sitelock' => '0',
-            'nights' => $nights,
-            'siteclass' => $site->siteclass,
-            'taxrate' => $taxRate,
-            'totaltax' => $taxAmt,
-            'description' => 'Admin cart add',
-            'events' => null,
-            'subtotal' => $subtotal,
-            'total' => $total,
-            'rid' => null,
-            'discountcode' => null,
-            'discount' => $discounts,
-            'holduntil' => now()->addMinutes(15),
-            'number_of_guests' => (int) $request->input('number_of_guests', 0) ?: null,
-            'addon_id' => null,
-            'base_price' => null,
-            'product_id' => null,
-        ]);
-
-        $count = CartReservation::where('cartid', $cartToken)->count();
-
-        return response()->json([
-            'ok' => true,
-            'count' => $count,
-            'cart_token' => $cartToken,
-        ]);
     }
 
     public function customerSearch(Request $request)
