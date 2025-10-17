@@ -96,6 +96,7 @@
 
 
                         </select>
+                        <div class="form-text">---</div>
                     </div>
 
                     <div class="col-auto me-2">
@@ -148,7 +149,7 @@
                         <span class="badge rounded-pill bg-secondary d-none" id="nightsBadge">0 nights</span>
                     </div>
 
-                    <div class="card-body p-0">
+                    <div class="card-body p-0" style="height: 50vh; overflow-y: auto; position: relative;">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0" id="resultsTable">
                                 <thead class="table-light" id="resultsHead">
@@ -282,6 +283,37 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Occupants Modal -->
+    <div class="modal fade" id="addOccupantsModal" tabindex="-1" aria-labelledby="addOccupantsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addOccupantsModalLabel">Add Occupants</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="occupantsForm">
+                        <div class="mb-3">
+                            <label for="adultsInput" class="form-label">Adults</label>
+                            <input type="number" class="form-control" id="adultsInput" name="adults" value="0"
+                                min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="childrenInput" class="form-label">Children</label>
+                            <input type="number" class="form-control" id="childrenInput" name="children"
+                                value="0" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnConfirmOccupants" class="btn btn-primary">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('js')
@@ -327,10 +359,17 @@
     </script>
 
     <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         (function() {
             const routes = {
                 availability: @json(route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id])),
                 cartAdd: @json(route('admin.reservation_mgmt.cart.add', ['admin' => auth()->user()->id])),
+                cartItems: @json(route('admin.reservation_mgmt.cart.item.cartItems', ['admin' => auth()->user()->id])),
                 cartGet: @json(route('admin.reservation_mgmt.cart', ['admin' => auth()->user()->id])),
                 custSearch: @json(route('admin.reservation_mgmt.customer.search', ['admin' => auth()->user()->id])),
                 custCreate: @json(route('admin.reservation_mgmt.customer.create', ['admin' => auth()->user()->id])),
@@ -522,38 +561,71 @@
                             </tr>
                         `;
 
-                            rows = results.units.map(unit => {
-                                const status = unit?.status?.available ?
-                                    '<span class="badge bg-success">Available</span>' :
-                                    unit?.status?.reserved ?
-                                    '<span class="badge bg-warning text-dark">Reserved</span>' :
-                                    unit?.status?.in_cart ?
-                                    '<span class="badge bg-info text-dark">In Cart</span>' :
-                                    '<span class="badge bg-secondary">Unavailable</span>';
+                            const selectedClass = $('[name="siteclass"]').val();
+                            const selectedHookup = $('[name="hookup"]').val();
 
-                                return `
-                            <tr>
-                                <td><strong>${unit?.site_id ?? ''}</strong></td>
-                                <td>${unit?.name ?? ''}</td>
-                                <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
-                                <td>${unit?.hookup ?? ''}</td>
-                                <td class="text-center">${unit?.maxlength ?? ''}</td>
-                                <td>${status}</td>
-                                <td class="text-end">
-                                    ${unit?.price_quote
-                                        ? `
-                                            <div class="small">
-                                                <div><strong>Total:</strong> $${unit.price_quote.total ?? '0'}</div>
-                                                <div><strong>Avg/Night:</strong> $${unit.price_quote.avg_nightly ?? '0'}</div>
-                                                <div><strong>Nights:</strong> ${nights ?? 1}</div>
-                                            </div>
+
+
+                            rows = results.units
+                                .filter(unit => {
+                                    const matchClass = selectedClass === '---' || !selectedClass ?
+                                        true :
+                                        unit.class?.toLowerCase() === selectedClass.toLowerCase();
+
+                                    const matchHookup = selectedHookup === '---' || !selectedHookup ?
+                                        true :
+                                        unit.hookup?.toLowerCase() === selectedHookup.toLowerCase();
+
+                                    return matchClass && matchHookup;
+                                })
+
+                                .map(unit => {
+                                    const isAvailable = unit?.status?.available;
+                                    const statusBadge = isAvailable ?
+                                        '<span class="badge bg-success">Available</span>' :
+                                        unit?.status?.reserved ?
+                                        '<span class="badge bg-warning text-dark">Reserved</span>' :
+                                        unit?.status?.in_cart ?
+                                        '<span class="badge bg-info text-dark">In Cart</span>' :
+                                        '<span class="badge bg-secondary">Unavailable</span>';
+
+                                    const priceHtml = unit?.price_quote ?
                                         `
-                                        : '<span class="text-muted small">—</span>'
-                                    }
-                                </td>
-                            </tr>
-                        `;
-                            }).join('');
+                                        <div class="small">
+                                            <div><strong>Total:</strong> $${Number(unit.price_quote.total ?? 0).toFixed(2)}</div>
+                                            <div><strong>Avg/Night:</strong> $${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</div>
+                                        </div>
+                                    ` :
+                                        '<span class="text-muted small">—</span>';
+
+                                    const addToCartBtn = isAvailable ?
+                                        `
+                                        <button class="btn btn-sm btn-primary addToCartBtn mt-1"
+                                            data-site-id="${unit.site_id}"
+                                            data-total="${unit.price_quote?.total ?? 0}"
+                                            data-price-quote-id="${unit.price_quote.price_quote_id ?? ''}"
+                                            data-start="${ci}"
+                                            data-end="${co}"
+                                            >
+                                            <i class="bi bi-cart-plus"></i> Add to Cart
+                                        </button>
+                                    ` :
+                                        '';
+
+                                    return `
+                                    <tr>
+                                        <td><strong>${unit?.site_id ?? ''}</strong></td>
+                                        <td>${unit?.name ?? ''}</td>
+                                        <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
+                                        <td>${unit?.hookup ?? ''}</td>
+                                        <td class="text-center">${unit?.maxlength ?? ''}</td>
+                                        <td>${statusBadge}</td>
+                                        <td class="text-end">
+                                            ${priceHtml}
+                                            ${addToCartBtn}
+                                        </td>
+                                    </tr>`;
+                                }).join('');
                         } else if (data.view === 'aggregated' && Array.isArray(results.buckets)) {
                             headHtml = `
                             <tr>
@@ -580,11 +652,11 @@
                                         Array.isArray(bucket.price_options) && bucket.price_options.length
                                             ? bucket.price_options
                                                 .map(po => `
-                                                    <div class="small border-bottom pb-1 mb-1">
-                                                        <div><strong>Total:</strong> $${po.total ?? '0'}</div>
-                                                        <div><strong>Avg/Night:</strong> $${nights ?? '0'}</div>
-                                                    </div>
-                                                `)
+                                                                            <div class="small border-bottom pb-1 mb-1">
+                                                                                <div><strong>Total:</strong> $${po.total ?? '0'}</div>
+                                                                                <div><strong>Avg/Night:</strong> $${nights ?? '0'}</div>
+                                                                            </div>
+                                                                        `)
                                                 .join('')
                                             : '<span class="text-muted small">—</span>'
                                     }
@@ -623,6 +695,111 @@
                         setLoading(false);
                         _inFlightAvailability = null;
                     });
+            }
+
+            let selectedBtn = null; // track which button was clicked
+
+            $(document).on('click', '.addToCartBtn', function() {
+                selectedBtn = $(this); // store clicked button
+                $('#addOccupantsModal').modal('show'); // show modal
+            });
+
+            $('#btnConfirmOccupants').on('click', async function() {
+                if (!selectedBtn) return;
+
+                const adults = parseInt($('#adultsInput').val());
+                const children = parseInt($('#childrenInput').val());
+
+                $('#addOccupantsModal').modal('hide');
+                selectedBtn.prop('disabled', true)
+                    .html(
+                        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...'
+                    );
+
+                try {
+                    let cartId = sessionStorage.getItem('cart_id');
+                    let cartToken = sessionStorage.getItem('cart_token');
+
+                    if (!cartId || !cartToken) {
+                        const cartRes = await $.ajax({
+                            url: routes.cartAdd,
+                            method: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({})
+                        });
+
+                        cartId = cartRes.data.cart_id;
+                        cartToken = cartRes.data.cart_token;
+                        sessionStorage.setItem('cart_id', cartId);
+                        sessionStorage.setItem('cart_token', cartToken);
+                    }
+
+                    const payload = {
+                        cart_id: parseInt(cartId),
+                        token: cartToken,
+                        site_id: selectedBtn.data('site-id'),
+                        start_date: selectedBtn.data('start'),
+                        end_date: selectedBtn.data('end'),
+                        occupants: {
+                            adults,
+                            children
+                        },
+                        add_ons: [],
+                        price_quote_id: selectedBtn.data('price-quote-id') || null,
+                    };
+
+                    const itemRes = await $.ajax({
+                        url: routes.cartItems,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(payload)
+                    });
+
+                    if (itemRes) {
+                        updateCartSidebar(itemRes.cart);
+                        selectedBtn.html('<i class="bi bi-check-lg"></i> Added');
+                    } else {
+                        console.error(itemRes);
+                        selectedBtn.html('Error');
+                    }
+
+                } catch (err) {
+                    console.error('Error adding to cart', err);
+                    selectedBtn.html('Retry');
+                } finally {
+                    selectedBtn.prop('disabled', false);
+                    selectedBtn = null;
+                }
+            });
+
+
+            function updateCartSidebar(cartData) {
+                const body = $('#cartBody');
+                const count = $('#cartCount');
+
+                if (!cartData || !cartData.items || !cartData.items.length === 0) {
+                    body.html('<p class="text-muted mb-0">No items yet.</p>');
+                    count.text(0);
+                    $('#btnCheckout').prop('disabled', true);
+                    return
+                }
+
+                const itemsHtml = cartData.items.map(item => `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div><strong>${item.site_id}</strong></div>
+                        <div class="text-muted small">
+                            ${item.start_date} → ${item.end_date}
+                        </div>
+                        <div class="text-end small">
+                            $${item.price?.subtotal ?? 0}
+                        </div>
+                    </div>
+                `).join('');
+
+                body.html(itemsHtml);
+                count.text(cartData.items.length);
+                $('#btnCheckout').prop('disabled', !cartData.customer_id);
+
             }
 
             window.__availabilityTrigger = debounce(() => {
