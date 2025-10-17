@@ -103,9 +103,9 @@ class ReservationManagementController extends Controller
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/cart', [
-                'utm_source' => 'admin_panel',
-                'utm_medium' => 'internal',
-                'utm_campaign' => 'reservation_management',
+                'utm_source' => 'rvparkhq',
+                'utm_medium' => 'referral',
+                'utm_campaign' => 'summer',
             ]);
 
             if ($response->successful()) {
