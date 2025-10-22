@@ -44,14 +44,16 @@ class ReservationManagementController extends Controller
             'siteclass' => ['nullable', 'string'],
             'hookup' => ['nullable', 'string'],
             'amps' => ['nullable', 'integer'],
-            'pets_ok' => ['sometimes', 'boolean'],
+            // 'pets_ok' => ['sometimes', 'boolean'],
             'include_offline' => ['sometimes', 'boolean'],
+            'include_reserved' => ['sometimes', 'boolean'],
             'riglength' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'with_prices' => ['sometimes', 'boolean'],
         ]);
 
         // Always include with_prices
         $validated['with_prices'] = true;
+        $validated['view'] = 'units';
 
         // Filter out null or empty values to avoid confusing the API
         $query = collect($validated)
@@ -66,23 +68,109 @@ class ReservationManagementController extends Controller
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->get(env('BOOK_API_URL') . 'v1/availability', $query);
 
-            if ($response->successful()) {
-                return response()->json($response->json());
+            if (!$response->successful()) {
+                Log::error('Availability API error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return response()->json(
+                    [
+                        'ok' => false,
+                        'message' => 'Failed to fetch availability from booking service.',
+                        'status' => $response->status(),
+                    ],
+                    $response->status(),
+                );
             }
 
-            Log::error('Availability API error', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+            $data = $response->json();
+            if (isset($data['response']['results']['units'])) {
+                $units = collect($data['response']['results']['units']);
 
-            return response()->json(
-                [
-                    'ok' => false,
-                    'message' => 'Failed to fetch availability data.',
-                    'status' => $response->status(),
-                ],
-                $response->status(),
-            );
+                /**
+                 *  Rig length filtering
+                 */
+                if (!empty($validated['riglength'])) {
+                    $riglength = (float) ($data['response']['filters']['rig_length'] ?? $validated['riglength']);
+
+                    $units = $units
+                        ->filter(function ($unit) use ($riglength) {
+                            $max = isset($unit['maxlength']) ? (float) $unit['maxlength'] : null;
+                            return $max !== null && $max <= $riglength;
+                        })
+                        ->values();
+
+                    Log::info('Filtered availability by rig length', [
+                        'riglength' => $riglength,
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                /**
+                 *  Site class filtering
+                 */
+                if (!empty($validated['siteclass'])) {
+                    $siteclass = str_replace(' ', '_', trim($validated['siteclass']));
+
+                    $units = $units
+                        ->filter(function ($unit) use ($siteclass) {
+                            $classes = isset($unit['class']) ? collect(explode(',', $unit['class']))->map(fn($c) => str_replace(' ', '_', trim($c))) : collect();
+
+                            return $classes->contains($siteclass);
+                        })
+                        ->values();
+
+                    Log::info('Filtered availability by site class', [
+                        'siteclass' => $siteclass,
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                /**
+                 *  Hookup filtering
+                 */
+                if (!empty($validated['hookup'])) {
+                    $hookup = str_replace(' ', '_', trim($validated['hookup']));
+
+                    $units = $units
+                        ->filter(function ($unit) use ($hookup) {
+                            $unitHookup = isset($unit['hookup']) ? str_replace(' ', '_', trim($unit['hookup'])) : null;
+                            return $unitHookup === $hookup;
+                        })
+                        ->values();
+
+                    Log::info('Filtered availability by hookup', [
+                        'hookup' => $hookup,
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                /**
+                 * Reserved Site Filtering
+                 * Default behavior: exclude reserved sites unless include_reserved = true
+                 */
+                $includeReserved = $validated['include_reserved'] ?? false;
+
+                if (!$includeReserved) {
+                    $units = $units
+                        ->filter(function ($unit) {
+                            $isReserved = isset($unit['status']['reserved']) ? (bool) $unit['status']['reserved'] : false;
+                            return !$isReserved;
+                        })
+                        ->values();
+
+                    Log::info('Filtered availability to exclude reserved sites', [
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                //  Update the response
+                $data['response']['results']['units'] = $units->values()->all();
+                $data['response']['results']['total_units'] = $units->count();
+            }
+
+            return response()->json($data);
         } catch (\Exception $e) {
             Log::error('Availability proxy failed', ['error' => $e->getMessage()]);
 
@@ -149,6 +237,7 @@ class ReservationManagementController extends Controller
             'occupants' => ['nullable', 'array'],
             'add_ons' => ['nullable', 'array'],
             'price_quote_id' => ['nullable', 'string'],
+            'site_lock_fee' => 'nullable', 'numeric', 'min:0',
         ]);
 
         try {

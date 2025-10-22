@@ -58,7 +58,7 @@
                         <label class="form-label">Rig length (ft)</label>
                         <input type="number" class="form-control" name="riglength" min="0" max="100"
                             placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
-                        <div class="form-text">Matches site max length</div>
+                        <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit.</div>
                     </div>
 
                     {{-- Site class --}}
@@ -71,7 +71,7 @@
                             @endforeach
 
                         </select>
-                        <div class="form-text">---</div>
+                        <div class="form-text">Select Type of site to filter</div>
                     </div>
                     {{-- Site hookups --}}
                     <div class="col-2 col-mb-2">
@@ -83,12 +83,12 @@
                             @endforeach
 
                         </select>
-                        <div class="form-text">---</div>
+                        <div class="form-text">Utilities Needed</div>
                     </div>
 
 
                     {{-- View String --}}
-                    <div class="col-2 col-mb-2">
+                    {{-- <div class="col-2 col-mb-2">
                         <label class="form-label">View </label>
                         <select class="form-select" name="view">
                             <option value="units">units</option>
@@ -97,23 +97,46 @@
 
                         </select>
                         <div class="form-text">---</div>
-                    </div>
+                    </div> --}}
 
-                    <div class="col-auto me-2">
+                    {{-- <div class="col-auto me-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="1" id="pets_ok" name="pets_ok"
                                 checked>
                             <div class="form-text">With Pets</div>
                         </div>
+                    </div> --}}
+                    <div class="col-auto">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include_reserved" name="include_reserved">
+                            <div class="form-text">Include Reserved</div>
+                        </div>
                     </div>
 
                     <div class="col-auto">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="include_offline"
-                                name="include_offline" checked>
-                            <div class="form-text">Include Offline</div>
+                        <div class="form-check position-relative">
+                            <input class="form-check-input" type="checkbox" id="include_seasonal" name="include_seasonal"
+                                disabled>
+                            <div class="form-text">
+                                Include Seasonal
+                                <span class="badge bg-danger ms-1" style="font-size: 0.75rem;">Blocked</span>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">Coming soon</small>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="col-auto">
+                        <div class="form-check position-relative">
+                            <input class="form-check-input" type="checkbox" id="include_offline" name="include_offline"
+                                disabled>
+                            <div class="form-text">
+                                Include Offline
+                                <span class="badge bg-danger ms-1" style="font-size: 0.75rem;">Blocked</span>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">Coming soon</small>
+                            </div>
+                        </div>
+                    </div>
+
 
 
 
@@ -320,42 +343,38 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <script>
+        const checkin = document.getElementById('checkinHidden').value;
+        const checkout = document.getElementById('checkoutHidden').value;
+
+
         if (!document.querySelector('#dateRange')._flatpickr) {
             flatpickr("#dateRange", {
                 mode: "range",
                 dateFormat: "m/d/Y",
                 allowInput: true,
+                defaultDate: checkin && checkout ? [checkin, checkout] : null,
                 onClose: function(selectedDates, dateStr, instance) {
                     if (selectedDates && selectedDates.length === 2) {
                         const d1 = selectedDates[0];
                         const d2 = selectedDates[1];
 
-                        const toIso = d =>
-                            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-                        document.getElementById('checkinHidden').value = toIso(d1);
-                        document.getElementById('checkoutHidden').value = toIso(d2);
+                        document.getElementById('checkinHidden').value = instance.formatDate(d1, instance.config
+                            .dateFormat);
+                        document.getElementById('checkoutHidden').value = instance.formatDate(d2, instance
+                            .config.dateFormat);
 
-                        document.getElementById('dateRange').value =
-                            `${instance.formatDate(d1, 'm/d/Y')} — ${instance.formatDate(d2, 'm/d/Y')}`;
+
+                        // document.getElementById('dateRange').value =
+                        //     `${instance.formatDate(d1, instance.config.dateFormat)} — ${instance.formatDate(d2, instance.config.dateFormat)}`;
+
+
 
                         if (window.__availabilityTrigger) window.__availabilityTrigger();
                     }
                 }
             });
         }
-
-
-        // (function() {
-        //     const ci = document.getElementById('checkinHidden').value;
-        //     const co = document.getElementById('checkoutHidden').value;
-        //     if (ci && co) {
-        //         const d1 = new Date(ci + 'T00:00:00');
-        //         const d2 = new Date(co + 'T00:00:00');
-        //         const fp = document.querySelector('#dateRange')._flatpickr;
-        //         if (fp) fp.setDate([d1, d2], true);
-        //     }
-        // })();
     </script>
 
     <script>
@@ -496,13 +515,25 @@
                 const fp = document.querySelector('#dateRange')._flatpickr;
                 if ((!ci || !co) && fp && fp.selectedDates.length === 2) {
                     const [d1, d2] = fp.selectedDates;
-                    const toIso = d =>
-                        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    ci = toIso(d1);
-                    co = toIso(d2);
+
+                    ci = fp.formatDate(d1, fp.config.dateFormat);
+                    co = fp.formatDate(d2, fp.config.dateFormat);
+
                     $form.find('[name="start_date"]').val(ci);
                     $form.find('[name="end_date"]').val(co);
                 }
+
+                const formData = $form.serializeArray();
+
+                formData.push({
+                    name: 'include_reserved',
+                    value: $('#include_reserved').prop('checked') ? 1 : 0
+                });
+                formData.push({
+                    name: 'include_offline',
+                    value: $('#include_offline').prop('checked') ? 1 : 0
+                });
+
 
                 if (!ci || !co) {
                     $tbody.html(
@@ -526,21 +557,22 @@
                 $tbody.html(`<tr><td colspan="7" class="text-center py-4">Searching…</td></tr>`);
 
 
-                _inFlightAvailability = $.get(routes.availability, $form.serialize())
+                _inFlightAvailability = $.get(routes.availability, $.param(formData))
                     .done(res => {
                         const $badge = $('#nightsBadge');
                         const data = res?.response || {};
                         const results = data.results || {};
 
 
-                        console.log('Availability results:', data.view);
+
                         let nights = 1;
                         const ci = $('[name=start_date]').val();
                         const co = $('[name=end_date]').val();
 
+
                         if (ci && co) {
-                            const d1 = new Date(ci + 'T00:00:00');
-                            const d2 = new Date(co + 'T00:00:00');
+                            const d1 = new Date(ci);
+                            const d2 = new Date(co);
                             nights = Math.max(1, Math.floor((d2 - d1) / 86400000));
                         }
                         $badge.text(`${nights} ${nights === 1 ? 'night' : 'nights'}`).removeClass('d-none');
@@ -567,17 +599,7 @@
 
 
                             rows = results.units
-                                .filter(unit => {
-                                    const matchClass = selectedClass === '---' || !selectedClass ?
-                                        true :
-                                        unit.class?.toLowerCase() === selectedClass.toLowerCase();
 
-                                    const matchHookup = selectedHookup === '---' || !selectedHookup ?
-                                        true :
-                                        unit.hookup?.toLowerCase() === selectedHookup.toLowerCase();
-
-                                    return matchClass && matchHookup;
-                                })
 
                                 .map(unit => {
                                     const isAvailable = unit?.status?.available;
@@ -589,28 +611,59 @@
                                         '<span class="badge bg-info text-dark">In Cart</span>' :
                                         '<span class="badge bg-secondary">Unavailable</span>';
 
-                                    const priceHtml = unit?.price_quote ?
-                                        `
-                                        <div class="small">
-                                            <div><strong>Total:</strong> $${Number(unit.price_quote.total ?? 0).toFixed(2)}</div>
-                                            <div><strong>Avg/Night:</strong> $${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</div>
-                                        </div>
-                                    ` :
-                                        '<span class="text-muted small">—</span>';
+                                    let priceHtml = '';
 
-                                    const addToCartBtn = isAvailable ?
-                                        `
-                                        <button class="btn btn-sm btn-primary addToCartBtn mt-1"
-                                            data-site-id="${unit.site_id}"
-                                            data-total="${unit.price_quote?.total ?? 0}"
-                                            data-price-quote-id="${unit.price_quote.price_quote_id ?? ''}"
-                                            data-start="${ci}"
-                                            data-end="${co}"
-                                            >
-                                            <i class="bi bi-cart-plus"></i> Add to Cart
-                                        </button>
-                                    ` :
-                                        '';
+                                    if ((isAvailable || unit?.status?.offline) && unit?.price_quote) {
+                                        priceHtml = `
+                                            <div class="small">
+                                                <div><strong>Total:</strong> $${Number(unit.price_quote.total ?? 0).toFixed(2)}</div>
+                                                <div><strong>Avg/Night:</strong> $${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</div>
+
+                                            </div>
+                                        `;
+
+                                    } else {
+                                        priceHtml = '<span class="text-muted small">—</span>';
+
+                                    }
+
+
+                                    const addToCartHtml = isAvailable ? `
+                                        <div class="mt-2">
+                                            <div class="d-flex align-items-center gap-3 mb-2">
+                                                <div class="text-center">
+                                                    <label class="small text-muted d-block mb-1">Adults</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input adults"
+                                                        value="2" min="0" style="width:70px;">
+                                                </div>
+                                                <div class="text-center">
+                                                    <label class="small text-muted d-block mb-1">Children</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input children"
+                                                        value="0" min="0" style="width:80px;">
+                                                </div>
+
+                                                
+                                            </div>
+
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input siteLockFee" type="checkbox" id="siteLockFee_${unit.site_id}">
+                                                <label class="form-check-label small text-muted" for="siteLockFee_${unit.site_id}">
+                                                    Lock This Site 
+                                                </label>
+                                            </div>
+
+                                            <button class="btn btn-sm btn-primary addToCartBtn"
+                                                data-site-id="${unit.site_id}"
+                                                data-total="${unit.price_quote?.total ?? 0}"
+                                                data-price-quote-id="${unit.price_quote?.price_quote_id ?? ''}"
+                                                data-start="${ci}"
+                                                data-end="${co}"
+                                                data-site-lock-fee="0" >
+                                                <i class="bi bi-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </div>
+                                    ` : '';
+
 
                                     return `
                                     <tr>
@@ -622,47 +675,13 @@
                                         <td>${statusBadge}</td>
                                         <td class="text-end">
                                             ${priceHtml}
-                                            ${addToCartBtn}
+
+                                        </td>
+                                        <td data-role="add-wrap">
+                                            ${addToCartHtml}
                                         </td>
                                     </tr>`;
                                 }).join('');
-                        } else if (data.view === 'aggregated' && Array.isArray(results.buckets)) {
-                            headHtml = `
-                            <tr>
-                                <th>Class</th>
-                                <th>Hookup</th>
-                                <th class="text-center">Available</th>
-                                <th class="text-center">Held</th>
-                                <th class="text-center">Reserved</th>
-                                <th class="text-center">Total</th>
-                                <th>Price Options</th>
-                            </tr>
-                        `;
-
-                            rows = results.buckets.map(bucket => `
-                            <tr>
-                                <td>${bucket?.class ? bucket.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
-                                <td>${bucket.hookup || ''}</td>
-                                <td class="text-center">${bucket.available ?? 0}</td>
-                                <td class="text-center">${bucket.held ?? 0}</td>
-                                <td class="text-center">${bucket.reserved ?? 0}</td>
-                                <td class="text-center">${bucket.total ?? 0}</td>
-                                <td class="text-end">
-                                    ${
-                                        Array.isArray(bucket.price_options) && bucket.price_options.length
-                                            ? bucket.price_options
-                                                .map(po => `
-                                                                            <div class="small border-bottom pb-1 mb-1">
-                                                                                <div><strong>Total:</strong> $${po.total ?? '0'}</div>
-                                                                                <div><strong>Avg/Night:</strong> $${nights ?? '0'}</div>
-                                                                            </div>
-                                                                        `)
-                                                .join('')
-                                            : '<span class="text-muted small">—</span>'
-                                    }
-                                </td>
-                            </tr>
-                        `).join('');
                         }
 
                         $('#resultsHead').html(headHtml);
@@ -679,9 +698,7 @@
 
                         initTooltips();
 
-                        // if (!cart.customer_id) {
-                        //     $('#selectCustomerHint').removeClass('d-none');
-                        // }
+
                     })
                     .fail(xhr => {
                         if (xhr && xhr.statusText === 'abort') {
@@ -698,54 +715,50 @@
             }
 
             let selectedBtn = null; // track which button was clicked
+            $(document).on('click', '.addToCartBtn', async function() {
+                const btn = $(this);
+                const container = btn.closest('div'); // wrapper where inputs exist
+                const adults = parseInt(container.find('.adults').val()) || 0;
+                const children = parseInt(container.find('.children').val()) || 0;
+                const siteLockFee =  0;
 
-            $(document).on('click', '.addToCartBtn', function() {
-                selectedBtn = $(this); // store clicked button
-                $('#addOccupantsModal').modal('show'); // show modal
-            });
+                if (adults + children === 0) {
+                    alert('Please enter at least one occupant.');
+                    return;
+                }
 
-            $('#btnConfirmOccupants').on('click', async function() {
-                if (!selectedBtn) return;
-
-                const adults = parseInt($('#adultsInput').val());
-                const children = parseInt($('#childrenInput').val());
-
-                $('#addOccupantsModal').modal('hide');
-                selectedBtn.prop('disabled', true)
+                btn.prop('disabled', true)
                     .html(
                         '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...'
                     );
 
                 try {
-                    let cartId = sessionStorage.getItem('cart_id');
-                    let cartToken = sessionStorage.getItem('cart_token');
 
-                    if (!cartId || !cartToken) {
-                        const cartRes = await $.ajax({
-                            url: routes.cartAdd,
-                            method: 'POST',
-                            contentType: 'application/json',
-                            data: JSON.stringify({})
-                        });
+                    const cartRes = await $.ajax({
+                        url: routes.cartAdd,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({})
+                    });
 
-                        cartId = cartRes.data.cart_id;
-                        cartToken = cartRes.data.cart_token;
-                        sessionStorage.setItem('cart_id', cartId);
-                        sessionStorage.setItem('cart_token', cartToken);
-                    }
+                    cartId = cartRes.data.cart_id;
+                    cartToken = cartRes.data.cart_token;
 
+                    console.log('Cart created/loaded:', cartId, cartToken);
+                    
                     const payload = {
                         cart_id: parseInt(cartId),
                         token: cartToken,
-                        site_id: selectedBtn.data('site-id'),
-                        start_date: selectedBtn.data('start'),
-                        end_date: selectedBtn.data('end'),
+                        site_id: btn.data('site-id'),
+                        start_date: btn.data('start'),
+                        end_date: btn.data('end'),
                         occupants: {
                             adults,
                             children
                         },
                         add_ons: [],
-                        price_quote_id: selectedBtn.data('price-quote-id') || null,
+                        price_quote_id: btn.data('price-quote-id') || null,
+                        site_lock_fee: siteLockFee
                     };
 
                     const itemRes = await $.ajax({
@@ -757,18 +770,16 @@
 
                     if (itemRes) {
                         updateCartSidebar(itemRes.cart);
-                        selectedBtn.html('<i class="bi bi-check-lg"></i> Added');
+                        btn.html('<i class="bi bi-check-lg"></i> Added');
                     } else {
-                        console.error(itemRes);
-                        selectedBtn.html('Error');
+                        btn.html('Error');
                     }
 
                 } catch (err) {
                     console.error('Error adding to cart', err);
-                    selectedBtn.html('Retry');
+                    btn.html('Retry');
                 } finally {
-                    selectedBtn.prop('disabled', false);
-                    selectedBtn = null;
+                    btn.prop('disabled', false);
                 }
             });
 
@@ -811,9 +822,8 @@
             }, 300);
 
             // $('#dateRange').on('change', window.__availabilityTrigger);
-            $('[name="riglength"], [name="siteclass"], [name="hookup"], [name="view"], [name="pets_ok"], [name="include_offline"]')
-                .on('change', window.__availabilityTrigger);
-
+            $('[name="riglength"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
+                .on('change input', window.__availabilityTrigger);
 
             $form.off('submit.avail').on('submit.avail', function(e) {
                 e.preventDefault();
@@ -824,8 +834,7 @@
                 runAvailabilitySearch(), 450));
             $form.find('[name="site_id"]').off('change.avail').on('change.avail', debounce(() =>
                 runAvailabilitySearch(), 250));
-            $form.find('[name="include_offline"]').off('change.avail').on('change.avail', debounce(() =>
-                runAvailabilitySearch(), 250));
+
 
             setTimeout(() => {
                 const ci = $form.find('[name="start_date"]').val();
