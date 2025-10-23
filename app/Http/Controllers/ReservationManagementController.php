@@ -13,7 +13,7 @@ use App\Models\CartReservation;
 use App\Models\Receipt;
 use App\Models\GiftCard;
 use App\Models\SiteHookup;
-
+use App\Models\BusinessSettings;
 use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Facades\DB;
@@ -237,8 +237,16 @@ class ReservationManagementController extends Controller
             'occupants' => ['nullable', 'array'],
             'add_ons' => ['nullable', 'array'],
             'price_quote_id' => ['nullable', 'string'],
-            'site_lock_fee' => 'nullable', 'numeric', 'min:0',
+            'site_lock_fee' => 'sometimes|in:on,off',
         ]);
+
+        if ($data['site_lock_fee'] == 'on') {
+            $siteLockFee = BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0;
+        } else {
+            $siteLockFee = 0;
+        }
+
+        $data['site_lock_fee'] = (float) $siteLockFee;
 
         try {
             $response = Http::withHeaders([
@@ -247,7 +255,9 @@ class ReservationManagementController extends Controller
             ])->post(env('BOOK_API_URL') . 'v1/cart/items', $data);
 
             if ($response->successful()) {
+                Log::info('Added item to cart via booking API', $response->json());
                 return response()->json($response->json(), 200);
+
             }
 
             Log::error('Cart items API error', [
@@ -265,6 +275,39 @@ class ReservationManagementController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('Cart items proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
+
+    public function removeCartItem(Request $request)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->delete(env('BOOK_API_URL') . 'v1/cart/items', [
+                'cart_id' => $request->input('cart_id'),
+                'cart_token' => $request->input('token'),
+                'cart_item_id' => $request->input('cart_item_id'),
+            ]);
+
+            Log::info('Remove cart item response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
+        } catch (\Exception $e) {
+            Log::error('Cart item removal proxy failed', ['error' => $e->getMessage()]);
 
             return response()->json(
                 [
