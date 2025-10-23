@@ -212,7 +212,14 @@
                     </div>
                     <div class="card-footer bg-white">
                         <button class="btn btn-outline-primary w-100" id="btnCustomer">Select/Create Customer</button>
-                        <button class="btn btn-success w-100 mt-2" id="btnCheckout" disabled>Proceed to Checkout</button>
+                        <div class="position-relative d-inline-block w-100">
+                            <button class="btn btn-success w-100 mt-2" id="btnCheckout" disabled>
+                                Proceed to Checkout
+                            </button>
+                            <span class="badge bg-danger position-absolute top-0 end-0 translate-middle">
+                                Blocked
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -394,7 +401,8 @@
                 custCreate: @json(route('admin.reservation_mgmt.customer.create', ['admin' => auth()->user()->id])),
                 couponApply: @json(route('admin.reservation_mgmt.coupon.apply', ['admin' => auth()->user()->id])),
                 checkout: @json(route('admin.reservation_mgmt.checkout', ['admin' => auth()->user()->id])),
-                giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id]))
+                giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
+                cartItemRemove: @json(route('admin.reservation_mgmt.cart.item.remove', ['admin' => auth()->user()->id])),
             };
 
             const debounce = (fn, d = 300) => {
@@ -720,8 +728,7 @@
                 const container = btn.closest('div'); // wrapper where inputs exist
                 const adults = parseInt(container.find('.adults').val()) || 0;
                 const children = parseInt(container.find('.children').val()) || 0;
-                const siteLockFee =  0;
-
+                const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
                 if (adults + children === 0) {
                     alert('Please enter at least one occupant.');
                     return;
@@ -729,7 +736,7 @@
 
                 btn.prop('disabled', true)
                     .html(
-                        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...'
+                        '<i class="fa-solid fa-spinner fa-spin-pulse"></i> Adding...'
                     );
 
                 try {
@@ -745,7 +752,7 @@
                     cartToken = cartRes.data.cart_token;
 
                     console.log('Cart created/loaded:', cartId, cartToken);
-                    
+
                     const payload = {
                         cart_id: parseInt(cartId),
                         token: cartToken,
@@ -768,9 +775,10 @@
                         data: JSON.stringify(payload)
                     });
 
+
                     if (itemRes) {
-                        updateCartSidebar(itemRes.cart);
-                        btn.html('<i class="bi bi-check-lg"></i> Added');
+                        updateCartSidebar(itemRes.cart, itemRes.cart_meta);
+                        btn.prop('disabled', true).html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
                     } else {
                         btn.html('Error');
                     }
@@ -784,26 +792,70 @@
             });
 
 
-            function updateCartSidebar(cartData) {
+            $(document).ready(function() {
+                const saved = localStorage.getItem('cartData');
+                const savedMeta = localStorage.getItem('cartMeta');
+                if (saved, savedMeta) {
+                    try {
+                        const cartData = JSON.parse(saved);
+                        const cartMeta = JSON.parse(savedMeta);
+                        const expiresAt = new Date(cartData.expires_at);
+                        const now = new Date();
+
+                        if (expiresAt > now) {
+                            console.log('Restoring cart data from localStorage', cartData, cartMeta);
+                            updateCartSidebar(cartData, cartMeta)
+                        } else {
+                            console.log('Saved cart data expired, clearing...');
+                            localStorage.removeItem('cartData');
+                            localStorage.removeItem('cartMeta');
+                        }
+                    } catch (error) {
+                        console.error('Failed to parse saved cart data', error);
+                        localStorage.removeItem('cartData');
+                        localStorage.removeItem('cartMeta');
+                    }
+                }
+            })
+
+
+            function updateCartSidebar(cartData, cartMeta) {
                 const body = $('#cartBody');
                 const count = $('#cartCount');
+
+                console.log('Updating cart sidebar with data', cartData);
 
                 if (!cartData || !cartData.items || !cartData.items.length === 0) {
                     body.html('<p class="text-muted mb-0">No items yet.</p>');
                     count.text(0);
                     $('#btnCheckout').prop('disabled', true);
+                    localStorage.removeItem('cartData');
+                    localStorage.removeItem('cartMeta');
                     return
                 }
 
                 const itemsHtml = cartData.items.map(item => `
                     <div class="border-bottom pb-2 mb-2">
-                        <div><strong>${item.site_id}</strong></div>
+                      
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${item.site_id}</strong>
+                            <button class="btn btn-link text-danger p-0 remove-item-btn"
+                                data-cart-id="${cartData.cart_id}"
+                                data-cart-token="${cartMeta.cart_token}"
+                                data-cart-item-id="${item.id}"
+
+                                title="Remove">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+
                         <div class="text-muted small">
                             ${item.start_date} → ${item.end_date}
                         </div>
                         <div class="text-end small">
                             $${item.price?.subtotal ?? 0}
                         </div>
+
                     </div>
                 `).join('');
 
@@ -811,7 +863,71 @@
                 count.text(cartData.items.length);
                 $('#btnCheckout').prop('disabled', !cartData.customer_id);
 
+                try {
+                    localStorage.setItem('cartData', JSON.stringify(cartData));
+                    localStorage.setItem('cartMeta', JSON.stringify(cartMeta));
+                } catch (error) {
+                    console.error('Failed to save cart data to localStorage', error);
+                }
+
+                if (cartData.expires_at) {
+                    const expiresAt = new Date(cartData.expires_at).getTime();
+                    const now = Date.now();
+                    const timeRemaining = expiresAt - now;
+
+                    if (timeRemaining > 0) {
+                        setTimeout(() => {
+                            console.log('Cart expired, clearning sidebar...');
+                            localStorage.removeItem('cartData');
+                            localStorage.removeItem('cartMeta');
+                            body.html('<p class="text-muted mb-0">Cart Expireed.</p>');
+                            count.text(0);
+                            $('#btnCheckout').prop('disabled', true);
+                        }, timeRemaining);
+                    }
+                }
+
             }
+
+            $(document).on('click', '.remove-item-btn', async function() {
+                const btn = $(this);
+                const cartId = btn.data('cart-id');
+                const token = btn.data('cart-token');
+                const cartItemId = btn.data('cart-item-id');
+
+                const originalHtml = btn.html();
+                btn.prop('disabled', true).html('<span class="opacity-75"><i class="fa-solid fa-spinner fa-spin-pulse"></i></span>')
+                    .fadeTo(200, 0.6);
+
+                try {
+                    const deleteCartItem = await $.ajax({
+                        url: routes.cartItemRemove,
+                        method: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            cart_id: cartId,
+                            token: token,
+                            cart_item_id: cartItemId
+                        }),
+                    });
+
+                    if (deleteCartItem) {
+                        localStorage.removeItem('cartData');
+                        localStorage.removeItem('cartMeta');
+                        console.log('Item removed from cart, updating sidebar...');
+                        toastr.success('Item removed from cart.');
+                        updateCartSidebar(deleteCartItem.cart, deleteCartItem.trace);
+                    } else {
+                        toastr.error('Failed to remove item from cart.');
+                    }
+                } catch (err) {
+                    console.error('Error removing cart item:', err);
+                    toastr.error('Something went wrong while removing the item.');
+                } finally {
+                    btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+
 
             window.__availabilityTrigger = debounce(() => {
                 const ci = $('[name="start_date"]').val();
