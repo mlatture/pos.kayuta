@@ -184,6 +184,7 @@
                                         <th class="text-center">Max Length</th>
                                         <th>Status</th>
                                         <th>Price Quote</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -234,7 +235,7 @@
 
                             <div class="list-group mb-3" id="customerResults"></div>
 
-                            <div class="border-top pt-2">
+                            {{-- <div class="border-top pt-2">
                                 <h6 class="small text-muted mb-2">Create new customer</h6>
                                 <div class="row g-2">
                                     <div class="col-12 col-md-4"><input type="text" class="form-control"
@@ -246,7 +247,7 @@
                                 </div>
                                 <button class="btn btn-sm btn-primary mt-2 w-100" id="btnCreateCustomer">Save &
                                     Select</button>
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
 
@@ -544,6 +545,7 @@
                                 <th class="text-center">Max Length</th>
                                 <th>Status</th>
                                 <th>Price Quote</th>
+                                <th>Actions</th>
                             </tr>
                         `;
 
