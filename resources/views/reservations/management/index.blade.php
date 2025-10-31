@@ -22,6 +22,16 @@
         .badge-fits {
             background-color: #0d6efd;
         }
+
+        .site-details-row td {
+            background-color: #f9fafb !important;
+            border-top: 0;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .viewSiteDetails:hover {
+            background-color: #f1f5f9;
+        }
     </style>
 @endpush
 
@@ -165,12 +175,18 @@
             {{-- Results --}}
             <div class="col-lg-8">
                 <div class="card shadow-sm">
+                    
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>
                             Available Sites
                         </strong>
                         <span class="badge rounded-pill bg-secondary d-none" id="nightsBadge">0 nights</span>
                     </div>
+
+                    <p class="small text-muted mx-3 mt-2 mb-0">
+                        Tip: Click any site row to view more details and amenities.
+                    </p>
+
 
                     <div class="card-body p-0" style="height: 50vh; overflow-y: auto; position: relative;">
                         <div class="table-responsive">
@@ -372,6 +388,18 @@
             }
         });
 
+        function initTooltips() {
+            $('[data-bs-toggle="tooltip"]').tooltip('dispose');
+
+            // Initialize all tooltips again
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                trigger: 'hover',
+                placement: 'top',
+                html: true
+            });
+        }
+
+
         (function() {
             const routes = {
                 availability: @json(route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id])),
@@ -384,6 +412,7 @@
                 checkout: @json(route('admin.reservation_mgmt.checkout', ['admin' => auth()->user()->id])),
                 giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
                 cartItemRemove: @json(route('admin.reservation_mgmt.cart.item.remove', ['admin' => auth()->user()->id])),
+                viewSiteDetails: @json(route('admin.reservation_mgmt.view.site.details', ['admin' => auth()->user()->id])),
             };
 
             const debounce = (fn, d = 300) => {
@@ -412,48 +441,7 @@
                 $spinner.toggleClass('d-none', !b);
             };
 
-            const cart = {
-                items: [],
-                customer_id: null,
-                totals: {
-                    subtotal: 0,
-                    tax: 0,
-                    discounts: 0,
-                    total: 0
-                }
-            };
 
-            function initTooltips() {
-                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-                    const t = bootstrap.Tooltip.getInstance(el);
-                    if (t) t.dispose();
-                    new bootstrap.Tooltip(el);
-                });
-            }
-
-            function enableAddButtonsAfterCustomerSelected() {
-                $('#resultsTable [data-role="add-wrap"]').each(function() {
-                    $(this).replaceWith(
-                        '<button class="btn btn-sm btn-outline-primary btnAdd">Add to Cart</button>');
-                });
-            }
-
-            function recalcTotals() {
-                let subtotal = 0,
-                    tax = 0,
-                    discounts = 0;
-                cart.items.forEach(it => {
-                    subtotal += (it.price_breakdown?.subtotal || 0);
-                    tax += (it.price_breakdown?.tax || 0);
-                    discounts += (it.price_breakdown?.discounts || 0);
-                });
-                cart.totals = {
-                    subtotal,
-                    tax,
-                    discounts,
-                    total: subtotal - discounts + tax
-                };
-            }
 
 
 
@@ -555,8 +543,6 @@
 
 
                             rows = results.units
-
-
                                 .map(unit => {
                                     const isAvailable = unit?.status?.available;
                                     const statusBadge = isAvailable ?
@@ -622,7 +608,9 @@
 
 
                                     return `
-                                    <tr>
+                                    <tr class="viewSiteDetails" data-site-id="${unit?.site_id}" data-start="${ci}" data-end="${co}"
+                                    style="cursor: pointer;"
+                                    >
                                         <td><strong>${unit?.site_id ?? ''}</strong></td>
                                         <td>${unit?.name ?? ''}</td>
                                         <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
@@ -638,6 +626,8 @@
                                         </td>
                                     </tr>`;
                                 }).join('');
+
+
                         }
 
                         $('#resultsHead').html(headHtml);
@@ -649,6 +639,128 @@
                             );
                         } else {
                             $tbody.html(rows);
+
+
+                            $tbody.off('click', '.viewSiteDetails').on('click', '.viewSiteDetails', function(e) {
+                                if ($(e.target).closest('button, input, .form-check-input').length) return;
+
+                                const siteId = $(this).data('site-id');
+                                const start = $(this).data('start');
+                                const end = $(this).data('end');
+                                const $row = $(this);
+
+                                const $existing = $(`#siteDetails_${siteId}`);
+                                if ($existing.length) {
+                                    $existing.find('.collapse-content').slideToggle(200);
+                                    return;
+                                }
+
+                                $tbody.find('.site-details-row').remove();
+
+                                const colspan = $row.find('td').length;
+                                const $detailsRow = $(`
+                                    <tr class="site-details-row" id="siteDetails_${siteId}">
+                                        <td colspan="${colspan}" class="bg-light">
+                                            <div class="collapse-content small text-muted p-4 text-center">
+                                                <i class="bi bi-hourglass-split"></i> Loading site details...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `);
+
+                                $row.after($detailsRow);
+
+                                $.get(routes.viewSiteDetails, {
+                                        site_id: siteId,
+                                        uscid: start,
+                                        uscod: end
+                                    })
+                                    .done(res => {
+                                        const site = res.response?.site || {};
+                                        const constraints = res.response?.constraints || {};
+                                        const policies = res.response?.policies || {};
+                                        const pricing = res.response?.pricing || {};
+                                        const status = res.response?.status || {};
+                                        const amenities = site.amenities || [];
+
+                                        const availabilityBadge = status.available ?
+                                            '<span class="badge bg-success">Available</span>' :
+                                            status.in_cart ?
+                                            '<span class="badge bg-info text-dark">In Cart</span>' :
+                                            status.reserved ?
+                                            '<span class="badge bg-warning text-dark">Reserved</span>' :
+                                            '<span class="badge bg-secondary">Unavailable</span>';
+
+                                        const amenitiesHtml = amenities.length ?
+                                            `<div class="d-flex flex-wrap gap-2 mt-2">
+                                                    ${amenities
+                                                        .map(a => `<span class="badge rounded-pill bg-success mb-1">
+                                                                        <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
+                                                                    </span>`)
+                                                        .join('')}
+                                            </div>` :
+                                            `<div class="text-muted small">No listed amenities.</div>`;
+
+                                        const lockHtml = policies.site_lock?.enabled ?
+                                            `<div class="alert alert-warning small mt-3 mb-0">
+                                                    <i class="bi bi-lock-fill me-1"></i>
+                                                    <strong>Site Lock Fee:</strong> $${policies.site_lock.fee}<br>
+                                                    ${policies.site_lock.message.replace(/\n/g, '<br>')}
+                                            </div>` :
+                                            '';
+
+                                        const pricingHtml = `
+                                            <div class="mt-3">
+                                                <h6 class="fw-bold mb-2">Pricing Summary</h6>
+                                                <div class="row small">
+                                                    <div class="col-md-4"><strong>Stay:</strong> ${pricing.range?.length_of_stay || 1} night(s)</div>
+                                                    <div class="col-md-4"><strong>Avg/Night:</strong> $${Number(pricing.average_nightly ?? 0).toFixed(2)}</div>
+                                                    <div class="col-md-4"><strong>Total:</strong> $${Number(pricing.total ?? 0).toFixed(2)}</div>
+                                                </div>
+                                                <div class="text-muted mt-2 fst-italic">${pricing.notes || ''}</div>
+                                            </div>
+                                        `;
+
+                                        const content = `
+                                            <div class="collapse-content">
+                                               
+
+                                                <p class="small text-muted mb-3">${site.attributes || ''}</p>
+
+                                                <div class="row mb-3">
+                                                    <div class="col-md-4">
+                                                        <div><strong>Site ID:</strong> ${site.site_id}</div>
+                                                        <div><strong>Class:</strong> ${site.class || 'N/A'}</div>
+                                                        <div><strong>Hookup:</strong> ${site.hookup || 'N/A'}</div>
+                                                        <div><strong>Rig Length:</strong> ${constraints.rig_length?.min ?? 0}–${constraints.rig_length?.max ?? 0} ft</div>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <strong>Amenities:</strong>
+                                                        ${amenitiesHtml}
+                                                    </div>
+                                                </div>
+
+                                                ${lockHtml}
+                                                ${pricingHtml}
+
+                                                <div class="text-muted small fst-italic mt-3">
+                                                    <i class="bi bi-info-circle me-1"></i>Note: Site availability and policies may vary by season.
+                                                </div>
+                                            </div>
+                                        `;
+
+                                        $detailsRow.find('td').html(content);
+                                        $detailsRow.find('.collapse-content').hide().slideDown(250);
+                                        initTooltips();
+                                    })
+                                    .fail(() => {
+                                        $detailsRow.find('td').html(
+                                            `<div class="text-danger py-3">Failed to load details for site ${siteId}.</div>`
+                                        );
+                                    });
+                            });
+
+
                         }
 
 
@@ -670,10 +782,9 @@
                     });
             }
 
-            let selectedBtn = null; // track which button was clicked
             $(document).on('click', '.addToCartBtn', async function() {
                 const btn = $(this);
-                const container = btn.closest('div'); // wrapper where inputs exist
+                const container = btn.closest('div');
                 const adults = parseInt(container.find('.adults').val()) || 0;
                 const children = parseInt(container.find('.children').val()) || 0;
                 const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
@@ -840,7 +951,7 @@
                     meta: cartMeta
                 }
 
-               
+
 
             }
 
@@ -1138,7 +1249,7 @@
 
                 const total = cart.items.map(it => it.price?.total || 0);
 
-            
+
 
                 const payload = {
                     _token: $('input[name=_token]').val(),
@@ -1167,12 +1278,12 @@
                     city: custDetails?.city || '',
                     state: custDetails?.state || '',
                     zip: custDetails?.zip || '',
-                    
+
                     // Cart totals snapshot
                     xAmount: total,
 
                     applicable_coupon: $('#couponCode').val().trim() || null,
-                    
+
                 };
 
                 if (method === 'gift_card') {
@@ -1293,7 +1404,7 @@
                                         details: c,
                                     };
 
-                               
+
                                     selectCustomer(c);
                                 });
                             $results.append(item);

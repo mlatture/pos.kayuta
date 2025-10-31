@@ -184,6 +184,36 @@ class ReservationManagementController extends Controller
         }
     }
 
+    public function viewSiteDetails(Request $request)
+    {
+        $data = $request->validate([
+            'site_id' => ['required', 'string'],
+            'uscid' => ['required', 'date'],
+            'uscod' => ['required', 'date'],
+        ]);
+
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->get(env('BOOK_API_URL') . "v1/sites/{$data['site_id']}", $data);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
+        } catch (\Exception $e) {
+            Log::error('Site details proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
+
     public function cart(Request $request)
     {
         try {
@@ -285,7 +315,7 @@ class ReservationManagementController extends Controller
         }
     }
 
-       public function checkout(Request $request)
+    public function checkout(Request $request)
     {
         $data = $request->validate([
             'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
@@ -299,11 +329,9 @@ class ReservationManagementController extends Controller
             'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
             'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
 
-
             // Optional Fields
 
             'applicable_coupon' => ['nullable', 'string', 'max:50'],
-
 
             // Required Fields
             'fname' => ['required', 'string', 'max:100'],
@@ -314,8 +342,10 @@ class ReservationManagementController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:50'],
             'zip' => ['required', 'string', 'max:10'],
-            'cc.xCardNum'          => 'required', 'digits_between:13,19',
-            'cc.xExp'              => 'required', 'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/',
+            'cc.xCardNum' => 'required',
+            'digits_between:13,19',
+            'cc.xExp' => 'required',
+            'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/',
             'xAmount' => ['required', 'numeric', 'min:0.5'],
             'api_cart.cart_id' => ['required', 'string'],
             'api_cart.cart_token' => ['required', 'string'],
@@ -325,8 +355,7 @@ class ReservationManagementController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
-
-            ])->post(env('BOOK_API_URL') . 'v1/checkout'. $data);
+            ])->post(env('BOOK_API_URL') . 'v1/checkout' . $data);
         } catch (\Exception $e) {
             Log::error('Checkout proxy failed', ['error' => $e->getMessage()]);
 
@@ -604,10 +633,6 @@ class ReservationManagementController extends Controller
             ],
         ]);
     }
- 
-   
-    
-    
 
     // Gift Cart Lookup
     public function giftCardLookup(Request $request)
