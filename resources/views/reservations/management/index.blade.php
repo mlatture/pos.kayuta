@@ -699,7 +699,6 @@
                     cartId = cartRes.data.cart_id;
                     cartToken = cartRes.data.cart_token;
 
-                    console.log('Cart created/loaded:', cartId, cartToken);
 
                     const payload = {
                         cart_id: parseInt(cartId),
@@ -752,10 +751,8 @@
                         const now = new Date();
 
                         if (expiresAt > now) {
-                            console.log('Restoring cart data from localStorage', cartData, cartMeta);
                             updateCartSidebar(cartData, cartMeta)
                         } else {
-                            console.log('Saved cart data expired, clearing...');
                             localStorage.removeItem('cartData');
                             localStorage.removeItem('cartMeta');
                         }
@@ -772,7 +769,6 @@
                 const body = $('#cartBody');
                 const count = $('#cartCount');
 
-                console.log('Updating cart sidebar with data', cartData);
 
                 if (!cartData || !cartData.items || !cartData.items.length === 0) {
                     $btnCheckout.prop('disabled', true);
@@ -829,7 +825,6 @@
 
                     if (timeRemaining > 0) {
                         setTimeout(() => {
-                            console.log('Cart expired, clearning sidebar...');
                             localStorage.removeItem('cartData');
                             localStorage.removeItem('cartMeta');
                             body.html('<p class="text-muted mb-0">Cart Expireed.</p>');
@@ -845,13 +840,7 @@
                     meta: cartMeta
                 }
 
-                console.log('Initialized cart', window.currentCart?.data);
-                console.log('Initialized cart', window.currentCart?.meta.cart_token);
-
-                currentCart?.data?.items.map(it => {
-                    console.log('Cart item  total:', it.price.total);
-                })
-
+               
 
             }
 
@@ -881,7 +870,6 @@
                     if (deleteCartItem) {
                         localStorage.removeItem('cartData');
                         localStorage.removeItem('cartMeta');
-                        console.log('Item removed from cart, updating sidebar...');
                         toastr.success('Item removed from cart.');
                         updateCartSidebar(deleteCartItem.cart, deleteCartItem.trace);
                     } else {
@@ -1305,9 +1293,7 @@
                                         details: c,
                                     };
 
-                                    console.log('Select customer for cart:', window
-                                        .selectCustomerForCart);
-
+                               
                                     selectCustomer(c);
                                 });
                             $results.append(item);
