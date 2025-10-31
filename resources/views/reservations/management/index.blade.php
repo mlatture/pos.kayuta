@@ -205,58 +205,62 @@
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>Cart</strong>
                         <span class="badge bg-secondary" id="cartCount">0</span>
-                        <span class="badge bg-secondary d-none" id="forUser"></span>
                     </div>
+
                     <div class="card-body" id="cartBody">
                         <p class="text-muted mb-0">No items yet.</p>
                     </div>
+
+                    {{-- Inline Customer Section --}}
+                    <div class="border-top p-3 bg-light" id="customerSection">
+                        <h6 class="mb-2">Select / Create Customer</h6>
+
+                        {{-- Selected Customer Display --}}
+                        <div id="selectedCustomer" class="d-none mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong id="selName"></strong><br>
+                                    <small class="text-muted" id="selEmail"></small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" id="btnChangeCustomer">Change</button>
+                            </div>
+                        </div>
+
+                        {{-- Search + Create Section --}}
+                        <div id="customerForm">
+                            <input type="text" class="form-control mb-2" id="customerSearch"
+                                placeholder="Search name, email, or phone…">
+                            <div id="customerSearchResults" class="list-group mt-2"></div>
+
+                            <div class="list-group mb-3" id="customerResults"></div>
+
+                            <div class="border-top pt-2">
+                                <h6 class="small text-muted mb-2">Create new customer</h6>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newName" placeholder="Full name"></div>
+                                    <div class="col-12 col-md-4"><input type="email" class="form-control"
+                                            id="newEmail" placeholder="Email"></div>
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newPhone" placeholder="Phone"></div>
+                                </div>
+                                <button class="btn btn-sm btn-primary mt-2 w-100" id="btnCreateCustomer">Save &
+                                    Select</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card-footer bg-white">
-                        <button class="btn btn-outline-primary w-100" id="btnCustomer">Select/Create Customer</button>
                         <div class="position-relative d-inline-block w-100">
                             <button class="btn btn-success w-100 mt-2" id="btnCheckout" disabled>
                                 Proceed to Checkout
                             </button>
-                            <span class="badge bg-danger position-absolute top-0 end-0 translate-middle">
-                                Blocked
-                            </span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- Customer Modal --}}
-    <div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Customer</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
 
-                <div class="modal-body">
-                    <label class="form-label">Search customer</label>
-                    <input type="text" class="form-control" id="customerSearch" placeholder="Name, email, or phone…">
-                    <div class="list-group mt-2" id="customerResults"></div>
-
-                    <hr>
-                    <h6>Create new customer</h6>
-                    <div class="row g-2">
-                        <div class="col-md-4"><input type="text" class="form-control" id="newName"
-                                placeholder="Full name"></div>
-                        <div class="col-md-4"><input type="email" class="form-control" id="newEmail"
-                                placeholder="Email"></div>
-                        <div class="col-md-4"><input type="text" class="form-control" id="newPhone"
-                                placeholder="Phone"></div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" id="btnCreateCustomer">Save & Select</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -270,12 +274,16 @@
                 </div>
 
                 <div class="modal-body">
+
+                    <!-- Dynamic Cart Items -->
+                    <div id="cartItemsList" class="mb-3"><!-- dynamically filled --></div>
+
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Coupon code</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="couponCode" placeholder="Enter code">
-                                <button class="btn btn-outline-secondary" id="btnApplyCoupon">Apply</button>
+                                {{-- <button class="btn btn-outline-secondary" id="btnApplyCoupon">Apply</button> --}}
                             </div>
                             <div class="form-text">Same validation rules as book site.</div>
                         </div>
@@ -314,35 +322,7 @@
         </div>
     </div>
 
-    <!-- Add Occupants Modal -->
-    <div class="modal fade" id="addOccupantsModal" tabindex="-1" aria-labelledby="addOccupantsModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addOccupantsModalLabel">Add Occupants</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="occupantsForm">
-                        <div class="mb-3">
-                            <label for="adultsInput" class="form-label">Adults</label>
-                            <input type="number" class="form-control" id="adultsInput" name="adults" value="0"
-                                min="1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="childrenInput" class="form-label">Children</label>
-                            <input type="number" class="form-control" id="childrenInput" name="children"
-                                value="0" min="0" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="btnConfirmOccupants" class="btn btn-primary">Continue</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
 @endsection
 
@@ -420,7 +400,6 @@
             const $cartCount = $('#cartCount');
             const $btnCheckout = $('#btnCheckout');
 
-            const $customerModal = new bootstrap.Modal('#customerModal');
             const $checkoutModal = new bootstrap.Modal('#checkoutModal');
 
             const fmt = n => new Intl.NumberFormat(undefined, {
@@ -475,43 +454,10 @@
                 };
             }
 
-            function renderCart() {
-                if (!cart.items.length) {
-                    $cartBody.html('<p class="text-muted mb-0">No items yet.</p>');
-                    $btnCheckout.prop('disabled', true);
-                    $cartCount.text(0);
-                    return;
-                }
-                let html = '';
-                cart.items.forEach(it => {
-                    html += `
-                    <div class="border rounded p-2 mb-2">
-                        <div class="d-flex justify-content-between">
-                            <strong>${it.site_name}</strong><span>${it.checkin} → ${it.checkout}</span>
-                        </div>
-                        <div class="small text-muted">${it.available_online ? '' : ' • Offline-only'}</div>
-                        <div class="d-flex justify-content-between mt-1">
-                            <span>Total</span><strong>${fmt(it.price_breakdown?.total)}</strong>
-                        </div>
-                    </div>`;
-                });
-                recalcTotals();
-                html += `<div class="mt-2">
-                    <div class="d-flex justify-content-between"><span>Subtotal</span><strong>${fmt(cart.totals.subtotal)}</strong></div>
-                    <div class="d-flex justify-content-between"><span>Discounts</span><strong>-${fmt(cart.totals.discounts)}</strong></div>
-                    <div class="d-flex justify-content-between"><span>Tax</span><strong>${fmt(cart.totals.tax)}</strong></div>
-                    <hr>
-                    <div class="d-flex justify-content-between fs-5"><span>Total</span><strong>${fmt(cart.totals.total)}</strong></div>
-                </div>`;
 
-                $cartBody.html(html);
-                $btnCheckout.prop('disabled', !cart.customer_id);
-                $cartCount.text(cart.items.length);
-            }
 
             $('#btnRefresh').on('click', () => location.reload());
 
-            $('#btnCustomer, #btnOpenCustomer').on('click', () => $customerModal.show());
 
             let _inFlightAvailability = null;
 
@@ -778,7 +724,8 @@
 
                     if (itemRes) {
                         updateCartSidebar(itemRes.cart, itemRes.cart_meta);
-                        btn.prop('disabled', true).html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
+                        btn.prop('disabled', true).html(
+                            '<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
                     } else {
                         btn.html('Error');
                     }
@@ -826,9 +773,9 @@
                 console.log('Updating cart sidebar with data', cartData);
 
                 if (!cartData || !cartData.items || !cartData.items.length === 0) {
+                    $btnCheckout.prop('disabled', true);
                     body.html('<p class="text-muted mb-0">No items yet.</p>');
                     count.text(0);
-                    $('#btnCheckout').prop('disabled', true);
                     localStorage.removeItem('cartData');
                     localStorage.removeItem('cartMeta');
                     return
@@ -859,9 +806,12 @@
                     </div>
                 `).join('');
 
+                if (itemsHtml) {
+                    $btnCheckout.prop('disabled', false);
+                }
+
                 body.html(itemsHtml);
                 count.text(cartData.items.length);
-                $('#btnCheckout').prop('disabled', !cartData.customer_id);
 
                 try {
                     localStorage.setItem('cartData', JSON.stringify(cartData));
@@ -882,10 +832,24 @@
                             localStorage.removeItem('cartMeta');
                             body.html('<p class="text-muted mb-0">Cart Expireed.</p>');
                             count.text(0);
-                            $('#btnCheckout').prop('disabled', true);
+                            $btnCheckout.prop('disabled', true);
                         }, timeRemaining);
                     }
                 }
+
+                // Make it global the cart object
+                window.currentCart = {
+                    data: cartData,
+                    meta: cartMeta
+                }
+
+                console.log('Initialized cart', window.currentCart?.data);
+                console.log('Initialized cart', window.currentCart?.meta.cart_token);
+
+                currentCart?.data?.items.map(it => {
+                    console.log('Cart item  total:', it.price.total);
+                })
+
 
             }
 
@@ -896,7 +860,8 @@
                 const cartItemId = btn.data('cart-item-id');
 
                 const originalHtml = btn.html();
-                btn.prop('disabled', true).html('<span class="opacity-75"><i class="fa-solid fa-spinner fa-spin-pulse"></i></span>')
+                btn.prop('disabled', true).html(
+                        '<span class="opacity-75"><i class="fa-solid fa-spinner fa-spin-pulse"></i></span>')
                     .fadeTo(200, 0.6);
 
                 try {
@@ -965,7 +930,6 @@
             $('#resultsTable').on('click', '.btnAdd', function() {
                 if (!cart.customer_id) {
                     $('#selectCustomerHint').removeClass('d-none');
-                    $('#customerModal').modal('show');
                     return;
                 }
 
@@ -1005,151 +969,101 @@
                             checkout,
                             price_breakdown: payload.price_breakdown,
                         });
-                        renderCart();
+                        // renderCart();
 
                     })
                     .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add to cart.'));
             });
 
-            (function() {
-                const $input = $('#customerSearch');
-                const $results = $('#customerResults');
 
-                let searchTimer = null;
-                let inFlightReq = null;
+            // function renderCart() {
+            //     if (!cart.items.length) {
+            //         $cartBody.html('<p class="text-muted mb-0">No items yet.</p>');
+            //         $btnCheckout.prop('disabled', true);
+            //         $cartCount.text(0);
+            //         return;
+            //     }
+            //     let html = '';
+            //     cart.items.forEach(it => {
+            //         html += `
+        //         <div class="border rounded p-2 mb-2">
+        //             <div class="d-flex justify-content-between">
+        //                 <strong>${it.site_name}</strong><span>${it.checkin} → ${it.checkout}</span>
+        //             </div>
+        //             <div class="small text-muted">${it.available_online ? '' : ' • Offline-only'}</div>
+        //             <div class="d-flex justify-content-between mt-1">
+        //                 <span>Total</span><strong>${fmt(it.price_breakdown?.total)}</strong>
+        //             </div>
+        //         </div>`;
+            //     });
+            //     recalcTotals();
+            //     html += `<div class="mt-2">
+        //         <div class="d-flex justify-content-between"><span>Subtotal</span><strong>${fmt(cart.totals.subtotal)}</strong></div>
+        //         <div class="d-flex justify-content-between"><span>Discounts</span><strong>-${fmt(cart.totals.discounts)}</strong></div>
+        //         <div class="d-flex justify-content-between"><span>Tax</span><strong>${fmt(cart.totals.tax)}</strong></div>
+        //         <hr>
+        //         <div class="d-flex justify-content-between fs-5"><span>Total</span><strong>${fmt(cart.totals.total)}</strong></div>
+        //     </div>`;
 
-                function renderResults(res) {
-                    const html = (res?.hits || []).map(h => `
-                    <button type="button" class="list-group-item list-group-item-action selCustomer" data-name="${h.f_name} ${h.l_name}" data-id="${h.id}">
-                        ${h.f_name}  ${h.l_name}${h.email ? ' • ' + h.email : ''}${h.phone ? ' • ' + h.phone : ''}
-                    </button>
-                    `).join('');
-                    $results.html(html || '<div class="text-muted small px-2 py-1">No matches</div>');
+            //     $cartBody.html(html);
+            //     $btnCheckout.prop('disabled', !cart.customer_id);
+            //     $cartCount.text(cart.items.length);
+            // }
+
+
+            $btnCheckout.on('click', function() {
+                const cart = window.currentCart?.data;
+                if (!cart) {
+                    alert('No cart data found.');
+                    return;
                 }
 
-                function doSearch(q) {
-                    if (inFlightReq && inFlightReq.readyState !== 4) inFlightReq.abort();
+                // Fill totals
+                $('#tSubtotal').text(fmt(cart.totals?.subtotal ?? 0));
+                $('#tDiscounts').text('-' + fmt(cart.totals?.discounts ?? 0));
+                $('#tTax').text(fmt(cart.totals?.tax ?? 0));
+                $('#tTotal').text(fmt(cart.totals?.total ?? 0));
 
-                    inFlightReq = $.ajax({
-                            url: routes.custSearch,
-                            method: 'POST',
-                            data: {
-                                _token: $('input[name=_token]').val(),
-                                q
-                            },
-                        })
-                        .done(res => {
-                            if ($input.val().trim() === q) renderResults(res);
-                        })
-                        .fail((xhr, status) => {
-                            if (status !== 'abort') {
-                                console.error('Customer search failed:', xhr?.responseJSON || status);
-                                $results.html('<div class="text-danger small px-2 py-1">Search failed</div>');
-                            }
-                        });
+                // Build cart details list
+                const itemsHtml = cart.items.map(item => `
+                    <div class="border rounded p-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div>
+                                <strong>Site:</strong> ${item.site_id}
+                            </div>
+                            <span class="badge bg-success text-uppercase">${item.status}</span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <strong>Nights:</strong> ${item.price?.nights ?? 0}
+                        </div>
+                        <div class="text-end">
+                            <strong>Subtotal:</strong> $${item.price?.subtotal ?? 0}
+                        </div>
+                    </div>
+                `).join('');
+
+                // Insert details into modal
+                $('#cartItemsList').html(itemsHtml);
+
+                // Show modal
+                $('#checkoutModal').modal('show');
+
+                if (cart.expires_at) {
+                    const expDate = new Date(cart.expires_at);
+                    const formatted = expDate.toLocaleString();
+                    $('#cartItemsList').prepend(
+                        `<div class="alert alert-warning py-1 small mb-3">Cart expires at <strong>${formatted}</strong></div>`
+                    );
                 }
 
-                function schedule() {
-                    clearTimeout(searchTimer);
-                    const q = $input.val().trim();
-                    if (q.length < 2) {
-                        $results.empty();
-                        return;
-                    }
-                    searchTimer = setTimeout(() => doSearch(q), 300);
-                }
-
-                $input.off('input.customer').on('input.customer', schedule);
-
-                $('#customerModal')
-                    .off('shown.bs.modal.customer hidden.bs.modal.customer')
-                    .on('shown.bs.modal.customer', () => $input.trigger('focus'))
-                    .on('hidden.bs.modal.customer', () => {
-                        clearTimeout(searchTimer);
-                        if (inFlightReq && inFlightReq.readyState !== 4) inFlightReq.abort();
-                        $results.empty();
-                        $input.val('');
-                    });
-            })();
-
-            function applySelectedCustomer(id, name) {
-                cart.customer_id = id;
-                cart.customer_name = (name || '').trim() || '(selected)';
-
-                const $nameCust = $('#forUser');
-                if (cart.customer_id) {
-                    $nameCust.removeClass('d-none').text(`For: ${cart.customer_name}`);
-                    if (typeof enableAddButtonsAfterCustomerSelected === 'function') {
-                        enableAddButtonsAfterCustomerSelected();
-                    }
-                    $('#selectCustomerHint').addClass('d-none');
-                    $('#btnCheckout').prop('disabled', cart.items.length === 0);
-                } else {
-                    $nameCust.addClass('d-none').text('');
-                    $('#btnCheckout').prop('disabled', true);
-                }
-                renderCart();
-                $('#customerModal').modal('hide');
-            }
-
-            $('#customerResults').on('click', '.selCustomer', function() {
-                cart.customer_id = $(this).data('id');
-                cart.customer_name = $(this).data('name');
-                $nameCust = $('#forUser');
-                if (cart.customer_id) {
-                    $nameCust.removeClass('d-none').text(`For: ${cart.customer_name || '(selected)'}`);
-                    enableAddButtonsAfterCustomerSelected();
-                    $('#selectCustomerHint').addClass('d-none');
-                } else {
-                    $nameCust.addClass('d-none').text('');
-                }
-                renderCart();
-                $customerModal.hide();
             });
 
-            $('#btnCreateCustomer').on('click', function() {
-                const fullName = ($('#newName').val() || '').trim();
-                $.post(routes.custCreate, {
-                        _token: $('input[name=_token]').val(),
-                        name: fullName,
-                        email: $('#newEmail').val(),
-                        phone: $('#newPhone').val(),
-                    })
-                    .done(res => {
-                        applySelectedCustomer(res.id, fullName);
-                        $('#newName, #newEmail, #newPhone').val('');
-                    })
-                    .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to create customer'));
-            });
-
-
-            $('#hintSelectCustomer').on('click', () => $('#customerModal').modal('show'));
-
-            $('#btnCheckout').on('click', function() {
-                $('#tSubtotal').text(fmt(cart.totals.subtotal));
-                $('#tDiscounts').text('-' + fmt(cart.totals.discounts));
-                $('#tTax').text(fmt(cart.totals.tax));
-                $('#tTotal').text(fmt(cart.totals.total));
-                $checkoutModal.show();
-            });
-
-            $('#btnApplyCoupon').on('click', function() {
-                const code = $('#couponCode').val().trim();
-                if (!code) return;
-                $.post(routes.couponApply, {
-                        _token: $('input[name=_token]').val(),
-                        code
-                    })
-                    .done(res => {
-                        if (res.totals) {
-                            $('#tSubtotal').text(fmt(res.totals.subtotal || 0));
-                            $('#tDiscounts').text('-' + fmt(res.totals.discounts || 0));
-                            $('#tTax').text(fmt(res.totals.tax || 0));
-                            $('#tTotal').text(fmt(res.totals.total || 0));
-                        }
-                    })
-                    .fail(xhr => alert(xhr.responseJSON?.message || 'Coupon invalid'));
-            });
 
             $('#checkoutModal').on('click', '#btnLookupGiftcard', function() {
                 const code = ($('#giftCardCode').val() || '').trim();
@@ -1174,6 +1088,26 @@
                     })
                     .always(() => $btn.prop('disabled', false));
             });
+
+            $('#btnApplyCoupon').on('click', function() {
+                const code = $('#couponCode').val().trim();
+                if (!code) return;
+                $.post(routes.couponApply, {
+                        _token: $('input[name=_token]').val(),
+                        code
+                    })
+                    .done(res => {
+                        if (res.totals) {
+                            $('#tSubtotal').text(fmt(res.totals.subtotal || 0));
+                            $('#tDiscounts').text('-' + fmt(res.totals.discounts || 0));
+                            $('#tTax').text(fmt(res.totals.tax || 0));
+                            $('#tTotal').text(fmt(res.totals.total || 0));
+                        }
+                    })
+                    .fail(xhr => alert(xhr.responseJSON?.message || 'Coupon invalid'));
+            });
+
+
 
             $('#checkoutModal').on('click', 'button[data-method]', function() {
                 const method = $(this).data('method');
@@ -1208,9 +1142,16 @@
 
             $('#btnPlaceOrder').on('click', function() {
                 const method = $('#paymentInputs').data('method') || 'credit_card';
+                const meta = window.currentCart?.meta;
+                const cart = window.currentCart?.data;
+                const custDetails = window.selectCustomerForCart?.details;
+
+                const total = cart.items.map(it => it.price?.total || 0);
+
+            
+
                 const payload = {
                     _token: $('input[name=_token]').val(),
-                    customer_id: cart.customer_id,
                     payment_method: method,
                     gift_card_code: $('#giftCardCode').val(),
                     ach: {
@@ -1219,10 +1160,29 @@
                         account: $('#achAccount').val()
                     },
                     cc: {
-                        number: $('#ccNumber').val(),
-                        exp: $('#ccExp').val(),
+                        xCardNum: $('#ccNumber').val(),
+                        xExp: $('#ccExp').val(),
                         cvv: $('#ccCvv').val()
                     },
+                    api_cart: {
+                        cart_id: meta.cart_id,
+                        cart_token: meta.cart_token
+                    },
+                    // Customer info for guest place order
+                    fname: custDetails?.f_name || '',
+                    lname: custDetails?.l_name || '',
+                    email: custDetails?.email || '',
+                    phone: custDetails?.phone || '',
+                    street_address: custDetails?.street_address || '',
+                    city: custDetails?.city || '',
+                    state: custDetails?.state || '',
+                    zip: custDetails?.zip || '',
+                    
+                    // Cart totals snapshot
+                    xAmount: total,
+
+                    applicable_coupon: $('#couponCode').val().trim() || null,
+                    
                 };
 
                 if (method === 'gift_card') {
@@ -1266,9 +1226,9 @@
                             icon: 'success',
                             title: 'Success',
                             html: `
-                    <p>${message}</p>
-                    <p class="small text-muted">Page will refresh in <b></b> seconds.</p>
-                `,
+                                <p>${message}</p>
+                                <p class="small text-muted">Page will refresh in <b></b> seconds.</p>
+                            `,
                             timer: 4000, // auto close after 4s
                             timerProgressBar: true,
                             showCancelButton: true,
@@ -1302,6 +1262,118 @@
                         });
                     });
             }
+
+            // Customser Search/Create
+            $(function() {
+                let selectedCustomer = null;
+
+                $('#customerSearch').on('input', function() {
+                    const query = $(this).val().trim();
+                    const $results = $('#customerSearchResults');
+
+                    if (query.length < 2) {
+                        $results.empty();
+                        return;
+                    }
+
+                    $.get(routes.custSearch, {
+                        q: query
+                    }, function(data) {
+                        $results.empty();
+
+                        const customers = data.hits || [];
+
+                        if (customers.length === 0) {
+                            $results.append(
+                                $('<div>')
+                                .addClass('list-group-item text-muted small')
+                                .text('No matching customers found.')
+                            );
+                            return;
+                        }
+
+                        customers.map(function(c) {
+                            const item = $('<button>')
+                                .addClass('list-group-item list-group-item-action')
+                                .text(
+                                    `${c.f_name} ${c.l_name} — ${c.email || 'No email'}`
+                                )
+                                .on('click', function() {
+                                    window.selectCustomerForCart = {
+                                        details: c,
+                                    };
+
+                                    console.log('Select customer for cart:', window
+                                        .selectCustomerForCart);
+
+                                    selectCustomer(c);
+                                });
+                            $results.append(item);
+                        })
+
+
+
+
+                    });
+                });
+
+
+
+                function selectCustomer(c) {
+                    selectedCustomer = c;
+                    $('#selName').text(c.name);
+                    $('#selEmail').text(c.email || '');
+                    $('#selectedCustomer').removeClass('d-none');
+                    $('#customerForm').addClass('d-none');
+                    $('#btnCheckout').prop('disabled', false);
+                    $('#customerResults').empty();
+
+
+
+                }
+
+
+                $('#btnChangeCustomer').on('click', function() {
+                    selectedCustomer = null;
+                    $('#selectedCustomer').addClass('d-none');
+                    $('#customerForm').removeClass('d-none');
+                    $('#btnCheckout').prop('disabled', true);
+                });
+
+                $('#btnCreateCustomer').on('click', function() {
+                    const name = $('#newName').val().trim();
+                    const email = $('#newEmail').val().trim();
+                    const phone = $('#newPhone').val().trim();
+
+                    if (!name) {
+                        alert('Please enter a name.');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: routes.custCreate,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        data: {
+                            name: name,
+                            email: email,
+                            phone: phone
+                        },
+                        success: function(newCust) {
+                            if (newCust && newCust.id) {
+                                selectCustomer(newCust);
+                            } else {
+                                alert('Error creating customer.');
+                            }
+                        },
+                        error: function() {
+                            alert('Server error while creating customer.');
+                        }
+                    });
+                });
+            });
 
         })();
     </script>

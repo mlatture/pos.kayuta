@@ -257,7 +257,6 @@ class ReservationManagementController extends Controller
             if ($response->successful()) {
                 Log::info('Added item to cart via booking API', $response->json());
                 return response()->json($response->json(), 200);
-
             }
 
             Log::error('Cart items API error', [
@@ -275,6 +274,61 @@ class ReservationManagementController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('Cart items proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
+
+       public function checkout(Request $request)
+    {
+        $data = $request->validate([
+            'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
+            'gift_card_code' => ['nullable', 'string', 'max:64'],
+
+            'cc.number' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
+            'cc.exp' => ['required_if:payment_method,credit_card', 'string', 'max:7'], // MM/YY or MMYYYY
+            'cc.cvv' => ['required_if:payment_method,credit_card', 'string', 'max:4'],
+
+            'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
+            'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
+            'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
+
+
+            // Optional Fields
+
+            'applicable_coupon' => ['nullable', 'string', 'max:50'],
+
+
+            // Required Fields
+            'fname' => ['required', 'string', 'max:100'],
+            'lname' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email'],
+            'phone' => ['required', 'string', 'max:20'],
+            'street_address' => ['required', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['required', 'string', 'max:50'],
+            'zip' => ['required', 'string', 'max:10'],
+            'cc.xCardNum'          => 'required', 'digits_between:13,19',
+            'cc.xExp'              => 'required', 'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/',
+            'xAmount' => ['required', 'numeric', 'min:0.5'],
+            'api_cart.cart_id' => ['required', 'string'],
+            'api_cart.cart_token' => ['required', 'string'],
+        ]);
+
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+
+            ])->post(env('BOOK_API_URL') . 'v1/checkout'. $data);
+        } catch (\Exception $e) {
+            Log::error('Checkout proxy failed', ['error' => $e->getMessage()]);
 
             return response()->json(
                 [
@@ -319,6 +373,8 @@ class ReservationManagementController extends Controller
         }
     }
 
+    public function getCart(Request $request) {}
+
     public function customerSearch(Request $request)
     {
         $q = $request->validate(['q' => 'required|string|min:2'])['q'];
@@ -330,7 +386,7 @@ class ReservationManagementController extends Controller
                 ->orWhere('phone', 'like', "%{$q}%");
         })
             ->limit(15)
-            ->get(['id', 'f_name', 'l_name', 'email', 'phone']);
+            ->get();
 
         return response()->json(['ok' => true, 'hits' => $hits]);
     }
@@ -548,239 +604,10 @@ class ReservationManagementController extends Controller
             ],
         ]);
     }
-    public function checkout(Request $request)
-    {
-        $data = $request->validate([
-            'customer_id' => ['required', 'integer', 'exists:users,id'],
-            'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
-            'gift_card_code' => ['nullable', 'string', 'max:64'],
-
-            // CC fields required only when payment_method=credit_card
-            'cc.number' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
-            'cc.exp' => ['required_if:payment_method,credit_card', 'string', 'max:7'], // MM/YY or MMYYYY
-            'cc.cvv' => ['required_if:payment_method,credit_card', 'string', 'max:4'],
-
-            // ACH fields required only when payment_method=ach
-            'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
-            'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
-            'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
-        ]);
-
-        $customerId = (int) $data['customer_id'];
-        $method = $data['payment_method'];
-
-        $cartId = CartReservation::where('customernumber', (string) $customerId)->select('cartid', DB::raw('MAX(updated_at) as last_updated'))->groupBy('cartid')->orderByDesc('last_updated')->value('cartid');
-
-        if (!$cartId) {
-            return response()->json(['ok' => false, 'message' => 'Cart is empty.'], 422);
-        }
-
-        DB::beginTransaction();
-        try {
-            $rows = CartReservation::where('customernumber', (string) $customerId)->where('cartid', $cartId)->orderBy('id')->lockForUpdate()->get();
-
-            if ($rows->isEmpty()) {
-                DB::rollBack();
-                return response()->json(['ok' => false, 'message' => 'Cart is empty.'], 422);
-            }
-
-            $totals = [
-                'subtotal' => round((float) $rows->sum('subtotal'), 2),
-                'discounts' => round((float) $rows->sum('discount'), 2),
-                'tax' => round((float) $rows->sum('totaltax'), 2),
-                'total' => round((float) $rows->sum('total'), 2),
-            ];
-
-            if ($totals['total'] <= 0) {
-                DB::rollBack();
-                return response()->json(['ok' => false, 'message' => 'Nothing to charge.'], 422);
-            }
-
-            $adminId = (int) auth()->id();
-            $orgId = optional(auth()->user())->organization_id;
-            $customer = User::findOrFail($customerId);
-            $now = now();
-
-            $xRef = null;
-            $result = ['xResult' => 'A'];
-
-            if ($method === 'credit_card' || $method === 'ach') {
-                /** @var CardKnoxService $cx */
-                $cx = app(CardKnoxService::class);
-                $name = trim(($customer->f_name ?? '') . ' ' . ($customer->l_name ?? ''));
-                $email = $customer->email ?? '';
-
-                if ($method === 'credit_card') {
-                    $cardNum = $data['cc']['number'];
-                    $exp = $data['cc']['exp'];
-                    $cvv = $data['cc']['cvv'];
-
-                    $resp = $cx->sale($cardNum, $cvv, $exp, (float) $totals['total'], $name, $email);
-                    $result = $resp;
-                    $xRef = $resp['xRefNum'] ?? null;
-
-                    if (($resp['xResult'] ?? null) !== 'A') {
-                        DB::rollBack();
-                        return response()->json(['ok' => false, 'message' => $resp['xError'] ?? 'Card was declined.'], 422);
-                    }
-                } elseif ($method === 'ach') {
-                    $routing = $data['ach']['routing'];
-                    $account = $data['ach']['account'];
-                    $accName = $data['ach']['name'];
-
-                    $resp = $cx->achSale($routing, $account, $accName, (float) $totals['total'], $name, $email);
-                    $result = $resp;
-                    $xRef = $resp['xRefNum'] ?? null;
-
-                    if (($resp['xResult'] ?? null) !== 'A') {
-                        DB::rollBack();
-                        return response()->json(['ok' => false, 'message' => $resp['xError'] ?? 'ACH was declined.'], 422);
-                    }
-                }
-            } elseif ($method === 'gift_card') {
-                $giftCardCode = trim($data['gift_card_code'] ?? '');
-                if ($giftCardCode === '') {
-                    DB::rollBack();
-                    return response()->json(['ok' => false, 'message' => 'Gift card code is required for gift card payments.'], 422);
-                }
-
-                $amountToCharge = round((float) $totals['total'], 2);
-
-                $card = GiftCard::where('barcode', $giftCardCode)->lockForUpdate()->first();
-
-                if (!$card) {
-                    DB::rollBack();
-                    return response()->json(['ok' => false, 'message' => 'Gift card not found.'], 404);
-                }
-
-                if ((int) $card->status !== 1) {
-                    DB::rollBack();
-                    return response()->json(['ok' => false, 'message' => 'Gift card is inactive.'], 422);
-                }
-
-                if ((float) $card->amount < $amountToCharge) {
-                    DB::rollBack();
-                    return response()->json(['ok' => false, 'message' => 'Gift card balance is insufficient.'], 422);
-                }
-
-                $card->amount = round(((float) $card->amount) - $amountToCharge, 2);
-                $card->save();
-
-                $xRef = 'GC-' . $giftCardCode;
-            }
-
-            $reservationIds = $this->createReservationsFromCartRows($rows, $customerId, $adminId, $now);
-
-            CartReservation::where('cartid', $cartId)->update([
-                'rid' => (string) ($reservationIds[0] ?? ''),
-                'email' => $customer->email ?? null,
-                'updated_at' => $now,
-            ]);
-
-            $receipt = Receipt::create([
-                'cartid' => $cartId,
-                'createdate' => $now,
-            ]);
-
-            $receiptId = Receipt::where('cartid', $cartId)->value('id');
-
-            $paymentId = DB::table('payments')->insertGetId([
-                'amount' => $totals['total'],
-                'organization_id' => $orgId,
-                'cartid' => $cartId,
-                'receipt' => $receiptId,
-                'method' => $method,
-                'customernumber' => (string) $customerId,
-                'email' => $customer->email ?? null,
-                'payment' => $totals['total'],
-                'x_ref_num' => $xRef,
-                'transaction_type' => 'sale',
-                'cancellation_fee' => null,
-                'refunded_amount' => null,
-                'order_id' => $reservationIds[0] ?? null,
-                'user_id' => $adminId,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            CartReservation::where('cartid', $cartId)->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'ok' => true,
-                'message' => 'Reservation created & paid.',
-                'payment_id' => $paymentId,
-                'reservation_ids' => $reservationIds,
-                'cartid' => $cartId,
-                'gateway_ref' => $xRef,
-            ]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Admin checkout failed', [
-                'error' => $e->getMessage(),
-            ]);
-            return response()->json(['ok' => false, 'message' => 'Payment or reservation failed. Please retry.'], 422);
-        }
-    }
-    private function createReservationsFromCartRows(\Illuminate\Support\Collection $rows, int $customerId, int $adminId, \Carbon\Carbon $now): array
-    {
-        $ids = [];
-        foreach ($rows as $line) {
-            $payload = [
-                'siteid' => $line->siteid,
-                'siteclass' => $line->siteclass ?? 'Unclassified',
-                'cartid' => $line->cartid,
-                'customernumber' => (string) $customerId,
-                'cid' => optional($line->cid)->toDateString(),
-                'cod' => optional($line->cod)->toDateString(),
-                'nights' => (int) $line->nights,
-                'riglength' => $line->riglength ?? null,
-                'taxrate' => $line->taxrate ?? null,
-                'subtotal' => (float) $line->subtotal,
-                'totaltax' => (float) $line->totaltax,
-                'discount' => (float) $line->discount,
-                'total' => (float) $line->total,
-                'source' => 'Office / Walk-in',
-                'email' => $line->email ?? null,
-                'fname' => optional($line->user)->f_name ?? 'Guest',
-                'lname' => optional($line->user)->l_name ?? '',
-                'status' => 'confirmed',
-                'createdby' => 'Admin   ',
-                'created_at' => $now,
-                'updated_at' => $now,
-                'createdate' => $now,
-                'xconfnum' => $line->cartid,
-            ];
-
-            $ids[] = DB::table('reservations')->insertGetId($payload);
-        }
-        return $ids;
-    }
-    private function readCart(): array
-    {
-        return session('admin_res_cart', []);
-    }
-
-    private function calcTotals(array $cart): array
-    {
-        $subtotal = 0.0;
-        $tax = 0.0;
-        $discounts = 0.0;
-        $total = 0.0;
-        foreach ($cart as $line) {
-            $subtotal += (float) ($line['price_breakdown']['subtotal'] ?? 0);
-            $tax += (float) ($line['price_breakdown']['tax'] ?? 0);
-            $discounts += (float) ($line['price_breakdown']['discounts'] ?? 0);
-            $total += (float) ($line['price_breakdown']['total'] ?? 0);
-        }
-        return [
-            'subtotal' => round($subtotal, 4),
-            'tax' => round($tax, 4),
-            'discounts' => round($discounts, 4),
-            'total' => round($total, 4),
-        ];
-    }
+ 
+   
+    
+    
 
     // Gift Cart Lookup
     public function giftCardLookup(Request $request)
