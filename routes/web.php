@@ -49,6 +49,7 @@ use App\Http\Controllers\SeasonalCustomerDiscountController;
 
 use App\Models\Order;
 use App\Http\Controllers\ApiChannelController;
+use App\Http\Controllers\Admin\ContentHub\SettingsController;
 
 Route::get('/', function () {
     return redirect('/admin');
@@ -60,6 +61,16 @@ Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
 
+
+//  content hub settings
+
+  Route::prefix('content-hub')->group(function () {
+             Route::get('/settings', [SettingsController::class,'show'])->name('settings');
+             Route::post('/settings', [SettingsController::class,'update'])->name('settings.update');
+             Route::post('/toggle', [SettingsController::class,'toggle'])
+             ->name('toggle');
+        }) ; 
+        
         Route::prefix('seasonal-customer-discounts')->group(function () {
             Route::get('{customer}', [SeasonalCustomerDiscountController::class, 'index'])->name('seasonal.customer.discounts.index');
             Route::post('store', [SeasonalCustomerDiscountController::class, 'store'])->name('seasonal.customer.discounts.store');
