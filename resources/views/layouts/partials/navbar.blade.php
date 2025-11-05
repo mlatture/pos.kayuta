@@ -320,6 +320,15 @@
                             </span>
                         </a></li>
                 @endHasPermission
+                
+                
+    <li>
+      <a class="dropdown-item" href="{{ route('admin.content-hub.settings') }}">
+        <i class="fa-solid fa-robot"></i>
+        <span>Ai Content Hub</span>
+      </a>
+    </li>
+
 
 
                 {{-- @hasPermission(config('constants.role_modules.process_seasonals.value'))

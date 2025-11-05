@@ -12,8 +12,9 @@ class SettingsController extends Controller
 {
     public function show()
     {
-        $this->authorize('contenthub.view');
+        // $this->authorize('contenthub.view');
         $settings = ContentHubSetting::firstOrCreate(['id'=>1]);
+        
         return view('admin.content_hub.settings', compact('settings'));
     }
 

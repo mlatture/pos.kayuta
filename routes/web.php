@@ -61,15 +61,15 @@ Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
 
-
-//  content hub settings
-
-  Route::prefix('content-hub')->group(function () {
-             Route::get('/settings', [SettingsController::class,'show'])->name('settings');
-             Route::post('/settings', [SettingsController::class,'update'])->name('settings.update');
-             Route::post('/toggle', [SettingsController::class,'toggle'])
-             ->name('toggle');
-        }) ; 
+    // content hub settings
+    Route::prefix('content-hub')->group(function () {
+        Route::get('/settings', [SettingsController::class, 'show'])
+            ->name('admin.content-hub.settings');
+        Route::post('/settings', [SettingsController::class, 'update'])
+            ->name('admin.content-hub.settings.update');
+        Route::post('/toggle', [SettingsController::class, 'toggle'])
+            ->name('admin.content-hub.toggle');
+    });
         
         Route::prefix('seasonal-customer-discounts')->group(function () {
             Route::get('{customer}', [SeasonalCustomerDiscountController::class, 'index'])->name('seasonal.customer.discounts.index');
