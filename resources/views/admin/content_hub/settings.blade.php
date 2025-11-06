@@ -12,7 +12,7 @@
             </h4>
 
             {{-- Enable/Disable Toggle --}}
-            <form method="POST" action="\">
+            <form method="POST" action="{{ route('admin.content-hub.toggle') }}">
                 @csrf
                 <button class="btn btn-{{ $settings->is_enabled ? 'danger' : 'success' }}">
                     <i class="bi {{ $settings->is_enabled ? 'bi-toggle-off' : 'bi-toggle-on' }}"></i>
@@ -23,29 +23,33 @@
 
         <div class="card-body px-4 py-3" style="max-height: 80vh; overflow-y: auto;">
             {{-- Nav Tabs --}}
-            <ul class="nav nav-tabs" role="tablist">
-                @php($active = request('tab','overview'))
-                <li class="nav-item">
-                    <a class="nav-link {{ $active === 'overview' ? 'active' : '' }}" href="">
-                        <i class="bi bi-info-circle me-1"></i> Overview
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ $active === 'ai' ? 'active' : '' }}" href="">
-                        <i class="bi bi-cpu me-1"></i> AI Provider & Credentials
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ $active === 'safety' ? 'active' : '' }}" href="">
-                        <i class="bi bi-shield-check me-1"></i> Safety Filters
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ $active === 'advanced' ? 'active' : '' }}" href="">
-                        <i class="bi bi-sliders me-1"></i> Advanced
-                    </a>
-                </li>
-            </ul>
+            @php($active = request('tab','overview'))
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link text-dark {{ $active === 'overview' ? 'active' : '' }}"
+           href="{{ route('admin.content-hub.settings', ['tab'=>'overview']) }}">
+            <i class="bi bi-info-circle me-1"></i> Overview
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark {{ $active === 'ai' ? 'active' : '' }}"
+           href="{{ route('admin.content-hub.settings', ['tab'=>'ai']) }}">
+            <i class="bi bi-cpu me-1"></i> AI Provider & Credentials
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark {{ $active === 'safety' ? 'active' : '' }}"
+           href="{{ route('admin.content-hub.settings', ['tab'=>'safety']) }}">
+            <i class="bi bi-shield-check me-1"></i> Safety Filters
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark {{ $active === 'advanced' ? 'active' : '' }}"
+           href="{{ route('admin.content-hub.settings', ['tab'=>'advanced']) }}">
+            <i class="bi bi-sliders me-1"></i> Advanced
+        </a>
+    </li>
+</ul>
 
             {{-- Flash --}}
             @if(session('status'))
@@ -86,15 +90,9 @@
                                 <h5 class="mb-3">
                                     <i class="bi bi-journal-text me-2"></i> Notes
                                 </h5>
-                                <p class="text-muted mb-2">
-                                    • Single-tenant deployment: this configuration applies to <em>this</em> park only.
-                                </p>
-                                <p class="text-muted mb-2">
-                                    • Credentials are stored encrypted at rest.
-                                </p>
-                                <p class="text-muted mb-0">
-                                    • Toggle above cleanly enables/disables the Content Hub without affecting other modules.
-                                </p>
+                                <p class="text-muted mb-2">• Single-tenant deployment: this config applies to <em>this</em> park only.</p>
+                                <p class="text-muted mb-2">• Credentials are stored encrypted at rest.</p>
+                                <p class="text-muted mb-0">• Toggle above safely enables/disables Content Hub.</p>
                             </div>
                         </div>
                     </div>
@@ -102,7 +100,7 @@
 
                 {{-- AI PROVIDER & CREDS --}}
                 <div class="tab-pane fade {{ $active === 'ai' ? 'show active' : '' }}" id="ai" role="tabpanel">
-                    <form method="POST" action="" class="mt-1">
+                    <form method="POST" action="{{ route('admin.content-hub.settings.update') }}" class="mt-1">
                         @csrf
                         <input type="hidden" name="is_enabled" value="{{ (int)$settings->is_enabled }}"/>
 
@@ -152,7 +150,8 @@
                             <button class="btn btn-primary">
                                 <i class="bi bi-save me-1"></i> Save Settings
                             </button>
-                            <a class="btn btn-outline-secondary" href="">
+                            <a class="btn btn-outline-secondary"
+                               href="{{ route('admin.content-hub.settings', ['tab'=>'overview']) }}">
                                 <i class="bi bi-arrow-left-short me-1"></i> Back to Overview
                             </a>
                         </div>
@@ -161,22 +160,26 @@
 
                 {{-- SAFETY FILTERS --}}
                 <div class="tab-pane fade {{ $active === 'safety' ? 'show active' : '' }}" id="safety" role="tabpanel">
-                    <form method="POST" action="" class="mt-1">
+                    <form method="POST" action="{{ route('admin.content-hub.settings.update') }}" class="mt-1">
                         @csrf
                         <input type="hidden" name="is_enabled" value="{{ (int)$settings->is_enabled }}"/>
 
+                        {{-- hidden fallbacks ensure unchecked checkboxes send 0 --}}
+                        <input type="hidden" name="face_blur_enabled" value="0">
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="face_blur_enabled" value="1"
                                    id="face_blur_enabled" @checked($settings->face_blur_enabled)>
                             <label class="form-check-label" for="face_blur_enabled">Face Blur Enabled</label>
                         </div>
 
+                        <input type="hidden" name="profanity_filter_enabled" value="0">
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="profanity_filter_enabled" value="1"
                                    id="profanity_filter_enabled" @checked($settings->profanity_filter_enabled)>
                             <label class="form-check-label" for="profanity_filter_enabled">Profanity Filter Enabled</label>
                         </div>
 
+                        <input type="hidden" name="guest_uploads_enabled" value="0">
                         <div class="form-check form-switch mb-4">
                             <input class="form-check-input" type="checkbox" name="guest_uploads_enabled" value="1"
                                    id="guest_uploads_enabled" @checked($settings->guest_uploads_enabled)>
@@ -191,7 +194,7 @@
 
                 {{-- ADVANCED --}}
                 <div class="tab-pane fade {{ $active === 'advanced' ? 'show active' : '' }}" id="advanced" role="tabpanel">
-                    <form method="POST" action="" class="mt-1">
+                    <form method="POST" action="{{ route('admin.content-hub.settings.update') }}" class="mt-1">
                         @csrf
                         <input type="hidden" name="is_enabled" value="{{ (int)$settings->is_enabled }}"/>
 
@@ -227,7 +230,7 @@
 
 @push('js')
 <script>
-    // Basic JSON safety: prettify AI creds/advanced JSON if user pasted object
+    // Optional: prettify JSON before submit (don’t block submit if invalid; server-side validation will catch)
     document.addEventListener('submit', function (e) {
         const form = e.target;
         if (!form || form.tagName !== 'FORM') return;
@@ -235,24 +238,8 @@
         const creds = form.querySelector('textarea[name="ai_api_credentials"]');
         const adv   = form.querySelector('textarea[name="settings_json"]');
 
-        try {
-            if (creds && creds.value.trim()) {
-                const obj = JSON.parse(creds.value);
-                creds.value = JSON.stringify(obj);
-            }
-        } catch (err) {
-            // allow server-side validation to catch; or show quick alert:
-            // alert('Invalid JSON in AI API Credentials'); e.preventDefault();
-        }
-
-        try {
-            if (adv && adv.value.trim()) {
-                const obj = JSON.parse(adv.value);
-                adv.value = JSON.stringify(obj);
-            }
-        } catch (err) {
-            // alert('Invalid JSON in Advanced Settings'); e.preventDefault();
-        }
+        try { if (creds && creds.value.trim()) creds.value = JSON.stringify(JSON.parse(creds.value)); } catch {}
+        try { if (adv && adv.value.trim())   adv.value   = JSON.stringify(JSON.parse(adv.value));   } catch {}
     }, true);
 </script>
 @endpush
