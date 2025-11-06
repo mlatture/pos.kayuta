@@ -54,7 +54,9 @@
 
                     {{-- Dates (wide) --}}
                     <div class="col-12 col-md-5">
-                        <label class="form-label">Dates</label>
+                        <label class="form-label">Dates <span class="badge rounded-pill bg-secondary d-none"
+                                id="nightsBadge">0 nights</span>
+                        </label>
                         <input type="text" class="form-control" id="dateRange" placeholder="MM/DD/YYYY — MM/DD/YYYY"
                             autocomplete="off" required>
                         <!-- Hidden fields kept for server compatibility -->
@@ -66,7 +68,7 @@
                     {{-- Rig length --}}
                     <div class="col-6 col-md-2">
                         <label class="form-label">Rig length (ft)</label>
-                        <input type="number" class="form-control" name="riglength" min="0" max="100"
+                        <input type="number" class="form-control" name="rig_length" min="0" max="100"
                             placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
                         <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit.</div>
                     </div>
@@ -75,9 +77,11 @@
                     <div class="col-2 col-mb-2">
                         <label class="form-label">Site Class</label>
                         <select class="form-select" name="siteclass">
-                            <option value="">Any</option>
                             @foreach ($siteClasses as $classes)
-                                <option value="{{ $classes->siteclass }}">{{ $classes->siteclass }}</option>
+                                <option value="{{ $classes->siteclass }}"
+                                    {{ $classes->siteclass == 'RV Sites' ? 'selected' : '' }}>
+                                    {{ $classes->siteclass }}
+                                </option>
                             @endforeach
 
                         </select>
@@ -175,44 +179,34 @@
             {{-- Results --}}
             <div class="col-lg-8">
                 <div class="card shadow-sm">
-                    
+
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>
                             Available Sites
                         </strong>
-                        <span class="badge rounded-pill bg-secondary d-none" id="nightsBadge">0 nights</span>
                     </div>
 
                     <p class="small text-muted mx-3 mt-2 mb-0">
                         Tip: Click any site row to view more details and amenities.
                     </p>
 
+                    <div class="card-body p-0" style="height: 50vh; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0" id="resultsTable"
+                            style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                            <thead class="table-light" id="resultsHead"
+                                style="position: sticky; top: 0; z-index: 10; background: #f8f9fa;">
 
-                    <div class="card-body p-0" style="height: 50vh; overflow-y: auto; position: relative;">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0" id="resultsTable">
-                                <thead class="table-light" id="resultsHead">
-                                    <tr>
-                                        <th>Site ID</th>
-                                        <th>Name</th>
-                                        <th>Class</th>
-                                        <th>Hookup</th>
-                                        <th class="text-center">Max Length</th>
-                                        <th>Status</th>
-                                        <th>Price Quote</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="7" class="text-center py-4 text-muted">Search to see availability…
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                        </div>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">Search to see availability…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
+
+
                 </div>
             </div>
 
@@ -503,8 +497,9 @@
                 _inFlightAvailability = $.get(routes.availability, $.param(formData))
                     .done(res => {
                         const $badge = $('#nightsBadge');
-                        const data = res?.response || {};
+                        const data = res?.data.response || {};
                         const results = data.results || {};
+                        const slFAmount = res?.site_lock_fee || " ";
 
 
 
@@ -522,23 +517,24 @@
 
                         let headHtml = '';
                         let rows = '';
+                        const siteClass = $('[name="siteclass"]').val();
+
+
 
                         if (data.view === 'units' && Array.isArray(results?.units)) {
                             headHtml = `
-                            <tr>
-                                <th>Site ID</th>
-                                <th>Name</th>
-                                <th>Class</th>
-                                <th>Hookup</th>
-                                <th class="text-center">Max Length</th>
-                                <th>Status</th>
-                                <th>Price Quote</th>
-                                <th>Actions</th>
+                            <tr >
+                                <th class="sticky-header">Site ID</th>
+                                <th class="sticky-header">Name</th>
+                                <th class="sticky-header">Class</th>
+                                <th class="sticky-header col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Hookup</th>
+                                <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Max Length</th>
+                                <th class="sticky-header">Status</th>
+                                <th class="sticky-header">Price Quote</th>
+                                <th class="sticky-header">Actions</th>
                             </tr>
                         `;
 
-                            const selectedClass = $('[name="siteclass"]').val();
-                            const selectedHookup = $('[name="hookup"]').val();
 
 
 
@@ -588,9 +584,9 @@
                                             </div>
 
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input siteLockFee" type="checkbox" id="siteLockFee_${unit.site_id}">
+                                                <input class="form-check-input siteLockFee" type="checkbox" checked id="siteLockFee_${unit.site_id}">
                                                 <label class="form-check-label small text-muted" for="siteLockFee_${unit.site_id}">
-                                                    Lock This Site 
+                                                    Site Lock Fee: $${slFAmount}
                                                 </label>
                                             </div>
 
@@ -614,8 +610,8 @@
                                         <td><strong>${unit?.site_id ?? ''}</strong></td>
                                         <td>${unit?.name ?? ''}</td>
                                         <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
-                                        <td>${unit?.hookup ?? ''}</td>
-                                        <td class="text-center">${unit?.maxlength ?? ''}</td>
+                                        <td class="col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.hookup ?? ''}</td>
+                                        <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.maxlength ?? ''}</td>
                                         <td>${statusBadge}</td>
                                         <td class="text-end">
                                             ${priceHtml}
@@ -695,8 +691,8 @@
                                             `<div class="d-flex flex-wrap gap-2 mt-2">
                                                     ${amenities
                                                         .map(a => `<span class="badge rounded-pill bg-success mb-1">
-                                                                        <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
-                                                                    </span>`)
+                                                                                                                                                                        <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
+                                                                                                                                                                    </span>`)
                                                         .join('')}
                                             </div>` :
                                             `<div class="text-muted small">No listed amenities.</div>`;
@@ -998,22 +994,51 @@
             window.__availabilityTrigger = debounce(() => {
                 const ci = $('[name="start_date"]').val();
                 const co = $('[name="end_date"]').val();
+                const selectedClass = $('[name="siteclass"]').val();
+
+                console.log('Availability trigger fired. CI:', ci, 'CO:', co, 'Class:', selectedClass);
                 if (!ci || !co) return;
+
+
+                if (selectedClass !== 'RV Sites') {
+                    $('[name="rig_length"]').val('');
+                }
+
 
                 runAvailabilitySearch();
             }, 300);
 
-            // $('#dateRange').on('change', window.__availabilityTrigger);
-            $('[name="riglength"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
+
+
+
+            if ($('[name="siteclass"]').val() !== 'RV Sites') hideRVColumns(true);
+
+
+            // Bind filters to trigger availability search
+            $('[name="rig_length"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
                 .on('change input', window.__availabilityTrigger);
 
+
+            // Handle form submission
             $form.off('submit.avail').on('submit.avail', function(e) {
                 e.preventDefault();
                 runAvailabilitySearch();
             });
 
-            $form.find('[name="rig_length"]').off('input.avail').on('input.avail', debounce(() =>
-                runAvailabilitySearch(), 450));
+
+            $form.find('[name="rig_length"]').on('input', function() {
+                const val = $(this).val().trim();
+                const $siteClass = $('[name="siteclass"]');
+
+                if (val.length > 0 && $siteClass.val() !== 'RV Sites') {
+                    $siteClass.val('RV Sites');
+                    $siteClass.trigger('change');
+                }
+            });
+
+
+
+
             $form.find('[name="site_id"]').off('change.avail').on('change.avail', debounce(() =>
                 runAvailabilitySearch(), 250));
 

@@ -47,9 +47,13 @@ class ReservationManagementController extends Controller
             // 'pets_ok' => ['sometimes', 'boolean'],
             'include_offline' => ['sometimes', 'boolean'],
             'include_reserved' => ['sometimes', 'boolean'],
-            'riglength' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'rig_length' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'with_prices' => ['sometimes', 'boolean'],
+            'site_lock_fee' => ['nullable', 'string']
         ]);
+
+        $siteLockFee = BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0;
+
 
         // Always include with_prices
         $validated['with_prices'] = true;
@@ -91,8 +95,8 @@ class ReservationManagementController extends Controller
                 /**
                  *  Rig length filtering
                  */
-                if (!empty($validated['riglength'])) {
-                    $riglength = (float) ($data['response']['filters']['rig_length'] ?? $validated['riglength']);
+                if (!empty($validated['rig_length'])) {
+                    $riglength = (float) ($data['response']['filters']['rig_length'] ?? $validated['rig_length']);
 
                     $units = $units
                         ->filter(function ($unit) use ($riglength) {
@@ -102,7 +106,7 @@ class ReservationManagementController extends Controller
                         ->values();
 
                     Log::info('Filtered availability by rig length', [
-                        'riglength' => $riglength,
+                        'rig_length' => $riglength,
                         'remaining_units' => $units->count(),
                     ]);
                 }
@@ -170,7 +174,7 @@ class ReservationManagementController extends Controller
                 $data['response']['results']['total_units'] = $units->count();
             }
 
-            return response()->json($data);
+            return response()->json(['data' => $data, 'site_lock_fee' => $siteLockFee]);
         } catch (\Exception $e) {
             Log::error('Availability proxy failed', ['error' => $e->getMessage()]);
 
