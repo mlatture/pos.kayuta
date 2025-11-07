@@ -70,7 +70,7 @@
                         <label class="form-label">Rig length (ft)</label>
                         <input type="number" class="form-control" name="rig_length" min="0" max="100"
                             placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
-                        <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit.</div>
+                        <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit. Please Enter After Typing</div>
                     </div>
 
                     {{-- Site class --}}
