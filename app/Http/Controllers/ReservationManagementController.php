@@ -49,11 +49,10 @@ class ReservationManagementController extends Controller
             'include_reserved' => ['sometimes', 'boolean'],
             'rig_length' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'with_prices' => ['sometimes', 'boolean'],
-            'site_lock_fee' => ['nullable', 'string']
+            'site_lock_fee' => ['nullable', 'string'],
         ]);
 
         $siteLockFee = BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0;
-
 
         // Always include with_prices
         $validated['with_prices'] = true;
@@ -101,7 +100,7 @@ class ReservationManagementController extends Controller
                     $units = $units
                         ->filter(function ($unit) use ($riglength) {
                             $max = isset($unit['maxlength']) ? (float) $unit['maxlength'] : null;
-                            return $max !== null && $max <= $riglength;
+                            return $max !== null && $max === $riglength;
                         })
                         ->values();
 
@@ -260,6 +259,46 @@ class ReservationManagementController extends Controller
         }
     }
 
+    public function getCart(Request $request)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->get(env('BOOK_API_URL') . "v1/cart/{$request['cart_id']}", [
+                'cart_token' => $request['cart_token'],
+            ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
+
+            Log::error('Get Cart API error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Failed to get cart from booking service.',
+                    'status' => $response->status(),
+                ],
+                $response->status(),
+            );
+        } catch (\Exception $e) {
+            Log::error('Get Cart API proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
+
     public function cartItems(Request $request)
     {
         $data = $request->validate([
@@ -406,8 +445,6 @@ class ReservationManagementController extends Controller
         }
     }
 
-    public function getCart(Request $request) {}
-
     public function customerSearch(Request $request)
     {
         $q = $request->validate(['q' => 'required|string|min:2'])['q'];
@@ -415,11 +452,12 @@ class ReservationManagementController extends Controller
         $hits = User::where(function ($w) use ($q) {
             $w->where('f_name', 'like', "%{$q}%")
                 ->orWhere('l_name', 'like', "%{$q}%")
+                ->orWhere(DB::raw("CONCAT(f_name, ' ', l_name)"), 'like', "%{$q}%")
                 ->orWhere('email', 'like', "%{$q}%")
                 ->orWhere('phone', 'like', "%{$q}%");
         })
             ->limit(15)
-            ->get();
+            ->get(['id', 'f_name', 'l_name', 'street_address', 'address_2', 'address_3', 'phone']);
 
         return response()->json(['ok' => true, 'hits' => $hits]);
     }

@@ -302,6 +302,8 @@
                             <div class="border rounded p-3" id="totalsBox">
                                 <div class="d-flex justify-content-between"><span>Subtotal</span><strong
                                         id="tSubtotal">—</strong></div>
+                                <div class="d-flex justify-content-between"><span>Site Lock Fee</span><strong
+                                        id="tSiteLock">—</strong></div>
                                 <div class="d-flex justify-content-between"><span>Discounts</span><strong
                                         id="tDiscounts">—</strong></div>
                                 <div class="d-flex justify-content-between"><span>Tax</span><strong
@@ -319,7 +321,7 @@
                         <button class="btn btn-outline-dark" data-method="cash">Cash</button>
                         <button class="btn btn-outline-dark" data-method="ach">ACH</button>
                         <button class="btn btn-outline-dark" data-method="gift_card">Gift Card</button>
-                        <button class="btn btn-primary" data-method="credit_card">Credit Card</button>
+                        <button class="btn btn-outline-dark" data-method="credit_card">Credit Card</button>
                     </div>
 
                     <div class="mt-3" id="paymentInputs"><!-- dynamically injected --></div>
@@ -399,7 +401,6 @@
                 availability: @json(route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id])),
                 cartAdd: @json(route('admin.reservation_mgmt.cart.add', ['admin' => auth()->user()->id])),
                 cartItems: @json(route('admin.reservation_mgmt.cart.item.cartItems', ['admin' => auth()->user()->id])),
-                cartGet: @json(route('admin.reservation_mgmt.cart', ['admin' => auth()->user()->id])),
                 custSearch: @json(route('admin.reservation_mgmt.customer.search', ['admin' => auth()->user()->id])),
                 custCreate: @json(route('admin.reservation_mgmt.customer.create', ['admin' => auth()->user()->id])),
                 couponApply: @json(route('admin.reservation_mgmt.coupon.apply', ['admin' => auth()->user()->id])),
@@ -407,6 +408,7 @@
                 giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
                 cartItemRemove: @json(route('admin.reservation_mgmt.cart.item.remove', ['admin' => auth()->user()->id])),
                 viewSiteDetails: @json(route('admin.reservation_mgmt.view.site.details', ['admin' => auth()->user()->id])),
+                getCart: @json(route('admin.reservation_mgmt.get.cart', ['admin' => auth()->user()->id]))
             };
 
             const debounce = (fn, d = 300) => {
@@ -691,8 +693,8 @@
                                             `<div class="d-flex flex-wrap gap-2 mt-2">
                                                     ${amenities
                                                         .map(a => `<span class="badge rounded-pill bg-success mb-1">
-                                                                                                                                                                        <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
-                                                                                                                                                                    </span>`)
+                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
+                                                                                                                                                                                                                                                        </span>`)
                                                         .join('')}
                                             </div>` :
                                             `<div class="text-muted small">No listed amenities.</div>`;
@@ -778,24 +780,44 @@
                     });
             }
 
-            $(document).on('click', '.addToCartBtn', async function() {
-                const btn = $(this);
-                const container = btn.closest('div');
-                const adults = parseInt(container.find('.adults').val()) || 0;
-                const children = parseInt(container.find('.children').val()) || 0;
-                const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
-                if (adults + children === 0) {
-                    alert('Please enter at least one occupant.');
-                    return;
+
+
+
+
+            $(window).on('load', async function() {
+                console.log('📦 Document ready triggered');
+
+                const storedCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+
+                if (storedCart.cart_id && storedCart.cart_token && storedCart.expires_at) {
+                    const expiresAt = new Date(storedCart.expires_at);
+                    const now = new Date();
+
+                    if (now < expiresAt) {
+                        console.log('🕒 Restoring existing cart from localStorage:', storedCart);
+                        await updateCartSidebar(storedCart.cart_id, storedCart.cart_token);
+                    } else {
+                        console.log('🗑️ Cart expired, clearing localStorage');
+                        localStorage.removeItem('cartInfo');
+                    }
                 }
+            });
 
-                btn.prop('disabled', true)
-                    .html(
-                        '<i class="fa-solid fa-spinner fa-spin-pulse"></i> Adding...'
-                    );
 
-                try {
 
+            async function createOrRestoreCart() {
+                let cartId, cartToken;
+
+                // Check existing cart first
+                const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+                const now = new Date();
+
+                if (stored.cart_id && stored.cart_token && new Date(stored.expires_at) > now) {
+                    console.log('♻️ Using existing cart:', stored);
+                    cartId = stored.cart_id;
+                    cartToken = stored.cart_token;
+                } else {
+                    console.log('🆕 Creating new cart...');
                     const cartRes = await $.ajax({
                         url: routes.cartAdd,
                         method: 'POST',
@@ -803,9 +825,49 @@
                         data: JSON.stringify({})
                     });
 
-                    cartId = cartRes.data.cart_id;
-                    cartToken = cartRes.data.cart_token;
+                    const data = cartRes.data;
+                    cartId = data.cart_id;
+                    cartToken = data.cart_token;
 
+                    // Compute expiration datetime
+                    const expiresAt = new Date();
+                    expiresAt.setSeconds(expiresAt.getSeconds() + (cartRes.meta?.ttl_seconds || 1800));
+
+                    // Save to localStorage
+                    localStorage.setItem('cartInfo', JSON.stringify({
+                        cart_id: cartId,
+                        cart_token: cartToken,
+                        expires_at: expiresAt.toISOString()
+                    }));
+                }
+
+                return {
+                    cartId,
+                    cartToken
+                };
+            }
+
+            $(document).on('click', '.addToCartBtn', async function() {
+                const btn = $(this);
+                const container = btn.closest('div');
+                const adults = parseInt(container.find('.adults').val()) || 0;
+                const children = parseInt(container.find('.children').val()) || 0;
+                const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
+
+                if (adults + children === 0) {
+                    alert('Please enter at least one occupant.');
+                    return;
+                }
+
+                btn.prop('disabled', true).html(
+                    '<i class="fa-solid fa-spinner fa-spin-pulse"></i> Adding...');
+
+                try {
+                    //  Create or restore shared cart
+                    const {
+                        cartId,
+                        cartToken
+                    } = await createOrRestoreCart();
 
                     const payload = {
                         cart_id: parseInt(cartId),
@@ -822,6 +884,7 @@
                         site_lock_fee: siteLockFee
                     };
 
+                    // Add item
                     const itemRes = await $.ajax({
                         url: routes.cartItems,
                         method: 'POST',
@@ -829,15 +892,12 @@
                         data: JSON.stringify(payload)
                     });
 
-
                     if (itemRes) {
-                        updateCartSidebar(itemRes.cart, itemRes.cart_meta);
-                        btn.prop('disabled', true).html(
-                            '<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
+                        await updateCartSidebar(cartId, cartToken);
+                        btn.html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
                     } else {
                         btn.html('Error');
                     }
-
                 } catch (err) {
                     console.error('Error adding to cart', err);
                     btn.html('Retry');
@@ -847,108 +907,99 @@
             });
 
 
-            $(document).ready(function() {
-                const saved = localStorage.getItem('cartData');
-                const savedMeta = localStorage.getItem('cartMeta');
-                if (saved, savedMeta) {
-                    try {
-                        const cartData = JSON.parse(saved);
-                        const cartMeta = JSON.parse(savedMeta);
-                        const expiresAt = new Date(cartData.expires_at);
-                        const now = new Date();
-
-                        if (expiresAt > now) {
-                            updateCartSidebar(cartData, cartMeta)
-                        } else {
-                            localStorage.removeItem('cartData');
-                            localStorage.removeItem('cartMeta');
-                        }
-                    } catch (error) {
-                        console.error('Failed to parse saved cart data', error);
-                        localStorage.removeItem('cartData');
-                        localStorage.removeItem('cartMeta');
-                    }
-                }
-            })
 
 
-            function updateCartSidebar(cartData, cartMeta) {
-                const body = $('#cartBody');
-                const count = $('#cartCount');
 
-
-                if (!cartData || !cartData.items || !cartData.items.length === 0) {
-                    $btnCheckout.prop('disabled', true);
-                    body.html('<p class="text-muted mb-0">No items yet.</p>');
-                    count.text(0);
-                    localStorage.removeItem('cartData');
-                    localStorage.removeItem('cartMeta');
-                    return
-                }
-
-                const itemsHtml = cartData.items.map(item => `
-                    <div class="border-bottom pb-2 mb-2">
-                      
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>${item.site_id}</strong>
-                            <button class="btn btn-link text-danger p-0 remove-item-btn"
-                                data-cart-id="${cartData.cart_id}"
-                                data-cart-token="${cartMeta.cart_token}"
-                                data-cart-item-id="${item.id}"
-
-                                title="Remove">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-
-                        <div class="text-muted small">
-                            ${item.start_date} → ${item.end_date}
-                        </div>
-                        <div class="text-end small">
-                            $${item.price?.subtotal ?? 0}
-                        </div>
-
-                    </div>
-                `).join('');
-
-                if (itemsHtml) {
-                    $btnCheckout.prop('disabled', false);
-                }
-
-                body.html(itemsHtml);
-                count.text(cartData.items.length);
-
+            async function updateCartSidebar(cartId, cartToken) {
                 try {
-                    localStorage.setItem('cartData', JSON.stringify(cartData));
-                    localStorage.setItem('cartMeta', JSON.stringify(cartMeta));
-                } catch (error) {
-                    console.error('Failed to save cart data to localStorage', error);
-                }
-
-                if (cartData.expires_at) {
-                    const expiresAt = new Date(cartData.expires_at).getTime();
-                    const now = Date.now();
-                    const timeRemaining = expiresAt - now;
-
-                    if (timeRemaining > 0) {
-                        setTimeout(() => {
-                            localStorage.removeItem('cartData');
-                            localStorage.removeItem('cartMeta');
-                            body.html('<p class="text-muted mb-0">Cart Expireed.</p>');
-                            count.text(0);
-                            $btnCheckout.prop('disabled', true);
-                        }, timeRemaining);
+                    // Empty cart fallback
+                    if (!cartId || !cartToken) {
+                        btnCheckout.prop('disabled', true);
+                        body.html('<p class="text-muted mb-0">No items yet.</p>');
+                        count.text(0);
+                        return;
                     }
+
+                    const res = await $.ajax({
+                        url: routes.getCart,
+                        method: 'GET',
+                        data: {
+                            cart_token: cartToken,
+                            cart_id: cartId
+                        }
+                    });
+
+                    console.log('🧾 Updated Cart:', res);
+
+                    const cart = res.data?.cart;
+                    const body = $('#cartBody');
+                    const count = $('#cartCount');
+                    const btnCheckout = $('#btnCheckout');
+
+
+
+                    // Build cart items dynamically
+                    let itemsHtml = '';
+                    let totalSubtotal = 0;
+                    let totalLockFee = 0;
+                    let totalGrand = 0;
+
+                    cart.items.forEach(item => {
+                        const site = item.site || {};
+                        const subtotal = item.price_snapshot?.subtotal || 0;
+                        const sitelockFee = item.price_snapshot?.sitelock_fee || 0;
+                        const total = item.price_snapshot?.total || 0;
+
+                        totalSubtotal += subtotal;
+                        totalLockFee += sitelockFee;
+                        totalGrand += total;
+
+                        itemsHtml += `
+                            <div class="cart-item mb-2 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>${site.name || item.site_id}</strong><br>
+                                        <small>${site.hookup || ''}</small><br>
+                                        <small>${item.start_date} → ${item.end_date}</small><br>
+                                        <small>${item.occupants?.adults || 0} adults, ${item.occupants?.children || 0} children</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <button class="btn btn-link text-danger p-0 remove-item-btn"
+                                            data-cart-id="${cartId}"
+                                            data-cart-token="${cartToken}"
+                                            data-cart-item-id="${item.id}"
+
+                                            title="Remove">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                        <div>Base: $${subtotal.toFixed(2)}</div>
+                                        ${sitelockFee > 0 ? `<div>Site Lock: $${sitelockFee.toFixed(2)}</div>` : ''}
+                                        <strong>Total: $${total.toFixed(2)}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Add a summary section at the end
+                    itemsHtml += `
+                        <hr>
+                        <div class="cart-summary text-end">
+                            <div><strong>Subtotal:</strong> $${totalSubtotal.toFixed(2)}</div>
+                            ${totalLockFee > 0 ? `<div><strong>Site Lock Fees:</strong> $${totalLockFee.toFixed(2)}</div>` : ''}
+                            <div class="fs-5"><strong>Grand Total:</strong> $${totalGrand.toFixed(2)}</div>
+                        </div>
+                    `;
+
+                    // Render to sidebar
+                    body.html(itemsHtml);
+                    count.text(cart.items.length);
+                    btnCheckout.prop('disabled', false);
+
+                } catch (err) {
+                    console.error('❌ Error fetching cart:', err);
+                    $('#cartBody').html('<p class="text-danger mb-0">Error loading cart.</p>');
                 }
-
-                // Make it global the cart object
-                window.currentCart = {
-                    data: cartData,
-                    meta: cartMeta
-                }
-
-
-
             }
 
             $(document).on('click', '.remove-item-btn', async function() {
@@ -958,9 +1009,11 @@
                 const cartItemId = btn.data('cart-item-id');
 
                 const originalHtml = btn.html();
-                btn.prop('disabled', true).html(
+                btn.prop('disabled', true)
+                    .html(
                         '<span class="opacity-75"><i class="fa-solid fa-spinner fa-spin-pulse"></i></span>')
-                    .fadeTo(200, 0.6);
+                    .fadeTo(200, 0.6, 'linear');
+
 
                 try {
                     const deleteCartItem = await $.ajax({
@@ -974,21 +1027,135 @@
                         }),
                     });
 
-                    if (deleteCartItem) {
-                        localStorage.removeItem('cartData');
-                        localStorage.removeItem('cartMeta');
+                    console.log('🗑️ Delete response:', deleteCartItem);
+
+                    // Success condition (depends on API return)
+                    if (deleteCartItem.code === "ITEM_REMOVED") {
+                        await updateCartSidebar(cartId, token);
+
+
                         toastr.success('Item removed from cart.');
-                        updateCartSidebar(deleteCartItem.cart, deleteCartItem.trace);
                     } else {
-                        toastr.error('Failed to remove item from cart.');
+                        toastr.error('Failed to remove item from cart. Please try again!');
                     }
                 } catch (err) {
                     console.error('Error removing cart item:', err);
                     toastr.error('Something went wrong while removing the item.');
                 } finally {
-                    btn.prop('disabled', false).html(originalHtml);
+                    btn.prop('disabled', false).html(originalHtml).fadeTo(200, 1);
                 }
             });
+
+            $btnCheckout.on('click', async function() {
+                const storedCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+
+
+
+                try {
+                    // Optional: refresh latest data from API
+                    const res = await $.ajax({
+                        url: routes.getCart,
+                        method: 'GET',
+                        data: {
+                            cart_id: storedCart.cart_id,
+                            cart_token: storedCart.cart_token
+                        }
+                    });
+
+                    const cart = res.data?.cart;
+                    if (!cart || !cart.items?.length) {
+                        $('#cartItemsList').html('<p class="text-muted mb-0">No items in cart.</p>');
+                        $('#checkoutModal').modal('show');
+                        return;
+                    }
+
+                    // Calculate totals
+                    let totalSubtotal = 0;
+                    let totalLockFee = 0;
+                    let totalDiscounts = 0;
+                    let totalTax = 0;
+                    let totalGrand = 0;
+
+                    cart.items.forEach(item => {
+                        const snapshot = item.price_snapshot || {};
+                        totalSubtotal += snapshot.subtotal || 0;
+                        totalLockFee += snapshot.sitelock_fee || 0;
+                        totalDiscounts += snapshot.discounts || 0;
+                        totalTax += snapshot.tax || 0;
+                        totalGrand += snapshot.total || 0;
+                    });
+
+                    // Update totals in modal
+                    $('#tSubtotal').text(fmt(totalSubtotal));
+                    $('#tDiscounts').text('-' + fmt(totalDiscounts));
+                    $('#tTax').text(fmt(totalTax));
+                    $('#tSiteLock').text(fmt(totalLockFee));
+                    $('#tTotal').text(fmt(totalGrand));
+
+                    // Build items display
+                    const itemsHtml = cart.items.map(item => {
+                        const site = item.site || {};
+                        const snapshot = item.price_snapshot || {};
+                        const subtotal = snapshot.subtotal || 0;
+                        const sitelockFee = snapshot.sitelock_fee || 0;
+
+                        return `
+                <div class="border rounded p-2 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div>
+                            <strong>${site.name || item.site_id}</strong><br>
+                            <small>${site.hookup || ''}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${sitelockFee > 0 ? 'success' : 'secondary'}">
+                                ${sitelockFee > 0
+                                    ? '<i class="fa-solid fa-lock"></i> Locked'
+                                    : '<i class="fa-solid fa-lock-open"></i> Unlocked'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-1">
+                        <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
+                    </div>
+                    <div class="small text-muted mb-1">
+                        <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
+                    </div>
+                    <div class="small text-muted mb-1">
+                        <strong>Nights:</strong> ${snapshot.nights ?? 0}
+                    </div>
+                    <div class="text-end">
+                        <strong>Subtotal:</strong> $${subtotal.toFixed(2)}<br>
+                        ${sitelockFee > 0 ? `<small>Site Lock Fee: $${sitelockFee.toFixed(2)}</small><br>` : ''}
+                        <strong>Total:</strong> $${(snapshot.total || 0).toFixed(2)}
+                    </div>
+                </div>
+            `;
+                    }).join('');
+
+                    $('#cartItemsList').html(itemsHtml);
+
+                    // Show expiration warning if available
+                    if (cart.expires_at) {
+                        const expDate = new Date(cart.expires_at);
+                        const formatted = expDate.toLocaleString();
+                        $('#cartItemsList').prepend(
+                            `<div class="alert alert-warning py-1 small mb-3">
+                    Cart expires at <strong>${formatted}</strong>
+                </div>`
+                        );
+                    }
+
+                    // Finally, open modal
+                    $('#checkoutModal').modal('show');
+
+                } catch (err) {
+                    console.error('❌ Error opening checkout modal:', err);
+                    toastr.error('Something went wrong while loading your cart.');
+                }
+            });
+
+
+
 
 
             window.__availabilityTrigger = debounce(() => {
@@ -997,26 +1164,24 @@
                 const selectedClass = $('[name="siteclass"]').val();
 
                 console.log('Availability trigger fired. CI:', ci, 'CO:', co, 'Class:', selectedClass);
-                if (!ci || !co) return;
 
+                if (!ci || !co) return;
 
                 if (selectedClass !== 'RV Sites') {
                     $('[name="rig_length"]').val('');
                 }
 
-
                 runAvailabilitySearch();
-            }, 300);
+            }, 500); // Slightly longer delay helps prevent rapid re-triggers
 
-
+            // Only bind change events, not input
+            $('[name="start_date"], [name="end_date"], [name="rig_length"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
+                .on('change', window.__availabilityTrigger);
 
 
             if ($('[name="siteclass"]').val() !== 'RV Sites') hideRVColumns(true);
 
 
-            // Bind filters to trigger availability search
-            $('[name="rig_length"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
-                .on('change input', window.__availabilityTrigger);
 
 
             // Handle form submission
@@ -1099,95 +1264,6 @@
 
                     })
                     .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add to cart.'));
-            });
-
-
-            // function renderCart() {
-            //     if (!cart.items.length) {
-            //         $cartBody.html('<p class="text-muted mb-0">No items yet.</p>');
-            //         $btnCheckout.prop('disabled', true);
-            //         $cartCount.text(0);
-            //         return;
-            //     }
-            //     let html = '';
-            //     cart.items.forEach(it => {
-            //         html += `
-        //         <div class="border rounded p-2 mb-2">
-        //             <div class="d-flex justify-content-between">
-        //                 <strong>${it.site_name}</strong><span>${it.checkin} → ${it.checkout}</span>
-        //             </div>
-        //             <div class="small text-muted">${it.available_online ? '' : ' • Offline-only'}</div>
-        //             <div class="d-flex justify-content-between mt-1">
-        //                 <span>Total</span><strong>${fmt(it.price_breakdown?.total)}</strong>
-        //             </div>
-        //         </div>`;
-            //     });
-            //     recalcTotals();
-            //     html += `<div class="mt-2">
-        //         <div class="d-flex justify-content-between"><span>Subtotal</span><strong>${fmt(cart.totals.subtotal)}</strong></div>
-        //         <div class="d-flex justify-content-between"><span>Discounts</span><strong>-${fmt(cart.totals.discounts)}</strong></div>
-        //         <div class="d-flex justify-content-between"><span>Tax</span><strong>${fmt(cart.totals.tax)}</strong></div>
-        //         <hr>
-        //         <div class="d-flex justify-content-between fs-5"><span>Total</span><strong>${fmt(cart.totals.total)}</strong></div>
-        //     </div>`;
-
-            //     $cartBody.html(html);
-            //     $btnCheckout.prop('disabled', !cart.customer_id);
-            //     $cartCount.text(cart.items.length);
-            // }
-
-
-            $btnCheckout.on('click', function() {
-                const cart = window.currentCart?.data;
-                if (!cart) {
-                    alert('No cart data found.');
-                    return;
-                }
-
-                // Fill totals
-                $('#tSubtotal').text(fmt(cart.totals?.subtotal ?? 0));
-                $('#tDiscounts').text('-' + fmt(cart.totals?.discounts ?? 0));
-                $('#tTax').text(fmt(cart.totals?.tax ?? 0));
-                $('#tTotal').text(fmt(cart.totals?.total ?? 0));
-
-                // Build cart details list
-                const itemsHtml = cart.items.map(item => `
-                    <div class="border rounded p-2 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div>
-                                <strong>Site:</strong> ${item.site_id}
-                            </div>
-                            <span class="badge bg-success text-uppercase">${item.status}</span>
-                        </div>
-                        <div class="small text-muted mb-1">
-                            <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
-                        </div>
-                        <div class="small text-muted mb-1">
-                            <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
-                        </div>
-                        <div class="small text-muted mb-1">
-                            <strong>Nights:</strong> ${item.price?.nights ?? 0}
-                        </div>
-                        <div class="text-end">
-                            <strong>Subtotal:</strong> $${item.price?.subtotal ?? 0}
-                        </div>
-                    </div>
-                `).join('');
-
-                // Insert details into modal
-                $('#cartItemsList').html(itemsHtml);
-
-                // Show modal
-                $('#checkoutModal').modal('show');
-
-                if (cart.expires_at) {
-                    const expDate = new Date(cart.expires_at);
-                    const formatted = expDate.toLocaleString();
-                    $('#cartItemsList').prepend(
-                        `<div class="alert alert-warning py-1 small mb-3">Cart expires at <strong>${formatted}</strong></div>`
-                    );
-                }
-
             });
 
 
@@ -1422,7 +1498,7 @@
                             const item = $('<button>')
                                 .addClass('list-group-item list-group-item-action')
                                 .text(
-                                    `${c.f_name} ${c.l_name} — ${c.email || 'No email'}`
+                                    `${c.f_name} ${c.l_name} — ${c.street_address || c.address_1 || c.address_3 || 'No address'}`
                                 )
                                 .on('click', function() {
                                     window.selectCustomerForCart = {
@@ -1445,15 +1521,12 @@
 
                 function selectCustomer(c) {
                     selectedCustomer = c;
-                    $('#selName').text(c.name);
-                    $('#selEmail').text(c.email || '');
+                    $('#selName').text(`${c.f_name} ${c.l_name}`);
+                    $('#selEmail').text(c.street_address || c.address_1 || c.address_3 || '');
                     $('#selectedCustomer').removeClass('d-none');
                     $('#customerForm').addClass('d-none');
                     $('#btnCheckout').prop('disabled', false);
                     $('#customerResults').empty();
-
-
-
                 }
 
 

@@ -108,7 +108,7 @@ Route::prefix('admin')
                 Route::get('{admin}/availability', [ReservationManagementController::class, 'availability'])->name('admin.reservation_mgmt.availability');
                 Route::post('{admin}/cart/add', [ReservationManagementController::class, 'cart'])->name('admin.reservation_mgmt.cart.add');
                 Route::post('{admin}/cart/item', [ReservationManagementController::class, 'cartItems'])->name('admin.reservation_mgmt.cart.item.cartItems');
-                Route::get('{admin}/cart', [ReservationManagementController::class, 'cart'])->name('admin.reservation_mgmt.cart');
+                Route::get('{admin/cart/get', [ReservationManagementController::class, 'getCart'])->name('admin.reservation_mgmt.get.cart');
                 Route::delete('{admin}/cart/item/remove', [ReservationManagementController::class, 'removeCartItem'])->name('admin.reservation_mgmt.cart.item.remove');
                 Route::get('{admin}/customer/search', [ReservationManagementController::class, 'customerSearch'])->name('admin.reservation_mgmt.customer.search');
                 
