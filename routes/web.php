@@ -51,12 +51,17 @@ use App\Models\Order;
 use App\Http\Controllers\ApiChannelController;
 use App\Http\Controllers\Admin\ContentHub\SettingsController;
 
+use App\Http\Controllers\Admin\ContentHub\ConnectionsController;
+use App\Http\Controllers\Auth\SocialAuthController;
+
 Route::get('/', function () {
     return redirect('/admin');
 });
 
 Auth::routes();
 
+    Route::get('auth/{provider}/callback', [SocialAuthController::class,'callback'])
+        ->name('oauth.callback');
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
@@ -70,6 +75,21 @@ Route::prefix('admin')
         Route::post('/toggle', [SettingsController::class, 'toggle'])
             ->name('admin.content-hub.toggle');
     });
+    
+    
+      // Connections dashboard
+    Route::get('content-hub/connections', [ConnectionsController::class,'index'])
+        ->name('admin.content-hub.connections');
+
+    Route::delete('content-hub/connections/{id}', [ConnectionsController::class,'disconnect'])
+        ->name('admin.content-hub.connections.disconnect');
+
+    // OAuth
+    Route::get('auth/{provider}/redirect', [SocialAuthController::class,'redirect'])
+        ->name('oauth.redirect');
+
+    Route::get('auth/{provider}/callback', [SocialAuthController::class,'callback'])
+        ->name('oauth.callback');
         
         Route::prefix('seasonal-customer-discounts')->group(function () {
             Route::get('{customer}', [SeasonalCustomerDiscountController::class, 'index'])->name('seasonal.customer.discounts.index');

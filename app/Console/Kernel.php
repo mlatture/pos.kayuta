@@ -28,6 +28,8 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
+        $schedule->job(new \App\Jobs\RefreshSocialTokensJob())->hourly();
+
         $schedule->command(SendPaymentReminders::class)->daily();
         $schedule->command('electric:optimize-prompts --min=8')->dailyAt('03:30')->onOneServer();
         $schedule

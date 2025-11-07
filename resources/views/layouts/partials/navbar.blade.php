@@ -328,6 +328,12 @@
         <span>Ai Content Hub</span>
       </a>
     </li>
+    
+    <li>
+  <a class="dropdown-item" href="{{ route('admin.content-hub.connections') }}">
+    <i class="fa-solid fa-plug"></i> <span>Social Connections</span>
+  </a>
+</li>
 
 
 
