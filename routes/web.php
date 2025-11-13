@@ -37,6 +37,8 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\MeterController;
+use App\Http\Controllers\Admin\AdminWaiverController;
+
 use App\Http\Controllers\SeasonalSettingController;
 use App\Http\Controllers\SeasonalRenewalGuestController;
 use App\Http\Controllers\SeasonalTransactionsController;
@@ -144,6 +146,28 @@ Route::prefix('admin')
 
             // Bulk delete
             Route::post('bulk-delete', [DocumentController::class, 'bulkDestroy'])->name('file.bulkDestroy');
+            
+            
+            
+             // Unattached Waivers modal (HTML partial)
+    Route::get('customers/{user}/waivers', [AdminWaiverController::class, 'index'])
+        ->name('customers.waivers');
+
+    // DataTables JSON for unattached waivers (same modal me)
+    Route::get('customers/{user}/waivers/data', [AdminWaiverController::class, 'data'])
+        ->name('customers.waivers.data');
+
+    // Bulk attach selected waivers to this customer
+    Route::post('customers/{user}/waivers/attach', [AdminWaiverController::class, 'attach'])
+        ->name('customers.waivers.attach');
+
+    // Bulk soft delete selected waivers
+    Route::post('waivers/bulk-delete', [AdminWaiverController::class, 'bulkDelete'])
+        ->name('waivers.bulkDelete');
+
+    // (Optional) Admin download (signed)
+    Route::get('waivers/{waiver}/download', [AdminWaiverController::class, 'download'])
+        ->name('waivers.download');
         });
 
         Route::get('system/logs', [SystemLogsController::class, 'index'])->name('admin.system_logs.index');
