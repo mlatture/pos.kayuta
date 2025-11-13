@@ -88,6 +88,9 @@ class ReservationManagementController extends Controller
             }
 
             $data = $response->json();
+
+            
+
             if (isset($data['response']['results']['units'])) {
                 $units = collect($data['response']['results']['units']);
 
@@ -109,6 +112,8 @@ class ReservationManagementController extends Controller
                         'remaining_units' => $units->count(),
                     ]);
                 }
+
+              
 
                 /**
                  *  Site class filtering
@@ -364,8 +369,8 @@ class ReservationManagementController extends Controller
             'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
             'gift_card_code' => ['nullable', 'string', 'max:64'],
 
-            'cc.number' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
-            'cc.exp' => ['required_if:payment_method,credit_card', 'string', 'max:7'], // MM/YY or MMYYYY
+            'cc.xCardNum' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
+            'cc.xExp' => ['required_if:payment_method,credit_card', 'string', 'max:7'], // MM/YY or MMYYYY
             'cc.cvv' => ['required_if:payment_method,credit_card', 'string', 'max:4'],
 
             'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
@@ -385,9 +390,7 @@ class ReservationManagementController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:50'],
             'zip' => ['required', 'string', 'max:10'],
-            'cc.xCardNum' => 'required',
             'digits_between:13,19',
-            'cc.xExp' => 'required',
             'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/',
             'xAmount' => ['required', 'numeric', 'min:0.5'],
             'api_cart.cart_id' => ['required', 'string'],
@@ -398,7 +401,7 @@ class ReservationManagementController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
-            ])->post(env('BOOK_API_URL') . 'v1/checkout' . $data);
+            ])->post(env('BOOK_API_URL') . 'v1/checkout', $data);
         } catch (\Exception $e) {
             Log::error('Checkout proxy failed', ['error' => $e->getMessage()]);
 
@@ -457,7 +460,7 @@ class ReservationManagementController extends Controller
                 ->orWhere('phone', 'like', "%{$q}%");
         })
             ->limit(15)
-            ->get(['id', 'f_name', 'l_name', 'street_address', 'address_2', 'address_3', 'phone']);
+            ->get();
 
         return response()->json(['ok' => true, 'hits' => $hits]);
     }

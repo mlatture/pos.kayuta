@@ -70,7 +70,8 @@
                         <label class="form-label">Rig length (ft)</label>
                         <input type="number" class="form-control" name="rig_length" min="0" max="100"
                             placeholder="e.g. 32" inputmode="numeric" pattern="[0-9]*">
-                        <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit. Please Enter After Typing</div>
+                        <div class="form-text">Total Rig Length, tip-to-tip. Filters to sites that fit. Please Enter After
+                            Typing</div>
                     </div>
 
                     {{-- Site class --}}
@@ -275,65 +276,8 @@
         </div>
     </div>
 
-    {{-- Checkout Modal --}}
-    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Checkout</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body">
-
-                    <!-- Dynamic Cart Items -->
-                    <div id="cartItemsList" class="mb-3"><!-- dynamically filled --></div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Coupon code</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="couponCode" placeholder="Enter code">
-                                {{-- <button class="btn btn-outline-secondary" id="btnApplyCoupon">Apply</button> --}}
-                            </div>
-                            <div class="form-text">Same validation rules as book site.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3" id="totalsBox">
-                                <div class="d-flex justify-content-between"><span>Subtotal</span><strong
-                                        id="tSubtotal">—</strong></div>
-                                <div class="d-flex justify-content-between"><span>Site Lock Fee</span><strong
-                                        id="tSiteLock">—</strong></div>
-                                <div class="d-flex justify-content-between"><span>Discounts</span><strong
-                                        id="tDiscounts">—</strong></div>
-                                <div class="d-flex justify-content-between"><span>Tax</span><strong
-                                        id="tTax">—</strong></div>
-                                <hr>
-                                <div class="d-flex justify-content-between fs-5"><span>Total</span><strong
-                                        id="tTotal">—</strong></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="d-grid gap-2 d-md-flex">
-                        <button class="btn btn-outline-dark" data-method="cash">Cash</button>
-                        <button class="btn btn-outline-dark" data-method="ach">ACH</button>
-                        <button class="btn btn-outline-dark" data-method="gift_card">Gift Card</button>
-                        <button class="btn btn-outline-dark" data-method="credit_card">Credit Card</button>
-                    </div>
-
-                    <div class="mt-3" id="paymentInputs"><!-- dynamically injected --></div>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-success" id="btnPlaceOrder">Place Order</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{-- Modals --}}
+    @include('reservations.management.modals');
 
 
 
@@ -433,11 +377,6 @@
                 currency: 'USD'
             }).format(n || 0);
 
-            const setLoading = (b) => {
-                $spinner.toggleClass('d-none', !b);
-            };
-
-
 
 
 
@@ -492,7 +431,7 @@
                     _inFlightAvailability = null;
                 }
 
-                setLoading(true);
+                // setLoading(true);
                 $tbody.html(`<tr><td colspan="7" class="text-center py-4">Searching…</td></tr>`);
 
 
@@ -693,8 +632,8 @@
                                             `<div class="d-flex flex-wrap gap-2 mt-2">
                                                     ${amenities
                                                         .map(a => `<span class="badge rounded-pill bg-success mb-1">
-                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
-                                                                                                                                                                                                                                                        </span>`)
+                                                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
+                                                                                                                                                                                                                                                                                        </span>`)
                                                         .join('')}
                                             </div>` :
                                             `<div class="text-muted small">No listed amenities.</div>`;
@@ -775,7 +714,7 @@
                         );
                     })
                     .always(() => {
-                        setLoading(false);
+                        // setLoading(false);
                         _inFlightAvailability = null;
                     });
             }
@@ -826,9 +765,9 @@
                     });
 
                     const data = cartRes.data;
+
                     cartId = data.cart_id;
                     cartToken = data.cart_token;
-
                     // Compute expiration datetime
                     const expiresAt = new Date();
                     expiresAt.setSeconds(expiresAt.getSeconds() + (cartRes.meta?.ttl_seconds || 1800));
@@ -837,7 +776,7 @@
                     localStorage.setItem('cartInfo', JSON.stringify({
                         cart_id: cartId,
                         cart_token: cartToken,
-                        expires_at: expiresAt.toISOString()
+                        expires_at: expiresAt.toISOString(),
                     }));
                 }
 
@@ -988,6 +927,7 @@
                             <div><strong>Subtotal:</strong> $${totalSubtotal.toFixed(2)}</div>
                             ${totalLockFee > 0 ? `<div><strong>Site Lock Fees:</strong> $${totalLockFee.toFixed(2)}</div>` : ''}
                             <div class="fs-5"><strong>Grand Total:</strong> $${totalGrand.toFixed(2)}</div>
+                            <input type="hidden" value="${totalGrand}" id="grandTotal">
                         </div>
                     `;
 
@@ -1047,6 +987,20 @@
             });
 
             $btnCheckout.on('click', async function() {
+                const btn = $(this);
+
+
+                if (!window.selectCustomerForCart || !window.selectCustomerForCart.details) {
+                    toastr.warning('Please select customer');
+                    return;
+                }
+
+                const customerInfo = window.selectCustomerForCart.details;
+                console.log('check', customerInfo);
+
+
+                btn.prop('disabled', true).html(
+                    '<i class="fa-solid fa-spinner fa-spin-pulse"></i>');
                 const storedCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
 
 
@@ -1092,6 +1046,8 @@
                     $('#tSiteLock').text(fmt(totalLockFee));
                     $('#tTotal').text(fmt(totalGrand));
 
+
+
                     // Build items display
                     const itemsHtml = cart.items.map(item => {
                         const site = item.site || {};
@@ -1100,36 +1056,36 @@
                         const sitelockFee = snapshot.sitelock_fee || 0;
 
                         return `
-                <div class="border rounded p-2 mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <div>
-                            <strong>${site.name || item.site_id}</strong><br>
-                            <small>${site.hookup || ''}</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-${sitelockFee > 0 ? 'success' : 'secondary'}">
-                                ${sitelockFee > 0
-                                    ? '<i class="fa-solid fa-lock"></i> Locked'
-                                    : '<i class="fa-solid fa-lock-open"></i> Unlocked'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="small text-muted mb-1">
-                        <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
-                    </div>
-                    <div class="small text-muted mb-1">
-                        <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
-                    </div>
-                    <div class="small text-muted mb-1">
-                        <strong>Nights:</strong> ${snapshot.nights ?? 0}
-                    </div>
-                    <div class="text-end">
-                        <strong>Subtotal:</strong> $${subtotal.toFixed(2)}<br>
-                        ${sitelockFee > 0 ? `<small>Site Lock Fee: $${sitelockFee.toFixed(2)}</small><br>` : ''}
-                        <strong>Total:</strong> $${(snapshot.total || 0).toFixed(2)}
-                    </div>
-                </div>
-            `;
+                            <div class="border rounded p-2 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <strong>${site.name || item.site_id}</strong><br>
+                                        <small>${site.hookup || ''}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-${sitelockFee > 0 ? 'success' : 'secondary'}">
+                                            ${sitelockFee > 0
+                                                ? '<i class="fa-solid fa-lock"></i> Locked'
+                                                : '<i class="fa-solid fa-lock-open"></i> Unlocked'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    <strong>Nights:</strong> ${snapshot.nights ?? 0}
+                                </div>
+                                <div class="text-end">
+                                    <strong>Subtotal:</strong> $${subtotal.toFixed(2)}<br>
+                                    ${sitelockFee > 0 ? `<small>Site Lock Fee: $${sitelockFee.toFixed(2)}</small><br>` : ''}
+                                    <strong>Total:</strong> $${(snapshot.total || 0).toFixed(2)}
+                                </div>
+                            </div>
+                        `;
                     }).join('');
 
                     $('#cartItemsList').html(itemsHtml);
@@ -1140,10 +1096,21 @@
                         const formatted = expDate.toLocaleString();
                         $('#cartItemsList').prepend(
                             `<div class="alert alert-warning py-1 small mb-3">
-                    Cart expires at <strong>${formatted}</strong>
-                </div>`
+                                Cart expires at <strong>${formatted}</strong>
+                            </div>`
                         );
                     }
+
+                    // Prefill Customer info
+                    $('#custFname').val(customerInfo.f_name || '');
+                    $('#custLname').val(customerInfo.l_name || '');
+                    $('#custEmail').val(customerInfo.email || '');
+                    $('#custPhone').val(customerInfo.phone || '');
+                    $('#custStreet').val(customerInfo.street_address || '');
+                    $('#custCity').val(customerInfo.city || '');
+                    $('#custState').val(customerInfo.state || '');
+                    $('#custZip').val(customerInfo.zip || '');
+
 
                     // Finally, open modal
                     $('#checkoutModal').modal('show');
@@ -1151,6 +1118,8 @@
                 } catch (err) {
                     console.error('❌ Error opening checkout modal:', err);
                     toastr.error('Something went wrong while loading your cart.');
+                } finally {
+                    btn.prop('disabled', false);
                 }
             });
 
@@ -1218,53 +1187,6 @@
 
             let cartToken = null;
 
-            $('#resultsTable').on('click', '.btnAdd', function() {
-                if (!cart.customer_id) {
-                    $('#selectCustomerHint').removeClass('d-none');
-                    return;
-                }
-
-                const $tr = $(this).closest('tr');
-                const item = JSON.parse($tr.attr('data-json'));
-
-                const checkin = $form.find('[name="start_date"]').val();
-                const checkout = $form.find('[name="end_date"]').val();
-
-                const payload = {
-                    _token: $('input[name=_token]').val(),
-                    site_id: item.id,
-                    checkin,
-                    checkout,
-                    customer_id: cart.customer_id || null,
-                    cart_token: cartToken,
-                    price_breakdown: {
-                        nightly: item.pricing?.nightly || 0,
-                        nights: item.pricing?.nights || 1,
-                        subtotal: item.pricing?.subtotal || 0,
-                        tax: item.pricing?.tax || 0,
-                        discounts: 0,
-                        total: item.pricing?.total || 0
-                    }
-                };
-
-                $.post(routes.cartAdd, payload)
-                    .done(res => {
-                        if (res.cart_token && !cartToken) cartToken = res.cart_token;
-                        cart.items.push({
-                            customer_id: cart.customer_id || null,
-                            site_id: item.id,
-                            site_name: item.name,
-                            site_type: item.type ?? '',
-                            available_online: !!item.available_online,
-                            checkin,
-                            checkout,
-                            price_breakdown: payload.price_breakdown,
-                        });
-                        // renderCart();
-
-                    })
-                    .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add to cart.'));
-            });
 
 
             $('#checkoutModal').on('click', '#btnLookupGiftcard', function() {
@@ -1342,18 +1264,43 @@
                 $('#paymentInputs').html(html).data('method', method);
             });
 
+            $('#btnCheckCancel').on('click', function() {
+                const checkoutBtn = $('#btnCheckout');
+
+                checkoutBtn.text('Proceed To Checkout');
+            });
+
             $('#btnPlaceOrder').on('click', function() {
                 const method = $('#paymentInputs').data('method') || 'credit_card';
-                const meta = window.currentCart?.meta;
-                const cart = window.currentCart?.data;
-                const custDetails = window.selectCustomerForCart?.details;
+                const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
 
-                const total = cart.items.map(it => it.price?.total || 0);
+                const customer = {
+                    fname: $('#custFname').val().trim(),
+                    lname: $('#custLname').val().trim(),
+                    email: $('#custEmail').val().trim(),
+                    phone: $('#custPhone').val().trim(),
+                    street_address: $('#custStreet').val().trim(),
+                    city: $('#custCity').val().trim(),
+                    state: $('#custState').val().trim(),
+                    zip: $('#custZip').val().trim()
+                };
+
+                for (const [key, val] of Object.entries(customer)) {
+                    if (!val) {
+                        toastr.error(`Please fill out ${key.replace('_', ' ')}.`);
+                        return;
+                    }
+                }
+
+
+
+                const total = $('#grandTotal').val();
 
 
 
                 const payload = {
                     _token: $('input[name=_token]').val(),
+                    ...customer,
                     payment_method: method,
                     gift_card_code: $('#giftCardCode').val(),
                     ach: {
@@ -1367,18 +1314,10 @@
                         cvv: $('#ccCvv').val()
                     },
                     api_cart: {
-                        cart_id: meta.cart_id,
-                        cart_token: meta.cart_token
+                        cart_id: stored.cart_id,
+                        cart_token: stored.cart_token
                     },
                     // Customer info for guest place order
-                    fname: custDetails?.f_name || '',
-                    lname: custDetails?.l_name || '',
-                    email: custDetails?.email || '',
-                    phone: custDetails?.phone || '',
-                    street_address: custDetails?.street_address || '',
-                    city: custDetails?.city || '',
-                    state: custDetails?.state || '',
-                    zip: custDetails?.zip || '',
 
                     // Cart totals snapshot
                     xAmount: total,
@@ -1433,9 +1372,9 @@
                             `,
                             timer: 4000, // auto close after 4s
                             timerProgressBar: true,
-                            showCancelButton: true,
-                            confirmButtonText: 'Reload now',
-                            cancelButtonText: 'Stay here',
+                            // showCancelButton: true,
+                            confirmButtonText: 'Okay',
+                            // cancelButtonText: 'Stay here',
                             didOpen: () => {
                                 const b = Swal.getPopup().querySelector('b');
                                 let timeLeft = 4;
@@ -1450,10 +1389,11 @@
                             }
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                location.reload(); // user clicked Reload now
+                                location.reload();
                             } else if (result.dismiss === Swal.DismissReason.timer) {
-                                location.reload(); // auto reload after timer
+                                location.reload();
                             }
+                            localStorage.removeItem('cartInfo');
                         });
                     })
                     .fail(xhr => {
@@ -1505,7 +1445,6 @@
                                         details: c,
                                     };
 
-
                                     selectCustomer(c);
                                 });
                             $results.append(item);
@@ -1527,6 +1466,7 @@
                     $('#customerForm').addClass('d-none');
                     $('#btnCheckout').prop('disabled', false);
                     $('#customerResults').empty();
+
                 }
 
 
