@@ -14,7 +14,9 @@
             </div>
             <div class="me-3 d-flex justify-content-center align-items-center">
                 <h4>
-                    <a  class="btn btn-primary" href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">Check Availability</a>
+                    <a class="btn btn-primary"
+                        href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">Check
+                        Availability</a>
                 </h4>
             </div>
         </div>
@@ -136,12 +138,15 @@
                         <div class="d-flex flex-column justify-content-between align-items-start">
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($sites->pluck('ratetier')->unique()->sort() as $rateTier)
-                                    <option value="{{ $rateTier }}">{{ $rateTier }}</option>
+                                @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
+                                    <option value="{{ $siteclass }}" @if ($siteclass === 'RV Sites') selected @endif>
+                                        {{ $siteclass }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                     </th>
+
                     @php
                         $recurringMonth = '';
                         $colspan = 0;
@@ -184,6 +189,7 @@
             </thead>
             <tbody id="siteTableBody">
                 @include('reservations.components._site_rows_list', [
+                    'site_classes' => $site_classes,
                     'sites' => $sites,
                     'calendar' => $calendar,
                 ])
@@ -231,6 +237,8 @@
                 width: '100%',
             });
 
+            filterTable();
+
             // Event listeners for filters change
             $('#siteFilter, #typeFilter').on('change', function() {
                 filterTable();
@@ -258,6 +266,7 @@
             rows.forEach(row => {
                 const siteId = row.dataset.siteSiteid;
                 const siteTier = row.dataset.siteRatetier;
+                const siteClass = row.dataset.topSiteclass;
                 const isSeasonal = row.dataset.siteSeasonal === '1';
 
                 let showRow = true;
@@ -268,7 +277,7 @@
                     showRow = false;
                 }
 
-                if (selectedTypes.length > 0 && !selectedTypes.includes(siteTier)) {
+                if (selectedTypes.length > 0 && !selectedTypes.includes(siteClass)) {
                     showRow = false;
                 }
 

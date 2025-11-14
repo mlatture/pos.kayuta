@@ -51,7 +51,7 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         $query = Site::with(['reservations.payments']);
-
+        $site_classes = SiteClass::all();
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -116,7 +116,7 @@ class ReservationController extends Controller
             ]);
         }
 
-        return view('reservations.index', compact('sites', 'calendar', 'filters'));
+        return view('reservations.index', compact('site_classes','sites', 'calendar', 'filters'));
     }
 
     private function generateSeasonCalendar($startDate, $endDate)
