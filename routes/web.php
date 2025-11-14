@@ -123,6 +123,11 @@ Route::prefix('admin')
                 Route::post('{admin}/checkout', [ReservationManagementController::class, 'checkout'])->name('admin.reservation_mgmt.checkout');
 
                 Route::post('{admin}/giftcard/lookup', [ReservationManagementController::class, 'giftCardLookup'])->name('admin.reservation_mgmt.giftcard.lookup');
+
+
+                // Map View
+
+                Route::get('{admin}/view/map', [ReservationManagementController::class, 'viewMap'])->name('admin.reservation_mgmt.map.view');
             });
 
         Route::prefix('customers/{customer}/account')->group(function () {

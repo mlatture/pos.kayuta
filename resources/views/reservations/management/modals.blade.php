@@ -18,6 +18,9 @@
                           <div class="border rounded p-3 mb-3">
                               <h6 class="mb-3">Customer Information</h6>
 
+                              {{--  Hidden ID --}}
+                            <input type="hidden" name="" id="custId">
+                            
                               <div class="row g-3">
                                   <div class="col-md-6">
                                       <label class="form-label">First Name</label>

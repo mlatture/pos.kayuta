@@ -14,6 +14,9 @@ use App\Models\Receipt;
 use App\Models\GiftCard;
 use App\Models\SiteHookup;
 use App\Models\BusinessSettings;
+use App\Models\Setting;
+
+
 use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Facades\DB;
@@ -21,6 +24,7 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+
 
 use App\Services\CardKnoxService;
 
@@ -89,8 +93,6 @@ class ReservationManagementController extends Controller
 
             $data = $response->json();
 
-            
-
             if (isset($data['response']['results']['units'])) {
                 $units = collect($data['response']['results']['units']);
 
@@ -112,8 +114,6 @@ class ReservationManagementController extends Controller
                         'remaining_units' => $units->count(),
                     ]);
                 }
-
-              
 
                 /**
                  *  Site class filtering
@@ -192,6 +192,42 @@ class ReservationManagementController extends Controller
         }
     }
 
+    public function viewMap(Request $request)
+    {
+        $result = $this->availability($request);
+        $data = $result->getData(true);
+        $sites = $data['data']['response']['results']['units'] ?? [];
+
+        $bookType = $request->book_type ?? 'book_now';
+        $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
+
+        if ($bookType === 'book_now') {
+            // if ($grids == '1') {
+            //     return view('reservations.management.map.grid_booking', [
+            //         'sites' => $sites['units'] ?? [],
+            //         'hookup' => $sites['hookup'] ?? null,
+            //         'riglength' => $sites['rig_length'] ?? null,
+            //         'siteclass' => $sites['siteclass'] ?? null,
+            //     ]);
+            // }
+
+            return view('reservations.management.map.booking', [
+                'sites' => $sites['units'] ?? [],
+                'hookup' => $sites['hookup'] ?? null,
+                'riglength' => $sites['rig_length'] ?? null,
+                'siteclass' => $sites['siteclass'] ?? null,
+            ]);
+        }
+
+        return view('reservations.management.map.flexible', [
+            'sites' => $sites['units'] ?? [],
+            'hookup' => $sites['hookup'] ?? null,
+            'riglength' => $sites['rig_length'] ?? null,
+            'siteclass' => $sites['siteclass'] ?? null,
+            'stay' => $sites['stay'] ?? null,
+            'months' => $sites['months'] ?? [],
+        ]);
+    }
     public function viewSiteDetails(Request $request)
     {
         $data = $request->validate([
@@ -382,6 +418,7 @@ class ReservationManagementController extends Controller
             'applicable_coupon' => ['nullable', 'string', 'max:50'],
 
             // Required Fields
+            'custId' => ['nullable', 'integer'],
             'fname' => ['required', 'string', 'max:100'],
             'lname' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email'],
@@ -398,6 +435,23 @@ class ReservationManagementController extends Controller
         ]);
 
         try {
+            if (!empty($data['custId'])) {
+                $user = User::find($data['custId']);
+
+                if ($user) {
+                    $user->update([
+                        'f_name' => $data['fname'],
+                        'l_name' => $data['lname'],
+                        'email' => $data['email'],
+                        'phone' => $data['phone'],
+                        'street_address' => $data['street_address'],
+                        'city' => $data['city'],
+                        'state' => $data['state'],
+                        'zip' => $data['zip'],
+                    ]);
+                }
+            }
+
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
@@ -469,8 +523,12 @@ class ReservationManagementController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'streetadd' => ['required', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'zip' => ['required', 'digits_between:3,10'],
         ]);
 
         [$first, $last] = $this->splitName($data['name']);
@@ -481,11 +539,28 @@ class ReservationManagementController extends Controller
             'password' => 'default123',
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
+            'street_address' => $data['streetadd'] ?? null,
+            'city' => $data['city'] ?? null,
+            'state' => $data['state'] ?? null,
+            'zip' => $data['zip'] ?? null,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return response()->json(['ok' => true, 'id' => $id]);
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'id' => $id,
+                'f_name' => $first,
+                'l_name' => $last,
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'street_address' => $data['streetadd'] ?? null,
+                'city' => $data['city'] ?? null,
+                'state' => $data['state'] ?? null,
+                'zip' => $data['zip'] ?? null,
+            ],
+        ]);
     }
 
     private function splitName(string $full): array

@@ -101,26 +101,14 @@
                         <div class="form-text">Utilities Needed</div>
                     </div>
 
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-outline-primary position-relative" id="btnViewMap">
+                            View Map
+                        </button>
+                        <div class="form-text">Please select a date first before opening the map.</div>
+                    </div>
 
-                    {{-- View String --}}
-                    {{-- <div class="col-2 col-mb-2">
-                        <label class="form-label">View </label>
-                        <select class="form-select" name="view">
-                            <option value="units">units</option>
-                            <option value="aggregated">aggregated</option>
 
-
-                        </select>
-                        <div class="form-text">---</div>
-                    </div> --}}
-
-                    {{-- <div class="col-auto me-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="pets_ok" name="pets_ok"
-                                checked>
-                            <div class="form-text">With Pets</div>
-                        </div>
-                    </div> --}}
                     <div class="col-auto">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="include_reserved" name="include_reserved">
@@ -246,7 +234,7 @@
 
                             <div class="list-group mb-3" id="customerResults"></div>
 
-                            {{-- <div class="border-top pt-2">
+                            <div class="border-top pt-2">
                                 <h6 class="small text-muted mb-2">Create new customer</h6>
                                 <div class="row g-2">
                                     <div class="col-12 col-md-4"><input type="text" class="form-control"
@@ -255,10 +243,18 @@
                                             id="newEmail" placeholder="Email"></div>
                                     <div class="col-12 col-md-4"><input type="text" class="form-control"
                                             id="newPhone" placeholder="Phone"></div>
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newStreetAdd" placeholder="Street Address"></div>
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newCity" placeholder="City"></div>
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newState" placeholder="State"></div>
+                                    <div class="col-12 col-md-4"><input type="text" class="form-control"
+                                            id="newZip" placeholder="Zip"></div>
                                 </div>
                                 <button class="btn btn-sm btn-primary mt-2 w-100" id="btnCreateCustomer">Save &
                                     Select</button>
-                            </div> --}}
+                            </div>
                         </div>
                     </div>
 
@@ -289,6 +285,7 @@
     <script>
         const checkin = document.getElementById('checkinHidden').value;
         const checkout = document.getElementById('checkoutHidden').value;
+        const $btnViewMap = $('#btnViewMap');
 
 
         if (!document.querySelector('#dateRange')._flatpickr) {
@@ -319,6 +316,17 @@
                 }
             });
         }
+
+
+        function updateViewMapButton() {
+            const checkin = $('#checkinHidden').val();
+            const checkout = $('#checkoutHidden').val();
+
+            // $btnViewMap.prop('disabled', !(checkin && checkout));
+        }
+
+        // Initial check
+        updateViewMapButton();
     </script>
 
     <script>
@@ -352,7 +360,9 @@
                 giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
                 cartItemRemove: @json(route('admin.reservation_mgmt.cart.item.remove', ['admin' => auth()->user()->id])),
                 viewSiteDetails: @json(route('admin.reservation_mgmt.view.site.details', ['admin' => auth()->user()->id])),
-                getCart: @json(route('admin.reservation_mgmt.get.cart', ['admin' => auth()->user()->id]))
+                getCart: @json(route('admin.reservation_mgmt.get.cart', ['admin' => auth()->user()->id])),
+                viewMap: @json(route('admin.reservation_mgmt.map.view', ['admin' => auth()->user()->id])),
+
             };
 
             const debounce = (fn, d = 300) => {
@@ -378,6 +388,21 @@
             }).format(n || 0);
 
 
+            // Click handler
+            $btnViewMap.on('click', function(e) {
+                const checkin = $('#checkinHidden').val();
+                const checkout = $('#checkoutHidden').val();
+
+                if (!checkin || !checkout) {
+                    e.preventDefault();
+                    alert('Please select a start and end date first.');
+                    return false;
+                }
+
+                const url =
+                    `${routes.viewMap}?start_date=${encodeURIComponent(checkin)}&end_date=${encodeURIComponent(checkout)}`;
+                window.location.href = url;
+            });
 
 
             $('#btnRefresh').on('click', () => location.reload());
@@ -469,6 +494,7 @@
                                 <th class="sticky-header">Name</th>
                                 <th class="sticky-header">Class</th>
                                 <th class="sticky-header col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Hookup</th>
+                                <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Min Length</th>
                                 <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Max Length</th>
                                 <th class="sticky-header">Status</th>
                                 <th class="sticky-header">Price Quote</th>
@@ -552,6 +578,7 @@
                                         <td>${unit?.name ?? ''}</td>
                                         <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
                                         <td class="col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.hookup ?? ''}</td>
+                                        <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.minlength ?? ''}</td>
                                         <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.maxlength ?? ''}</td>
                                         <td>${statusBadge}</td>
                                         <td class="text-end">
@@ -632,8 +659,8 @@
                                             `<div class="d-flex flex-wrap gap-2 mt-2">
                                                     ${amenities
                                                         .map(a => `<span class="badge rounded-pill bg-success mb-1">
-                                                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
-                                                                                                                                                                                                                                                                                        </span>`)
+                                                                                                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
+                                                                                                                                                                                                                                                                                                                                        </span>`)
                                                         .join('')}
                                             </div>` :
                                             `<div class="text-muted small">No listed amenities.</div>`;
@@ -868,14 +895,13 @@
                         }
                     });
 
-                    console.log('🧾 Updated Cart:', res);
 
                     const cart = res.data?.cart;
                     const body = $('#cartBody');
                     const count = $('#cartCount');
                     const btnCheckout = $('#btnCheckout');
 
-
+                    console.log('Cart Check', cart);
 
                     // Build cart items dynamically
                     let itemsHtml = '';
@@ -899,7 +925,7 @@
                                     <div>
                                         <strong>${site.name || item.site_id}</strong><br>
                                         <small>${site.hookup || ''}</small><br>
-                                        <small>${item.start_date} → ${item.end_date}</small><br>
+                                        <small>${item.start_date} → ${item.end_date} (${item.nights} nights)</small><br>
                                         <small>${item.occupants?.adults || 0} adults, ${item.occupants?.children || 0} children</small>
                                     </div>
                                     <div class="text-end">
@@ -1071,7 +1097,7 @@
                                     </div>
                                 </div>
                                 <div class="small text-muted mb-1">
-                                    <strong>Dates:</strong> ${item.start_date} → ${item.end_date}
+                                    <strong>Dates:</strong> ${item.start_date} → ${item.end_date} (${item.nights} nights)
                                 </div>
                                 <div class="small text-muted mb-1">
                                     <strong>Occupants:</strong> ${item.occupants?.adults ?? 0} Adults, ${item.occupants?.children ?? 0} Children
@@ -1110,6 +1136,7 @@
                     $('#custCity').val(customerInfo.city || '');
                     $('#custState').val(customerInfo.state || '');
                     $('#custZip').val(customerInfo.zip || '');
+                    $('#custId').val(customerInfo.id || '');
 
 
                     // Finally, open modal
@@ -1282,7 +1309,8 @@
                     street_address: $('#custStreet').val().trim(),
                     city: $('#custCity').val().trim(),
                     state: $('#custState').val().trim(),
-                    zip: $('#custZip').val().trim()
+                    zip: $('#custZip').val().trim(),
+                    custId: $('#custId').val().trim()
                 };
 
                 for (const [key, val] of Object.entries(customer)) {
@@ -1478,13 +1506,44 @@
                 });
 
                 $('#btnCreateCustomer').on('click', function() {
-                    const name = $('#newName').val().trim();
-                    const email = $('#newEmail').val().trim();
-                    const phone = $('#newPhone').val().trim();
+                    const fields = [{
+                            id: '#newName',
+                            label: 'name'
+                        },
+                        {
+                            id: '#newEmail',
+                            label: 'email'
+                        },
+                        {
+                            id: '#newPhone',
+                            label: 'phone number'
+                        },
+                        {
+                            id: '#newStreetAdd',
+                            label: 'street address'
+                        },
+                        {
+                            id: '#newCity',
+                            label: 'city'
+                        },
+                        {
+                            id: '#newState',
+                            label: 'state'
+                        },
+                        {
+                            id: '#newZip',
+                            label: 'zip code'
+                        },
+                    ];
 
-                    if (!name) {
-                        alert('Please enter a name.');
-                        return;
+                    let data = {};
+                    for (const field of fields) {
+                        const value = $(field.id).val().trim();
+                        if (!value) {
+                            toastr.warning(`Please enter a ${field.label}.`);
+                            return;
+                        }
+                        data[field.id.replace('#new', '').toLowerCase()] = value;
                     }
 
                     $.ajax({
@@ -1493,17 +1552,22 @@
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        data: {
-                            name: name,
-                            email: email,
-                            phone: phone
-                        },
+                        data: data,
                         success: function(newCust) {
-                            if (newCust && newCust.id) {
-                                selectCustomer(newCust);
+                            console.log(newCust);
+
+                            if (newCust && newCust.ok && newCust.data && newCust.data.id) {
+
+                                selectCustomer(newCust.data);
+
+                                window.selectCustomerForCart = {
+                                    details: newCust.data
+                                };
+
                             } else {
                                 alert('Error creating customer.');
                             }
+
                         },
                         error: function() {
                             alert('Server error while creating customer.');
