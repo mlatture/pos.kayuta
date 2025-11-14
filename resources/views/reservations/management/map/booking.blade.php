@@ -16,9 +16,7 @@
 @section('content')
     <div id="tooltip" style="position: absolute; display: none;"></div>
 
-    <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         viewBox="0 0 700 933">
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 700 933">
         <image width="100%" height="933" xlink:href="{{ asset('storage/map/mapforwebsite.jpg') }}"></image>
 
         <text x="440" y="180" font-family="Verdana" font-size="15" fill="black">Click on a Green or Orange site</text>
@@ -40,14 +38,13 @@
 
         <a xlink:href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
             <image href="/buttons/booknow1.png" x="425" y="110" width="80"
-                   onmousemove="showTooltip(evt, 'Click to Search');"
-                   onmouseout="hideTooltip();" />
+                onmousemove="showTooltip(evt, 'Click to Search');" onmouseout="hideTooltip();" />
         </a>
 
         @foreach ($sites as $currentsite)
             @php
 
-                $csite = trim($currentsite['siteid']);
+                $csite = trim($currentsite['site_id']);
                 $chookup = $currentsite['hookup'] ?? '';
                 $csiteclass = $currentsite['class'] ?? '';
                 $crigtype = $currentsite['rigtypes'] ?? '';
@@ -56,10 +53,6 @@
                 $filltext = '';
                 $allowbooking = true;
                 $lengthdetails = '';
-
-
-
-
 
                 // Rig type validation
                 if ($currentsite['status'] === 'JustShowMap') {
@@ -80,8 +73,6 @@
                         if (str_contains($csiteclass, 'RV_Sites')) {
                             $lengthdetails .= "($chookup Max Length is {$currentsite['maxlength']} feet)";
                         }
-
-
                     }
 
                     if (!empty($riglength)) {
@@ -101,187 +92,148 @@
                         $fillcolor = 'red';
                     }
 
-                    if ($currentsite['incart'] !== 'Available' && $currentsite['reserved'] === 'Available') {
-                        $fillcolor = 'blue';
-                        if (!in_array($currentsite['cartid'], $cartIds)) {
-                            $filltext .= 'This site is locked in another cart - check back later. ';
-                            $allowbooking = false;
+                    foreach ($status as $value) {
+                        if (!empty($status)) {
+                            if (!empty($status['available']) && $status['available'] === true) {
+                                $fillcolor = 'blue';
+                                if (!in_array($currentsite['cartid'], $cartIds)) {
+                                    $filltext .= 'This site is locked in another cart - check back later. ';
+                                    $allowbooking = false;
+                                }
+                            } elseif (!empty($status['reserve']) && $status['reserve'] === true) {
+                                $allowbooking = false;
+                                $fillcolor = 'red';
+                                $filltext = 'This site is already reserved.';
+                            }
                         }
-                    } elseif (trim($currentsite['reserved']) !== 'Available') {
-                        $allowbooking = false;
-                        $fillcolor = 'red';
-                        $filltext = 'This site is already reserved.';
                     }
+                    
                 }
             @endphp
 
             @if ($type !== 'Normal')
                 <a xlink:href="{{ route('front.site-details', ['siteid' => $csite]) }}">
-                    <{!! $currentsite['coordinates'] !!}
-                        stroke="{{ $type === 'Amenity' ? 'black' : 'blue' }}"
-                    stroke-opacity="1.0" opacity="0.7" fill="white"
-                    onmousemove="showTooltip(evt, '{{ $currentsite['sitename'] }}');"
-                    onmouseout="hideTooltip();" />
+                    <{!! $currentsite['coordinates'] !!} stroke="{{ $type === 'Amenity' ? 'black' : 'blue' }}" stroke-opacity="1.0"
+                        opacity="0.7" fill="white" onmousemove="showTooltip(evt, '{{ $currentsite['sitename'] }}');"
+                        onmouseout="hideTooltip();" />
                 </a>
             @else
                 @if ($allowbooking)
                     <a xlink:href="{{ route('front.site-details', ['siteid' => $csite]) }}">
-                        @endif
-
-                        @php
-
-
-
-                            $isAvailable = $currentsite['available'];
-                          $isAvailableOnline = $currentsite['availableonline'];
-                          $isSeasonal = $currentsite['seasonal'];
-                          $isUnavailable = !$isAvailable || !$isAvailableOnline;
-
-
-
-
-                                  $selectedClass = strtolower(trim($booking['siteclass'])); // from user input
-                                  $csiteclassArray = array_map('strtolower', array_map('trim', explode(',', $csiteclass)));
-
-                           $rigLength = (int) $booking['riglength']; // user input
-                                  $minLength = (int) $currentsite['minlength'];
-                                  $maxLength = (int) $currentsite['maxlength'];
-                                          $isThisAnRvSite = in_array('rv_sites', $csiteclassArray);
-
-
-                                  // normalize class names to avoid case mismatch
-                                  $classMatch = in_array($selectedClass, $csiteclassArray);
-
-
-                          // Optional: cleaner way to cast to boolean
-                          $seasonAvailable = ($isSeasonal == '1');
-
-                          // Fill color logic
-                                  $fillcolor = ($seasonAvailable || $isUnavailable || !$classMatch) ? 'red' : ($fillcolor ?? 'green');
-
-
-                             // Tooltip logic
-                                  if (!$classMatch) {
-                                      $filltext =  'This is not the type of site you are looking for.';
-                                      $disableLink = true;
-                                  } elseif ($isSeasonal || trim($currentsite['reserved']) !== 'Available') {
-                                       if(!$classMatch)
-                                    {
-                                                    $filltext =  'This is not the type of site you are looking for.';
-
-                                    }
-                                    else
-                                    {
-                                             $filltext = 'This site is reserved';
-
-                                    }
-                                      $disableLink = true;
-
-                                  } elseif ($isUnavailable) {
-                                      $filltext = 'This site is not available';
-                                      $disableLink = true;
-
-                                  } else {
-                                  if($fillcolor == 'blue')
-                                  {
-                                          $filltext = 'This site is in another customer’s cart.';
-                                  }
-                                  else{
-                                              $filltext = 'This site is available. Click to review';
-
-                                  }
-                                      $disableLink = false;
-
-                                  }
-
-                                   if ($isThisAnRvSite && ($rigLength < $minLength || $rigLength > $maxLength)) {
-                                      $rigTooBigOrSmall = true;
-                                      $fillcolor = 'red';
-                                      $filltext = 'Your rig will not fit.';
-                                      $disableLink = true;
-                                  }
-
-                                  if($isThisAnRvSite && !empty($hookup) && $chookup !== $hookup)
-                                  {
-                                    if($isSeasonal)
-                                  {
-
-                                    if(!$classMatch)
-                                    {
-                                                    $filltext =  'This is not the type of site you are looking for.';
-
-                                    }
-                                    else
-                                    {
-                                             $filltext = 'This site is reserved';
-
-                                    }
-                                  }
-                                  else
-                                  {
-
-                                          if(!$classMatch)
-                                          {
-                                          $filltext =  'This is not the type of site you are looking for.';
-                                          $fillcolor = 'red';
-                                          $disableLink = true;
-
-                                          }else
-                                          {
-                                                $disableLink = false;
-
-                                            $filltext = 'This site does not have the requested hookup';
-                                          }
-
-
-                                  }        }
-
-                          $latestSeason = \DB::table('camping_seasons')
-                              ->orderByDesc('id')
-                              ->first();
-
-                          $openingDay = \Carbon\Carbon::parse($latestSeason?->opening_day);
-                          $closingDay = \Carbon\Carbon::parse($latestSeason?->closing_day);
-
-                          $checkIn = \Carbon\Carbon::parse($booking['cid']);
-                          $checkOut = \Carbon\Carbon::parse($booking['cod']);
-
-
-                          if ($checkIn->lt($openingDay) || $checkOut->gt($closingDay)) {
-                              $fillcolor = 'red';
-                              $filltext = 'We are not open on those dates.';
-                              $disableLink = true;
-                          }
-                              // Interaction disabling
-                        @endphp
-
-
-
-
-
-
-                        <{!! $currentsite['coordinates'] !!}
-                            stroke="black"
-                        stroke-opacity="1.0"
-                        opacity="0.8"
-                        fill="{{ $fillcolor }}"
-                        style="cursor: {{ isset($disableLink) && $disableLink ? 'not-allowed' : 'pointer' }};"
-                        onmousemove="showTooltip(evt, '{{ $currentsite['sitename'] }} {{ $lengthdetails }}<br>{{ $filltext }}');"
-                        onmouseout="hideTooltip();"
-                        @if(!$disableLink)
-                            onclick="selectSite('{{ $currentsite['id'] }}')"
-                        @else
-                            onclick="event.stopPropagation(); event.preventDefault();" {{-- disables click without blocking hover --}}
-                        @endif
-                        />
-
-
-
-
-                        @if ($allowbooking)
-                    </a>
                 @endif
+
+                @php
+
+                    $isAvailable = $currentsite['available'];
+                    $isAvailableOnline = $currentsite['availableonline'];
+                    $isSeasonal = $currentsite['seasonal'];
+                    $isUnavailable = !$isAvailable || !$isAvailableOnline;
+
+                    $selectedClass = strtolower(trim($booking['siteclass'])); // from user input
+                    $csiteclassArray = array_map('strtolower', array_map('trim', explode(',', $csiteclass)));
+
+                    $rigLength = (int) $booking['riglength']; // user input
+                    $minLength = (int) $currentsite['minlength'];
+                    $maxLength = (int) $currentsite['maxlength'];
+                    $isThisAnRvSite = in_array('rv_sites', $csiteclassArray);
+
+                    // normalize class names to avoid case mismatch
+                    $classMatch = in_array($selectedClass, $csiteclassArray);
+
+                    // Optional: cleaner way to cast to boolean
+                    $seasonAvailable = $isSeasonal == '1';
+
+                    // Fill color logic
+                    $fillcolor = $seasonAvailable || $isUnavailable || !$classMatch ? 'red' : $fillcolor ?? 'green';
+
+                    // Tooltip logic
+                    if (!$classMatch) {
+                        $filltext = 'This is not the type of site you are looking for.';
+                        $disableLink = true;
+                    } elseif ($isSeasonal || trim($currentsite['reserved']) !== 'Available') {
+                        if (!$classMatch) {
+                            $filltext = 'This is not the type of site you are looking for.';
+                        } else {
+                            $filltext = 'This site is reserved';
+                        }
+                        $disableLink = true;
+                    } elseif ($isUnavailable) {
+                        $filltext = 'This site is not available';
+                        $disableLink = true;
+                    } else {
+                        if ($fillcolor == 'blue') {
+                            $filltext = 'This site is in another customer’s cart.';
+                        } else {
+                            $filltext = 'This site is available. Click to review';
+                        }
+                        $disableLink = false;
+                    }
+
+                    if ($isThisAnRvSite && ($rigLength < $minLength || $rigLength > $maxLength)) {
+                        $rigTooBigOrSmall = true;
+                        $fillcolor = 'red';
+                        $filltext = 'Your rig will not fit.';
+                        $disableLink = true;
+                    }
+
+                    if ($isThisAnRvSite && !empty($hookup) && $chookup !== $hookup) {
+                        if ($isSeasonal) {
+                            if (!$classMatch) {
+                                $filltext = 'This is not the type of site you are looking for.';
+                            } else {
+                                $filltext = 'This site is reserved';
+                            }
+                        } else {
+                            if (!$classMatch) {
+                                $filltext = 'This is not the type of site you are looking for.';
+                                $fillcolor = 'red';
+                                $disableLink = true;
+                            } else {
+                                $disableLink = false;
+
+                                $filltext = 'This site does not have the requested hookup';
+                            }
+                        }
+                    }
+
+                    $latestSeason = \DB::table('camping_seasons')->orderByDesc('id')->first();
+
+                    $openingDay = \Carbon\Carbon::parse($latestSeason?->opening_day);
+                    $closingDay = \Carbon\Carbon::parse($latestSeason?->closing_day);
+
+                    $checkIn = \Carbon\Carbon::parse($booking['cid']);
+                    $checkOut = \Carbon\Carbon::parse($booking['cod']);
+
+                    if ($checkIn->lt($openingDay) || $checkOut->gt($closingDay)) {
+                        $fillcolor = 'red';
+                        $filltext = 'We are not open on those dates.';
+                        $disableLink = true;
+                    }
+                    // Interaction disabling
+                @endphp
+
+
+
+
+
+
+                <{!! $currentsite['coordinates'] !!} stroke="black" stroke-opacity="1.0" opacity="0.8" fill="{{ $fillcolor }}"
+                    style="cursor: {{ isset($disableLink) && $disableLink ? 'not-allowed' : 'pointer' }};"
+                    onmousemove="showTooltip(evt, '{{ $currentsite['sitename'] }} {{ $lengthdetails }}<br>{{ $filltext }}');"
+                    onmouseout="hideTooltip();" @if (!$disableLink)
+                    onclick="selectSite('{{ $currentsite['id'] }}')"
+                @else
+                    onclick="event.stopPropagation(); event.preventDefault();" {{-- disables click without blocking hover --}}
             @endif
+            />
+
+
+
+
+            @if ($allowbooking)
+                </a>
+            @endif
+        @endif
         @endforeach
     </svg>
 

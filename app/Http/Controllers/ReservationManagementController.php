@@ -198,6 +198,8 @@ class ReservationManagementController extends Controller
         $data = $result->getData(true);
         $sites = $data['data']['response']['results']['units'] ?? [];
 
+        $statuses = array_map(fn($sites) => $sites['status'] ?? [], $sites);
+
         $bookType = $request->book_type ?? 'book_now';
         $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
 
@@ -211,11 +213,13 @@ class ReservationManagementController extends Controller
             //     ]);
             // }
 
+
             return view('reservations.management.map.booking', [
                 'sites' => $sites['units'] ?? [],
                 'hookup' => $sites['hookup'] ?? null,
                 'riglength' => $sites['rig_length'] ?? null,
                 'siteclass' => $sites['siteclass'] ?? null,
+                'status' => $statuses,
             ]);
         }
 
