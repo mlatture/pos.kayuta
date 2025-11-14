@@ -19,7 +19,7 @@
     <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink"
          viewBox="0 0 700 933">
-        <image width="100%" height="933" xlink:href="{{ asset('shared_storage/map/mapforwebsite.jpg') }}"></image>
+        <image width="100%" height="933" xlink:href="{{ asset('storage/map/mapforwebsite.jpg') }}"></image>
 
         <text x="440" y="180" font-family="Verdana" font-size="15" fill="black">Click on a Green or Orange site</text>
         <text x="460" y="200" font-family="Verdana" font-size="15" fill="black">to see pricing or to book</text>
