@@ -273,8 +273,7 @@
     </div>
 
     {{-- Modals --}}
-    @include('reservations.management.modals');
-
+    @include('reservations.management.modals')
 
 
 @endsection

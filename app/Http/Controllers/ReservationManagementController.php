@@ -16,7 +16,6 @@ use App\Models\SiteHookup;
 use App\Models\BusinessSettings;
 use App\Models\Setting;
 
-
 use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Facades\DB;
@@ -24,7 +23,6 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
 
 use App\Services\CardKnoxService;
 
@@ -212,7 +210,6 @@ class ReservationManagementController extends Controller
             //         'siteclass' => $sites['siteclass'] ?? null,
             //     ]);
             // }
-
 
             return view('reservations.management.map.booking', [
                 'sites' => $sites['units'] ?? [],
@@ -403,25 +400,27 @@ class ReservationManagementController extends Controller
         }
     }
 
+
     public function checkout(Request $request)
     {
+        Log::info('Checkout started', [
+            'request_payload' => $request->all(),
+        ]);
+
         $data = $request->validate([
             'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
             'gift_card_code' => ['nullable', 'string', 'max:64'],
 
             'cc.xCardNum' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
-            'cc.xExp' => ['required_if:payment_method,credit_card', 'string', 'max:7'], // MM/YY or MMYYYY
+            'cc.xExp' => ['required_if:payment_method,credit_card', 'string', 'max:7'],
             'cc.cvv' => ['required_if:payment_method,credit_card', 'string', 'max:4'],
 
             'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
             'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
             'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
 
-            // Optional Fields
-
             'applicable_coupon' => ['nullable', 'string', 'max:50'],
 
-            // Required Fields
             'custId' => ['nullable', 'integer'],
             'fname' => ['required', 'string', 'max:100'],
             'lname' => ['required', 'string', 'max:100'],
@@ -431,15 +430,17 @@ class ReservationManagementController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:50'],
             'zip' => ['required', 'string', 'max:10'],
-            'digits_between:13,19',
-            'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/',
+
             'xAmount' => ['required', 'numeric', 'min:0.5'],
             'api_cart.cart_id' => ['required', 'string'],
             'api_cart.cart_token' => ['required', 'string'],
         ]);
 
         try {
+    
             if (!empty($data['custId'])) {
+                Log::info('Updating customer', ['customer_id' => $data['custId']]);
+
                 $user = User::find($data['custId']);
 
                 if ($user) {
@@ -453,15 +454,40 @@ class ReservationManagementController extends Controller
                         'state' => $data['state'],
                         'zip' => $data['zip'],
                     ]);
+
+                } else {
+                    Log::warning('Customer not found for update', [
+                        'customer_id' => $data['custId'],
+                    ]);
                 }
             }
+
+           
+            if (($data['payment_method'] ?? null) === 'credit_card' ) {
+                $data['xCardNum'] = $data['cc']['xCardNum'] ?? null;
+                $data['xExp'] = $data['cc']['xExp'] ?? null;
+                $data['cvv'] = $data['cc']['cvv'] ?? null;
+
+                unset($data['cc']);
+            };
 
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/checkout', $data);
+
+            Log::info('Booking API response', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            return $response->json();
         } catch (\Exception $e) {
-            Log::error('Checkout proxy failed', ['error' => $e->getMessage()]);
+            Log::error('Checkout failed', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
             return response()->json(
                 [
