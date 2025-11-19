@@ -103,7 +103,11 @@ class ReservationManagementController extends Controller
                     $units = $units
                         ->filter(function ($unit) use ($riglength) {
                             $max = isset($unit['maxlength']) ? (float) $unit['maxlength'] : null;
-                            return $max !== null && $max === $riglength;
+                            if ($max === null) {
+                                return false;
+                            }
+
+                            return $riglength <= $max;
                         })
                         ->values();
 
@@ -400,7 +404,6 @@ class ReservationManagementController extends Controller
         }
     }
 
-
     public function checkout(Request $request)
     {
         Log::info('Checkout started', [
@@ -437,7 +440,6 @@ class ReservationManagementController extends Controller
         ]);
 
         try {
-    
             if (!empty($data['custId'])) {
                 Log::info('Updating customer', ['customer_id' => $data['custId']]);
 
@@ -454,7 +456,6 @@ class ReservationManagementController extends Controller
                         'state' => $data['state'],
                         'zip' => $data['zip'],
                     ]);
-
                 } else {
                     Log::warning('Customer not found for update', [
                         'customer_id' => $data['custId'],
@@ -462,14 +463,13 @@ class ReservationManagementController extends Controller
                 }
             }
 
-           
-            if (($data['payment_method'] ?? null) === 'credit_card' ) {
+            if (($data['payment_method'] ?? null) === 'credit_card') {
                 $data['xCardNum'] = $data['cc']['xCardNum'] ?? null;
                 $data['xExp'] = $data['cc']['xExp'] ?? null;
                 $data['cvv'] = $data['cc']['cvv'] ?? null;
 
                 unset($data['cc']);
-            };
+            }
 
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
