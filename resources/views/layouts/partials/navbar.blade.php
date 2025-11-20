@@ -335,6 +335,12 @@
   </a>
 </li>
 
+  <li>
+  <a class="dropdown-item" href="{{ route('admin.ideas') }}">
+    <i class="fa-solid fa-plug"></i> <span>Content Ideas</span>
+  </a>
+</li>
+
 
 
                 {{-- @hasPermission(config('constants.role_modules.process_seasonals.value'))

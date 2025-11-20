@@ -18,6 +18,7 @@ class DocumentController extends Controller
     public function index(User $user)
     {
         // $user = tumhara "customer" (Kayuta guest)
+        
         return view('admin.customers.documents', compact('user'));
     }
 

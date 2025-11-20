@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SeasonalTransactionsController;
+use App\Http\Controllers\API\IdeaController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -21,6 +23,22 @@ use App\Http\Controllers\SeasonalTransactionsController;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+Route::group([], function () {
+
+    Route::get('/ideas', [IdeaController::class, 'index']);
+    Route::post('/ideas/{idea}/approve', [IdeaController::class, 'approve']);
+    Route::post('/ideas/{idea}/replace', [IdeaController::class, 'replace']);
+    Route::delete('/ideas/{idea}', [IdeaController::class, 'destroy']);
+
+    Route::get('/posts/calendar', [PostController::class, 'calendar']);
+    Route::patch('/posts/{post}/reschedule', [PostController::class, 'reschedule']);
+
+    Route::post('/events/upload', [EventController::class, 'upload']);
+    Route::post('/settings/autopilot', [SettingsController::class, 'toggleAutopilot']);
+});
+
 
 Route::post('upload-receipt-logo', [ReceiptController::class, 'uploadReceiptLogo']);
 

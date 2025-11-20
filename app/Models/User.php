@@ -19,7 +19,48 @@ class User extends Authenticatable
     protected $guarded = [];
 
     protected $table = 'users';
-    protected $fillable = ['organization_id', 'f_name', 'l_name', 'name', 'phone', 'home_phone', 'work_phone', 'email', 'password', 'image', 'street_address', 'address_2', 'address_3', 'country', 'state', 'city', 'zip', 'house_no', 'apartment_no', 'discovery_method', 'date_of_birth', 'anniversary', 'age', 'probation', 'is_active', 'is_phone_verified', 'is_email_verified', 'payment_card_last_four', 'payment_card_brand', 'payment_card_fawry_token', 'login_medium', 'social_id', 'facebook_id', 'google_id', 'temporary_token', 'cm_firebase_token', 'wallet_balance', 'loyalty_point', 'stripe_customer_id', 'liabilty_path', 'text_on_phone', 'ip_address', 'seasonal'];
+    protected $fillable = [
+        'f_name',
+        'l_name',
+        // 'name', // removed: column dropped from users table
+        'email',
+        'stripe_customer_id',
+        'password',
+        'phone',
+        'image',
+        'login_medium',
+        'is_active',
+        'social_id',
+        'is_phone_verified',
+        'temporary_token',
+        'home_phone',
+        'customer_number',
+        'work_phone',
+        'driving_license',
+        'street_address',
+        'address_2',
+        // 'address_3', // removed: column dropped from users table
+        'city',
+        'state',
+        'zip',
+        'country',
+        'discovery_method',
+        'probation',
+        'date_of_birth',
+        'anniversary',
+        'age',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_backup_codes',
+        'phone_verified_at',
+
+        // Second guest fields
+        'guest2_f_name',
+        'guest2_l_name',
+        'guest2_email',
+        'guest2_phone',
+        'guest2_can_text',
+    ];
 
     /**
      * The attributes that should be hidden for arrays.

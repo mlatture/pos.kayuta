@@ -56,6 +56,9 @@ use App\Http\Controllers\Admin\ContentHub\SettingsController;
 use App\Http\Controllers\Admin\ContentHub\ConnectionsController;
 use App\Http\Controllers\Auth\SocialAuthController;
 
+use App\Http\Controllers\Api\IdeaController;
+
+
 Route::get('/', function () {
     return redirect('/admin');
 });
@@ -67,6 +70,21 @@ Auth::routes();
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
+
+
+
+
+
+    // Page jahan Vue load hoga:
+    Route::get('/ideas', function () {
+        return view('admin.ideas');
+    })->name('admin.ideas');
+
+    // JSON APIs for Vue:
+    Route::get('/ideas/list', [IdeaController::class, 'list'])->name('admin.ideas.list');
+    Route::post('/ideas/{idea}/approve', [IdeaController::class, 'approve'])->name('admin.ideas.approve');
+    Route::post('/ideas/{idea}/replace', [IdeaController::class, 'replace'])->name('admin.ideas.replace');
+    Route::delete('/ideas/{idea}', [IdeaController::class, 'destroy'])->name('admin.ideas.delete');
 
     // content hub settings
     Route::prefix('content-hub')->group(function () {

@@ -45,6 +45,8 @@ class Kernel extends ConsoleKernel
             ]);
         })->yearlyOn(11, 1, '02:00'); // e.g. every Nov 1st, 2AM
 
+       // Weekly – e.g. every Monday at 02:00
+        $schedule->command('ideas:generate')->weeklyOn(1, '2:00');
 
     }
 
