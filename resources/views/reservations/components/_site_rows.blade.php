@@ -1,10 +1,10 @@
 <tr data-site-id="{{ $site->id }}" data-site-siteid="{{ $site->siteid }}" data-site-ratetier="{{ $site->ratetier }}"
     data-site-siteclass="{{ $site->siteclass }}" data-site-price="{{ $site->price ?? 0.0 }}"
-    data-site-images='@json($site->images ?? [])' data-site-seasonal="{{ $site->seasonal }}" data-top-siteclass="{{ $topSiteclass->siteclass }}">
+    data-site-images='@json($site->images ?? [])' data-site-seasonal="{{ $site->seasonal }}">
     <td class="sticky-col bg__sky text-center">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
         {{ $site->siteid }}<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
 
-    <td class="sticky-col bg__sky">{{ $topSiteclass->siteclass }}</td>
+    <td class="sticky-col bg__sky">{{ str_replace('_', ' ', $site->siteclass) }}</td>
     @php
         $calendarCount = count($calendar);
         $i = 0;

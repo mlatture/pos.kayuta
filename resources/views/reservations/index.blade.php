@@ -139,7 +139,7 @@
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
                                 @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                    <option value="{{ $siteclass }}" @if ($siteclass === 'RV Sites') selected @endif>
+                                    <option value="{{ $siteclass }}" {{ $siteclass === 'RV Sites' ? 'selected' : '' }}>
                                         {{ $siteclass }}
                                     </option>
                                 @endforeach
@@ -237,6 +237,11 @@
                 width: '100%',
             });
 
+            setTimeout(() => {
+                $('#typeFilter').val(['RV Sites']).trigger('change');
+                filterTable();
+            }, 50);
+
             filterTable();
 
             // Event listeners for filters change
@@ -256,34 +261,45 @@
         });
 
 
+
+
         function filterTable() {
-            const hideSeasonal = !$('#seasonalFilter').is(':checked'); // Invert logic: unchecked means hide seasonal
+            const hideSeasonal = !$('#seasonalFilter').is(':checked');
             const selectedSites = $('#siteFilter').val() || [];
             const selectedTypes = $('#typeFilter').val() || [];
 
             const rows = document.querySelectorAll('#siteTableBody tr');
 
+            const normalize = (v) => (v || "").toLowerCase().replace(/_/g, ' ').trim();
+
+            // normalize selected types
+            const normalizedSelected = selectedTypes.map(normalize);
+
             rows.forEach(row => {
                 const siteId = row.dataset.siteSiteid;
-                const siteTier = row.dataset.siteRatetier;
-                const siteClass = row.dataset.topSiteclass;
                 const isSeasonal = row.dataset.siteSeasonal === '1';
+
+                // Split multiple classes and normalize
+                const siteClasses = row.dataset.siteSiteclass
+                    .split(',')
+                    .map(normalize);
 
                 let showRow = true;
 
                 if (hideSeasonal && isSeasonal) showRow = false;
 
-                if (selectedSites.length > 0 && !selectedSites.includes(siteId)) {
-                    showRow = false;
-                }
+                if (selectedSites.length > 0 && !selectedSites.includes(siteId)) showRow = false;
 
-                if (selectedTypes.length > 0 && !selectedTypes.includes(siteClass)) {
-                    showRow = false;
+                if (normalizedSelected.length > 0) {
+                    const matches = siteClasses.some(c => normalizedSelected.includes(c));
+                    if (!matches) showRow = false;
                 }
 
                 row.style.display = showRow ? '' : 'none';
             });
         }
+
+
 
 
 
@@ -797,8 +813,8 @@
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow = tomorrow.toISOString().split('T')[0];
 
-        document.getElementById("checkin").value = today;
-        document.getElementById("checkout").value = tomorrow;
+        // document.getElementById("checkin").value = today;
+        // document.getElementById("checkout").value = tomorrow;
 
         let selectedSites = [];
         let nightsCounts = 1;
