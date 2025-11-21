@@ -71,12 +71,16 @@ class ReservationManagementController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
-            ])->get(env('BOOK_API_URL') . 'v1/availability', $query);
+            ])->get(env('BOOK_API_URL') . 'v1/availability', [
+                ...$query,
+                'isKayuta' => true,
+            ]);
 
             if (!$response->successful()) {
                 Log::error('Availability API error', [
                     'status' => $response->status(),
                     'body' => $response->body(),
+                    
                 ]);
 
                 return response()->json(
@@ -90,6 +94,8 @@ class ReservationManagementController extends Controller
             }
 
             $data = $response->json();
+
+            Log::info('Fetched True WebPayload', ['data' => $data]);
 
             if (isset($data['response']['results']['units'])) {
                 $units = collect($data['response']['results']['units']);
@@ -180,7 +186,7 @@ class ReservationManagementController extends Controller
                 $data['response']['results']['total_units'] = $units->count();
             }
 
-            return response()->json(['data' => $data, 'site_lock_fee' => $siteLockFee]);
+            return response()->json(['data' => $data, 'site_lock_fee' => $siteLockFee, '']);
         } catch (\Exception $e) {
             Log::error('Availability proxy failed', ['error' => $e->getMessage()]);
 
@@ -194,45 +200,83 @@ class ReservationManagementController extends Controller
         }
     }
 
-    public function viewMap(Request $request)
+    // public function viewMap(Request $request)
+    // {
+    //     $result = $this->availability($request, true);
+    //     $data = $result->getData(true);
+    //     $sites = $data['data']['response']['results']['units'] ?? [];
+
+    //     $statuses = array_map(fn($sites) => $sites['status'] ?? [], $sites);
+
+    //     $bookType = $request->book_type ?? 'book_now';
+    //     $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
+
+    //     if ($bookType === 'book_now') {
+    //         // if ($grids == '1') {
+    //         //     return view('reservations.management.map.grid_booking', [
+    //         //         'sites' => $sites['units'] ?? [],
+    //         //         'hookup' => $sites['hookup'] ?? null,
+    //         //         'riglength' => $sites['rig_length'] ?? null,
+    //         //         'siteclass' => $sites['siteclass'] ?? null,
+    //         //     ]);
+    //         // }
+
+    //         return view('reservations.management.map.booking', [
+    //             'sites' => $sites['units'] ?? [],
+    //             'hookup' => $sites['hookup'] ?? null,
+    //             'riglength' => $sites['rig_length'] ?? null,
+    //             'siteclass' => $sites['siteclass'] ?? null,
+    //             'status' => $statuses,
+    //         ]);
+    //     }
+
+    //     return view('reservations.management.map.flexible', [
+    //         'sites' => $sites['units'] ?? [],
+    //         'hookup' => $sites['hookup'] ?? null,
+    //         'riglength' => $sites['rig_length'] ?? null,
+    //         'siteclass' => $sites['siteclass'] ?? null,
+    //         'stay' => $sites['stay'] ?? null,
+    //         'months' => $sites['months'] ?? [],
+    //     ]);
+    // }
+
+    public function viewMap(Request $request, string $bookType = 'book_now')
     {
-        $result = $this->availability($request);
+        // Call backend
+        $result = $this->availability($request, true);
         $data = $result->getData(true);
-        $sites = $data['data']['response']['results']['units'] ?? [];
 
-        $statuses = array_map(fn($sites) => $sites['status'] ?? [], $sites);
+        Log::info('View Map data', ['data' => $data]);
 
-        $bookType = $request->book_type ?? 'book_now';
+        // Correct extraction
+        $sites = $data['response']['results']['units'] ?? [];
+
+        // Extract statuses
+        $statuses = array_map(fn($site) => $site['status'] ?? null, $sites);
+
         $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
 
-        if ($bookType === 'book_now') {
-            // if ($grids == '1') {
-            //     return view('reservations.management.map.grid_booking', [
-            //         'sites' => $sites['units'] ?? [],
-            //         'hookup' => $sites['hookup'] ?? null,
-            //         'riglength' => $sites['rig_length'] ?? null,
-            //         'siteclass' => $sites['siteclass'] ?? null,
-            //     ]);
-            // }
-
+        if ($bookType) {
             return view('reservations.management.map.booking', [
-                'sites' => $sites['units'] ?? [],
-                'hookup' => $sites['hookup'] ?? null,
-                'riglength' => $sites['rig_length'] ?? null,
-                'siteclass' => $sites['siteclass'] ?? null,
+                'sites' => $sites, // FIXED
+                'hookup' => $data['hookup'] ?? null,
+                'riglength' => $data['riglength'] ?? null,
+                'siteclass' => $data['siteclass'] ?? null,
                 'status' => $statuses,
             ]);
         }
 
+        // FLEXIBLE VIEW
         return view('reservations.management.map.flexible', [
-            'sites' => $sites['units'] ?? [],
-            'hookup' => $sites['hookup'] ?? null,
-            'riglength' => $sites['rig_length'] ?? null,
-            'siteclass' => $sites['siteclass'] ?? null,
-            'stay' => $sites['stay'] ?? null,
-            'months' => $sites['months'] ?? [],
+            'sites' => $sites, // FIXED
+            'hookup' => $data['hookup'] ?? null,
+            'riglength' => $data['riglength'] ?? null,
+            'siteclass' => $data['siteclass'] ?? null,
+            'stay' => $data['stay'] ?? null,
+            'months' => $data['months'] ?? [],
         ]);
     }
+
     public function viewSiteDetails(Request $request)
     {
         $data = $request->validate([

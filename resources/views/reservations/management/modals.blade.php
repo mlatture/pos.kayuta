@@ -19,8 +19,8 @@
                               <h6 class="mb-3">Customer Information</h6>
 
                               {{--  Hidden ID --}}
-                            <input type="hidden" name="" id="custId">
-                            
+                              <input type="hidden" name="" id="custId">
+
                               <div class="row g-3">
                                   <div class="col-md-6">
                                       <label class="form-label">First Name</label>
@@ -66,15 +66,53 @@
 
 
 
-                          <label class="form-label">Coupon code</label>
-                          <div class="input-group">
-                              <input type="text" class="form-control" id="couponCode" placeholder="Enter code">
-                              {{-- <button class="btn btn-outline-secondary" id="btnApplyCoupon">Apply</button> --}}
+                          <!-- Coupon Code Section -->
+                          <div class="border rounded p-3">
+                              <div class="mb-3">
+                                  <label class="form-label">Coupon code</label>
+                                  <div class="input-group">
+                                      <input type="text" class="form-control" id="couponCode"
+                                          placeholder="Enter code">
+                                      <button class="btn btn-outline-secondary" id="btnApplyCoupon">Apply</button>
+                                  </div>
+                                  <div class="form-text">Same validation rules as book site.</div>
+                              </div>
+
+                              <!-- Instant Discount Section -->
+                              <div class="mb-3">
+                                  <label class="form-label fw-bold">Apply Instant Discount</label>
+                                  <div class="d-flex align-items-center mb-1">
+                                      <!-- Radio buttons -->
+                                      <div class="form-check me-2">
+                                          <input class="form-check-input" type="radio" name="discountType"
+                                              id="percentDiscount" value="percent" checked>
+                                          <label class="form-check-label" for="percentDiscount">%</label>
+                                      </div>
+                                      <div class="form-check me-2">
+                                          <input class="form-check-input" type="radio" name="discountType"
+                                              id="dollarDiscount" value="dollar">
+                                          <label class="form-check-label" for="dollarDiscount">$</label>
+                                      </div>
+
+                                      <!-- Discount value input -->
+                                      <input type="number" class="form-control form-control-sm" id="discountValue"
+                                          placeholder="0.00" min="0" max="999.99" step="0.01"
+                                          style="width: 80px;">
+
+                                      <!-- Apply button -->
+                                      <button class="btn btn-outline-primary btn-sm ms-2"
+                                          id="btnApplyDiscount">Apply</button>
+                                  </div>
+
+                                  <!-- Description input -->
+                                  <input type="text" class="form-control form-control-sm" id="discountDescription"
+                                      placeholder="Description (will show on receipt)">
+                              </div>
+
                           </div>
-                          <div class="form-text">Same validation rules as book site.</div>
                       </div>
                       <div class="col-md-6">
-                          <div class="border rounded p-3" id="totalsBox">
+                          <div class="border rounded p-3 mb-3" id="totalsBox">
                               <div class="d-flex justify-content-between"><span>Subtotal</span><strong
                                       id="tSubtotal">—</strong></div>
                               <div class="d-flex justify-content-between"><span>Site Lock Fee</span><strong
@@ -87,19 +125,25 @@
                               <div class="d-flex justify-content-between fs-5"><span>Total</span><strong
                                       id="tTotal">—</strong></div>
                           </div>
+
+                          <div class="border rounded p-3">
+                              <div class="d-grid gap-2 d-md-flex">
+                                  <button class="btn btn-outline-dark" data-method="cash">Cash</button>
+                                  <button class="btn btn-outline-dark" data-method="ach">ACH</button>
+                                  <button class="btn btn-outline-dark" data-method="gift_card">Gift Card</button>
+                                  <button class="btn btn-outline-dark" data-method="credit_card">Credit Card</button>
+                              </div>
+
+                              <div class="mt-3" id="paymentInputs"><!-- dynamically injected --></div>
+                          </div>
                       </div>
+
+
                   </div>
 
                   <hr>
 
-                  <div class="d-grid gap-2 d-md-flex">
-                      <button class="btn btn-outline-dark" data-method="cash">Cash</button>
-                      <button class="btn btn-outline-dark" data-method="ach">ACH</button>
-                      <button class="btn btn-outline-dark" data-method="gift_card">Gift Card</button>
-                      <button class="btn btn-outline-dark" data-method="credit_card">Credit Card</button>
-                  </div>
 
-                  <div class="mt-3" id="paymentInputs"><!-- dynamically injected --></div>
               </div>
 
               <div class="modal-footer">
