@@ -14,7 +14,30 @@ class Page extends Model
 
     protected $table = 'pages';
 
-    protected $fillable = ['title', 'slug', 'description', 'type', 'status', 'image', 'attachment', 'metatitle', 'metadescription', 'canonicalurl', 'opengraphimage', 'opengraphtitle', 'opengraphdescription', 'schema_code_pasting'];
+   protected $fillable = [
+        'tenant_id',
+        'idea_id',
+        'title',
+        'slug',
+        'description',
+        'type',
+        'status',
+        'image',
+        'attachment',
+        'metatitle',
+        'metadescription',
+        'canonicalurl',
+        'opengraphimage',
+        'opengraphtitle',
+        'opengraphdescription',
+        'schema_code_pasting',
+        'views',
+        'referrers',
+    ];
+
+    protected $casts = [
+        'referrers' => 'array',
+    ];
 
     public function setTitleAttribute($value)
     {

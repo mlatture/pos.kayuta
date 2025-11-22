@@ -7,6 +7,7 @@ use App\Models\ContentIdea;
 use App\Models\FeedbackLog;
 use Illuminate\Http\Request;
 // use App\Services\AI\ContentService; // abhi optional, replace me later
+use App\Jobs\GeneratePostsFromIdeaJob;
 
 class IdeaController extends Controller
 {
@@ -40,6 +41,8 @@ class IdeaController extends Controller
             'action'    => 'approve',
             'weight'    => 2,
         ]);
+
+         GeneratePostsFromIdeaJob::dispatch($idea->id);
 
         // TODO: yahan baad me GeneratePostsFromIdea job dispatch karna hai
         // dispatch(new GeneratePostsFromIdea($idea->id));
