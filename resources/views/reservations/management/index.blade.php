@@ -119,11 +119,10 @@
                     <div class="col-auto">
                         <div class="form-check position-relative">
                             <input class="form-check-input" type="checkbox" id="include_seasonal" name="include_seasonal"
-                                disabled>
+                                >
                             <div class="form-text">
                                 Include Seasonal
-                                <span class="badge bg-danger ms-1" style="font-size: 0.75rem;">Blocked</span>
-                                <small class="text-muted d-block" style="font-size: 0.7rem;">Coming soon</small>
+                             
                             </div>
                         </div>
                     </div>
@@ -131,11 +130,10 @@
                     <div class="col-auto">
                         <div class="form-check position-relative">
                             <input class="form-check-input" type="checkbox" id="include_offline" name="include_offline"
-                                disabled>
+                                >
                             <div class="form-text">
                                 Include Offline
-                                <span class="badge bg-danger ms-1" style="font-size: 0.75rem;">Blocked</span>
-                                <small class="text-muted d-block" style="font-size: 0.7rem;">Coming soon</small>
+
                             </div>
                         </div>
                     </div>
@@ -434,6 +432,10 @@
                 formData.push({
                     name: 'include_offline',
                     value: $('#include_offline').prop('checked') ? 1 : 0
+                });
+                formData.push({
+                    name: 'include_seasonal',
+                    value: $('#include_seasonal').prop('checked') ? 1 : 0
                 });
 
 
@@ -1170,7 +1172,7 @@
             }, 500); // Slightly longer delay helps prevent rapid re-triggers
 
             // Only bind change events, not input
-            $('[name="start_date"], [name="end_date"], [name="rig_length"], [name="siteclass"], [name="hookup"], [name="include_offline"], [name="include_reserved"]')
+            $('[name="start_date"], [name="end_date"], [name="rig_length"], [name="siteclass"], [name="hookup"], [name="include_seasonal"], [name="include_offline"], [name="include_reserved"]')
                 .on('change', window.__availabilityTrigger);
 
 

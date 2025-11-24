@@ -49,6 +49,7 @@ class ReservationManagementController extends Controller
             // 'pets_ok' => ['sometimes', 'boolean'],
             'include_offline' => ['sometimes', 'boolean'],
             'include_reserved' => ['sometimes', 'boolean'],
+            'include_seasonal' => ['sometimes', 'boolean'],
             'rig_length' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'with_prices' => ['sometimes', 'boolean'],
             'site_lock_fee' => ['nullable', 'string'],
@@ -71,16 +72,12 @@ class ReservationManagementController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
-            ])->get(env('BOOK_API_URL') . 'v1/availability', [
-                ...$query,
-                'isKayuta' => true,
-            ]);
+            ])->get(env('BOOK_API_URL') . 'v1/availability', [...$query, 'isKayuta' => true]);
 
             if (!$response->successful()) {
                 Log::error('Availability API error', [
                     'status' => $response->status(),
                     'body' => $response->body(),
-                    
                 ]);
 
                 return response()->json(
@@ -99,6 +96,12 @@ class ReservationManagementController extends Controller
 
             if (isset($data['response']['results']['units'])) {
                 $units = collect($data['response']['results']['units']);
+
+                /**
+                 * Exclude unavailable units
+                 */
+
+                $units = $units->filter(fn($unit) => isset($unit['status']['available']) && $unit['status']['available'] === true)->values();
 
                 /**
                  *  Rig length filtering
@@ -166,17 +169,53 @@ class ReservationManagementController extends Controller
                  * Reserved Site Filtering
                  * Default behavior: exclude reserved sites unless include_reserved = true
                  */
-                $includeReserved = $validated['include_reserved'] ?? false;
+                $includeReserved = filter_var($validated['include_reserved'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                 if (!$includeReserved) {
                     $units = $units
                         ->filter(function ($unit) {
                             $isReserved = isset($unit['status']['reserved']) ? (bool) $unit['status']['reserved'] : false;
-                            return !$isReserved;
+                            return !$isReserved; // keep only not reserved
                         })
                         ->values();
 
                     Log::info('Filtered availability to exclude reserved sites', [
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                /**
+                 * Seasonal Filtering
+                 * Default behavior: exclude seasonal sites
+                 */
+
+                $includeSeasonal = filter_var($validated['include_seasonal'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if (!$includeSeasonal) {
+                    $units = $units->filter(fn($unit) => !($unit['status']['is_seasonal'] ?? false))->values();
+
+                    Log::info('Filtered seasonal ', [
+                        'remaining_units' => $units->count(),
+                    ]);
+                }
+
+                // /**
+                //  * Offline Site Filtering
+                //  * Default behavior: exclude offline sites
+                //  */
+
+                $includeOffline = filter_var($validated['include_offline'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if (!$includeOffline) {
+                    // Exclude offline sites (available_online = false / 0)
+                    $units = $units
+                        ->filter(function ($unit) {
+                            $availableOnline = $unit['status']['available_online'] ?? ($unit['status']['availableonline'] ?? 0);
+                            return (bool) $availableOnline; // Only keep online units
+                        })
+                        ->values();
+
+                    Log::info('Filtered offline sites', [
                         'remaining_units' => $units->count(),
                     ]);
                 }
