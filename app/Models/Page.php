@@ -33,6 +33,8 @@ class Page extends Model
         'schema_code_pasting',
         'views',
         'referrers',
+        'body_md',
+
     ];
 
     protected $casts = [

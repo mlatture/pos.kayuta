@@ -45,11 +45,13 @@ class GeneratePostsFromIdeaJob implements ShouldQueue
         // 2) Create internal article/page for book.kayuta.com
         $page = Page::create([
             'tenant_id'    => $idea->tenant_id,
+            'idea_id'   => $idea->id,
             'type'         => $result['internal']['type'] ?? 'article',
             'title'        => $result['internal']['title'],
+            'metatitle'   => $result['internal']['title'],
             'slug'         => $result['internal']['slug'],
             'body_md'      => $result['internal']['body_md'],
-            'status'       => 'published',
+            'status'       => 1,
             'published_at' => now(),
         ]);
 

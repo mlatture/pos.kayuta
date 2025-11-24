@@ -38,6 +38,11 @@ return new class extends Migration
                     ->nullable()
                     ->after('views');
             }
+
+            // Body markdown field
+            if (!Schema::hasColumn('pages', 'body_md')) {
+                $table->text('body_md')->nullable()->after('referrers');
+            }
         });
     }
 
@@ -59,6 +64,10 @@ return new class extends Migration
 
             if (Schema::hasColumn('pages', 'referrers')) {
                 $table->dropColumn('referrers');
+            }
+
+            if (Schema::hasColumn('pages', 'body_md')) {
+                $table->dropColumn('body_md');
             }
         });
     }

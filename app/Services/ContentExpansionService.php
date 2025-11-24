@@ -62,34 +62,38 @@ class ContentExpansionService
         ];
     }
 
+    
     protected function buildInternalMarkdown(ContentIdea $idea): string
-    {
-        // Internal: first-person, "we", "our guests"
-        return <<<MD
+{
+    $summary = $idea->summary ?: '';
+
+    return <<<MD
 # {$idea->title}
 
 We’re excited to share an update from our park.
 
-{$idea->summary ?? ''}
+{$summary}
 
 This post was generated from one of our weekly content ideas and is meant for guests reading our main website.
 MD;
-    }
+}
 
-    protected function buildExternalMarkdown(ContentIdea $idea): string
-    {
-        $parkName = $idea->tenant->name ?? 'this campground';
+protected function buildExternalMarkdown(ContentIdea $idea): string
+{
+    $parkName = $idea->tenant->name ?? 'this campground';
+    $summary = $idea->summary ?: '';
 
-        return <<<MD
+    return <<<MD
 # {$idea->title} at {$parkName}
 
 {$parkName} has announced a new update for its guests.
 
-{$idea->summary ?? ''}
+{$summary}
 
 This article is written in a third-person voice and is intended for external sites or partner networks that talk about the park from the outside.
 MD;
-    }
+}
+
 
     protected function buildArticleUrl($idea, string $slug): string
     {
