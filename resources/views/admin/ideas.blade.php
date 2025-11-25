@@ -18,7 +18,20 @@
         </div>
 
         <div class="card-body">
-            <div id="ideas-app">
+            <div id="ideas-app" class="position-relative">
+
+                {{-- FULL-SCREEN OVERLAY LOADER --}}
+                <div v-if="actionLoading"
+                     class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                     style="background: rgba(255,255,255,0.8); z-index: 1050;">
+                    <div class="text-center">
+                        <div class="spinner-border text-success mb-2" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <div class="fw-semibold text-muted">Processing… please wait</div>
+                    </div>
+                </div>
+
                 {{-- Loading state --}}
                 <div v-if="loading" class="text-muted mb-2">
                     Loading ideas…
@@ -35,54 +48,56 @@
                         <div class="border rounded-3 p-3 h-100 d-flex flex-column justify-content-between bg-light">
                             <div>
                                 <h5 class="mb-1 fw-semibold d-flex align-items-center">
-    <span>@{{ idea.title }}</span>
+                                    <span>@{{ idea.title }}</span>
 
-    {{-- Status badge/tag right side --}}
-    <span class="badge ms-2"
-          :class="{
-            'bg-secondary': idea.status === 'draft',
-            'bg-success': idea.status === 'approved',
-            'bg-danger': idea.status === 'rejected'
-          }">
-        @{{ idea.status === 'approved'
-            ? 'Approved'
-            : (idea.status === 'draft' ? 'Draft' : 'Rejected') }}
-    </span>
-</h5>
+                                    {{-- Status badge/tag right side --}}
+                                    <span class="badge ms-2"
+                                          :class="{
+                                            'bg-secondary': idea.status === 'draft',
+                                            'bg-success': idea.status === 'approved',
+                                            'bg-danger': idea.status === 'rejected'
+                                          }">
+                                        @{{ idea.status === 'approved'
+                                            ? 'Approved'
+                                            : (idea.status === 'draft' ? 'Draft' : 'Rejected') }}
+                                    </span>
+                                </h5>
 
-<p class="mb-2 small text-muted">
-    @{{ idea.summary }}
-</p>
+                                <p class="mb-2 small text-muted">
+                                    @{{ idea.summary }}
+                                </p>
 
-<div class="small text-secondary mb-2">
-    <span class="me-2">
-        <i class="bi bi-tag"></i>
-        Category: @{{ idea.category && idea.category.name ? idea.category.name : '—' }}
-    </span>
-    <span>
-        <i class="bi bi-circle-fill"
-           :class="{
-             'text-secondary': idea.status === 'draft',
-             'text-success': idea.status === 'approved',
-             'text-danger': idea.status === 'rejected'
-           }"
-           style="font-size: 0.5rem;"></i>
-        Status: @{{ idea.status }}
-    </span>
-</div>
-
+                                <div class="small text-secondary mb-2">
+                                    <span class="me-2">
+                                        <i class="bi bi-tag"></i>
+                                        Category: @{{ idea.category && idea.category.name ? idea.category.name : '—' }}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-circle-fill"
+                                           :class="{
+                                             'text-secondary': idea.status === 'draft',
+                                             'text-success': idea.status === 'approved',
+                                             'text-danger': idea.status === 'rejected'
+                                           }"
+                                           style="font-size: 0.5rem;"></i>
+                                        Status: @{{ idea.status }}
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="d-flex gap-2 mt-2">
                                 <button class="btn btn-sm btn-success"
+                                        :disabled="actionLoading"
                                         @click="approve(idea)">
                                     <i class="bi bi-check2-circle"></i> Approve
                                 </button>
                                 <button class="btn btn-sm btn-warning text-white"
+                                        :disabled="actionLoading"
                                         @click="replaceIdea(idea)">
                                     <i class="bi bi-arrow-repeat"></i> Replace
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger ms-auto"
+                                        :disabled="actionLoading"
                                         @click="deleteIdea(idea)">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
@@ -104,8 +119,9 @@
 
             createApp({
                 setup() {
-                    const ideas   = ref([])
-                    const loading = ref(false)
+                    const ideas         = ref([])
+                    const loading       = ref(false)   // for initial + list loading
+                    const actionLoading = ref(false)   // for full-screen overlay on actions
 
                     const csrfMeta = document.querySelector('meta[name="csrf-token"]')
                     if (csrfMeta) {
@@ -130,22 +146,46 @@
                     const approve = async (idea) => {
                         if (!confirm('Approve this idea and send it into the post-generation workflow?')) return
 
-                        await axios.post(`/api/ideas/${idea.id}/approve`)
-                        await loadIdeas()
+                        try {
+                            actionLoading.value = true
+                            await axios.post(`/api/ideas/${idea.id}/approve`)
+                            await loadIdeas()
+                        } catch (e) {
+                            console.error('Failed to approve idea', e)
+                            alert('Error approving idea (see console).')
+                        } finally {
+                            actionLoading.value = false
+                        }
                     }
 
                     const replaceIdea = async (idea) => {
                         if (!confirm('Replace this idea with a new one?')) return
 
-                        await axios.post(`/api/ideas/${idea.id}/replace`)
-                        await loadIdeas()
+                        try {
+                            actionLoading.value = true
+                            await axios.post(`/api/ideas/${idea.id}/replace`)
+                            await loadIdeas()
+                        } catch (e) {
+                            console.error('Failed to replace idea', e)
+                            alert('Error replacing idea (see console).')
+                        } finally {
+                            actionLoading.value = false
+                        }
                     }
 
                     const deleteIdea = async (idea) => {
                         if (!confirm('Delete this idea permanently?')) return
 
-                        await axios.delete(`/api/ideas/${idea.id}`)
-                        await loadIdeas()
+                        try {
+                            actionLoading.value = true
+                            await axios.delete(`/api/ideas/${idea.id}`)
+                            await loadIdeas()
+                        } catch (e) {
+                            console.error('Failed to delete idea', e)
+                            alert('Error deleting idea (see console).')
+                        } finally {
+                            actionLoading.value = false
+                        }
                     }
 
                     onMounted(loadIdeas)
@@ -153,6 +193,7 @@
                     return {
                         ideas,
                         loading,
+                        actionLoading,
                         approve,
                         replaceIdea,
                         deleteIdea,

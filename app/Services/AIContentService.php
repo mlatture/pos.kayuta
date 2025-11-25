@@ -91,6 +91,7 @@ PROMPT;
         ]);
 
         $content = $response->choices[0]->message->content ?? '';
+        
 
         // JSON parse
         $data = json_decode($content, true);
