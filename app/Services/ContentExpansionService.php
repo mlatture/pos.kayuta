@@ -8,51 +8,93 @@ use Illuminate\Support\Facades\Http;
 
 class ContentExpansionService
 {
+    
+     protected AIContentService $ai;
+
+    public function __construct(AIContentService $ai)
+    {
+        $this->ai = $ai;
+    }
+
+
+   
+   
     public function expandFromIdea(ContentIdea $idea): array
     {
-        $tenantId = $idea->tenant_id;
-
-        // TODO: future me yahan AI call ayega.
-        // Abhi ke liye dummy internal/external content banate hain.
-
         $slug = Str::slug($idea->title . '-' . $idea->id);
 
-        // Internal voice: "we added a new pool"
-        $internalBody = $this->buildInternalMarkdown($idea);
+        // 1) Pehle AI se try karo
+        $aiResult = $this->ai->expandIdea($idea);
 
-        // External voice: "Kayuta Lake Campground has added a new pool"
-        $externalBody = $this->buildExternalMarkdown($idea);
+        // 2) Internal
+        if (!empty($aiResult['internal'])) {
+            $internal = [
+                'type'    => $aiResult['internal']['type']    ?? 'article',
+                'title'   => $aiResult['internal']['title']   ?? $idea->title,
+                'slug'    => $aiResult['internal']['slug']    ?? $slug,
+                'body_md' => $aiResult['internal']['body_md'] ?? $this->buildInternalMarkdown($idea),
+            ];
+        } else {
+            // fallback: tumhara purana static logic
+            $internal = [
+                'type'    => 'article',
+                'title'   => $idea->title,
+                'slug'    => $slug,
+                'body_md' => $this->buildInternalMarkdown($idea),
+            ];
+        }
 
-        // Main article representation for internal Page
-        $internal = [
-            'type'     => 'article', // ya 'blog' agar config se change karna ho
-            'title'    => $idea->title,
-            'slug'     => $slug,
-            'body_md'  => $internalBody,
-        ];
+        // 3) External
+        $parkName = $idea->tenant->name ?? 'our campground';
 
-        // External/syndicated-style content for Make.com
-        $external = [
-            'channel' => 'rvcamping',
-            'title'   => $idea->title . ' at ' . ($idea->tenant->name ?? 'our campground'),
-            'body_md' => $externalBody,
-            'meta'    => [
-                'idea_id'   => $idea->id,
-                'tenant_id' => $idea->tenant_id,
-                // future: park url, logo, etc.
-            ],
-        ];
+        if (!empty($aiResult['external'])) {
+            $external = [
+                'channel' => $aiResult['external']['channel'] ?? 'rvcamping',
+                'title'   => $aiResult['external']['title']   ?? $idea->title . ' at ' . $parkName,
+                'body_md' => $aiResult['external']['body_md'] ?? $this->buildExternalMarkdown($idea),
+                'meta'    => $aiResult['external']['meta']    ?? [
+                    'idea_id'   => $idea->id,
+                    'tenant_id' => $idea->tenant_id,
+                ],
+            ];
+        } else {
+            $external = [
+                'channel' => 'rvcamping',
+                'title'   => $idea->title . ' at ' . $parkName,
+                'body_md' => $this->buildExternalMarkdown($idea),
+                'meta'    => [
+                    'idea_id'   => $idea->id,
+                    'tenant_id' => $idea->tenant_id,
+                ],
+            ];
+        }
 
-        // Build social variants
-        $variants = $this->buildSocialVariants($idea, $internal);
+        // 4) Variants
+        if (!empty($aiResult['variants'])) {
+            $variants = $this->normalizeAndAttachUtmToVariants($idea, $internal, $aiResult['variants']);
+        } else {
+            $variants = $this->buildSocialVariants($idea, $internal);
+        }
 
-        // Media list (hero, etc.)
-        $media = [
-            [
-                'type' => 'image',
-                'url'  => 'https://picsum.photos/1200/630?random=' . $idea->id,
-            ],
-        ];
+        // 5) Media
+        if (!empty($aiResult['media'])) {
+            // agar AI sirf prompts diya hai, tum yahan decide karo ke kaun sa actual image url use karna
+            $media = [];
+            foreach ($aiResult['media'] as $item) {
+                $media[] = [
+                    'type' => 'image',
+                    'url'  => 'https://picsum.photos/1200/630?random=' . $idea->id,
+                    'prompt' => $item['prompt'] ?? null,
+                ];
+            }
+        } else {
+            $media = [
+                [
+                    'type' => 'image',
+                    'url'  => 'https://picsum.photos/1200/630?random=' . $idea->id,
+                ],
+            ];
+        }
 
         return [
             'internal' => $internal,
@@ -62,6 +104,44 @@ class ContentExpansionService
         ];
     }
 
+    // 👇 yeh naya helper hai
+    protected function normalizeAndAttachUtmToVariants(ContentIdea $idea, array $internal, array $variants): array
+    {
+        $baseUrl = $this->buildArticleUrl($idea, $internal['slug']);
+
+        $normalized = [];
+
+        foreach ($variants as $variant) {
+            $platform = strtolower($variant['platform'] ?? 'other');
+            $caption  = $variant['caption'] ?? '';
+
+            $query = http_build_query([
+                'utm_source'   => $platform,
+                'utm_medium'   => 'social',
+                'utm_campaign' => 'idea_' . $idea->id,
+            ]);
+
+            $utmLink = $baseUrl . '?' . $query;
+
+            // length limits
+            if ($platform === 'instagram' && strlen($caption) > 2200) {
+                $caption = substr($caption, 0, 2190) . '…';
+            }
+
+            if (($platform === 'x' || $platform === 'twitter') && strlen($caption) > 280) {
+                $caption = substr($caption, 0, 270) . '…';
+            }
+
+            $normalized[] = [
+                'platform'  => $platform,
+                'caption'   => $caption,
+                'media_url' => 'https://picsum.photos/1200/630?random=' . $idea->id, // ya real hero image
+                'utm_link'  => $utmLink,
+            ];
+        }
+
+        return $normalized;
+    }
     
     protected function buildInternalMarkdown(ContentIdea $idea): string
 {

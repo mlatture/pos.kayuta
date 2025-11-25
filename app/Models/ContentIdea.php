@@ -25,6 +25,12 @@ class ContentIdea extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    
+      public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
 
     public function scheduledPosts()
     {
