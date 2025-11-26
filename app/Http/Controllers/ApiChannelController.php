@@ -52,8 +52,7 @@ class ApiChannelController extends Controller
                     'auto_disabled'          => false,
                     'rate_limit_per_minute'  => $data['rate_limit_per_minute'] ?? 100,
                     'rate_burst_per_minute'  => $data['rate_burst_per_minute'] ?? 300,
-                    'created_at'             => $now,
-                    'updated_at'             => $now,
+                   
                 ]);
     
                 DB::table('channel_system_logs')->insert([

@@ -23,6 +23,8 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Session;
 
 use App\Services\CardKnoxService;
 
@@ -72,7 +74,7 @@ class ReservationManagementController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
-            ])->get(env('BOOK_API_URL') . 'v1/availability', [...$query, 'isKayuta' => true]);
+            ])->get(env('BOOK_API_URL') . 'v1/availability', $query);
 
             if (!$response->successful()) {
                 Log::error('Availability API error', [
@@ -281,38 +283,85 @@ class ReservationManagementController extends Controller
 
     public function viewMap(Request $request, string $bookType = 'book_now')
     {
-        // Call backend
-        $result = $this->availability($request, true);
-        $data = $result->getData(true);
+        $response = $this->availability($request);
 
-        Log::info('View Map data', ['data' => $data]);
+        $data = $response instanceof JsonResponse ? $response->getData(true) : $response;
 
-        // Correct extraction
-        $sites = $data['response']['results']['units'] ?? [];
+        $sites = $data['data']['sites'] ?? [];
+        $hookup = $request->hookup ?? null;
+        $riglength = (int) ($request->riglength ?? 0);
+        $siteclass = $request->siteclass ?? '';
+        $cartIds = $data['data']['cartIds'] ?? [];
 
-        // Extract statuses
-        $statuses = array_map(fn($site) => $site['status'] ?? null, $sites);
+        $processedSites = [];
 
-        $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
+        foreach ($sites as $currentsite) {
+            $csiteclassArray = array_map(fn($v) => strtolower(str_replace('_', ' ', trim($v))), explode(',', $currentsite['class'] ?? ''));
 
-        if ($bookType) {
-            return view('reservations.management.map.booking', [
-                'sites' => $sites, // FIXED
-                'hookup' => $data['hookup'] ?? null,
-                'riglength' => $data['riglength'] ?? null,
-                'siteclass' => $data['siteclass'] ?? null,
-                'status' => $statuses,
+            $isThisAnRvSite = in_array('rv sites', $csiteclassArray);
+            $classMatch = in_array(strtolower($siteclass), $csiteclassArray);
+
+            $rigLength = $riglength;
+            $minLength = (int) ($currentsite['minlength'] ?? 0);
+            $maxLength = (int) ($currentsite['maxlength'] ?? 0);
+
+            $isAvailable = (bool) ($currentsite['available'] ?? false);
+            $isAvailableOnline = (bool) ($currentsite['availableonline'] ?? false);
+            $isSeasonal = (bool) ($currentsite['seasonal'] ?? false);
+            $isUnavailable = !$isAvailable || !$isAvailableOnline;
+
+            // Default values
+            $fillcolor = '#66FF66';
+            $disableLink = false;
+            $filltext = '';
+
+            if (!$classMatch) {
+                $fillcolor = 'red';
+                $filltext = 'This is not the type of site you are looking for.';
+                $disableLink = true;
+            } elseif ($isSeasonal || trim($currentsite['reserved'] ?? '') !== 'Available') {
+                $fillcolor = 'red';
+                $filltext = 'This site is reserved';
+                $disableLink = true;
+            } elseif ($isUnavailable) {
+                $fillcolor = 'red';
+                $filltext = 'This site is not available';
+                $disableLink = true;
+            }
+
+            if ($isThisAnRvSite && ($rigLength < $minLength || $rigLength > $maxLength)) {
+                $fillcolor = 'red';
+                $filltext = 'Your rig will not fit.';
+                $disableLink = true;
+            }
+
+            if ($isThisAnRvSite && $hookup && ($currentsite['hookup'] ?? '') !== $hookup) {
+                $fillcolor = 'orange';
+                $filltext = "This site does not have the requested hookup ($hookup).";
+                $disableLink = true;
+            }
+
+            $processedSites[] = array_merge($currentsite, [
+                'fillcolor' => $fillcolor,
+                'disableLink' => $disableLink,
+                'filltext' => $filltext,
+                'csiteclassArray' => $csiteclassArray,
             ]);
         }
 
-        // FLEXIBLE VIEW
-        return view('reservations.management.map.flexible', [
-            'sites' => $sites, // FIXED
-            'hookup' => $data['hookup'] ?? null,
-            'riglength' => $data['riglength'] ?? null,
-            'siteclass' => $data['siteclass'] ?? null,
-            'stay' => $data['stay'] ?? null,
-            'months' => $data['months'] ?? [],
+        // Save booking session
+        Session::put('booking', [
+            'cid' => $request->start_date ?? '',
+            'cod' => $request->end_date ?? '',
+            'hookup' => $hookup,
+            'riglength' => $riglength,
+            'siteclass' => $siteclass,
+        ]);
+
+        return view('reservations.management.map.booking', [
+            'sites' => $processedSites,
+            'booking' => Session::get('booking'),
+            'cartids' => $cartIds,
         ]);
     }
 

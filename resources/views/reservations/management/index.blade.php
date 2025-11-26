@@ -389,6 +389,9 @@
             $btnViewMap.on('click', function(e) {
                 const checkin = $('#checkinHidden').val();
                 const checkout = $('#checkoutHidden').val();
+                const siteclass = $form.find('[name="siteclass"]').val();
+                const riglength = $form.find('[name="rig_length"]').val();
+                const hookup = $form.find('[name="hookup"]').val();
 
                 if (!checkin || !checkout) {
                     e.preventDefault();
@@ -397,7 +400,7 @@
                 }
 
                 const url =
-                    `${routes.viewMap}?start_date=${encodeURIComponent(checkin)}&end_date=${encodeURIComponent(checkout)}`;
+                    `${routes.viewMap}?start_date=${encodeURIComponent(checkin)}&end_date=${encodeURIComponent(checkout)}&siteclass=${encodeURIComponent(siteclass)}&riglength=${encodeURIComponent(riglength)}&hookup=${encodeURIComponent(hookup)}`;
                 window.location.href = url;
             });
 
