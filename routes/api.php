@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SeasonalTransactionsController;
 use App\Http\Controllers\API\IdeaController;
+use App\Http\Controllers\API\SyndicatedContentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+
+Route::middleware('syndication.token')->group(function () {
+    Route::get('/syndicated-content', [SyndicatedContentController::class, 'index']);
+    Route::patch('/syndicated-content/{content}', [SyndicatedContentController::class, 'update']);
+    Route::delete('/syndicated-content/{content}', [SyndicatedContentController::class, 'destroy']);
+});
 
 Route::group([], function () {
 

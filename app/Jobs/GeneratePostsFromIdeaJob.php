@@ -56,15 +56,16 @@ class GeneratePostsFromIdeaJob implements ShouldQueue
         ]);
 
         // 3) Store external/syndicated-style content for Make.com
-        SyndicatedContent::create([
-            'tenant_id' => $idea->tenant_id,
-            'idea_id'   => $idea->id,
-            'channel'   => $result['external']['channel'] ?? 'rvcamping',
-            'title'     => $result['external']['title'],
-            'body_md'   => $result['external']['body_md'],
-            'meta'      => $result['external']['meta'] ?? [],
-            'status'    => 'pending',
-        ]);
+       SyndicatedContent::create([
+    'tenant_id' => $idea->tenant_id,
+    'idea_id'   => $idea->id,
+    'channel'   => $result['external']['channel'] ?? 'rvcamping',
+    'title'     => $result['external']['title'],
+    'body_md'   => $result['external']['body_md'],
+    'meta'      => $result['external']['meta'] ?? [],
+    'status'    => 'pending',
+]);
+
 
         // 4) Send social variants payload to RVParkHQ (stub for now)
         $expander->sendToHQScheduler($idea, $page, $result);

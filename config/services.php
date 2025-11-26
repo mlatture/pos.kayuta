@@ -44,6 +44,11 @@ return [
      'openai' => [
         'key' => env('OPENAI_API_KEY'),
     ],
+    
+    'syndication' => [
+    'token' => env('SYNDICATION_API_TOKEN'),
+    ],
+
 
 
 
