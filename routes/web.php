@@ -56,6 +56,8 @@ use App\Http\Controllers\Admin\ContentHub\SettingsController;
 use App\Http\Controllers\Admin\ContentHub\ConnectionsController;
 use App\Http\Controllers\Auth\SocialAuthController;
 
+use App\Http\Controllers\ContentIdeaController;
+
 use App\Http\Controllers\Api\IdeaController;
 
 
@@ -257,6 +259,20 @@ Route::prefix('admin')
         Route::get('/settings', [SettingController::class, 'index'])->name('settinpgs.index');
         Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
         Route::resource('product-vendors', ProductVendorController::class);
+        
+        
+        Route::resource('content-ideas', ContentIdeaController::class)->only([
+        'index',
+        'create',
+        'store',
+        'edit',
+        'update',
+        'destroy',
+       ]);
+       
+       
+ 
+
         Route::resource('products', ProductController::class);
         Route::get('category-products', [ProductController::class, 'categoryProducts'])->name('category.products');
         Route::post('/products/toggle-suggested-addon', [ProductController::class, 'toggleSuggestedAddon'])->name('products.toggle-suggested-addon');

@@ -204,6 +204,13 @@
                 @endHasPermission
 
 
+                @hasPermission(config('constants.role_modules.manage_pages.value'))
+                    <li><a class="dropdown-item" href="{{ route('content-ideas.index') }}">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <span> Content Ideas  </span>
+                        </a></li>
+                @endHasPermission
+
             </ul>
 
         </li>
