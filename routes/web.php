@@ -148,6 +148,7 @@ Route::prefix('admin')
                 // Map View
 
                 Route::get('{admin}/view/map', [ReservationManagementController::class, 'viewMap'])->name('admin.reservation_mgmt.map.view');
+                Route::get('{admin}/view/map/information', [ReservationManagementController::class, 'information'])->name('admin.reservation_mgmt.map.information');
             });
 
         Route::prefix('customers/{customer}/account')->group(function () {

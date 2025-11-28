@@ -271,7 +271,7 @@
     </div>
 
     {{-- Modals --}}
-    @include('reservations.management.modals')
+    @include('reservations.modals.checkout')
 
 
 @endsection
@@ -346,21 +346,7 @@
 
 
         (function() {
-            const routes = {
-                availability: @json(route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id])),
-                cartAdd: @json(route('admin.reservation_mgmt.cart.add', ['admin' => auth()->user()->id])),
-                cartItems: @json(route('admin.reservation_mgmt.cart.item.cartItems', ['admin' => auth()->user()->id])),
-                custSearch: @json(route('admin.reservation_mgmt.customer.search', ['admin' => auth()->user()->id])),
-                custCreate: @json(route('admin.reservation_mgmt.customer.create', ['admin' => auth()->user()->id])),
-                couponApply: @json(route('admin.reservation_mgmt.coupon.apply', ['admin' => auth()->user()->id])),
-                checkout: @json(route('admin.reservation_mgmt.checkout', ['admin' => auth()->user()->id])),
-                giftcardLookup: @json(route('admin.reservation_mgmt.giftcard.lookup', ['admin' => auth()->user()->id])),
-                cartItemRemove: @json(route('admin.reservation_mgmt.cart.item.remove', ['admin' => auth()->user()->id])),
-                viewSiteDetails: @json(route('admin.reservation_mgmt.view.site.details', ['admin' => auth()->user()->id])),
-                getCart: @json(route('admin.reservation_mgmt.get.cart', ['admin' => auth()->user()->id])),
-                viewMap: @json(route('admin.reservation_mgmt.map.view', ['admin' => auth()->user()->id])),
-
-            };
+           
 
             const debounce = (fn, d = 300) => {
                 let t;

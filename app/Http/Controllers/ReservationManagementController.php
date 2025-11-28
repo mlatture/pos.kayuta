@@ -15,6 +15,7 @@ use App\Models\GiftCard;
 use App\Models\SiteHookup;
 use App\Models\BusinessSettings;
 use App\Models\Setting;
+use App\Models\Infos;
 
 use Illuminate\Validation\Rule;
 
@@ -241,45 +242,7 @@ class ReservationManagementController extends Controller
         }
     }
 
-    // public function viewMap(Request $request)
-    // {
-    //     $result = $this->availability($request, true);
-    //     $data = $result->getData(true);
-    //     $sites = $data['data']['response']['results']['units'] ?? [];
-
-    //     $statuses = array_map(fn($sites) => $sites['status'] ?? [], $sites);
-
-    //     $bookType = $request->book_type ?? 'book_now';
-    //     $grids = Setting::where('key', 'is_grid_view')->value('is_grid_view');
-
-    //     if ($bookType === 'book_now') {
-    //         // if ($grids == '1') {
-    //         //     return view('reservations.management.map.grid_booking', [
-    //         //         'sites' => $sites['units'] ?? [],
-    //         //         'hookup' => $sites['hookup'] ?? null,
-    //         //         'riglength' => $sites['rig_length'] ?? null,
-    //         //         'siteclass' => $sites['siteclass'] ?? null,
-    //         //     ]);
-    //         // }
-
-    //         return view('reservations.management.map.booking', [
-    //             'sites' => $sites['units'] ?? [],
-    //             'hookup' => $sites['hookup'] ?? null,
-    //             'riglength' => $sites['rig_length'] ?? null,
-    //             'siteclass' => $sites['siteclass'] ?? null,
-    //             'status' => $statuses,
-    //         ]);
-    //     }
-
-    //     return view('reservations.management.map.flexible', [
-    //         'sites' => $sites['units'] ?? [],
-    //         'hookup' => $sites['hookup'] ?? null,
-    //         'riglength' => $sites['rig_length'] ?? null,
-    //         'siteclass' => $sites['siteclass'] ?? null,
-    //         'stay' => $sites['stay'] ?? null,
-    //         'months' => $sites['months'] ?? [],
-    //     ]);
-    // }
+ 
 
     public function viewMap(Request $request, string $bookType = 'book_now')
     {
@@ -313,7 +276,7 @@ class ReservationManagementController extends Controller
             // Default values
             $fillcolor = '#66FF66';
             $disableLink = false;
-            $filltext = '';
+            $filltext = "$hookup Max Length is $maxLength feet. This site is available, click to review details";
 
             if (!$classMatch) {
                 $fillcolor = 'red';
@@ -337,8 +300,8 @@ class ReservationManagementController extends Controller
 
             if ($isThisAnRvSite && $hookup && ($currentsite['hookup'] ?? '') !== $hookup) {
                 $fillcolor = 'orange';
-                $filltext = "This site does not have the requested hookup ($hookup).";
-                $disableLink = true;
+                $filltext = "This site does not have the requested hookup $hookup";
+                $disableLink = false;
             }
 
             $processedSites[] = array_merge($currentsite, [
@@ -393,6 +356,13 @@ class ReservationManagementController extends Controller
                 500,
             );
         }
+    }
+
+    public function information()
+    {
+        $information = Infos::where('show_in_details', 1)->orderBy('id', 'asc')->get();
+
+        return response()->json(['information' => $information]);
     }
 
     public function cart(Request $request)
