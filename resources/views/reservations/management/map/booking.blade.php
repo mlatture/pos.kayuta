@@ -147,8 +147,8 @@
 
             // Image
             const img = r.media?.images?.[0] ?? r.media?.gallery?.[0] ?? null;
-            $('#sdImage').attr('src', img ? `shared_storage/sites/${img}` : '/no-image.png');
-
+            $('#sdImage').attr('src', img ? `/storage/sites/${img}` : '/no-image.png');
+            
             // Attributes
             $('#sdAttributes').text(r.site?.attributes ?? '');
 
