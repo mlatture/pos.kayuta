@@ -219,19 +219,32 @@ MD;
     public function sendToHQScheduler(ContentIdea $idea, $page, array $result): void
     {
         $payload = [
-            'tenant_id'   => $idea->tenant_id,
-            'idea_id'     => $idea->id,
-            'article_url' => $this->buildArticleUrl($idea, $page->slug),
-            'variants'    => $result['variants'],
-            'media'       => $result['media'],
+            'tenant_id'    => $idea->tenant_id,
+            'tenant_name'  => $idea->tenant->name ?? null,
+            'tenant_domain'=> $idea->tenant->primary_domain ?? null,
+            'idea_id'      => $idea->id,
+            'article_url'  => $this->buildArticleUrl($idea, $page->slug),
+            'variants'     => $result['variants'],
+            'media'        => $result['media'],
         ];
 
-        // Future: real call to rvparkhq.com API
-        /*
-        Http::withToken(config('services.rvparkhq.token'))
-            ->post(config('services.rvparkhq.endpoint') . '/api/posts.schedule', $payload);
-        */
+        $endpoint = rtrim(config('services.rvparkhq.endpoint'), '/') . '/api/posts.schedule';
 
-        logger()->info('HQ payload (stub)', $payload);
+        try {
+            $response = Http::withToken(config('services.rvparkhq.token'))
+                ->post($endpoint, $payload);
+
+            logger()->info('HQ payload sent', [
+                'payload'  => $payload,
+                'status'   => $response->status(),
+                'response' => $response->json(),
+            ]);
+        } catch (\Throwable $e) {
+            logger()->error('HQ payload send failed', [
+                'payload' => $payload,
+                'error'   => $e->getMessage(),
+            ]);
+        }
     }
+
 }

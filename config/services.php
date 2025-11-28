@@ -49,6 +49,10 @@ return [
     'token' => env('SYNDICATION_API_TOKEN'),
     ],
 
+  'rvparkhq' => [
+        'endpoint' => env('RVPARKHQ_ENDPOINT'),
+        'token'    => env('RVPARKHQ_TOKEN'),
+    ],
 
 
 
