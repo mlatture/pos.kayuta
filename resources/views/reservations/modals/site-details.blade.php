@@ -114,7 +114,7 @@
                                       <label for="occupantsAdults" class="form-label fw-bold">Adults</label>
                                       <div class="input-group">
                                           <span class="input-group-text">🧑</span>
-                                          <input type="number" class="form-control" id="occupantsAdults" value="2" min="1" max="10">
+                                          <input type="number" class="form-control" id="occupantsAdults" value="2" >
                                       </div>
                                       <div class="form-text">Default is 2 adults per site.</div>
                                   </div>
@@ -123,7 +123,7 @@
                                       <label for="occupantsChildren" class="form-label fw-bold">Children</label>
                                       <div class="input-group">
                                           <span class="input-group-text">👧</span>
-                                          <input type="number" class="form-control" id="occupantsChildren" value="0" min="0" max="10">
+                                          <input type="number" class="form-control" id="occupantsChildren" value="0" >
                                       </div>
                                       <div class="form-text">Ages 17 and under.</div>
                                   </div>

@@ -477,8 +477,8 @@ class ReservationManagementController extends Controller
 
             if ($response->successful()) {
                 Log::info('Added item to cart via booking API', $response->json());
-                return response()->json($response->json(), 200);
-                
+                return response()->json([$response->json(), "ok" => true], 200);
+
             }
 
             Log::error('Cart items API error', [

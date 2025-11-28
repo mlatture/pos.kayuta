@@ -253,9 +253,6 @@
                         url: routes.cartAdd,
                         method: 'POST',
                         contentType: 'application/json',
-
-                        data: JSON.stringify({})
-
                     });
 
                     const data = cartRes.data;
@@ -282,7 +279,7 @@
             // Add to Cart button data
             $(document).on('click', '#addToCartSite', async function() {
                 const btn = $(this);
-                const adults = parseInt($('#occupantsAdults').val()) || 0;
+                const adults = parseInt($('#occupantsAdults').val()) || 2;
                 const children = parseInt($('#occupantsChildren').val()) || 0;
                 const siteLockFee = $('#siteLockToggle').is(':checked') ? 'on' : 'off';
                 if (adults + children === 0) {
@@ -323,8 +320,8 @@
 
                     });
 
-                    if (itemRes) {
-                        window.location.href = " " + routes.reservationMgmtHome ;
+                    if (itemRes.ok) {
+                        window.location.href = routes.reservationMgmtHome;
                     }
                 } catch (err) {
                     console.error('Error adding to cart', err);
