@@ -104,7 +104,7 @@
                           </div>
                       </div>
 
-                      <div class="col">
+                      <div class="col occupants-col">
                           <div class="card shadow-sm h-100">
                               <div class="card-header bg-primary text-white">
                                   <h5 class="mb-0">Occupants</h5>
@@ -114,7 +114,7 @@
                                       <label for="occupantsAdults" class="form-label fw-bold">Adults</label>
                                       <div class="input-group">
                                           <span class="input-group-text">🧑</span>
-                                          <input type="number" class="form-control" id="occupantsAdults" value="2" >
+                                          <input type="number" class="form-control" id="occupantsAdults" value="2">
                                       </div>
                                       <div class="form-text">Default is 2 adults per site.</div>
                                   </div>
@@ -180,7 +180,7 @@
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-success" id="addToCartSite">Add To Cart</button>
+                  <button type="button" class="btn btn-success " id="addToCartSite">Add To Cart</button>
               </div>
 
           </div>

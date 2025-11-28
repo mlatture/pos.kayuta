@@ -118,19 +118,17 @@
 
                     <div class="col-auto">
                         <div class="form-check position-relative">
-                            <input class="form-check-input" type="checkbox" id="include_seasonal" name="include_seasonal"
-                                >
+                            <input class="form-check-input" type="checkbox" id="include_seasonal" name="include_seasonal">
                             <div class="form-text">
                                 Include Seasonal
-                             
+
                             </div>
                         </div>
                     </div>
 
                     <div class="col-auto">
                         <div class="form-check position-relative">
-                            <input class="form-check-input" type="checkbox" id="include_offline" name="include_offline"
-                                >
+                            <input class="form-check-input" type="checkbox" id="include_offline" name="include_offline">
                             <div class="form-text">
                                 Include Offline
 
@@ -173,8 +171,8 @@
                         </strong>
                     </div>
 
-                    <p class="small text-muted mx-3 mt-2 mb-0">
-                        Tip: Click any site row to view more details and amenities.
+                    <p class="small  mx-3 mt-2 mb-0">
+                        Tip: Click any <span class="text-success">site row</span> to view more details and amenities.
                     </p>
 
                     <div class="card-body p-0" style="height: 50vh; overflow-y: auto;">
@@ -272,6 +270,7 @@
 
     {{-- Modals --}}
     @include('reservations.modals.checkout')
+    @include('reservations.modals.site-details');
 
 
 @endsection
@@ -346,7 +345,7 @@
 
 
         (function() {
-           
+
 
             const debounce = (fn, d = 300) => {
                 let t;
@@ -546,16 +545,18 @@
                                                     Site Lock Fee: $${slFAmount}
                                                 </label>
                                             </div>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-primary addToCartBtn"
+                                                    data-site-id="${unit.site_id}"
+                                                    data-total="${unit.price_quote?.total ?? 0}"
+                                                    data-price-quote-id="${unit.price_quote?.price_quote_id ?? ''}"
+                                                    data-start="${ci}"
+                                                    data-end="${co}"
+                                                    data-site-lock-fee="0" >
+                                                    <i class="bi bi-cart-plus"></i> Add to Cart
+                                                </button>
 
-                                            <button class="btn btn-sm btn-primary addToCartBtn"
-                                                data-site-id="${unit.site_id}"
-                                                data-total="${unit.price_quote?.total ?? 0}"
-                                                data-price-quote-id="${unit.price_quote?.price_quote_id ?? ''}"
-                                                data-start="${ci}"
-                                                data-end="${co}"
-                                                data-site-lock-fee="0" >
-                                                <i class="bi bi-cart-plus"></i> Add to Cart
-                                            </button>
+                                            </div>
                                         </div>
                                     ` : '';
 
@@ -586,6 +587,9 @@
 
                         $('#resultsHead').html(headHtml);
 
+                        const siteDetailsModal = new bootstrap.Modal('#siteDetailsModal', {
+                            keyboard: true
+                        });
 
                         if (!rows) {
                             $tbody.html(
@@ -611,18 +615,6 @@
 
                                 $tbody.find('.site-details-row').remove();
 
-                                const colspan = $row.find('td').length;
-                                const $detailsRow = $(`
-                                    <tr class="site-details-row" id="siteDetails_${siteId}">
-                                        <td colspan="${colspan}" class="bg-light">
-                                            <div class="collapse-content small text-muted p-4 text-center">
-                                                <i class="bi bi-hourglass-split"></i> Loading site details...
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `);
-
-                                $row.after($detailsRow);
 
                                 $.get(routes.viewSiteDetails, {
                                         site_id: siteId,
@@ -637,80 +629,11 @@
                                         const status = res.response?.status || {};
                                         const amenities = site.amenities || [];
 
-                                        const availabilityBadge = status.available ?
-                                            '<span class="badge bg-success">Available</span>' :
-                                            status.in_cart ?
-                                            '<span class="badge bg-info text-dark">In Cart</span>' :
-                                            status.reserved ?
-                                            '<span class="badge bg-warning text-dark">Reserved</span>' :
-                                            '<span class="badge bg-secondary">Unavailable</span>';
-
-                                        const amenitiesHtml = amenities.length ?
-                                            `<div class="d-flex flex-wrap gap-2 mt-2">
-                                                    ${amenities
-                                                        .map(a => `<span class="badge rounded-pill bg-success mb-1">
-                                                                                                                                                                                                                                                                                                                                            <i class="bi bi-check-circle-fill me-1"></i>${a.replace(/_/g, ' ')}
-                                                                                                                                                                                                                                                                                                                                        </span>`)
-                                                        .join('')}
-                                            </div>` :
-                                            `<div class="text-muted small">No listed amenities.</div>`;
-
-                                        const lockHtml = policies.site_lock?.enabled ?
-                                            `<div class="alert alert-warning small mt-3 mb-0">
-                                                    <i class="bi bi-lock-fill me-1"></i>
-                                                    <strong>Site Lock Fee:</strong> $${policies.site_lock.fee}<br>
-                                                    ${policies.site_lock.message.replace(/\n/g, '<br>')}
-                                            </div>` :
-                                            '';
-
-                                        const pricingHtml = `
-                                            <div class="mt-3">
-                                                <h6 class="fw-bold mb-2">Pricing Summary</h6>
-                                                <div class="row small">
-                                                    <div class="col-md-4"><strong>Stay:</strong> ${pricing.range?.length_of_stay || 1} night(s)</div>
-                                                    <div class="col-md-4"><strong>Avg/Night:</strong> $${Number(pricing.average_nightly ?? 0).toFixed(2)}</div>
-                                                    <div class="col-md-4"><strong>Total:</strong> $${Number(pricing.total ?? 0).toFixed(2)}</div>
-                                                </div>
-                                                <div class="text-muted mt-2 fst-italic">${pricing.notes || ''}</div>
-                                            </div>
-                                        `;
-
-                                        const content = `
-                                            <div class="collapse-content">
-                                               
-
-                                                <p class="small text-muted mb-3">${site.attributes || ''}</p>
-
-                                                <div class="row mb-3">
-                                                    <div class="col-md-4">
-                                                        <div><strong>Site ID:</strong> ${site.site_id}</div>
-                                                        <div><strong>Class:</strong> ${site.class || 'N/A'}</div>
-                                                        <div><strong>Hookup:</strong> ${site.hookup || 'N/A'}</div>
-                                                        <div><strong>Rig Length:</strong> ${constraints.rig_length?.min ?? 0}–${constraints.rig_length?.max ?? 0} ft</div>
-                                                    </div>
-                                                    <div class="col-md-8">
-                                                        <strong>Amenities:</strong>
-                                                        ${amenitiesHtml}
-                                                    </div>
-                                                </div>
-
-                                                ${lockHtml}
-                                                ${pricingHtml}
-
-                                                <div class="text-muted small fst-italic mt-3">
-                                                    <i class="bi bi-info-circle me-1"></i>Note: Site availability and policies may vary by season.
-                                                </div>
-                                            </div>
-                                        `;
-
-                                        $detailsRow.find('td').html(content);
-                                        $detailsRow.find('.collapse-content').hide().slideDown(250);
-                                        initTooltips();
+                                        populateSiteDetails(res, start, end);
+                                        siteDetailsModal.show();
                                     })
                                     .fail(() => {
-                                        $detailsRow.find('td').html(
-                                            `<div class="text-danger py-3">Failed to load details for site ${siteId}.</div>`
-                                        );
+                                        alert('Failed to load site details.');
                                     });
                             });
 
@@ -735,6 +658,145 @@
                         _inFlightAvailability = null;
                     });
             }
+
+
+
+
+            function populateSiteDetails(res, start, end) {
+                const r = res.response ?? {}; // safety fallback
+
+                // Load Important Information
+                $.get(routes.information)
+                    .done(infoRes => {
+                        const infos = infoRes.information || [];
+                        const $infoCardBody = $('#infoCardBody');
+
+                        $infoCardBody.empty();
+
+                        if (infos.length > 0) {
+                            $('#sdTitleInfo').text('Important Information');
+
+                            infos.forEach(info => {
+                                if (info.title && info.description) {
+                                    $infoCardBody.append(`
+                                <div class="mb-3">
+                                    <h6 class="text-dark mb-0 fw-bold">${info.title}</h6>
+                                    <p class="small text-muted mb-0">${info.description}</p>
+                                </div>
+                            `);
+                                }
+                            });
+
+                        } else {
+                            // Handle case where no information is available
+                            $('#sdTitleInfo').text('Information Not Available');
+                            $infoCardBody.append(
+                                '<p class="text-muted fst-italic">No important information currently listed for this site.</p>'
+                            );
+                        }
+                    });
+
+                // Site
+                $('#sdName').text(r.site?.name ?? '');
+                $('#sdSiteId').text(r.site?.site_id ?? '—');
+                $('#sdClass').text(r.site?.class?.replace(/_/g, ' ') ?? '');
+                $('#sdHookup').text(r.site?.hookup ?? '');
+
+                // Image
+                const siteImages = r.media?.images ?? r.media?.gallery ?? [];
+                const container = $('#sdImagesContainer');
+                container.empty();
+
+                const imageBasePath = '/storage/sites/';
+                let slidesHtml = '';
+
+                if (siteImages.length > 0) {
+                    siteImages.forEach((imgFilename, index) => {
+                        const isActive = index === 0 ? 'active' : '';
+                        const imgSrc = `${imageBasePath}${imgFilename}`;
+
+                        slidesHtml += `
+                        <div class="carousel-item ${isActive}">
+                            <img src="${imgSrc}" class="d-block w-100 rounded-top" alt="Site Image ${index + 1}"
+                                style="height: 400px; object-fit: cover;">
+                        </div>
+                    `;
+                    });
+                } else {
+                    slidesHtml += `
+                    <div class="carousel-item active">
+                        <img src="/no-image.png" class="d-block w-100 rounded-top" alt="No Image Available"
+                            style="height: 400px; object-fit: cover;">
+                    </div>
+                `;
+                }
+
+                container.html(slidesHtml);
+                const $carouselElement = $('#siteImagesCarousel');
+                if ($carouselElement.length) {
+                    const nativeCarouselElement = $carouselElement[0];
+
+                    const bsCarousel = bootstrap.Carousel.getInstance(nativeCarouselElement);
+                    if (bsCarousel) {
+                        bsCarousel.dispose();
+                    }
+
+                    new bootstrap.Carousel(nativeCarouselElement);
+                }
+
+
+
+                // Attributes
+                $('#sdAttributes').text(r.site?.attributes ?? '');
+
+                // Amenities
+                $('#sdAmenities').empty();
+                if ((r.site?.amenities || []).length > 0) {
+                    (r.site.amenities).forEach(a => {
+                        $('#sdAmenities').append(
+                            `<li><span class="badge badge-pill badge-primary text-white">${a.replaceAll('_', ' ')}</span></li>`
+                        );
+                    });
+                } else {
+                    $('#sdAmenities').append('<li class="text-muted small">None Listed</li>');
+                }
+                // Rig
+                if (r.constraints?.rig_length) {
+                    $('#sdRig').text(`${r.constraints.rig_length.min}ft – ${r.constraints.rig_length.max}ft`);
+                }
+
+                // Pricing
+                $('#sdAvgNight').text(r.pricing?.average_nightly ?? '0');
+                $('#sdTotal').text(r.pricing?.total ?? '0');
+                $('#sdStay').text(r.pricing?.range?.length_of_stay ?? '0');
+                $('#sdPlatformFee').text(r.pricing?.platform_fee?.average_nightly ?? '0');
+
+                // Policies
+                $('#sdMinStay').text(r.policies?.minimum_stay ?? '—');
+                const siteLockEnabled = r.policies?.site_lock?.enabled ?? false;
+                const siteLockFee = r.policies?.site_lock?.fee ?? 0;
+                const lockMessage = r.policies?.site_lock?.message ?? '-';
+
+                $('#siteLockToggle').prop('checked', siteLockEnabled);
+
+                if (siteLockEnabled) {
+                    $('#sdSiteLockFeeDisplay').text(`Yes (+$${siteLockFee})`).removeClass('bg-secondary').addClass(
+                        'bg-success');
+                } else {
+                    $('#sdSiteLockFeeDisplay').text("No").removeClass('bg-success').addClass('bg-secondary');
+                }
+
+                $('#sdLockMessage').text(lockMessage);
+
+                $('#addToCartSite').prop('hidden', true);
+                $('.occupants-col').prop('hidden', true);
+
+
+
+            }
+
+
+
 
 
 
@@ -801,7 +863,7 @@
             $(document).on('click', '.addToCartBtn', async function() {
                 const btn = $(this);
                 const container = btn.closest('div');
-                const adults = parseInt(container.find('.adults').val()) || 0;
+                const adults = parseInt(container.find('.adults').val()) || 2;
                 const children = parseInt(container.find('.children').val()) || 0;
                 const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
 
@@ -857,10 +919,6 @@
                     btn.prop('disabled', false);
                 }
             });
-
-
-
-
 
             async function updateCartSidebar(cartId, cartToken) {
                 try {

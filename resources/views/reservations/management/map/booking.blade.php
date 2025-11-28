@@ -331,5 +331,31 @@
             });
 
         }
+
+        $(document).ready(function() {
+            $('#occupantsAdults, #occupantsChildren').on('input', function() {
+                const $input = $(this);
+                const currentValue = $input.val();
+
+                if (currentValue === '') {
+                    return; 
+                }
+
+                let val = parseInt(currentValue);
+                const id = $input.attr('id');
+
+                if (isNaN(val) || val < 0) {
+                    val = 0;
+                }
+
+                if (id === 'occupantsAdults' && val < 1) {
+                    val = 1;
+                }
+
+                if (parseInt(currentValue) !== val) {
+                    $input.val(val);
+                }
+            });
+        });
     </script>
 @endpush
