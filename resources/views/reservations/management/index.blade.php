@@ -741,7 +741,6 @@
 
 
             $(window).on('load', async function() {
-                console.log('📦 Document ready triggered');
 
                 const storedCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
 
@@ -750,10 +749,8 @@
                     const now = new Date();
 
                     if (now < expiresAt) {
-                        console.log('🕒 Restoring existing cart from localStorage:', storedCart);
                         await updateCartSidebar(storedCart.cart_id, storedCart.cart_token);
                     } else {
-                        console.log('🗑️ Cart expired, clearing localStorage');
                         localStorage.removeItem('cartInfo');
                     }
                 }
@@ -769,11 +766,9 @@
                 const now = new Date();
 
                 if (stored.cart_id && stored.cart_token && new Date(stored.expires_at) > now) {
-                    console.log('♻️ Using existing cart:', stored);
                     cartId = stored.cart_id;
                     cartToken = stored.cart_token;
                 } else {
-                    console.log('🆕 Creating new cart...');
                     const cartRes = await $.ajax({
                         url: routes.cartAdd,
                         method: 'POST',
@@ -814,6 +809,7 @@
                     alert('Please enter at least one occupant.');
                     return;
                 }
+
 
                 btn.prop('disabled', true).html(
                     '<i class="fa-solid fa-spinner fa-spin-pulse"></i> Adding...');
@@ -891,7 +887,6 @@
                     const count = $('#cartCount');
                     const btnCheckout = $('#btnCheckout');
 
-                    console.log('Cart Check', cart);
 
                     // Build cart items dynamically
                     let itemsHtml = '';
@@ -983,7 +978,6 @@
                         }),
                     });
 
-                    console.log('🗑️ Delete response:', deleteCartItem);
 
                     // Success condition (depends on API return)
                     if (deleteCartItem.code === "ITEM_REMOVED") {
@@ -1012,7 +1006,6 @@
                 }
 
                 const customerInfo = window.selectCustomerForCart.details;
-                console.log('check', customerInfo);
 
 
                 btn.prop('disabled', true).html(
@@ -1149,7 +1142,6 @@
                 const co = $('[name="end_date"]').val();
                 const selectedClass = $('[name="siteclass"]').val();
 
-                console.log('Availability trigger fired. CI:', ci, 'CO:', co, 'Class:', selectedClass);
 
                 if (!ci || !co) return;
 
@@ -1544,7 +1536,6 @@
                         },
                         data: data,
                         success: function(newCust) {
-                            console.log(newCust);
 
                             if (newCust && newCust.ok && newCust.data && newCust.data.id) {
 

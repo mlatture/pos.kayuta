@@ -13,12 +13,10 @@
                           <div class="card shadow-sm h-100">
                               <div class="card-body p-0">
                                   <div id="siteImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+
                                       <div class="carousel-inner rounded-top" id="sdImagesContainer">
-                                          <div class="carousel-item active">
-                                              <img id="sdImage"  class="d-block w-100 rounded-top"
-                                                  alt="Site Image" style="height: 400px; object-fit: cover;">
-                                          </div>
                                       </div>
+
                                       <button class="carousel-control-prev" type="button"
                                           data-bs-target="#siteImagesCarousel" data-bs-slide="prev">
                                           <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -108,6 +106,33 @@
 
                       <div class="col">
                           <div class="card shadow-sm h-100">
+                              <div class="card-header bg-primary text-white">
+                                  <h5 class="mb-0">Occupants</h5>
+                              </div>
+                              <div class="card-body">
+                                  <div class="mb-3">
+                                      <label for="occupantsAdults" class="form-label fw-bold">Adults</label>
+                                      <div class="input-group">
+                                          <span class="input-group-text">🧑</span>
+                                          <input type="number" class="form-control" id="occupantsAdults" value="2" min="1" max="10">
+                                      </div>
+                                      <div class="form-text">Default is 2 adults per site.</div>
+                                  </div>
+
+                                  <div class="mb-0">
+                                      <label for="occupantsChildren" class="form-label fw-bold">Children</label>
+                                      <div class="input-group">
+                                          <span class="input-group-text">👧</span>
+                                          <input type="number" class="form-control" id="occupantsChildren" value="0" min="0" max="10">
+                                      </div>
+                                      <div class="form-text">Ages 17 and under.</div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <div class="col">
+                          <div class="card shadow-sm h-100">
                               <div class="card-header bg-warning text-dark">
                                   <h5 class="mb-0">Booking Policies</h5>
                               </div>
@@ -117,9 +142,20 @@
                                       <span id="sdMinStay" class="fw-semibold">—</span> night(s)
                                   </li>
                                   <li class="list-group-item">
-                                      <strong class="d-block mb-1">Site Lock:</strong>
-                                      <span id="sdSiteLock" class="badge bg-secondary">Loading...</span>
-                                      <p class="small text-muted mt-1 mb-0" id="sdLockMessage">—</p>
+                                      <div
+                                          class="form-check form-switch d-flex justify-content-between align-items-center">
+                                          <label class="form-check-label fw-bold" for="siteLockToggle">Site
+                                              Lock:</label>
+                                          <input class="form-check-input" checked type="checkbox" role="switch"
+                                              id="siteLockToggle">
+                                      </div>
+
+                                      <div class="mt-2">
+                                          <span id="sdSiteLockFeeDisplay" class="badge bg-secondary">Not
+                                              Included</span>
+
+                                          <p class="small text-muted mt-1 mb-0" id="sdLockMessage">—</p>
+                                      </div>
                                   </li>
                               </ul>
                           </div>
@@ -144,6 +180,7 @@
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-success" id="addToCartSite">Add To Cart</button>
               </div>
 
           </div>

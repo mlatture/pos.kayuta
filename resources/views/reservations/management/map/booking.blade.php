@@ -59,6 +59,12 @@
 
 @push('js')
     <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         function showTooltip(evt, text) {
             let tooltip = document.getElementById("tooltip");
             tooltip.innerHTML = text;
@@ -93,7 +99,7 @@
                     uscod: end
                 })
                 .done(res => {
-                    populateSiteDetails(res);
+                    populateSiteDetails(res, start, end);
                     siteDetailsModal.show();
                 })
                 .fail((jqXHR, textStatus, errorThrown) => {
@@ -105,14 +111,14 @@
 
         });
 
-        function populateSiteDetails(res) {
+        function populateSiteDetails(res, start, end) {
             const r = res.response ?? {}; // safety fallback
 
             // Load Important Information
             $.get(routes.information)
                 .done(infoRes => {
                     const infos = infoRes.information || [];
-                    const $infoCardBody = $('#infoCardBody'); 
+                    const $infoCardBody = $('#infoCardBody');
 
                     $infoCardBody.empty();
 
@@ -135,7 +141,7 @@
                         $('#sdTitleInfo').text('Information Not Available');
                         $infoCardBody.append(
                             '<p class="text-muted fst-italic">No important information currently listed for this site.</p>'
-                            );
+                        );
                     }
                 });
 
@@ -146,9 +152,49 @@
             $('#sdHookup').text(r.site?.hookup ?? '');
 
             // Image
-            const img = r.media?.images?.[0] ?? r.media?.gallery?.[0] ?? null;
-            $('#sdImage').attr('src', img ? `/storage/sites/${img}` : '/no-image.png');
-            
+            const siteImages = r.media?.images ?? r.media?.gallery ?? [];
+            const container = $('#sdImagesContainer');
+            container.empty();
+
+            const imageBasePath = '/storage/sites/';
+            let slidesHtml = '';
+
+            if (siteImages.length > 0) {
+                siteImages.forEach((imgFilename, index) => {
+                    const isActive = index === 0 ? 'active' : '';
+                    const imgSrc = `${imageBasePath}${imgFilename}`;
+
+                    slidesHtml += `
+                        <div class="carousel-item ${isActive}">
+                            <img src="${imgSrc}" class="d-block w-100 rounded-top" alt="Site Image ${index + 1}"
+                                style="height: 400px; object-fit: cover;">
+                        </div>
+                    `;
+                });
+            } else {
+                slidesHtml += `
+                    <div class="carousel-item active">
+                        <img src="/no-image.png" class="d-block w-100 rounded-top" alt="No Image Available"
+                            style="height: 400px; object-fit: cover;">
+                    </div>
+                `;
+            }
+
+            container.html(slidesHtml);
+            const $carouselElement = $('#siteImagesCarousel');
+            if ($carouselElement.length) {
+                const nativeCarouselElement = $carouselElement[0];
+
+                const bsCarousel = bootstrap.Carousel.getInstance(nativeCarouselElement);
+                if (bsCarousel) {
+                    bsCarousel.dispose();
+                }
+
+                new bootstrap.Carousel(nativeCarouselElement);
+            }
+
+
+
             // Attributes
             $('#sdAttributes').text(r.site?.attributes ?? '');
 
@@ -176,12 +222,117 @@
 
             // Policies
             $('#sdMinStay').text(r.policies?.minimum_stay ?? '—');
-            if (r.policies?.site_lock?.enabled) {
-                $('#sdSiteLock').text(`Yes (+$${r.policies.site_lock.fee})`);
+            const siteLockEnabled = r.policies?.site_lock?.enabled ?? false;
+            const siteLockFee = r.policies?.site_lock?.fee ?? 0;
+            const lockMessage = r.policies?.site_lock?.message ?? '-';
+
+            $('#siteLockToggle').prop('checked', siteLockEnabled);
+
+            if (siteLockEnabled) {
+                $('#sdSiteLockFeeDisplay').text(`Yes (+$${siteLockFee})`).removeClass('bg-secondary').addClass(
+                    'bg-success');
             } else {
-                $('#sdSiteLock').text("No");
+                $('#sdSiteLockFeeDisplay').text("No").removeClass('bg-success').addClass('bg-secondary');
             }
-            $('#sdLockMessage').text(r.policies?.site_lock?.message ?? '');
+
+            $('#sdLockMessage').text(lockMessage);
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+            async function createOrRestoreCart() {
+                let cartId, cartToken;
+
+                // Check existing cart first
+                const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+                const now = new Date();
+
+                if (stored.cart_id && stored.cart_token && new Date(stored.expires_at) > now) {
+                    cartId = stored.cart_id;
+                    cartToken = stored.cart_token;
+                } else {
+                    const cartRes = await $.ajax({
+                        url: routes.cartAdd,
+                        method: 'POST',
+                        contentType: 'application/json',
+
+                        data: JSON.stringify({})
+
+                    });
+
+                    const data = cartRes.data;
+
+                    cartId = data.cart_id;
+                    cartToken = data.cart_token;
+                    // Compute expiration datetime
+                    const expiresAt = new Date();
+                    expiresAt.setSeconds(expiresAt.getSeconds() + (cartRes.meta?.ttl_seconds || 1800));
+
+                    // Save to localStorage
+                    localStorage.setItem('cartInfo', JSON.stringify({
+                        cart_id: cartId,
+                        cart_token: cartToken,
+                        expires_at: expiresAt.toISOString(),
+                    }));
+                }
+
+                return {
+                    cartId,
+                    cartToken
+                };
+            }
+            // Add to Cart button data
+            $(document).on('click', '#addToCartSite', async function() {
+                const btn = $(this);
+                const adults = parseInt($('#occupantsAdults').val()) || 0;
+                const children = parseInt($('#occupantsChildren').val()) || 0;
+                const siteLockFee = $('#siteLockToggle').is(':checked') ? 'on' : 'off';
+                if (adults + children === 0) {
+                    alert('Please enter at least one occupant.');
+                    return;
+                }
+
+
+                try {
+                    //  Create or restore shared cart
+                    const {
+                        cartId,
+                        cartToken
+                    } = await createOrRestoreCart();
+
+                    const payload = {
+                        cart_id: parseInt(cartId),
+                        token: cartToken,
+                        site_id: r.site?.site_id,
+                        start_date: start,
+                        end_date: end,
+                        occupants: {
+                            adults,
+                            children
+                        },
+                        add_ons: [],
+                        price_quote_id: null,
+                        site_lock_fee: siteLockFee
+                    };
+
+
+                    // Add item
+                    const itemRes = await $.ajax({
+                        url: routes.cartItems,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(payload),
+
+                    });
+
+                    if (itemRes) {
+                        window.location.href = " " + routes.reservationMgmtHome ;
+                    }
+                } catch (err) {
+                    console.error('Error adding to cart', err);
+                } finally {
+                    btn.prop('disabled', false);
+                }
+            });
+
         }
     </script>
 @endpush

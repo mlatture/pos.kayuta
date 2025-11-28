@@ -76,6 +76,7 @@
         }, 4000);
 
         let routes = {
+            reservationMgmtHome: @json(route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id])),
             availability: @json(route('admin.reservation_mgmt.availability', ['admin' => auth()->user()->id])),
             cartAdd: @json(route('admin.reservation_mgmt.cart.add', ['admin' => auth()->user()->id])),
             cartItems: @json(route('admin.reservation_mgmt.cart.item.cartItems', ['admin' => auth()->user()->id])),
