@@ -15,7 +15,7 @@
                                   <div id="siteImagesCarousel" class="carousel slide" data-bs-ride="carousel">
                                       <div class="carousel-inner rounded-top" id="sdImagesContainer">
                                           <div class="carousel-item active">
-                                              <img id="sdImage" src="/no-image.png" class="d-block w-100 rounded-top"
+                                              <img id="sdImage"  class="d-block w-100 rounded-top"
                                                   alt="Site Image" style="height: 400px; object-fit: cover;">
                                           </div>
                                       </div>
