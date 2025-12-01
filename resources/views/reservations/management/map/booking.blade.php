@@ -218,7 +218,6 @@
             $('#sdAvgNight').text(r.pricing?.average_nightly ?? '0');
             $('#sdTotal').text(r.pricing?.total ?? '0');
             $('#sdStay').text(r.pricing?.range?.length_of_stay ?? '0');
-            $('#sdPlatformFee').text(r.pricing?.platform_fee?.average_nightly ?? '0');
 
             // Policies
             $('#sdMinStay').text(r.policies?.minimum_stay ?? '—');
