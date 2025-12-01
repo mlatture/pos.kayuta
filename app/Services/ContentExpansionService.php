@@ -178,7 +178,7 @@ MD;
     protected function buildArticleUrl($idea, string $slug): string
     {
         // Later: pick from tenant settings (book.<park>.com)
-        return 'https://book.kayuta.com/articles/' . $slug;
+        return 'https://book.kayuta.com/article/' . $slug;
     }
 
     protected function buildSocialVariants(ContentIdea $idea, array $internal): array
