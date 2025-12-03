@@ -48,6 +48,24 @@ class CustomerController extends Controller
             }
 
             return DataTables::of($customers)
+                ->addColumn('full_name', function ($customer) {
+                    return ucwords($customer->f_name . ' ' . $customer->l_name);
+                })
+                ->addColumn('email', function ($customer) {
+                    return strtolower($customer->email) ?? 'N/A';
+                })
+                ->filter(function ($query) use ($request) {
+                    if ($search = $request->get('search')['value'] ?? null) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('f_name', 'like', "%{$search}%")
+                                ->orWhere('l_name', 'like', "%{$search}%")
+                                ->orWhere(DB::raw("CONCAT(f_name, ' ', l_name)"), 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%");
+                                // ->orWhere('street_address', 'like', "%{$search}%");
+                        });
+                    }
+                })
                 ->addIndexColumn()
                 ->addColumn('actions', function ($customer) {
                     $documents = '<a href="' . route('customers.documents', $customer->id) . '" class="btn btn-secondary"><i class="fa-solid fa-folder-open"></i></a>';

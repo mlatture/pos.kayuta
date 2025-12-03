@@ -137,9 +137,10 @@
                         searchable: false
                     },
                     {
-                        data: 'f_name',
-                        name: 'f_name'
+                        data: 'full_name',
+                        name: 'name'
                     },
+                    
                     {
                         data: 'email',
                         name: 'email'
