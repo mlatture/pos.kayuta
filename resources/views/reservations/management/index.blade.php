@@ -620,7 +620,7 @@
                                     });
                             });
 
-                          
+
                             function populateSiteDetails(res, start, end) {
 
 
@@ -1281,10 +1281,29 @@
                     .fail(xhr => alert(xhr.responseJSON?.message || 'Coupon invalid'));
             });
 
+            $('#btnCheckCancel').on('click', function() {
+                const checkoutBtn = $('#btnCheckout');
+
+                checkoutBtn.text('Proceed To Checkout');
+            });
+
+            // Default view is Credit Card
+            $('#checkoutModal').on('shown.bs.modal', function() {
+                $('#checkoutModal button[data-method="credit_card"]').trigger('click');
+
+            });
 
 
             $('#checkoutModal').on('click', 'button[data-method]', function() {
                 const method = $(this).data('method');
+
+                $(this).addClass('btn-primary text-white')
+                    .removeClass('btn-outline-dark')
+                    .siblings('button[data-method]')
+                    .removeClass('btn-primary text-white')
+                    .addClass('btn-outline-dark');
+
+
                 let html = '';
                 if (method === 'gift_card') {
                     html = `
@@ -1314,14 +1333,19 @@
                 $('#paymentInputs').html(html).data('method', method);
             });
 
-            $('#btnCheckCancel').on('click', function() {
-                const checkoutBtn = $('#btnCheckout');
 
-                checkoutBtn.text('Proceed To Checkout');
-            });
 
             $('#btnPlaceOrder').on('click', function() {
-                const method = $('#paymentInputs').data('method') || 'credit_card';
+
+                const $btn = $(this);
+
+                $btn.prop('disabled', true);
+                const originalText = $btn.html();
+                $btn.html(
+                    '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...'
+                    );
+
+                const method = $('#paymentInputs').data('method');
                 const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
 
                 const customer = {
@@ -1339,6 +1363,7 @@
                 for (const [key, val] of Object.entries(customer)) {
                     if (!val) {
                         toastr.error(`Please fill out ${key.replace('_', ' ')}.`);
+                        $btn.prop('disabled', false).html(originalText);
                         return;
                     }
                 }
@@ -1381,6 +1406,7 @@
                     const code = (payload.gift_card_code || '').trim();
                     if (!code) {
                         alert('Please enter a gift card code.');
+                        $btn.prop('disabled', false).html('originalText');
                         return;
                     }
                     $.post(routes.giftcardLookup, {
@@ -1394,21 +1420,23 @@
                                 alert(
                                     `Gift card balance (${fmt(balance)}) is less than the total (${fmt(total)}). Choose another method or split the payment.`
                                 );
+                                $btn.prop('disabled', false).html(originalText);
                                 return;
                             }
-                            doCheckout(payload);
+                            doCheckout(payload, $btn, originalText);
                         })
                         .fail(xhr => {
                             alert(xhr.responseJSON?.message || 'Unable to validate gift card.');
+                            $btn.prop('disabled', false).html(originalText);
                         });
                     return;
                 }
 
-                doCheckout(payload);
+                doCheckout(payload, $btn, originalText);
 
             });
 
-            function doCheckout(payload) {
+            function doCheckout(payload, $btn, originalText) {
                 $.post(routes.checkout, payload)
                     .done(res => {
                         const message = res?.message || 'Order placed successfully.';
@@ -1439,20 +1467,46 @@
                                 clearInterval(timerInterval);
                             }
                         }).then((result) => {
-                            if (result.isConfirmed) {
-                                location.reload();
-                            } else if (result.dismiss === Swal.DismissReason.timer) {
-                                location.reload();
-                            }
                             localStorage.removeItem('cartInfo');
+                            $btn.prop('disabled', false).html(originalText);
+                            window.location.reload();
                         });
                     })
                     .fail(xhr => {
+                        let msg = '';
+                        const mainMsg =
+                            "Something went wrong. We're unable to complete your request at this time. Please try again later. If the issue persists, please contact support.";
+
+                        if (xhr.responseJSON) {
+                            msg += `<strong>${mainMsg}</strong><br>`;
+
+                            if (xhr.responseJSON.message) {
+                                msg += `<span class="text-muted">${xhr.responseJSON.message}</span><br>`;
+                            }
+
+
+
+                            if (xhr.responseJSON.errors) {
+                                const errors = Object.values(xhr.responseJSON.errors)
+                                    .flat()
+                                    .map(err => `<li>${err}</li>`)
+                                    .join('<br>');
+
+                                msg += `<ul class="text-start mt-2">${errors}</ul>`;
+                            }
+                        }
+
+                        if (!msg) msg = mainMsg;
+
                         Swal.fire({
                             icon: 'error',
-                            title: 'Checkout failed',
-                            text: xhr.responseJSON?.message || 'Something went wrong.'
-                        });
+                            title: 'Checkout Failed',
+                            html: `<p>${msg}</p>`
+                        })
+
+                    })
+                    .always(() => {
+                        $btn.prop('disabled', false).html(originalText);
                     });
             }
 

@@ -242,8 +242,6 @@ class ReservationManagementController extends Controller
         }
     }
 
- 
-
     public function viewMap(Request $request, string $bookType = 'book_now')
     {
         $response = $this->availability($request);
@@ -477,8 +475,7 @@ class ReservationManagementController extends Controller
 
             if ($response->successful()) {
                 Log::info('Added item to cart via booking API', $response->json());
-                return response()->json([$response->json(), "ok" => true], 200);
-
+                return response()->json([$response->json(), 'ok' => true], 200);
             }
 
             Log::error('Cart items API error', [
@@ -540,32 +537,39 @@ class ReservationManagementController extends Controller
             'xAmount' => ['required', 'numeric', 'min:0.5'],
             'api_cart.cart_id' => ['required', 'string'],
             'api_cart.cart_token' => ['required', 'string'],
+        ], [], [
+            'cc.xCardNum' => 'card number',
+            'cc.xExp' => 'card expiration',
+            'cc.cvv' => 'card cvv',
+            'ach.routing' => 'ACH routing number',
+            'ach.account' => 'ACH account number',
+            'ach.name' => 'ACH account holder name',
         ]);
 
-        try {
-            if (!empty($data['custId'])) {
-                Log::info('Updating customer', ['customer_id' => $data['custId']]);
+        if (!empty($data['custId'])) {
+            Log::info('Updating customer', ['customer_id' => $data['custId']]);
 
-                $user = User::find($data['custId']);
+            $user = User::find($data['custId']);
 
-                if ($user) {
-                    $user->update([
-                        'f_name' => $data['fname'],
-                        'l_name' => $data['lname'],
-                        'email' => $data['email'],
-                        'phone' => $data['phone'],
-                        'street_address' => $data['street_address'],
-                        'city' => $data['city'],
-                        'state' => $data['state'],
-                        'zip' => $data['zip'],
-                    ]);
-                } else {
-                    Log::warning('Customer not found for update', [
-                        'customer_id' => $data['custId'],
-                    ]);
-                }
+            if ($user) {
+                $user->update([
+                    'f_name' => $data['fname'],
+                    'l_name' => $data['lname'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'],
+                    'street_address' => $data['street_address'],
+                    'city' => $data['city'],
+                    'state' => $data['state'],
+                    'zip' => $data['zip'],
+                ]);
+            } else {
+                Log::warning('Customer not found for update', [
+                    'customer_id' => $data['custId'],
+                ]);
             }
+        }
 
+        try {
             if (($data['payment_method'] ?? null) === 'credit_card') {
                 $data['xCardNum'] = $data['cc']['xCardNum'] ?? null;
                 $data['xExp'] = $data['cc']['xExp'] ?? null;
@@ -579,19 +583,21 @@ class ReservationManagementController extends Controller
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/checkout', $data);
 
-            Log::info('Booking API response', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
+            if ($response->failed()) {
+                $json = $response->json();
+                return response()->json(
+                    [
+                        'ok' => false,
+                        'message' => $json['message'] ?? '',
+                        'errors' => $json['errors'] ?? [],
+                    ],
+                    $response->status(),
+                );
+            }
 
             return $response->json();
         } catch (\Exception $e) {
-            Log::error('Checkout failed', [
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
-
+            
             return response()->json(
                 [
                     'ok' => false,
