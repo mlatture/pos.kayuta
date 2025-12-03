@@ -1406,7 +1406,7 @@
                     const code = (payload.gift_card_code || '').trim();
                     if (!code) {
                         alert('Please enter a gift card code.');
-                        $btn.prop('disabled', false).html('originalText');
+                        $btn.prop('disabled', false).html(originalText);
                         return;
                     }
                     $.post(routes.giftcardLookup, {
