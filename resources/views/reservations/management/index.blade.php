@@ -491,11 +491,49 @@
                         `;
 
 
+                            // Fetch current cart first
+                            const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+                            if (stored.cart_id && stored.cart_token) {
+                                $.ajax({
+                                        url: routes.getCart,
+                                        method: 'GET',
+                                        data: {
+                                            cart_token: stored.cart_token,
+                                            cart_id: stored.cart_id
+                                        }
+                                    })
+                                    .done(cartRes => {
+                                        const cartItems = cartRes.data?.cart?.items?.map(item => item
+                                            .site_id) || [];
+
+                                        console.log('CartRest', cartItems)
+
+                                        $('.addToCartBtn').each(function() {
+                                            const btn = $(this);
+                                            if (cartItems.includes(btn.data('site-id'))) {
+                                                btn.prop('disabled', true)
+                                                    .html(
+                                                        '<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added'
+                                                        );
+                                            } else {
+                                                btn.prop('disabled', false)
+                                                    .html(
+                                                    '<i class="bi bi-cart-plus"></i> Add to Cart');
+                                            }
+                                        });
+                                    })
+                                    .fail(err => console.error('Failed to fetch cart', err));
+                            }
+
+
 
 
                             rows = results.units
                                 .map(unit => {
                                     const isAvailable = unit?.status?.available;
+
+                                    //Check if already in cart
+
                                     const statusBadge = isAvailable ?
                                         '<span class="badge bg-success">Available</span>' :
                                         unit?.status?.reserved ?
@@ -551,8 +589,9 @@
                                                 data-price-quote-id="${unit.price_quote?.price_quote_id ?? ''}"
                                                 data-start="${ci}"
                                                 data-end="${co}"
-                                                data-site-lock-fee="0" >
-                                                <i class="bi bi-cart-plus"></i> Add to Cart
+                                                data-site-lock-fee="0">
+                                    
+                                                    <i class="bi bi-cart-plus"></i> Add to Cart
                                             </button>
                                         </div>
                                     ` : '';
@@ -791,6 +830,9 @@
 
                     if (now < expiresAt) {
                         await updateCartSidebar(storedCart.cart_id, storedCart.cart_token);
+
+
+
                     } else {
                         localStorage.removeItem('cartInfo');
                     }
@@ -839,12 +881,14 @@
                 };
             }
 
+            // Add to Cart button click
             $(document).on('click', '.addToCartBtn', async function() {
                 const btn = $(this);
                 const container = btn.closest('div');
                 const adults = parseInt(container.find('.adults').val()) || 0;
                 const children = parseInt(container.find('.children').val()) || 0;
                 const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
+                const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
 
                 if (adults + children === 0) {
                     alert('Please enter at least one occupant.');
@@ -852,15 +896,19 @@
                 }
 
 
+
                 btn.prop('disabled', true).html(
                     '<i class="fa-solid fa-spinner fa-spin-pulse"></i> Adding...');
 
                 try {
-                    //  Create or restore shared cart
+                    // Create or restore shared cart
                     const {
                         cartId,
                         cartToken
                     } = await createOrRestoreCart();
+
+
+
 
                     const payload = {
                         cart_id: parseInt(cartId),
@@ -877,7 +925,6 @@
                         site_lock_fee: siteLockFee
                     };
 
-                    // Add item
                     const itemRes = await $.ajax({
                         url: routes.cartItems,
                         method: 'POST',
@@ -885,25 +932,32 @@
                         data: JSON.stringify(payload)
                     });
 
+
                     if (itemRes) {
                         await updateCartSidebar(cartId, cartToken);
                         btn.html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
+                        btn.data('add-to-cart-lock', 1);
+                        btn.attr('data-add-to-cart-lock', 1);
+                        btn.prop('disabled', true);
+
+                        checkAllLocks();
                     } else {
                         btn.html('Error');
+                        btn.prop('disabled', false);
                     }
                 } catch (err) {
                     console.error('Error adding to cart', err);
                     btn.html('Retry');
-                } finally {
                     btn.prop('disabled', false);
                 }
             });
 
 
-
-
-
             async function updateCartSidebar(cartId, cartToken) {
+                const body = $('#cartBody');
+                const count = $('#cartCount');
+                const btnCheckout = $('#btnCheckout');
+
                 try {
                     // Empty cart fallback
                     if (!cartId || !cartToken) {
@@ -922,26 +976,26 @@
                         }
                     });
 
-
-                    const cart = res.data?.cart;
-                    const body = $('#cartBody');
-                    const count = $('#cartCount');
-                    const btnCheckout = $('#btnCheckout');
+                    const cart = res.data?.cart || [];
 
 
-                    // Build cart items dynamically
+
                     let itemsHtml = '';
                     let totalSubtotal = 0;
                     let totalLockFee = 0;
                     let totalGrand = 0;
 
                     cart.items.forEach(item => {
+                        const siteId = item.site_id?.toString();
                         const site = item.site || {};
                         const subtotal = item.price_snapshot?.subtotal || 0;
                         const sitelockFee = item.price_snapshot?.sitelock_fee || 0;
                         const total = item.price_snapshot?.total || 0;
 
-                        totalSubtotal += subtotal;
+                        if ('')
+
+
+                            totalSubtotal += subtotal;
                         totalLockFee += sitelockFee;
                         totalGrand += total;
 
@@ -959,7 +1013,6 @@
                                             data-cart-id="${cartId}"
                                             data-cart-token="${cartToken}"
                                             data-cart-item-id="${item.id}"
-
                                             title="Remove">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -972,7 +1025,7 @@
                         `;
                     });
 
-                    // Add a summary section at the end
+                    // Summary section
                     itemsHtml += `
                         <hr>
                         <div class="cart-summary text-end">
@@ -983,16 +1036,17 @@
                         </div>
                     `;
 
-                    // Render to sidebar
                     body.html(itemsHtml);
                     count.text(cart.items.length);
-                    btnCheckout.prop('disabled', false);
-
+                    btnCheckout.prop('disabled', cart.items.length === 0);
                 } catch (err) {
                     console.error('❌ Error fetching cart:', err);
-                    $('#cartBody').html('<p class="text-danger mb-0">Error loading cart.</p>');
+                    body.html('<p class="text-danger mb-0">Error loading cart.</p>');
+                    btnCheckout.prop('disabled', true);
+                    count.text(0);
                 }
             }
+
 
             $(document).on('click', '.remove-item-btn', async function() {
                 const btn = $(this);
