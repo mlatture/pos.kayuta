@@ -936,8 +936,6 @@
                     if (itemRes) {
                         await updateCartSidebar(cartId, cartToken);
                         btn.html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
-                        btn.data('add-to-cart-lock', 1);
-                        btn.attr('data-add-to-cart-lock', 1);
                         btn.prop('disabled', true);
 
                         checkAllLocks();
@@ -986,7 +984,6 @@
                     let totalGrand = 0;
 
                     cart.items.forEach(item => {
-                        const siteId = item.site_id?.toString();
                         const site = item.site || {};
                         const subtotal = item.price_snapshot?.subtotal || 0;
                         const sitelockFee = item.price_snapshot?.sitelock_fee || 0;
@@ -995,7 +992,7 @@
                         if ('')
 
 
-                            totalSubtotal += subtotal;
+                        totalSubtotal += subtotal;
                         totalLockFee += sitelockFee;
                         totalGrand += total;
 
