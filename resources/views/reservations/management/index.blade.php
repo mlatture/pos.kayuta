@@ -938,7 +938,6 @@
                         btn.html('<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added');
                         btn.prop('disabled', true);
 
-                        checkAllLocks();
                     } else {
                         btn.html('Error');
                         btn.prop('disabled', false);
