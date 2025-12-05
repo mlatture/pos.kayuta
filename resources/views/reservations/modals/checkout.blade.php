@@ -131,7 +131,7 @@
                                   <button class="btn btn-outline-dark" data-method="cash">Cash</button>
                                   <button class="btn btn-outline-dark" data-method="ach">ACH</button>
                                   <button class="btn btn-outline-dark" data-method="gift_card">Gift Card</button>
-                                  <button class="btn btn-outline-dark" data-method="credit_card">Credit Card</button>
+                                  <button class="btn btn-outline-dark" data-method="card">Credit Card</button>
                               </div>
 
                               <div class="mt-3" id="paymentInputs"><!-- dynamically injected --></div>

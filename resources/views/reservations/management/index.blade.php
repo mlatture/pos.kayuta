@@ -1289,7 +1289,7 @@
 
             // Default view is Credit Card
             $('#checkoutModal').on('shown.bs.modal', function() {
-                $('#checkoutModal button[data-method="credit_card"]').trigger('click');
+                $('#checkoutModal button[data-method="card"]').trigger('click');
 
             });
 
@@ -1320,7 +1320,7 @@
                     <div class="col-md-6"><input class="form-control" id="achRouting" placeholder="Routing #"></div>
                     <div class="col-md-6"><input class="form-control" id="achAccount" placeholder="Account #"></div>
                     </div>`;
-                } else if (method === 'credit_card') {
+                } else if (method === 'card') {
                     html = `
                     <div class="row g-2 mt-3">
                     <div class="col-md-8"><input class="form-control" id="ccNumber" placeholder="Card number (via SOLA/iFields)"></div>
@@ -1328,7 +1328,14 @@
                     <div class="col-md-2"><input class="form-control" id="ccCvv" placeholder="CVV"></div>
                     </div>`;
                 } else {
-                    html = '<div class="mt-3 text-muted">Cash selected.</div>';
+                    html = `
+                    <div class="row g-2 mt-3">
+                    <div class="mt-3 text-muted">Cash selected.</div>
+                    <div class="col"><input class="form-control" id="cashTendered" placeholder="Enter Cash Amount"></div>
+                    </div>
+
+                    `;
+
                 }
                 $('#paymentInputs').html(html).data('method', method);
             });
@@ -1343,7 +1350,7 @@
                 const originalText = $btn.html();
                 $btn.html(
                     '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...'
-                    );
+                );
 
                 const method = $('#paymentInputs').data('method');
                 const stored = JSON.parse(localStorage.getItem('cartInfo') || '{}');
@@ -1370,7 +1377,7 @@
 
 
 
-                const total = $('#grandTotal').val();
+                let total = $('#grandTotal').val();
 
 
 
@@ -1393,6 +1400,7 @@
                         cart_id: stored.cart_id,
                         cart_token: stored.cart_token
                     },
+                    cash_tendered: $('#cashTendered').val(),
                     // Customer info for guest place order
 
                     // Cart totals snapshot
@@ -1415,7 +1423,6 @@
                         })
                         .done(res => {
                             const balance = Number(res.balance) || 0;
-                            const total = Number(cart.totals.total) || 0;
                             if (balance < total) {
                                 alert(
                                     `Gift card balance (${fmt(balance)}) is less than the total (${fmt(total)}). Choose another method or split the payment.`

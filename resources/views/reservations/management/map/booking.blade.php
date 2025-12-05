@@ -237,7 +237,63 @@
             $('#sdLockMessage').text(lockMessage);
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            async function createOrRestoreCart() {
+            
+            // Add to Cart button data
+            $(document).off('click', '#addToCartSite').on('click', '#addToCartSite', async function() {
+                const btn = $(this);
+                btn.prop('disabled', true);
+                const adults = parseInt($('#occupantsAdults').val()) || 2;
+                const children = parseInt($('#occupantsChildren').val()) || 0;
+                const siteLockFee = $('#siteLockToggle').is(':checked') ? 'on' : 'off';
+                if (adults + children === 0) {
+                    alert('Please enter at least one occupant.');
+                    return;
+                }
+
+
+                try {
+                    //  Create or restore shared cart
+                    const {
+                        cartId,
+                        cartToken
+                    } = await createOrRestoreCart1();
+
+                    const payload = {
+                        cart_id: parseInt(cartId),
+                        token: cartToken,
+                        site_id: r.site?.site_id,
+                        start_date: start,
+                        end_date: end,
+                        occupants: {
+                            adults,
+                            children
+                        },
+                        add_ons: [],
+                        price_quote_id: null,
+                        site_lock_fee: siteLockFee
+                    };
+
+
+                    // Add item
+                    const itemRes = await $.ajax({
+                        url: routes.cartItems,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(payload),
+
+                    });
+
+                    if (itemRes.ok) {
+                        window.location.href = routes.reservationMgmtHome;
+                    }
+                } catch (err) {
+                    console.error('Error adding to cart', err);
+                } finally {
+                    btn.prop('disabled', false);
+                }
+            });
+
+            async function createOrRestoreCart1() {
                 let cartId, cartToken;
 
                 // Check existing cart first
@@ -275,59 +331,6 @@
                     cartToken
                 };
             }
-            // Add to Cart button data
-            $(document).on('click', '#addToCartSite', async function() {
-                const btn = $(this);
-                const adults = parseInt($('#occupantsAdults').val()) || 2;
-                const children = parseInt($('#occupantsChildren').val()) || 0;
-                const siteLockFee = $('#siteLockToggle').is(':checked') ? 'on' : 'off';
-                if (adults + children === 0) {
-                    alert('Please enter at least one occupant.');
-                    return;
-                }
-
-
-                try {
-                    //  Create or restore shared cart
-                    const {
-                        cartId,
-                        cartToken
-                    } = await createOrRestoreCart();
-
-                    const payload = {
-                        cart_id: parseInt(cartId),
-                        token: cartToken,
-                        site_id: r.site?.site_id,
-                        start_date: start,
-                        end_date: end,
-                        occupants: {
-                            adults,
-                            children
-                        },
-                        add_ons: [],
-                        price_quote_id: null,
-                        site_lock_fee: siteLockFee
-                    };
-
-
-                    // Add item
-                    const itemRes = await $.ajax({
-                        url: routes.cartItems,
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(payload),
-
-                    });
-
-                    if (itemRes.ok) {
-                        window.location.href = routes.reservationMgmtHome;
-                    }
-                } catch (err) {
-                    console.error('Error adding to cart', err);
-                } finally {
-                    btn.prop('disabled', false);
-                }
-            });
 
         }
     </script>

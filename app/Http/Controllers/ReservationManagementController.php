@@ -473,24 +473,35 @@ class ReservationManagementController extends Controller
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/cart/items', $data);
 
-            if ($response->successful()) {
-                Log::info('Added item to cart via booking API', $response->json());
-                return response()->json([$response->json(), 'ok' => true], 200);
-            }
 
             Log::error('Cart items API error', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
 
+            if ($response->failed()) {
+
+                return response()->json(
+                    [
+                        'ok' => false,
+                        'message' => 'Failed to add items to cart.',
+                        'status' => $response->status(),
+                    ],
+                    $response->status(),
+                );
+
+            }
+
             return response()->json(
                 [
-                    'ok' => false,
-                    'message' => 'Failed to add items to cart.',
+                    'ok' => true,
                     'status' => $response->status(),
+                    'data' => $response->json(),
+                    'message' => 'Items added to cart successfully.',
                 ],
                 $response->status(),
             );
+
         } catch (\Exception $e) {
             Log::error('Cart items proxy failed', ['error' => $e->getMessage()]);
 
@@ -510,41 +521,46 @@ class ReservationManagementController extends Controller
             'request_payload' => $request->all(),
         ]);
 
-        $data = $request->validate([
-            'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'credit_card'])],
-            'gift_card_code' => ['nullable', 'string', 'max:64'],
+        $data = $request->validate(
+            [
+                'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'card'])],
+                'gift_card_code' => ['nullable', 'string', 'max:64'],
 
-            'cc.xCardNum' => ['required_if:payment_method,credit_card', 'string', 'max:19'],
-            'cc.xExp' => ['required_if:payment_method,credit_card', 'string', 'max:7'],
-            'cc.cvv' => ['required_if:payment_method,credit_card', 'string', 'max:4'],
+                'cc.xCardNum' => ['required_if:payment_method,card', 'string', 'max:19'],
+                'cc.xExp' => ['required_if:payment_method,card', 'string', 'max:7'],
+                'cc.cvv' => ['required_if:payment_method,card', 'string', 'max:4'],
 
-            'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
-            'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
-            'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
+                'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
+                'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
+                'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
+                'cash_tendered' => ['required_if:payment_method,cash'],
+                'applicable_coupon' => ['nullable', 'string', 'max:50'],
 
-            'applicable_coupon' => ['nullable', 'string', 'max:50'],
+                'custId' => ['nullable', 'integer'],
+                'fname' => ['required', 'string', 'max:100'],
+                'lname' => ['required', 'string', 'max:100'],
+                'email' => ['required', 'email'],
+                'phone' => ['required', 'string', 'max:20'],
+                'street_address' => ['required', 'string', 'max:255'],
+                'city' => ['required', 'string', 'max:100'],
+                'state' => ['required', 'string', 'max:50'],
+                'zip' => ['required', 'string', 'max:10'],
 
-            'custId' => ['nullable', 'integer'],
-            'fname' => ['required', 'string', 'max:100'],
-            'lname' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email'],
-            'phone' => ['required', 'string', 'max:20'],
-            'street_address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'max:50'],
-            'zip' => ['required', 'string', 'max:10'],
-
-            'xAmount' => ['required', 'numeric', 'min:0.5'],
-            'api_cart.cart_id' => ['required', 'string'],
-            'api_cart.cart_token' => ['required', 'string'],
-        ], [], [
-            'cc.xCardNum' => 'card number',
-            'cc.xExp' => 'card expiration',
-            'cc.cvv' => 'card cvv',
-            'ach.routing' => 'ACH routing number',
-            'ach.account' => 'ACH account number',
-            'ach.name' => 'ACH account holder name',
-        ]);
+                'xAmount' => ['required', 'numeric', 'min:0.5'],
+                'api_cart.cart_id' => ['required', 'string'],
+                'api_cart.cart_token' => ['required', 'string'],
+            ],
+            [],
+            [
+                'cc.xCardNum' => 'card number',
+                'cc.xExp' => 'card expiration',
+                'cc.cvv' => 'card cvv',
+                'ach.routing' => 'ACH routing number',
+                'ach.account' => 'ACH account number',
+                'ach.name' => 'ACH account holder name',
+                'cash_tendered' => 'cash tendered',
+            ],
+        );
 
         if (!empty($data['custId'])) {
             Log::info('Updating customer', ['customer_id' => $data['custId']]);
@@ -570,7 +586,7 @@ class ReservationManagementController extends Controller
         }
 
         try {
-            if (($data['payment_method'] ?? null) === 'credit_card') {
+            if (($data['payment_method'] ?? null) === 'card') {
                 $data['xCardNum'] = $data['cc']['xCardNum'] ?? null;
                 $data['xExp'] = $data['cc']['xExp'] ?? null;
                 $data['cvv'] = $data['cc']['cvv'] ?? null;
@@ -584,6 +600,10 @@ class ReservationManagementController extends Controller
             ])->post(env('BOOK_API_URL') . 'v1/checkout', $data);
 
             if ($response->failed()) {
+                Log::error('Checkout API error', [
+                    'status' => $response->status(),
+                    'body' => $response->json(),
+                ], JSON_PRETTY_PRINT);
                 $json = $response->json();
                 return response()->json(
                     [
@@ -593,11 +613,13 @@ class ReservationManagementController extends Controller
                     ],
                     $response->status(),
                 );
+
+               
             }
 
             return $response->json();
         } catch (\Exception $e) {
-            
+            Log::error('Checkout proxy failed', ['error' => $e->getMessage()]);
             return response()->json(
                 [
                     'ok' => false,
