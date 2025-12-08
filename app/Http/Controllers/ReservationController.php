@@ -123,7 +123,7 @@ class ReservationController extends Controller
     // }
 
     // Optimized Logic
-    public function index(Request $request) 
+    public function index(Request $request)
     {
         $startDate = $request->startDate ? Carbon::parse($request->startDate) : Carbon::today();
         $endDate = $startDate->copy()->addDays(30);
@@ -139,76 +139,61 @@ class ReservationController extends Controller
             return $this->siteClass::all();
         });
 
-        if ($request->search) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search, $filters) {
-                $q->where('siteid', 'LIKE', "%{$search}%")
-                    ->orWhere('ratetier', 'LIKE', "%{$search}%")
-                    ->orWhereHas('reservations', function ($resQ) use ($search, $filters) {
-                        $resQ->where('cod', '>=', $filters['startDate'])
-                             ->where('cid', '<=', $filters['endDate'])
-                             ->where(function ($nameQ) use ($search) {
-                                 $nameQ->where('fname', 'LIKE', "%{$search}%")
-                                       ->orWhere('lname', 'LIKE', "%{$search}%");
-                             });
-                    });
-            });
-        }
-
         if ($request->sitename || $request->ratetier) {
-            $siteIds = array_unique(array_merge(
-                $request->sitename ? explode(',', $request->sitename) : [],
-                $request->ratetier ? explode(',', $request->ratetier) : []
-            ));
+            $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
 
             $query->whereIn('siteid', $siteIds);
         }
 
-        $query->when($request->has('seasonal'), function ($q) use ($request) {
-            $q->where('seasonal', $request->seasonal == '1' ? 1 : 0);
-        }, function ($q) {
-            $q->where('seasonal', 0);
-        });
+        $query->when(
+            $request->has('seasonal'),
+            function ($q) use ($request) {
+                $q->where('seasonal', $request->seasonal == '1' ? 1 : 0);
+            },
+            function ($q) {
+                $q->where('seasonal', 0);
+            },
+        );
 
         $sites = $query
-            ->with(['reservations' => function ($resQ) use ($filters) {
-                $resQ->where('cod', '>=', $filters['startDate'])
-                    ->where('cid', '<=', $filters['endDate'])
-                    ->orderBy('cid')
-                    ->select('siteid', 'cid', 'cod', 'id', 'fname', 'lname');
-            }, 
+            ->with([
+                'reservations' => function ($resQ) use ($filters) {
+                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'fname', 'lname', DB::raw('DATEDIFF(cod, cid) as days'));
+                },
             ])
-            ->get();
-        
-        foreach ($sites as $site) {
-            $siteReservations = $site->reservations;
-
-            $site->totalDays = 0;
-
-            foreach ($siteReservations as $reserve) {
-                $start = Carbon::parse($reserve->cid);
-                $end = Carbon::parse($reserve->cod);
-                $site->totalDays += $start->diffInDays($end);
-            }
-
-            $site->isVacant = $siteReservations->isEmpty();
-            $site->calendarReservations = $siteReservations;
-        }
+            ->paginate(50);
 
         $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
 
-        if ($request->ajax()) {
-            $html = view('reservations.components._site_rows_list', [
-                'sites' => $sites,
-                'calendar' => $calendar,
-            ])->render();
+        foreach ($sites as $site) {
+            $site->totalDays = $site->reservations->sum('days');
+            $site->isVacant = $site->reservations->isEmpty();
 
-            return response()->json([
-                'sites' => $html,
-                'next_page_url' => null,
-            ]);
-        };
+            $availability = array_fill_keys($calendar, null);
+
+            foreach ($site->reservations as $res) {
+                
+
+                $resStart = Carbon::parse($res->cid);
+                $resEnd = Carbon::parse($res->cod);
+
+                foreach ($calendar as $date) {
+                    $day = Carbon::parse($date);
+
+                    if ($day->gte($resStart) && $day->lt($resEnd)) {
+
+
+                        if ($date === $resStart->format('Y-m-d')) {
+                            $availability[$date] = $res;
+                        } else {
+
+                            $availability[$date] = true;
+                        }
+                    }
+                }
+            }
+            $site->availability = $availability;
+        }
 
         return view('reservations.index', compact('site_classes', 'sites', 'calendar', 'filters'));
     }
@@ -274,8 +259,8 @@ class ReservationController extends Controller
 
         return response()->json([
             'cartid' => $reservation->cartid,
-            'fname' => $reservation->user->f_name ?? 'Guest',
-            'lname' => $reservation->user->l_name ?? '',
+            'fname' => $reservation->user->f_name ?? ($reservation->fname ?? 'Guest'),
+            'lname' => $reservation->user->l_name ?? ($reservation->lname ?? ' '),
             'cid' => $reservation->cid,
             'cod' => $reservation->cod,
             'siteid' => $reservation->site->siteid ?? 'N/A',
@@ -290,8 +275,8 @@ class ReservationController extends Controller
             'checkedout' => optional($reservation->checkedout)->format('F j, Y g:i A') ?? null,
             'source' => $reservation->source ?? 'Walk-In',
             'customerRecord' => [
-                'email' => $reservation->user->email ?? 'N/A',
-                'phone' => $reservation->user->phone ?? 'N/A',
+                'email' => $reservation->user->email ?? ($reservation->email ?? 'N/A'),
+                'phone' => $reservation->user->phone ?? ($reservation->phone ?? 'N/A'),
             ],
         ]);
     }

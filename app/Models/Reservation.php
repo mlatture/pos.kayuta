@@ -24,6 +24,11 @@ class Reservation extends Model
        'base', 'sitelock', 'riglength', 'rigtype', 'checkedin', 'checkedout'
     ];
 
+    protected $casts = [
+        'cid' => 'date',
+        'cod' => 'date',
+    ];
+
 
     protected $guarded = [];
 

@@ -205,24 +205,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
     <script>
-        document.getElementById('startDatePicker').addEventListener('change', function() {
-            const startDate = this.value;
-            const seasonal = document.getElementById('seasonalFilter').checked ? 1 : 0;
-            window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
-        });
+        $(document).ready(function() {
+            function updateDateAndFilter(newDate) {
+                const newDateString = newDate.toISOString().split('T')[0];
+                $('#startDatePicker').val(newDateString).trigger('change');
+            }
 
-        document.getElementById('prev30').addEventListener('click', function() {
-            const current = new Date(document.getElementById('startDatePicker').value);
-            current.setDate(current.getDate() - 30);
-            document.getElementById('startDatePicker').value = current.toISOString().split('T')[0];
-            document.getElementById('startDatePicker').dispatchEvent(new Event('change'));
-        });
 
-        document.getElementById('next30').addEventListener('click', function() {
-            const current = new Date(document.getElementById('startDatePicker').value);
-            current.setDate(current.getDate() + 30);
-            document.getElementById('startDatePicker').value = current.toISOString().split('T')[0];
-            document.getElementById('startDatePicker').dispatchEvent(new Event('change'));
+            $('#startDatePicker').on('change', function() {
+                const startDate = $(this).val();
+                const seasonal = $('#seasonalFilter').is(':checked') ? 1 : 0;
+
+                window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
+            });
+
+            $('#prev30').on('click', function() {
+                const currentDateString = $('#startDatePicker').val();
+
+                const current = new Date(currentDateString);
+
+                current.setDate(current.getDate() - 30);
+
+                updateDateAndFilter(current);
+            });
+
+            $('#next30').on('click', function() {
+                const currentDateString = $('#startDatePicker').val();
+
+                const current = new Date(currentDateString);
+
+                current.setDate(current.getDate() + 30);
+
+                updateDateAndFilter(current);
+            });
         });
 
         $(document).ready(function() {
@@ -320,7 +335,7 @@
                     const c = item.customerRecord || {};
                     const format = d => d ? moment(d).format('MMM DD, YYYY') : 'N/A';
                     const balance = parseFloat(item.balance || 0).toFixed(2);
-
+                    console.log('customer', item);
                     $('#resCustomerName').text(`${item.fname || 'Guest'} ${item.lname || ''}`);
                     $('#resArrivalDate').text(format(item.cid));
                     $('#resDepartureDate').text(format(item.cod));
@@ -813,9 +828,7 @@
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow = tomorrow.toISOString().split('T')[0];
 
-        // document.getElementById("checkin").value = today;
-        // document.getElementById("checkout").value = tomorrow;
-
+        
         let selectedSites = [];
         let nightsCounts = 1;
 
@@ -856,69 +869,7 @@
 
 
 
-        $(document).ready(function() {
-            const $loadMoreBtn = $('#loadMoreSitesBtn');
-            const $spinner = $loadMoreBtn.find('.spinner-border');
-            const $siteTableBody = $('#siteTableBody');
-            const $nextPageUrl = $('#nextPageUrl');
-            const $searchBox = $('#searchBox');
-            const $searchBtn = $('#searchBtn');
-
-
-            let currentSearch = '';
-
-            // Load more pagination
-            $loadMoreBtn.on('click', function() {
-                const nextUrl = $nextPageUrl.val();
-                if (!nextUrl) return;
-
-                $loadMoreBtn.attr('disabled', true);
-                $spinner.removeClass('d-none');
-
-                $.get(nextUrl, {
-                    search: currentSearch,
-                    seasonal: $('#seasonalFilter').is(':checked') ? 1 : 0,
-                }, function(response) {
-                    $siteTableBody.append(response.sites);
-                    $nextPageUrl.val(response.next_page_url);
-
-                    if (!response.next_page_url) {
-                        $loadMoreBtn.hide();
-                    } else {
-                        $loadMoreBtn.removeAttr('disabled');
-                    }
-                    filterTable();
-                }).always(function() {
-                    $spinner.addClass('d-none');
-                });
-            });
-
-            // Trigger search on button click
-            $searchBtn.on('click', function() {
-                currentSearch = $searchBox.val();
-                const url = `{{ route('reservations.index') }}`;
-
-                $.get(url, {
-                    search: currentSearch
-                }, function(response) {
-                    $siteTableBody.html(response.sites);
-                    $nextPageUrl.val(response.next_page_url);
-
-                    if (!response.next_page_url) {
-                        $loadMoreBtn.hide();
-                    } else {
-                        $loadMoreBtn.show();
-                    }
-                });
-            });
-
-            // Also trigger search on Enter key
-            $searchBox.on('keypress', function(e) {
-                if (e.which == 13) {
-                    $searchBtn.click();
-                }
-            });
-        });
+        
 
 
         $(document).ready(function() {
