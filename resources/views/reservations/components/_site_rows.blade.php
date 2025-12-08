@@ -81,7 +81,7 @@
                 class="reservation-details text-center {{ $highlightToday }}"
                 data-reservation-id="{{ $reservationFound->id }}" data-start-date="{{ $reservationFound->cid }}"
                 data-end-date="{{ $reservationFound->cod }}">
-                {{ $reservationFound->user->f_name ?? 'Guest' }}
+                {{ $reservationFound->fname ?? 'Guest' }}
             </td>
         @else
             @php
