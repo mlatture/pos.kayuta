@@ -189,7 +189,7 @@ class ReservationController extends Controller
             foreach ($siteReservations as $reserve) {
                 $start = Carbon::parse($reserve->cid);
                 $end = Carbon::parse($reserve->cod);
-                $site->totalDays += $start->diffInDa($end);
+                $site->totalDays += $start->diffInDays($end);
             }
 
             $site->isVacant = $siteReservations->isEmpty();
