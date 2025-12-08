@@ -25,9 +25,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ReservationController extends Controller
 {
+    private $siteClass;
     private $site;
     protected $rateTier;
     protected $event;
@@ -36,9 +38,10 @@ class ReservationController extends Controller
     protected $cardsOnFile;
     protected $payment;
 
-    public function __construct(Site $site, RateTier $rateTier, Event $event, Reservation $reservation, Receipt $receipt, CardsOnFile $cardsOnFile, Payment $payment)
+    public function __construct(SiteClass $siteClass, Site $site, RateTier $rateTier, Event $event, Reservation $reservation, Receipt $receipt, CardsOnFile $cardsOnFile, Payment $payment)
     {
         $this->middleware('admin_has_permission:' . config('constants.role_modules.reservation_management.value'));
+        $this->siteClass = $siteClass;
         $this->site = $site;
         $this->rateTier = $rateTier;
         $this->event = $event;
@@ -48,61 +51,152 @@ class ReservationController extends Controller
         $this->payment = $payment;
     }
 
-    public function index(Request $request)
+    // public function index(Request $request)
+    // {
+    //     $query = Site::with(['reservations.payments']);
+    //     $site_classes = SiteClass::all();
+    //     if ($request->search) {
+    //         $search = $request->search;
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('siteid', 'LIKE', "%{$search}%")
+    //                 ->orWhere('ratetier', 'LIKE', "%{$search}%")
+    //                 ->orWhereHas('reservations', function ($resQ) use ($search) {
+    //                     $resQ->where('fname', 'LIKE', "%{$search}%")->orWhere('lname', 'LIKE', "%{$search}%");
+    //                 });
+    //         });
+    //     }
+
+    //     if ($request->sitename || $request->ratetier) {
+    //         $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
+    //         $query->whereIn('siteid', $siteIds);
+    //     }
+
+    //     // Seasonal logic: if 'seasonal=1', show only seasonal; if 'seasonal=0' (or unchecked), show only non-seasonal
+    //     if ($request->has('seasonal')) {
+    //         $query->where('seasonal', $request->seasonal == '1' ? 1 : 0);
+    //     } else {
+    //         // Default to hiding seasonal sites
+    //         $query->where('seasonal', 0);
+    //     }
+
+    //     // Always get ALL relevant sites (no pagination)
+    //     $sites = $query->get();
+
+    //     // Handle start and end date range (+30 days from startDate)
+    //     $latestSeason = CampingSeason::latest()->first();
+    //     $today = Carbon::today();
+    //     $seasonStart = Carbon::parse($latestSeason->opening_day ?? $today);
+
+    //     $startDate = $request->startDate ? Carbon::parse($request->startDate) : Carbon::today();
+
+    //     $endDate = $startDate->copy()->addDays(30);
+
+    //     $filters['startDate'] = $startDate->toDateString();
+    //     $filters['endDate'] = $endDate->toDateString();
+
+    //     $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
+
+    //     // Only fetch reservations within calendar range
+    //     $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
+
+    //     foreach ($sites as $site) {
+    //         $site->totalDays = $site->reservations->sum(function ($reservation) {
+    //             return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
+    //         });
+
+    //         $site->isVacant = !$reservations->where('site_id', $site->id)->count();
+    //     }
+
+    //     if ($request->ajax()) {
+    //         $html = view('reservations.components._site_rows_list', [
+    //             'sites' => $sites,
+    //             'calendar' => $calendar,
+    //         ])->render();
+
+    //         return response()->json([
+    //             'sites' => $html,
+    //             'next_page_url' => null, // Always null because we don't paginate anymore
+    //         ]);
+    //     }
+
+    //     return view('reservations.index', compact('site_classes','sites', 'calendar', 'filters'));
+    // }
+
+    // Optimized Logic
+    public function index(Request $request) 
     {
-        $query = Site::with(['reservations.payments']);
-        $site_classes = SiteClass::all();
+        $startDate = $request->startDate ? Carbon::parse($request->startDate) : Carbon::today();
+        $endDate = $startDate->copy()->addDays(30);
+
+        $filters = [
+            'startDate' => $startDate->toDateString(),
+            'endDate' => $endDate->toDateString(),
+        ];
+
+        $query = $this->site::query();
+
+        $site_classes = Cache::remember('site_classes_all', 3600, function () {
+            return $this->siteClass::all();
+        });
+
         if ($request->search) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+
+            $query->where(function ($q) use ($search, $filters) {
                 $q->where('siteid', 'LIKE', "%{$search}%")
                     ->orWhere('ratetier', 'LIKE', "%{$search}%")
-                    ->orWhereHas('reservations', function ($resQ) use ($search) {
-                        $resQ->where('fname', 'LIKE', "%{$search}%")->orWhere('lname', 'LIKE', "%{$search}%");
+                    ->orWhereHas('reservations', function ($resQ) use ($search, $filters) {
+                        $resQ->where('cod', '>=', $filters['startDate'])
+                             ->where('cid', '<=', $filters['endDate'])
+                             ->where(function ($nameQ) use ($search) {
+                                 $nameQ->where('fname', 'LIKE', "%{$search}%")
+                                       ->orWhere('lname', 'LIKE', "%{$search}%");
+                             });
                     });
             });
         }
 
         if ($request->sitename || $request->ratetier) {
-            $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
+            $siteIds = array_unique(array_merge(
+                $request->sitename ? explode(',', $request->sitename) : [],
+                $request->ratetier ? explode(',', $request->ratetier) : []
+            ));
+
             $query->whereIn('siteid', $siteIds);
         }
 
-        // Seasonal logic: if 'seasonal=1', show only seasonal; if 'seasonal=0' (or unchecked), show only non-seasonal
-        if ($request->has('seasonal')) {
-            $query->where('seasonal', $request->seasonal == '1' ? 1 : 0);
-        } else {
-            // Default to hiding seasonal sites
-            $query->where('seasonal', 0);
+        $query->when($request->has('seasonal'), function ($q) use ($request) {
+            $q->where('seasonal', $request->seasonal == '1' ? 1 : 0);
+        }, function ($q) {
+            $q->where('seasonal', 0);
+        });
+
+        $sites = $query
+            ->with(['reservations' => function ($resQ) use ($filters) {
+                $resQ->where('cod', '>=', $filters['startDate'])
+                    ->where('cid', '<=', $filters['endDate'])
+                    ->orderBy('cid')
+                    ->select('siteid', 'cid', 'cod', 'id', 'fname', 'lname');
+            }, 
+            ])
+            ->get();
+        
+        foreach ($sites as $site) {
+            $siteReservations = $site->reservations;
+
+            $site->totalDays = 0;
+
+            foreach ($siteReservations as $reserve) {
+                $start = Carbon::parse($reserve->cid);
+                $end = Carbon::parse($reserve->cod);
+                $site->totalDays += $start->diffInDa($end);
+            }
+
+            $site->isVacant = $siteReservations->isEmpty();
+            $site->calendarReservations = $siteReservations;
         }
-
-        // Always get ALL relevant sites (no pagination)
-        $sites = $query->get();
-
-        // Handle start and end date range (+30 days from startDate)
-        $latestSeason = CampingSeason::latest()->first();
-        $today = Carbon::today();
-        $seasonStart = Carbon::parse($latestSeason->opening_day ?? $today);
-
-        $startDate = $request->startDate ? Carbon::parse($request->startDate) : Carbon::today();
-
-        $endDate = $startDate->copy()->addDays(30);
-
-        $filters['startDate'] = $startDate->toDateString();
-        $filters['endDate'] = $endDate->toDateString();
 
         $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
-
-        // Only fetch reservations within calendar range
-        $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
-
-        foreach ($sites as $site) {
-            $site->totalDays = $site->reservations->sum(function ($reservation) {
-                return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
-            });
-
-            $site->isVacant = !$reservations->where('site_id', $site->id)->count();
-        }
 
         if ($request->ajax()) {
             $html = view('reservations.components._site_rows_list', [
@@ -112,11 +206,11 @@ class ReservationController extends Controller
 
             return response()->json([
                 'sites' => $html,
-                'next_page_url' => null, // Always null because we don't paginate anymore
+                'next_page_url' => null,
             ]);
-        }
+        };
 
-        return view('reservations.index', compact('site_classes','sites', 'calendar', 'filters'));
+        return view('reservations.index', compact('site_classes', 'sites', 'calendar', 'filters'));
     }
 
     private function generateSeasonCalendar($startDate, $endDate)
@@ -564,169 +658,169 @@ class ReservationController extends Controller
         abort(404);
     }
 
-    public function getOverlapDays($start1, $end1, $start2, $end2)
-    {
-        // Convert date strings to Unix timestamps
-        $start1 = strtotime($start1);
-        $end1 = strtotime($end1);
-        $start2 = strtotime($start2);
-        $end2 = strtotime($end2);
+    // public function getOverlapDays($start1, $end1, $start2, $end2)
+    // {
+    //     // Convert date strings to Unix timestamps
+    //     $start1 = strtotime($start1);
+    //     $end1 = strtotime($end1);
+    //     $start2 = strtotime($start2);
+    //     $end2 = strtotime($end2);
 
-        // Calculate the overlapping days
-        $overlapStart = max($start1, $start2);
-        $overlapEnd = min($end1, $end2);
-        $overlapDays = max(0, ($overlapEnd - $overlapStart) / 86400 + 1);
+    //     // Calculate the overlapping days
+    //     $overlapStart = max($start1, $start2);
+    //     $overlapEnd = min($end1, $end2);
+    //     $overlapDays = max(0, ($overlapEnd - $overlapStart) / 86400 + 1);
 
-        return $overlapDays;
-    }
+    //     return $overlapDays;
+    // }
 
-    public function applyCoupon(Request $request)
-    {
-        $request->validate(
-            [
-                'coupon_code' => 'required',
-                'amount' => 'required',
-            ],
-            [
-                'coupon_code.required' => 'Coupon Code is required!',
-            ],
-        );
+    // public function applyCoupon(Request $request)
+    // {
+    //     $request->validate(
+    //         [
+    //             'coupon_code' => 'required',
+    //             'amount' => 'required',
+    //         ],
+    //         [
+    //             'coupon_code.required' => 'Coupon Code is required!',
+    //         ],
+    //     );
 
-        DB::beginTransaction();
+    //     DB::beginTransaction();
 
-        try {
-            $coupon = Coupon::where(['code' => $request['coupon_code']])
-                ->where('expire_date', '>=', date('Y-m-d'))
-                ->where('start_date', '<=', date('Y-m-d'))
-                ->first();
-            $discount = 0;
-            if ($coupon && $coupon->min_purchase < $request->amount) {
-                if ($coupon->discount_type == 'amount') {
-                    $discount = $coupon->discount;
-                } elseif ($coupon->discount_type == 'percentage') {
-                    $discount = ($coupon->discount * $request->amount) / 100;
-                    if ($discount > $coupon->max_discount) {
-                        $discount = $coupon->max_discount;
-                    }
-                }
-                return response()->json(['code' => 1, 'message' => 'Coupon applied successfully!', 'data' => (object) ['coupon' => $coupon, 'discount' => Helpers::format_currency_usd($discount), 'discount_amount' => $discount]], 200);
-            } else {
-                return response()->json(['errors' => ['Coupon is not applicable']], 400);
-            }
-        } catch (Exception $e) {
-            return response()->json('error', $e->getMessage());
-        }
-    }
+    //     try {
+    //         $coupon = Coupon::where(['code' => $request['coupon_code']])
+    //             ->where('expire_date', '>=', date('Y-m-d'))
+    //             ->where('start_date', '<=', date('Y-m-d'))
+    //             ->first();
+    //         $discount = 0;
+    //         if ($coupon && $coupon->min_purchase < $request->amount) {
+    //             if ($coupon->discount_type == 'amount') {
+    //                 $discount = $coupon->discount;
+    //             } elseif ($coupon->discount_type == 'percentage') {
+    //                 $discount = ($coupon->discount * $request->amount) / 100;
+    //                 if ($discount > $coupon->max_discount) {
+    //                     $discount = $coupon->max_discount;
+    //                 }
+    //             }
+    //             return response()->json(['code' => 1, 'message' => 'Coupon applied successfully!', 'data' => (object) ['coupon' => $coupon, 'discount' => Helpers::format_currency_usd($discount), 'discount_amount' => $discount]], 200);
+    //         } else {
+    //             return response()->json(['errors' => ['Coupon is not applicable']], 400);
+    //         }
+    //     } catch (\Exception $e) {
+    //         return response()->json('error', $e->getMessage());
+    //     }
+    // }
 
-    public function doCheckout(Request $request, $bookingId)
-    {
-        //        dd($request->all());
-        try {
-            DB::beginTransaction();
-            $booking = Session::get('booking_' . $bookingId);
-            $carts = Session::get('reservation_cart_items_' . $bookingId) ?? [];
-            if (!empty($booking)) {
-                $user = User::find($booking['customer_id']);
-                if (count($carts) == 0) {
-                    return redirect()->route('reservations.book.site', [$bookingId]);
-                }
-                $amount = $request->input('xAmount');
-                $discount = 0;
-                if ($request->applicable_coupon && !empty($request->applicable_coupon)) {
-                    $coupon = Coupon::where(['code' => $request->applicable_coupon])
-                        ->where('expire_date', '>=', date('Y-m-d'))
-                        ->where('start_date', '<=', date('Y-m-d'))
-                        ->first();
-                    if ($coupon && $coupon->min_purchase < $amount) {
-                        if ($coupon->discount_type == 'amount') {
-                            $discount = $coupon->discount;
-                        } elseif ($coupon->discount_type == 'percentage') {
-                            $discount = ($coupon->discount * $amount) / 100;
-                            if ($discount > $coupon->max_discount) {
-                                $discount = $coupon->max_discount;
-                            }
-                        }
-                        $amount = $amount - $discount;
-                    }
-                }
-                $cardNumber = $request->input('xCardNum');
-                $xExp = str_replace('/', '', $request->xExp);
-                $cardKnoxService = new CardKnoxService();
-                $payment = $cardKnoxService->sale($cardNumber, $amount, $xExp);
-                if ($payment['success'] == true) {
-                    if ($payment['data']['xStatus'] == 'Error') {
-                        return redirect()->back()->with('error', $payment['data']['xError']);
-                    } elseif ($payment['data']['xStatus'] == 'Approved') {
-                        $xAuthCode = $payment['data']['xAuthCode'];
-                        $xToken = $payment['data']['xToken'];
-                        $reservationIds = [];
-                        if (count($carts) > 0) {
-                            //                            dd($carts);
-                            foreach ($carts as $cart) {
-                                $receipt = $this->receipt->storeReceipt(['cartid' => $cart['cartid']]);
-                                $sitelockFee = isset($cart['sitelock']) && $cart['sitelock'] == 'on' ? 20 : 0;
-                                $reservation = $this->reservation->storeReservation([
-                                    'xconfnum' => $xAuthCode,
-                                    'cartid' => $cart['cartid'],
-                                    'source' => 'Online Booking',
-                                    'createdby' => 'Customer',
-                                    'fname' => $user->f_name,
-                                    'lname' => $user->l_name,
-                                    'customernumber' => $user->id,
-                                    'siteid' => $cart['siteid'],
-                                    'cid' => $cart['cid'],
-                                    'cod' => $cart['cod'],
-                                    'sitelock' => $sitelockFee,
-                                    'siteclass' => $cart['siteclass'],
-                                    'totalcharges' => $cart['subtotal'] + $cart['taxrate'] + $sitelockFee,
-                                    'nights' => $cart['nights'],
-                                    'base' => $cart['base'],
-                                    'rateadjustment' => isset($cart['rateadjustment']) ? $cart['rateadjustment'] : null,
-                                    'rigtype' => '',
-                                    'riglength' => $cart['riglength'],
-                                    'rid' => $cart['rid'],
-                                    'receipt' => $receipt->id,
-                                    'discountcode' => $request->applicable_coupon ?? '',
-                                    'total' => $cart['subtotal'] + $cart['taxrate'] + $sitelockFee,
-                                    'subtotal' => $cart['subtotal'],
-                                ]);
+    // public function doCheckout(Request $request, $bookingId)
+    // {
+    //     //        dd($request->all());
+    //     try {
+    //         DB::beginTransaction();
+    //         $booking = Session::get('booking_' . $bookingId);
+    //         $carts = Session::get('reservation_cart_items_' . $bookingId) ?? [];
+    //         if (!empty($booking)) {
+    //             $user = User::find($booking['customer_id']);
+    //             if (count($carts) == 0) {
+    //                 return redirect()->route('reservations.book.site', [$bookingId]);
+    //             }
+    //             $amount = $request->input('xAmount');
+    //             $discount = 0;
+    //             if ($request->applicable_coupon && !empty($request->applicable_coupon)) {
+    //                 $coupon = Coupon::where(['code' => $request->applicable_coupon])
+    //                     ->where('expire_date', '>=', date('Y-m-d'))
+    //                     ->where('start_date', '<=', date('Y-m-d'))
+    //                     ->first();
+    //                 if ($coupon && $coupon->min_purchase < $amount) {
+    //                     if ($coupon->discount_type == 'amount') {
+    //                         $discount = $coupon->discount;
+    //                     } elseif ($coupon->discount_type == 'percentage') {
+    //                         $discount = ($coupon->discount * $amount) / 100;
+    //                         if ($discount > $coupon->max_discount) {
+    //                             $discount = $coupon->max_discount;
+    //                         }
+    //                     }
+    //                     $amount = $amount - $discount;
+    //                 }
+    //             }
+    //             $cardNumber = $request->input('xCardNum');
+    //             $xExp = str_replace('/', '', $request->xExp);
+    //             $cardKnoxService = new CardKnoxService();
+    //             $payment = $cardKnoxService->sale($cardNumber, $amount, $xExp);
+    //             if ($payment['success'] == true) {
+    //                 if ($payment['data']['xStatus'] == 'Error') {
+    //                     return redirect()->back()->with('error', $payment['data']['xError']);
+    //                 } elseif ($payment['data']['xStatus'] == 'Approved') {
+    //                     $xAuthCode = $payment['data']['xAuthCode'];
+    //                     $xToken = $payment['data']['xToken'];
+    //                     $reservationIds = [];
+    //                     if (count($carts) > 0) {
+    //                         //                            dd($carts);
+    //                         foreach ($carts as $cart) {
+    //                             $receipt = $this->receipt->storeReceipt(['cartid' => $cart['cartid']]);
+    //                             $sitelockFee = isset($cart['sitelock']) && $cart['sitelock'] == 'on' ? 20 : 0;
+    //                             $reservation = $this->reservation->storeReservation([
+    //                                 'xconfnum' => $xAuthCode,
+    //                                 'cartid' => $cart['cartid'],
+    //                                 'source' => 'Online Booking',
+    //                                 'createdby' => 'Customer',
+    //                                 'fname' => $user->f_name,
+    //                                 'lname' => $user->l_name,
+    //                                 'customernumber' => $user->id,
+    //                                 'siteid' => $cart['siteid'],
+    //                                 'cid' => $cart['cid'],
+    //                                 'cod' => $cart['cod'],
+    //                                 'sitelock' => $sitelockFee,
+    //                                 'siteclass' => $cart['siteclass'],
+    //                                 'totalcharges' => $cart['subtotal'] + $cart['taxrate'] + $sitelockFee,
+    //                                 'nights' => $cart['nights'],
+    //                                 'base' => $cart['base'],
+    //                                 'rateadjustment' => isset($cart['rateadjustment']) ? $cart['rateadjustment'] : null,
+    //                                 'rigtype' => '',
+    //                                 'riglength' => $cart['riglength'],
+    //                                 'rid' => $cart['rid'],
+    //                                 'receipt' => $receipt->id,
+    //                                 'discountcode' => $request->applicable_coupon ?? '',
+    //                                 'total' => $cart['subtotal'] + $cart['taxrate'] + $sitelockFee,
+    //                                 'subtotal' => $cart['subtotal'],
+    //                             ]);
 
-                                array_push($reservationIds, $reservation->id);
+    //                             array_push($reservationIds, $reservation->id);
 
-                                $this->cardsOnFile->storeCards([
-                                    'customernumber' => $user->id,
-                                    'method' => $payment['data']['xCardType'],
-                                    'cartid' => $cart['cartid'],
-                                    'email' => $user->email,
-                                    'xmaskedcardnumber' => $payment['data']['xMaskedCardNumber'],
-                                    'xtoken' => $xToken,
-                                    'receipt' => $receipt->id,
-                                    'gateway_response' => json_encode($payment['data']),
-                                ]);
+    //                             $this->cardsOnFile->storeCards([
+    //                                 'customernumber' => $user->id,
+    //                                 'method' => $payment['data']['xCardType'],
+    //                                 'cartid' => $cart['cartid'],
+    //                                 'email' => $user->email,
+    //                                 'xmaskedcardnumber' => $payment['data']['xMaskedCardNumber'],
+    //                                 'xtoken' => $xToken,
+    //                                 'receipt' => $receipt->id,
+    //                                 'gateway_response' => json_encode($payment['data']),
+    //                             ]);
 
-                                $this->payment->storePayment([
-                                    'customernumber' => $user->id,
-                                    'method' => $payment['data']['xCardType'],
-                                    'cartid' => $cart['cartid'],
-                                    'email' => $user->email,
-                                    'payment' => $payment['data']['xAuthAmount'],
-                                    'receipt' => $receipt->id,
-                                ]);
-                            }
-                            Session::remove('booking_' . $bookingId);
-                            Session::remove('reservation_cart_items_' . $bookingId);
-                            DB::commit();
-                            return redirect()->route('reservations.index')->with('success', 'Reservation created successfully.');
-                        }
-                        return redirect()->route('reservations.book.site', [$bookingId]);
-                    }
-                }
-                return redirect()->back()->with('error', 'Something went wrong!');
-            }
-            return redirect()->route('reservations.create');
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', $e->getMessage());
-        }
-    }
+    //                             $this->payment->storePayment([
+    //                                 'customernumber' => $user->id,
+    //                                 'method' => $payment['data']['xCardType'],
+    //                                 'cartid' => $cart['cartid'],
+    //                                 'email' => $user->email,
+    //                                 'payment' => $payment['data']['xAuthAmount'],
+    //                                 'receipt' => $receipt->id,
+    //                             ]);
+    //                         }
+    //                         Session::remove('booking_' . $bookingId);
+    //                         Session::remove('reservation_cart_items_' . $bookingId);
+    //                         DB::commit();
+    //                         return redirect()->route('reservations.index')->with('success', 'Reservation created successfully.');
+    //                     }
+    //                     return redirect()->route('reservations.book.site', [$bookingId]);
+    //                 }
+    //             }
+    //             return redirect()->back()->with('error', 'Something went wrong!');
+    //         }
+    //         return redirect()->route('reservations.create');
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         return redirect()->back()->with('error', $e->getMessage());
+    //     }
+    // }
 }
