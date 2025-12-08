@@ -107,10 +107,29 @@
                 </a>
             </li>
         @endHasPermission
+        @php
+            use Carbon\Carbon;
+            $today = Carbon::today()->toDateString();
 
+            $defaultParameters = [
+                'startDate' => $today,
+                'seasonal' => 0,
+                'siteclass' => ['RV Sites'],
+            ];
+
+            $defaultQuery = http_build_query([
+                'startDate' => $today,
+                'seasonal' => 0,
+            ]);
+
+            $defaultQuery .= '&siteclass[]=RV%20Sites';
+            $baseUrl = route('reservations.index');
+            $reservationUrl = $baseUrl . '?' . $defaultQuery;
+        @endphp
         @hasPermission(config('constants.role_modules.reservation_management.value'))
             <li class="nav-item">
-                <a href="{{ route('reservations.index') }}" class="nav-link {{ activeSegment('reservations') }}">
+                <a href="{{  $reservationUrl }}"
+                    class="nav-link {{ activeSegment('reservations') }}">
                     <div class="d-flex align-items-center">
                         <i class="nav-icon fas fa-calendar-alt me-2"></i>
                         <span>Reservations</span>
@@ -207,7 +226,7 @@
                 @hasPermission(config('constants.role_modules.manage_pages.value'))
                     <li><a class="dropdown-item" href="{{ route('content-ideas.index') }}">
                             <i class="fa-solid fa-file-lines"></i>
-                            <span> Content Ideas  </span>
+                            <span> Content Ideas </span>
                         </a></li>
                 @endHasPermission
 
@@ -312,7 +331,8 @@
 
 
                 @hasPermission(config('constants.role_modules.seasonal_renewals.value'))
-                    <li><a class="dropdown-item" href="{{ route('admin.seasonal-settings.index', ['tab' => 'overview'])  }}">
+                    <li><a class="dropdown-item"
+                            href="{{ route('admin.seasonal-settings.index', ['tab' => 'overview']) }}">
                             <i class="fa-solid fa-gears"></i> <span>
                                 {{ config('constants.role_modules.seasonal_renewals.name') }}
                             </span>
@@ -327,26 +347,26 @@
                             </span>
                         </a></li>
                 @endHasPermission
-                
-                
-    <li>
-      <a class="dropdown-item" href="{{ route('admin.content-hub.settings') }}">
-        <i class="fa-solid fa-robot"></i>
-        <span>Ai Content Hub</span>
-      </a>
-    </li>
-    
-    <li>
-  <a class="dropdown-item" href="{{ route('admin.content-hub.connections') }}">
-    <i class="fa-solid fa-plug"></i> <span>Social Connections</span>
-  </a>
-</li>
 
-  <li>
-  <a class="dropdown-item" href="{{ route('admin.ideas') }}">
-    <i class="fa-solid fa-plug"></i> <span>Content Ideas</span>
-  </a>
-</li>
+
+                <li>
+                    <a class="dropdown-item" href="{{ route('admin.content-hub.settings') }}">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>Ai Content Hub</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" href="{{ route('admin.content-hub.connections') }}">
+                        <i class="fa-solid fa-plug"></i> <span>Social Connections</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" href="{{ route('admin.ideas') }}">
+                        <i class="fa-solid fa-plug"></i> <span>Content Ideas</span>
+                    </a>
+                </li>
 
 
 

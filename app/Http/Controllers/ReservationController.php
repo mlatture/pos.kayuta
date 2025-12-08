@@ -51,77 +51,6 @@ class ReservationController extends Controller
         $this->payment = $payment;
     }
 
-    // public function index(Request $request)
-    // {
-    //     $query = Site::with(['reservations.payments']);
-    //     $site_classes = SiteClass::all();
-    //     if ($request->search) {
-    //         $search = $request->search;
-    //         $query->where(function ($q) use ($search) {
-    //             $q->where('siteid', 'LIKE', "%{$search}%")
-    //                 ->orWhere('ratetier', 'LIKE', "%{$search}%")
-    //                 ->orWhereHas('reservations', function ($resQ) use ($search) {
-    //                     $resQ->where('fname', 'LIKE', "%{$search}%")->orWhere('lname', 'LIKE', "%{$search}%");
-    //                 });
-    //         });
-    //     }
-
-    //     if ($request->sitename || $request->ratetier) {
-    //         $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
-    //         $query->whereIn('siteid', $siteIds);
-    //     }
-
-    //     // Seasonal logic: if 'seasonal=1', show only seasonal; if 'seasonal=0' (or unchecked), show only non-seasonal
-    //     if ($request->has('seasonal')) {
-    //         $query->where('seasonal', $request->seasonal == '1' ? 1 : 0);
-    //     } else {
-    //         // Default to hiding seasonal sites
-    //         $query->where('seasonal', 0);
-    //     }
-
-    //     // Always get ALL relevant sites (no pagination)
-    //     $sites = $query->get();
-
-    //     // Handle start and end date range (+30 days from startDate)
-    //     $latestSeason = CampingSeason::latest()->first();
-    //     $today = Carbon::today();
-    //     $seasonStart = Carbon::parse($latestSeason->opening_day ?? $today);
-
-    //     $startDate = $request->startDate ? Carbon::parse($request->startDate) : Carbon::today();
-
-    //     $endDate = $startDate->copy()->addDays(30);
-
-    //     $filters['startDate'] = $startDate->toDateString();
-    //     $filters['endDate'] = $endDate->toDateString();
-
-    //     $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
-
-    //     // Only fetch reservations within calendar range
-    //     $reservations = Reservation::whereBetween('cid', [$filters['startDate'], $filters['endDate']])->get();
-
-    //     foreach ($sites as $site) {
-    //         $site->totalDays = $site->reservations->sum(function ($reservation) {
-    //             return Carbon::parse($reservation->cid)->diffInDays($reservation->cod);
-    //         });
-
-    //         $site->isVacant = !$reservations->where('site_id', $site->id)->count();
-    //     }
-
-    //     if ($request->ajax()) {
-    //         $html = view('reservations.components._site_rows_list', [
-    //             'sites' => $sites,
-    //             'calendar' => $calendar,
-    //         ])->render();
-
-    //         return response()->json([
-    //             'sites' => $html,
-    //             'next_page_url' => null, // Always null because we don't paginate anymore
-    //         ]);
-    //     }
-
-    //     return view('reservations.index', compact('site_classes','sites', 'calendar', 'filters'));
-    // }
-
     // Optimized Logic
     public function index(Request $request)
     {
@@ -135,16 +64,6 @@ class ReservationController extends Controller
 
         $query = $this->site::query();
 
-        $site_classes = Cache::remember('site_classes_all', 3600, function () {
-            return $this->siteClass::all();
-        });
-
-        if ($request->sitename || $request->ratetier) {
-            $siteIds = array_unique(array_merge($request->sitename ? explode(',', $request->sitename) : [], $request->ratetier ? explode(',', $request->ratetier) : []));
-
-            $query->whereIn('siteid', $siteIds);
-        }
-
         $query->when(
             $request->has('seasonal'),
             function ($q) use ($request) {
@@ -154,6 +73,46 @@ class ReservationController extends Controller
                 $q->where('seasonal', 0);
             },
         );
+
+        if ($request->has('siteclass') && is_array($request->siteclass) && count($request->siteclass) > 0) {
+            $selectedClasses = $request->siteclass;
+
+            $normalizedClasses = collect($selectedClasses)->map(function ($class) {
+                return str_replace(' ', '_', $class);
+            });
+
+            $query->where(function ($q) use ($normalizedClasses) {
+                foreach ($normalizedClasses as $class) {
+                    $q->orWhere('siteclass', $class)
+                        ->orWhere('siteclass', 'like', $class . ',%')
+                        ->orWhere('siteclass', 'like', '%,' . $class)
+                        ->orWhere('siteclass', 'like', '%,' . $class . ',%');
+                }
+            });
+        }
+
+        $site_classes = Cache::remember('site_classes_all', 3600, function () {
+            return $this->siteClass::all();
+        });
+
+        $rate_tiers = Cache::remember('rate_tiers_all', 3600, function () {
+            return $this->rateTier::all();
+        });
+
+        if ($request->siteid || $request->ratetier) {
+            if ($request->has('ratetier') && is_array($request->ratetier) && count($request->ratetier) > 0) {
+                $query->whereIn('ratetier', $request->ratetier);
+            }
+
+            if ($request->has('siteid')) {
+
+                $siteIds = $request->input('siteid', []);
+
+                if (is_array($siteIds) && count($siteIds) > 0) {
+                    $query->whereIn('siteid', $siteIds);
+                }
+            }
+        }
 
         $sites = $query
             ->with([
@@ -172,8 +131,6 @@ class ReservationController extends Controller
             $availability = array_fill_keys($calendar, null);
 
             foreach ($site->reservations as $res) {
-                
-
                 $resStart = Carbon::parse($res->cid);
                 $resEnd = Carbon::parse($res->cod);
 
@@ -181,12 +138,9 @@ class ReservationController extends Controller
                     $day = Carbon::parse($date);
 
                     if ($day->gte($resStart) && $day->lt($resEnd)) {
-
-
                         if ($date === $resStart->format('Y-m-d')) {
                             $availability[$date] = $res;
                         } else {
-
                             $availability[$date] = true;
                         }
                     }
@@ -195,7 +149,7 @@ class ReservationController extends Controller
             $site->availability = $availability;
         }
 
-        return view('reservations.index', compact('site_classes', 'sites', 'calendar', 'filters'));
+        return view('reservations.index', compact('site_classes', 'rate_tiers', 'sites', 'calendar', 'filters'));
     }
 
     private function generateSeasonCalendar($startDate, $endDate)

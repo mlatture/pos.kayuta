@@ -330,7 +330,7 @@ Route::prefix('admin')
         Route::post('reservations/apply-coupon', [ReservationController::class, 'applyCoupon'])->name('reservations.apply-coupon');
         Route::post('reservations/do-checkout/{bookingId}', [ReservationController::class, 'doCheckout'])->name('reservations.do-checkout');
 
-        Route::get('/reservations', [NewReservationController::class, 'index'])->name('reservations.index');
+        Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
         Route::get('/reservepeople', [NewReservationController::class, 'getReservations']);
         Route::post('/reservations/update/{id}', [NewReservationController::class, 'updateReservation']);
         Route::get('get-customer-info', [CustomerController::class, 'customerInfo'])->name('customer.info');

@@ -124,28 +124,46 @@
         <table class="table management-table table-striped">
             <thead>
                 <tr class="t__head">
-                    <th class="sticky-col bg-dark text-white" rowspan="2">
-                        <div class="d-flex flex-column justify-content-between align-items-start">
+                    <th class="sticky-col bg-dark text-white" rowspan="3" >
+                        <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
                             <span class="me-2">Site</span>
                             <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($sites as $site)
-                                    <option value="{{ $site->siteid }}">{{ $site->siteid }}</option>
+                                @foreach ($sites->pluck('siteid')->unique()->sort() as $siteId)
+                                    <option value="{{ $siteId }}"
+                                        {{ in_array($siteId, request('siteid', [])) ? 'selected' : '' }}>
+                                        {{ $siteId }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                     </th>
-                    <th class="sticky-col bg-dark text-white" rowspan="2">
+                    <th class="sticky-col bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start">
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
                                 @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                    <option value="{{ $siteclass }}" {{ $siteclass === 'RV Sites' ? 'selected' : '' }}>
+                                    <option value="{{ $siteclass }}" {{-- Check if the siteclass is in the request array OR if the filter is empty and this is the default ('RV Sites') --}}
+                                        {{ in_array($siteclass, request('siteclass', [])) || ($siteclass === 'RV Sites' && !request()->has('siteclass')) ? 'selected' : '' }}>
                                         {{ $siteclass }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                     </th>
+                    <th class="sticky-col bg-dark text-white" rowspan="3">
+                        <div class="d-flex flex-column justify-content-between align-items-start" style="width: 10vw">
+                            <span class="me-2">Tier</span>
+                            <select id="tierFilter" class="form-select form-select-sm w-100" multiple="multiple">
+                                @foreach ($rate_tiers->pluck('tier')->unique()->sort() as $rateTier)
+                                    <option value="{{ $rateTier }}"
+                                        {{ in_array($rateTier, request('ratetier', [])) ? 'selected' : '' }}>
+                                        {{ $rateTier }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </th>
+
 
                     @php
                         $recurringMonth = '';
@@ -188,11 +206,13 @@
                 </tr>
             </thead>
             <tbody id="siteTableBody">
-                @include('reservations.components._site_rows_list', [
-                    'site_classes' => $site_classes,
-                    'sites' => $sites,
-                    'calendar' => $calendar,
-                ])
+                @foreach ($sites as $site)
+                    @include('reservations.components._site_rows', [
+                        'site' => $site,
+                        'calendar' => $calendar,
+                    ])
+                @endforeach
+
             </tbody>
         </table>
     </div>
@@ -206,113 +226,69 @@
 
     <script>
         $(document).ready(function() {
-            function updateDateAndFilter(newDate) {
-                const newDateString = newDate.toISOString().split('T')[0];
-                $('#startDatePicker').val(newDateString).trigger('change');
-            }
 
-
-            $('#startDatePicker').on('change', function() {
-                const startDate = $(this).val();
+            function applyFiltersAndReload() {
+                const startDate = $('#startDatePicker').val();
                 const seasonal = $('#seasonalFilter').is(':checked') ? 1 : 0;
 
-                window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
-            });
+                const selectedTypes = $('#typeFilter').val() || [];
+                const selectedTier = $('#tierFilter').val() || [];
+                const selectedSites = $('#siteFilter').val() || [];
+
+                let queryString = `?startDate=${startDate}&seasonal=${seasonal}`;
+
+                selectedTypes.forEach(type => {
+
+                    queryString += `&siteclass[]=${encodeURIComponent(type)}`;
+                });
+
+                selectedTier.forEach(tier => {
+                    queryString += `&ratetier[]=${encodeURIComponent(tier)}`;
+                });
+
+                selectedSites.forEach(siteId => {
+                    queryString += `&siteid[]=${encodeURIComponent(siteId)}`;
+                });
+
+                window.location.href = queryString;
+            }
+
+            function navigateAndReload(days) {
+                const current = new Date($('#startDatePicker').val());
+                current.setDate(current.getDate() + days);
+
+                $('#startDatePicker').val(current.toISOString().split('T')[0]);
+
+                applyFiltersAndReload();
+            }
+
+            $('#seasonalFilter, #startDatePicker, #typeFilter, #tierFilter, #siteFilter').on('change',
+                applyFiltersAndReload);
 
             $('#prev30').on('click', function() {
-                const currentDateString = $('#startDatePicker').val();
-
-                const current = new Date(currentDateString);
-
-                current.setDate(current.getDate() - 30);
-
-                updateDateAndFilter(current);
+                navigateAndReload(-30);
             });
 
             $('#next30').on('click', function() {
-                const currentDateString = $('#startDatePicker').val();
-
-                const current = new Date(currentDateString);
-
-                current.setDate(current.getDate() + 30);
-
-                updateDateAndFilter(current);
+                navigateAndReload(30);
             });
-        });
 
-        $(document).ready(function() {
-            // Initialize Select2 for multi-select dropdowns
             $('#siteFilter').select2({
                 placeholder: "",
-                width: '100%',
+                width: '100%'
             });
-
             $('#typeFilter').select2({
                 placeholder: "",
-                width: '100%',
+                width: '100%'
+            });
+            $('#tierFilter').select2({
+                placeholder: "",
+                width: '100%'
             });
 
-            setTimeout(() => {
-                $('#typeFilter').val(['RV Sites']).trigger('change');
-                filterTable();
-            }, 50);
+            
 
-            filterTable();
-
-            // Event listeners for filters change
-            $('#siteFilter, #typeFilter').on('change', function() {
-                filterTable();
-            });
         });
-
-        $('#seasonalFilter').on('change', function() {
-            filterTable();
-        });
-
-        $('#seasonalFilter').on('change', function() {
-            const seasonal = $(this).is(':checked') ? 1 : 0;
-            const startDate = $('#startDatePicker').val();
-            window.location.href = `?startDate=${startDate}&seasonal=${seasonal}`;
-        });
-
-
-
-
-        function filterTable() {
-            const hideSeasonal = !$('#seasonalFilter').is(':checked');
-            const selectedSites = $('#siteFilter').val() || [];
-            const selectedTypes = $('#typeFilter').val() || [];
-
-            const rows = document.querySelectorAll('#siteTableBody tr');
-
-            const normalize = (v) => (v || "").toLowerCase().replace(/_/g, ' ').trim();
-
-            // normalize selected types
-            const normalizedSelected = selectedTypes.map(normalize);
-
-            rows.forEach(row => {
-                const siteId = row.dataset.siteSiteid;
-                const isSeasonal = row.dataset.siteSeasonal === '1';
-
-                // Split multiple classes and normalize
-                const siteClasses = row.dataset.siteSiteclass
-                    .split(',')
-                    .map(normalize);
-
-                let showRow = true;
-
-                if (hideSeasonal && isSeasonal) showRow = false;
-
-                if (selectedSites.length > 0 && !selectedSites.includes(siteId)) showRow = false;
-
-                if (normalizedSelected.length > 0) {
-                    const matches = siteClasses.some(c => normalizedSelected.includes(c));
-                    if (!matches) showRow = false;
-                }
-
-                row.style.display = showRow ? '' : 'none';
-            });
-        }
 
 
 
@@ -828,7 +804,7 @@
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow = tomorrow.toISOString().split('T')[0];
 
-        
+
         let selectedSites = [];
         let nightsCounts = 1;
 
@@ -869,7 +845,7 @@
 
 
 
-        
+
 
 
         $(document).ready(function() {
