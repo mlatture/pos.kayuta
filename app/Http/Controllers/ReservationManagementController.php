@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Session;
 
-use App\Services\CardKnoxService;
+use Illuminate\Support\Arr;
 
 class ReservationManagementController extends Controller
 {
@@ -473,14 +473,12 @@ class ReservationManagementController extends Controller
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/cart/items', $data);
 
-
             Log::error('Cart items API error', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
 
             if ($response->failed()) {
-
                 return response()->json(
                     [
                         'ok' => false,
@@ -489,7 +487,6 @@ class ReservationManagementController extends Controller
                     ],
                     $response->status(),
                 );
-
             }
 
             return response()->json(
@@ -501,7 +498,6 @@ class ReservationManagementController extends Controller
                 ],
                 $response->status(),
             );
-
         } catch (\Exception $e) {
             Log::error('Cart items proxy failed', ['error' => $e->getMessage()]);
 
@@ -517,56 +513,38 @@ class ReservationManagementController extends Controller
 
     public function checkout(Request $request)
     {
-        Log::info('Checkout started', [
-            'request_payload' => $request->all(),
+        $data = $request->validate([
+            'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'card'])],
+            'gift_card_code' => ['nullable', 'string', 'max:64'],
+
+            'cc.xCardNum' => ['required_if:payment_method,card'],
+            'cc.xExp' => ['required_if:payment_method,card'],
+            'cc.cvv' => ['required_if:payment_method,card'],
+
+            'ach.routing' => ['required_if:payment_method,ach'],
+            'ach.account' => ['required_if:payment_method,ach'],
+            'ach.name' => ['required_if:payment_method,ach'],
+
+            'cash_tendered' => ['required_if:payment_method,cash'],
+            'custId' => ['nullable', 'integer'],
+
+            'fname' => 'required',
+            'lname' => 'required',
+            'email' => 'required|email',
+            'phone' => 'required',
+            'street_address' => 'required',
+            'city' => 'required',
+            'state' => 'required',
+            'zip' => 'required',
+
+            'xAmount' => ['required', 'numeric', 'min:0.5'],
+            'api_cart.cart_id' => ['required'],
+            'api_cart.cart_token' => ['required'],
         ]);
 
-        $data = $request->validate(
-            [
-                'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'card'])],
-                'gift_card_code' => ['nullable', 'string', 'max:64'],
-
-                'cc.xCardNum' => ['required_if:payment_method,card', 'string', 'max:19'],
-                'cc.xExp' => ['required_if:payment_method,card', 'string', 'max:7'],
-                'cc.cvv' => ['required_if:payment_method,card', 'string', 'max:4'],
-
-                'ach.routing' => ['required_if:payment_method,ach', 'string', 'max:20'],
-                'ach.account' => ['required_if:payment_method,ach', 'string', 'max:30'],
-                'ach.name' => ['required_if:payment_method,ach', 'string', 'max:100'],
-                'cash_tendered' => ['required_if:payment_method,cash'],
-                'applicable_coupon' => ['nullable', 'string', 'max:50'],
-
-                'custId' => ['nullable', 'integer'],
-                'fname' => ['required', 'string', 'max:100'],
-                'lname' => ['required', 'string', 'max:100'],
-                'email' => ['required', 'email'],
-                'phone' => ['required', 'string', 'max:20'],
-                'street_address' => ['required', 'string', 'max:255'],
-                'city' => ['required', 'string', 'max:100'],
-                'state' => ['required', 'string', 'max:50'],
-                'zip' => ['required', 'string', 'max:10'],
-
-                'xAmount' => ['required', 'numeric', 'min:0.5'],
-                'api_cart.cart_id' => ['required', 'string'],
-                'api_cart.cart_token' => ['required', 'string'],
-            ],
-            [],
-            [
-                'cc.xCardNum' => 'card number',
-                'cc.xExp' => 'card expiration',
-                'cc.cvv' => 'card cvv',
-                'ach.routing' => 'ACH routing number',
-                'ach.account' => 'ACH account number',
-                'ach.name' => 'ACH account holder name',
-                'cash_tendered' => 'cash tendered',
-            ],
-        );
-
+        // Update customer if needed
         if (!empty($data['custId'])) {
-            Log::info('Updating customer', ['customer_id' => $data['custId']]);
-
             $user = User::find($data['custId']);
-
             if ($user) {
                 $user->update([
                     'f_name' => $data['fname'],
@@ -578,43 +556,44 @@ class ReservationManagementController extends Controller
                     'state' => $data['state'],
                     'zip' => $data['zip'],
                 ]);
-            } else {
-                Log::warning('Customer not found for update', [
-                    'customer_id' => $data['custId'],
-                ]);
             }
         }
 
+        // Flatten card and ACH
+        if ($data['payment_method'] === 'card') {
+            $data['xCardNum'] = $data['cc']['xCardNum'];
+            $data['xExp'] = $data['cc']['xExp'];
+            $data['cvv'] = $data['cc']['cvv'];
+            Arr::forget($data, 'cc');
+        }
+
+        
+
         try {
-            if (($data['payment_method'] ?? null) === 'card') {
-                $data['xCardNum'] = $data['cc']['xCardNum'] ?? null;
-                $data['xExp'] = $data['cc']['xExp'] ?? null;
-                $data['cvv'] = $data['cc']['cvv'] ?? null;
-
-                unset($data['cc']);
-            }
-
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
             ])->post(env('BOOK_API_URL') . 'v1/checkout', $data);
 
             if ($response->failed()) {
-                Log::error('Checkout API error', [
-                    'status' => $response->status(),
-                    'body' => $response->json(),
-                ], JSON_PRETTY_PRINT);
-                $json = $response->json();
                 return response()->json(
                     [
                         'ok' => false,
-                        'message' => $json['message'] ?? '',
-                        'errors' => $json['errors'] ?? [],
+                        'message' => $response->json()['message'] ?? '',
+                        'errors' => $response->json()['errors'] ?? [],
                     ],
                     $response->status(),
                 );
+            }
 
-               
+            // Handle gift card deduction
+            if ($data['payment_method'] === 'gift_card') {
+                $res = $response->json();
+                $total = $res['reservations'][0]['totalcharges'] ?? null;
+
+                if ($total !== null) {
+                    GiftCard::where('barcode', $data['gift_card_code'])->decrement('amount', $total);
+                }
             }
 
             return $response->json();
