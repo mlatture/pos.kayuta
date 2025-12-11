@@ -68,11 +68,11 @@ class CustomerController extends Controller
                 })
                 ->addIndexColumn()
                 ->addColumn('actions', function ($customer) {
-                    $documents = '<a href="' . route('customers.documents', $customer->id) . '" class="btn btn-secondary"><i class="fa-solid fa-folder-open"></i></a>';
-                    $viewButton = '<a href="' . route('customers.show', $customer->id) . '" class="btn btn-info"><i class="fas fa-eye"></i></a>';
-                    $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value')) ? '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-primary"><i class="fas fa-edit"></i></a>' : '';
+                    $documents = '<a href="' . route('customers.documents', $customer->id) . '" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="See Files" role="tooltip"><i class="fa-solid fa-folder-open" ></i></a>';
+                    $viewButton = '<a href="' . route('customers.show', $customer->id) . '" class="btn btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Customer"><i class="fas fa-eye" ></i></a>';
+                    $editButton = auth()->user()->hasPermission(config('constants.role_modules.edit_customers.value')) ? '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Customer Details"><i class="fas fa-edit" ></i></a>' : '';
 
-                    $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value')) ? '<button class="btn btn-danger btn-delete" data-url="' . route('customers.destroy', $customer->id) . '"><i class="fas fa-trash"></i></button>' : '';
+                    $deleteButton = auth()->user()->hasPermission(config('constants.role_modules.delete_customers.value')) ? '<button class="btn btn-danger btn-delete" data-url="' . route('customers.destroy', $customer->id) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Customer"><i class="fas fa-trash" ></i></button>' : '';
 
                     return $documents . '  ' . $viewButton . ' ' . $editButton . ' ' . $deleteButton;
                 })

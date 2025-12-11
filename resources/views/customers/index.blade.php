@@ -83,7 +83,7 @@
                     <div class="row">
                         <div class="table-responsive m-t-40 p-0">
 
-                            <table class="display nowrap table table-hover table-striped border p-0" cellspacing="0"
+                            <table class="display nowrap table table-hover table-striped border p-0 customersTable"  cellspacing="0"
                                 width="100%">
                                 <thead>
                                     <tr>
@@ -175,6 +175,14 @@
                 },
                 pageLength: 10
             });
+
+            // Tooltip
+            $('.table').on('draw.dt', function () {
+                $('[data-bs-toggle="tooltip"]').each(function () {
+                    new bootstrap.Tooltip(this);
+                });
+            });
+
 
             $('.custom-filter-checkbox').html(`
                 <label class="form-check-label mb-0">
