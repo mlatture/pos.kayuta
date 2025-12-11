@@ -162,8 +162,8 @@
 
         <div class="row">
             {{-- Results --}}
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
+            <div class="col-lg-8 d-flex">
+                <div class="card shadow-sm h-100 w-100">
 
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>
@@ -196,8 +196,8 @@
             </div>
 
             {{-- Cart --}}
-            <div class="col-lg-4">
-                <div class="card shadow-sm">
+            <div class="col-lg-4 d-flex">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>Cart</strong>
                         <span class="badge bg-secondary" id="cartCount">0</span>
@@ -322,12 +322,6 @@
                 }
             });
         }
-
-
-      
-
-    
-
     </script>
 
     <script>
@@ -468,8 +462,7 @@
                         const $badge = $('#nightsBadge');
                         const data = res?.data.response || {};
                         const results = data.results || {};
-                        const slFAmount = res?.site_lock_fee || " ";
-
+                        const slFAmount = Number(res?.site_lock_fee ?? 0);
 
 
                         let nights = 1;
@@ -493,14 +486,10 @@
                         if (data.view === 'units' && Array.isArray(results?.units)) {
                             headHtml = `
                             <tr >
-                                <th class="sticky-header">Site ID</th>
-                                <th class="sticky-header">Name</th>
-                                <th class="sticky-header">Class</th>
+                                <th class="sticky-header">Site</th>
                                 <th class="sticky-header col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Hookup</th>
-                                <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Min Length</th>
-                                <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Max Length</th>
-                                <th class="sticky-header">Status</th>
-                                <th class="sticky-header">Price Quote</th>
+                                <th class="sticky-header col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">Rig Length</th>
+                                <th class="sticky-header">Occupants / Site Lock Fee</th>
                                 <th class="sticky-header">Actions</th>
                             </tr>
                         `;
@@ -546,6 +535,10 @@
                             rows = results.units
                                 .map(unit => {
                                     const isAvailable = unit?.status?.available;
+                                    const subTotal = Number(unit.price_quote.total ?? 0);
+
+                                    const computeTotal = Number(slFAmount + subTotal).toFixed(2);
+
 
                                     //Check if already in cart
 
@@ -562,9 +555,10 @@
                                     if ((isAvailable || unit?.status?.offline) && unit?.price_quote) {
                                         priceHtml = `
                                             <div class="small">
-                                                <div><strong>Total:</strong> $${Number(unit.price_quote.total ?? 0).toFixed(2)}</div>
+                                                <div><strong>Sub Total:</strong> $${subTotal.toFixed(2)}</div>
                                                 <div><strong>Avg/Night:</strong> $${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</div>
-
+                                                <div><strong>Extras:</strong> $${slFAmount.toFixed(2)}</div>
+                                                <div><strong>Total:</strong> $${computeTotal} </div>
                                             </div>
                                         `;
 
@@ -573,30 +567,33 @@
 
                                     }
 
+                                    const extraInlude = isAvailable ? `
+                                            <div class="d-flex align-items-center gap-3 mb-2">
+                                                    <div class="text-center">
+                                                        <label class="small text-muted d-block mb-1">Adults</label>
+                                                        <input type="number" class="form-control form-control-sm occupants-input adults"
+                                                            value="2" min="0" style="width:70px;">
+                                                    </div>
+                                                    <div class="text-center">
+                                                        <label class="small text-muted d-block mb-1">Children</label>
+                                                        <input type="number" class="form-control form-control-sm occupants-input children"
+                                                            value="0" min="0" style="width:80px;">
+                                                    </div>
+
+
+                                            </div>
+                                            <div class="form-check mt-2 mb-2">
+                                                    <input class="form-check-input siteLockFee" type="checkbox" checked id="siteLockFee_${unit.site_id}">
+                                                    <label class="form-check-label small text-muted" for="siteLockFee_${unit.site_id}">
+                                                        Site Lock Fee: $${slFAmount}
+                                                    </label>
+                                                </div>
+                                            ` : '';
+
 
                                     const addToCartHtml = isAvailable ? `
                                         <div class="mt-2">
-                                            <div class="d-flex align-items-center gap-3 mb-2">
-                                                <div class="text-center">
-                                                    <label class="small text-muted d-block mb-1">Adults</label>
-                                                    <input type="number" class="form-control form-control-sm occupants-input adults"
-                                                        value="2" min="0" style="width:70px;">
-                                                </div>
-                                                <div class="text-center">
-                                                    <label class="small text-muted d-block mb-1">Children</label>
-                                                    <input type="number" class="form-control form-control-sm occupants-input children"
-                                                        value="0" min="0" style="width:80px;">
-                                                </div>
-
-                                                
-                                            </div>
-
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input siteLockFee" type="checkbox" checked id="siteLockFee_${unit.site_id}">
-                                                <label class="form-check-label small text-muted" for="siteLockFee_${unit.site_id}">
-                                                    Site Lock Fee: $${slFAmount}
-                                                </label>
-                                            </div>
+                        
 
                                             <button class="btn btn-sm btn-primary addToCartBtn"
                                                 data-site-id="${unit.site_id}"
@@ -616,18 +613,15 @@
                                     <tr class="viewSiteDetails" data-site-id="${unit?.site_id}" data-start="${ci}" data-end="${co}"
                                     style="cursor: pointer;"
                                     >
-                                        <td><strong>${unit?.site_id ?? ''}</strong></td>
-                                        <td>${unit?.name ?? ''}</td>
-                                        <td>${unit?.class ? unit.class.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}</td>
+                                        <td><strong>${unit?.site_id ?? '' } <br> ${unit?.name ?? ''} <br> ${statusBadge}</strong></td>
                                         <td class="col-hookup ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.hookup ?? ''}</td>
-                                        <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.minlength ?? ''}</td>
-                                        <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.maxlength ?? ''}</td>
-                                        <td>${statusBadge}</td>
-                                        <td class="text-end">
-                                            ${priceHtml}
+                                        <td class="col-maxlength text-center ${siteClass !== 'RV Sites' ? 'd-none' : ' '}">${unit?.minlength ?? ''} - ${unit?.maxlength ?? ''}</td>
+                                        <td clas="text-end d-flex flex-column">
+                                            ${extraInlude}
 
                                         </td>
                                         <td data-role="add-wrap">
+                                            ${priceHtml}
                                             ${addToCartHtml}
                                         </td>
                                     </tr>`;
@@ -899,7 +893,7 @@
             // Add to Cart button click
             $(document).on('click', '.addToCartBtn', async function() {
                 const btn = $(this);
-                const container = btn.closest('div');
+                const container = btn.closest('tr');
                 const adults = parseInt(container.find('.adults').val()) || 0;
                 const children = parseInt(container.find('.children').val()) || 0;
                 const siteLockFee = container.find('.siteLockFee').is(':checked') ? 'on' : 'off';
@@ -964,14 +958,12 @@
                 }
             });
 
-
             async function updateCartSidebar(cartId, cartToken) {
                 const body = $('#cartBody');
                 const count = $('#cartCount');
                 const btnCheckout = $('#btnCheckout');
 
                 try {
-                    // Empty cart fallback
                     if (!cartId || !cartToken) {
                         btnCheckout.prop('disabled', true);
                         body.html('<p class="text-muted mb-0">No items yet.</p>');
@@ -988,8 +980,8 @@
                         }
                     });
 
-                    const cart = res.data?.cart || [];
-
+                    const cart = res.data?.cart || {};
+                    const cartItems = cart.items || [];
 
 
                     let itemsHtml = '';
@@ -997,18 +989,18 @@
                     let totalLockFee = 0;
                     let totalGrand = 0;
 
-                    cart.items.forEach(item => {
+                    cartItems.forEach(item => {
                         const site = item.site || {};
-                        const subtotal = item.price_snapshot?.subtotal || 0;
-                        const sitelockFee = item.price_snapshot?.sitelock_fee || 0;
-                        const total = item.price_snapshot?.total || 0;
 
-                        if ('')
+                        // 1. Calculate the raw numerical values for accumulation
+                        const itemSubtotal = Number(item.price_snapshot?.subtotal ?? 0);
+                        const itemSitelockFee = Number(item.price_snapshot?.sitelock_fee ?? 0);
+                        const itemTotal = Number(item.price_snapshot?.total ?? 0);
 
-
-                            totalSubtotal += subtotal;
-                        totalLockFee += sitelockFee;
-                        totalGrand += total;
+                        // 2. Accumulate NUMBERS
+                        totalSubtotal += itemSubtotal;
+                        totalLockFee += itemSitelockFee;
+                        totalGrand += itemTotal;
 
                         itemsHtml += `
                             <div class="cart-item mb-2 p-2 border rounded">
@@ -1027,9 +1019,9 @@
                                             title="Remove">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
-                                        <div>Base: $${subtotal.toFixed(2)}</div>
-                                        ${sitelockFee > 0 ? `<div>Site Lock: $${sitelockFee.toFixed(2)}</div>` : ''}
-                                        <strong>Total: $${total.toFixed(2)}</strong>
+                                        <div>Base: $${itemSubtotal.toFixed(2)}</div>
+                                        ${itemSitelockFee > 0 ? `<div>Site Lock: $${itemSitelockFee.toFixed(2)}</div>` : ''}
+                                        <strong>Total: $${itemTotal.toFixed(2)}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1048,8 +1040,8 @@
                     `;
 
                     body.html(itemsHtml);
-                    count.text(cart.items.length);
-                    btnCheckout.prop('disabled', cart.items.length === 0);
+                    count.text(cartItems.length);
+                    btnCheckout.prop('disabled', cartItems.length === 0);
                 } catch (err) {
                     console.error('❌ Error fetching cart:', err);
                     body.html('<p class="text-danger mb-0">Error loading cart.</p>');
