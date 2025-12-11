@@ -16,9 +16,29 @@
 @section('content')
     <div id="tooltip" style="position: absolute; display: none;"></div>
 
+
     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" id="siteBtns" xmlns:xlink="http://www.w3.org/1999/xlink"
         viewBox="0 0 700 933">
+
         <image width="100%" height="933" xlink:href="{{ asset('storage/map/mapforwebsite.jpg') }}"></image>
+
+
+
+
+        <a xlink:href="#" id="returnBtn" onmousemove="showTooltip(evt, 'Click to Return')" onmouseout="hideTooltip()">
+
+            <rect id="returnBtnBg" x="520" y="20" width="150" height="30" rx="10" ry="10" fill="#1e90ff"
+                stroke="#0d6efd" stroke-width="2" style="cursor: pointer;">
+
+            </rect>
+
+            <text x="598" y="36" text-anchor="middle" dominant-baseline="middle" font-size="18" font-family="Verdana"
+                fill="white" style="pointer-events: none; font-weight: bold;">
+                Return
+            </text>
+        </a>
+
+
 
         <text x="440" y="180" font-family="Verdana" font-size="15" fill="black">Click on a Green or Orange site</text>
         <text x="460" y="200" font-family="Verdana" font-size="15" fill="black">to see pricing or to book</text>
@@ -35,12 +55,10 @@
 
         <text x="505" y="300" font-family="Verdana" font-size="10" fill="black">Blue sites have a booking in</text>
         <text x="505" y="310" font-family="Verdana" font-size="10" fill="black">progress. Check back later.</text>
+
         <ellipse cx="490" cy="300" rx="11" ry="6" fill="blue" />
-        {{-- 
-        <a xlink:href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
-            <image href="/buttons/booknow1.png" x="425" y="110" width="80"
-                onmousemove="showTooltip(evt, 'Click to Search');" onmouseout="hideTooltip();" />
-        </a> --}}
+
+
 
         @foreach ($sites as $currentsite)
             <{!! $currentsite['coordinates'] !!} data-id="{{ $currentsite['siteid'] }}" stroke="black" opacity="0.8"
@@ -53,7 +71,7 @@
 
     </svg>
 
-    @include('reservations.modals.site-details');
+    @include('reservations.modals.site-details')
 
 @endsection
 
@@ -64,6 +82,14 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
+
+        $('#returnBtn').on('click', function() {
+            var data = {!! \Illuminate\Support\Js::from($booking) !!};
+            console.log('Test Data Booking', data['cid'], data['cod']);
+            const url = `${routes.reservationMgmtHome}?cid=${encodeURIComponent(data['cid'])}&cod=${encodeURIComponent(data['cod'])}`;
+            window.location.href = url;
+
+        })
 
         function showTooltip(evt, text) {
             let tooltip = document.getElementById("tooltip");
@@ -237,7 +263,7 @@
             $('#sdLockMessage').text(lockMessage);
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            
+
             // Add to Cart button data
             $(document).off('click', '#addToCartSite').on('click', '#addToCartSite', async function() {
                 const btn = $(this);

@@ -278,9 +278,20 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <script>
-        const checkin = document.getElementById('checkinHidden').value;
-        const checkout = document.getElementById('checkoutHidden').value;
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+
+        }
+
+
+        const checkin = $('#checkinHidden').val() || getQueryParam('cid');
+        const checkout = $('#checkoutHidden').val() || getQueryParam('cod');
+
+        if (checkin) $('[name="start_date"]').val(checkin);
+        if (checkout) $('[name="end_date"]').val(checkout);
         const $btnViewMap = $('#btnViewMap');
+
 
 
         if (!document.querySelector('#dateRange')._flatpickr) {
@@ -313,15 +324,10 @@
         }
 
 
-        function updateViewMapButton() {
-            const checkin = $('#checkinHidden').val();
-            const checkout = $('#checkoutHidden').val();
+      
 
-            // $btnViewMap.prop('disabled', !(checkin && checkout));
-        }
+    
 
-        // Initial check
-        updateViewMapButton();
     </script>
 
     <script>
@@ -330,6 +336,7 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
+
 
         function initTooltips() {
             $('[data-bs-toggle="tooltip"]').tooltip('dispose');
@@ -392,19 +399,27 @@
             $('#btnRefresh').on('click', () => location.reload());
 
 
+
+
             let _inFlightAvailability = null;
+
+
+            if (checkin && checkout) {
+                runAvailabilitySearch();
+
+            }
 
             function runAvailabilitySearch() {
 
-                let ci = $form.find('[name="start_date"]').val();
-                let co = $form.find('[name="end_date"]').val();
+                let ci = $form.find('[name="start_date"]').val() || getQueryParam('cid');
+                let co = $form.find('[name="end_date"]').val() || getQueryParam('cod');
 
                 const fp = document.querySelector('#dateRange')._flatpickr;
                 if ((!ci || !co) && fp && fp.selectedDates.length === 2) {
                     const [d1, d2] = fp.selectedDates;
 
-                    ci = fp.formatDate(d1, fp.config.dateFormat);
-                    co = fp.formatDate(d2, fp.config.dateFormat);
+                    ci = fp.formatDate(d1, fp.config.dateFormat) || getQueryParam('cid');
+                    co = fp.formatDate(d2, fp.config.dateFormat) || getQueryParam('cod');
 
                     $form.find('[name="start_date"]').val(ci);
                     $form.find('[name="end_date"]').val(co);
@@ -514,11 +529,11 @@
                                                 btn.prop('disabled', true)
                                                     .html(
                                                         '<i class="fa-solid fa-check" style="color: #63E6BE;"></i> Added'
-                                                        );
+                                                    );
                                             } else {
                                                 btn.prop('disabled', false)
                                                     .html(
-                                                    '<i class="bi bi-cart-plus"></i> Add to Cart');
+                                                        '<i class="bi bi-cart-plus"></i> Add to Cart');
                                             }
                                         });
                                     })
@@ -991,7 +1006,7 @@
                         if ('')
 
 
-                        totalSubtotal += subtotal;
+                            totalSubtotal += subtotal;
                         totalLockFee += sitelockFee;
                         totalGrand += total;
 
