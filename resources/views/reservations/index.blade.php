@@ -46,6 +46,11 @@
             max-height: 80vh !important;
         }
 
+        table.management-table {
+            border-collapse: separate;
+            border-spacing: 6px;
+        }
+
         .table-actions {
             margin-bottom: 10px;
         }
