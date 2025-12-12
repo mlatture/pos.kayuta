@@ -122,14 +122,16 @@
             outline: 3px dashed #00ffcc;
             outline-offset: -3px;
         }
+
+        
     </style>
 
 
     <div class="table-responsive">
         <table class="table management-table table-striped">
             <thead>
-                <tr class="t__head">
-                    <th class="sticky-col bg-dark text-white" rowspan="3" >
+                <tr class="t__head sticky-top bg-dark">
+                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3" >
                         <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
                             <span class="me-2">Site</span>
                             <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
@@ -142,7 +144,7 @@
                             </select>
                         </div>
                     </th>
-                    <th class="sticky-col bg-dark text-white" rowspan="3">
+                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start">
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
@@ -155,7 +157,7 @@
                             </select>
                         </div>
                     </th>
-                    <th class="sticky-col bg-dark text-white" rowspan="3">
+                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start" style="width: 10vw">
                             <span class="me-2">Tier</span>
                             <select id="tierFilter" class="form-select form-select-sm w-100" multiple="multiple">

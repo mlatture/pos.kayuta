@@ -58,12 +58,12 @@
                     $textColor = $fullyPaid ? 'white' : 'black';
                 }
 
-                $borderColor = $siteLock ? 'red' : 'white';
+                $borderColor = $siteLock ? 'red' : 'black';
 
                 $hasStarted = $today->greaterThanOrEqualTo($resStart);
 
-                if ($hasStarted && $borderColor === 'white') {
-                    $borderColor = 'black';
+                if ($hasStarted && $borderColor === 'black') {
+                    $borderColor = 'blue';
                 }
             @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
