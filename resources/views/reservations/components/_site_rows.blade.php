@@ -71,7 +71,7 @@
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
                 data-end-date="{{ $reservation->cod  }}">
-                {{ $reservation->lname ?? 'Guest' }} 
+                {{ strtoupper($reservation->lname ?? 'Guest') }} 
             </td>
             @php $i += $reservationColSpan; @endphp
         @elseif ($isOccupiedButNotStart)
