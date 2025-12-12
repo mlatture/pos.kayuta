@@ -555,12 +555,13 @@
                                     if ((isAvailable || unit?.status?.offline) && unit?.price_quote) {
                                         priceHtml = `
                                             <div class="small">
-                                                <div><strong>Sub Total:</strong> $${subTotal.toFixed(2)}</div>
-                                                <div><strong>Avg/Night:</strong> $${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</div>
-                                                <div><strong>Extras:</strong> $${slFAmount.toFixed(2)}</div>
-                                                <div><strong>Total:</strong> $${computeTotal} </div>
+                                                <div><strong>Sub Total:</strong> $<span class="sub-total">${subTotal.toFixed(2)}</span></div>
+                                                <div><strong>Avg/Night:</strong> $<span class="avg-night">${Number(unit.price_quote.avg_nightly ?? 0).toFixed(2)}</span></div>
+                                                <div><strong>Extras:</strong> $<span class="extras">${slFAmount.toFixed(2)}</span></div>
+                                                <div><strong>Total:</strong> $<span class="total">${computeTotal}</span></div>
                                             </div>
-                                        `;
+                                            `;
+
 
                                     } else {
                                         priceHtml = '<span class="text-muted small">—</span>';
@@ -583,7 +584,7 @@
 
                                             </div>
                                             <div class="form-check mt-2 mb-2">
-                                                    <input class="form-check-input siteLockFee" type="checkbox" checked id="siteLockFee_${unit.site_id}">
+                                                    <input class="form-check-input siteLockFee" type="checkbox" checked id="siteLockFee_${unit.site_id}" data-fee="${slFAmount}">
                                                     <label class="form-check-label small text-muted" for="siteLockFee_${unit.site_id}">
                                                         Site Lock Fee: $${slFAmount}
                                                     </label>
@@ -824,6 +825,23 @@
                         _inFlightAvailability = null;
                     });
             }
+
+            $tbody.off('change', '.siteLockFee').on('change', '.siteLockFee', function() {
+                const $checkbox = $(this);
+                const isChecked = $checkbox.is(':checked');
+
+                const $row = $checkbox.closest('tr');
+
+                const subTotal = parseFloat($row.find('.sub-total').text()) || 0;
+
+                const siteLockFee = parseFloat($checkbox.data('fee')) || 0;
+
+                const extras = isChecked ? siteLockFee : 0;
+                const total = subTotal + extras;
+
+                $row.find('.extras').text(extras.toFixed(2));
+                $row.find('.total').text(total.toFixed(2));
+            });
 
 
 
