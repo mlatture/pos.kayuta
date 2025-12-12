@@ -54,7 +54,7 @@
                     $textColor = $fullyPaid ? 'white' : 'black';
 
                 } else {
-                    $bgColor = $fullyPaid ? 'yellow-orange' : 'orange';
+                    $bgColor = $fullyPaid ? '#FFAA33' : 'orange';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 }
 
