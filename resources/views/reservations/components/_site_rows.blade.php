@@ -4,8 +4,9 @@
     data-site-siteclass="{{ $site->siteclass }}" 
     data-site-price="{{ $site->price ?? 0.0 }}"
     data-site-images='@json($site->images ?? [])' 
-    data-site-seasonal="{{ $site->seasonal }}">
-
+    data-site-seasonal="{{ $site->seasonal }}"
+    class="p-4">
+    
     <td class="sticky-col bg__sky text-center">{{ $site->siteid }}</td>
     <td class="sticky-col bg__sky">{{ str_replace('_', ' ', $site->siteclass) }}</td>
     <td class="sticky-col bg__sky">{{ $site->ratetier }} </td>
@@ -66,8 +67,8 @@
                     $borderColor = 'black';
                 }
             @endphp
-            <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
-                style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }};"
+            <td colspan="{{ $reservationColSpan }}" class="reservation-details p-4 text-center {{ $highlightToday }}"
+                style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
                 data-end-date="{{ $reservation->cod  }}">
                 {{ $reservation->lname ?? 'Guest' }} 
