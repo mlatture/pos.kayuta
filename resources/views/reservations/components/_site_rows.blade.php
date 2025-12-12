@@ -22,12 +22,12 @@
 
             $reservation = is_object($availability_value) ? $availability_value : null;
 
-
             $isOccupiedButNotStart = $availability_value === true;
         @endphp
 
         @if ($reservation)
             @php
+                $today = \Carbon\Carbon::today();
                 $resStart = \Carbon\Carbon::parse($reservation->cid);
                 $resEnd = \Carbon\Carbon::parse($reservation->cod);
 
@@ -36,8 +36,12 @@
                 
                 $isCancelled = $reservation->cancelled ?? false;
                 $matchingPayment = $reservation->payments->where('cartid', $reservation->cartid)->sum('amount');
-                $fullyPaid = $matchingPayment >= ($reservation->total ?? 0);
+                $fullyPaid = $matchingPayment >= ($reservation->total ?? 0) ?? $reservation->status === 'Paid';
                 $source = strtolower($reservation->source ?? '');
+                $createdBy = strtolower($reservation->createdby ?? '');
+                $siteLock = intval($reservation->sitelock) > 0;
+
+                $noSiteLock = $reservation->sitelock === 0 || is_null($reservation->sitelock);
 
                 if ($isCancelled) {
                     $bgColor = 'red';
@@ -45,24 +49,35 @@
                 } elseif (in_array($source, ['booking.com', 'airbnb'])) {
                     $bgColor = $fullyPaid ? 'purple' : 'yellow';
                     $textColor = $fullyPaid ? 'white' : 'black';
+                } elseif ($createdBy === 'customer') {
+                    $bgColor = $fullyPaid ? 'green' : 'yellow-orange';
+                    $textColor = $fullyPaid ? 'white' : 'black';
+
                 } else {
-                    $bgColor = $fullyPaid ? 'green' : 'orange';
+                    $bgColor = $fullyPaid ? 'yellow-orange' : 'orange';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 }
-            @endphp
 
+                $borderColor = $siteLock ? 'red' : 'white';
+
+                $hasStarted = $today->greaterThanOrEqualTo($resStart);
+
+                if ($hasStarted && $borderColor === 'white') {
+                    $borderColor = 'black';
+                }
+            @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
-                style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 2px solid white;"
+                style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }};"
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
-                data-end-date="{{ $reservation->cod }}">
-                {{ $reservation->fname ?? 'Guest' }}
+                data-end-date="{{ $reservation->cod  }}">
+                {{ $reservation->lname ?? 'Guest' }} 
             </td>
             @php $i += $reservationColSpan; @endphp
         @elseif ($isOccupiedButNotStart)
             @php $i++; @endphp
         @else
             @php $i++; @endphp
-            <td class="text-center bg-info text-white {{ $highlightToday }}" style="opacity: 50%">
+            <td class="text-center  text-dark {{ $highlightToday }}" style="opacity: 50%">
                 Available
             </td>
         @endif
