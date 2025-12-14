@@ -152,7 +152,7 @@
         <table class="table management-table table-striped">
             <thead>
                 <tr class="t__head sticky-top bg-dark">
-                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
+                    {{-- <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
                             <span class="me-2">Site</span>
                             <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
@@ -170,7 +170,7 @@
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
                                 @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                    <option value="{{ $siteclass }}" {{-- Check if the siteclass is in the request array OR if the filter is empty and this is the default ('RV Sites') --}}
+                                    <option value="{{ $siteclass }}" 
                                         {{ in_array($siteclass, request('siteclass', [])) || ($siteclass === 'RV Sites' && !request()->has('siteclass')) ? 'selected' : '' }}>
                                         {{ $siteclass }}
                                     </option>
@@ -189,6 +189,15 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                    </th> --}}
+
+                    <th class="sticky-col sticky-top bg-dark text-white text-center" rowspan="3" style="width: 120px;">
+                        <button type="button" class="btn btn-sm btn-light mb-2" data-bs-toggle="modal"
+                            data-bs-target="#filtersModal">
+                            <i class="fa fa-filter"></i> Filters
+                        </button>
+                        <div class="d-flex flex-column justify-content-between align-items-center">
                         </div>
                     </th>
 
@@ -247,13 +256,41 @@
 
 @endsection
 @include('reservations.modals.details')
-
+@include('reservations.modals.filter-col')
 
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
     <script>
         $(document).ready(function() {
+            $('[data-bs-toggle="tooltip"]').each(function() {
+                new bootstrap.Tooltip(this, {
+                    html: true,
+                    sanitize: false,
+                });
+            });
+
+            $('.site-info-icon').each(function() {
+                const $icon = $(this);
+                const siteDataJson = $icon.data('site-data');
+
+                if (!siteDataJson) return;
+
+                try {
+                    const data = siteDataJson;
+                    let tooltipContent = '';
+
+                    $.each(data, function(key, value) {
+                        if (value !== null && typeof value !== 'undefined') {
+                            tooltipContent += `<strong>${key}:</strong> ${value} <br>`;
+                        }
+                    });
+
+                    $icon.attr('data-bs-original-title', tooltipContent);
+                } catch (e) {
+                    console.error('Error parsing site data JSON:', e);
+                }
+            })
 
             function applyFiltersAndReload() {
                 const startDate = $('#startDatePicker').val();
@@ -290,7 +327,7 @@
                 applyFiltersAndReload();
             }
 
-            $('#seasonalFilter, #startDatePicker, #typeFilter, #tierFilter, #siteFilter').on('change',
+            $('#seasonalFilter, #startDatePicker').on('change',
                 applyFiltersAndReload);
 
             $('#prev30').on('click', function() {
@@ -301,18 +338,15 @@
                 navigateAndReload(30);
             });
 
-            $('#siteFilter').select2({
-                placeholder: "",
-                width: '100%'
+            $('.applyFilter').on('click', function(e) {
+                applyFiltersAndReload();
+            })
+
+            $('#siteFilter, #typeFilter, #tierFilter').select2({
+
+                dropdownParent: $('#filtersModal')
             });
-            $('#typeFilter').select2({
-                placeholder: "",
-                width: '100%'
-            });
-            $('#tierFilter').select2({
-                placeholder: "",
-                width: '100%'
-            });
+
 
 
 
