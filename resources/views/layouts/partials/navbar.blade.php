@@ -113,13 +113,13 @@
 
             $defaultParameters = [
                 'startDate' => $today,
-                'seasonal' => 0,
+                'seasonalFilter' => 'short',
                 'siteclass' => ['RV Sites'],
             ];
 
             $defaultQuery = http_build_query([
                 'startDate' => $today,
-                'seasonal' => 0,
+                'seasonalFilter' => 'short',
             ]);
 
             $defaultQuery .= '&siteclass[]=RV%20Sites';
@@ -330,15 +330,7 @@
                 @endHasPermission
 
 
-                @hasPermission(config('constants.role_modules.seasonal_renewals.value'))
-                    <li><a class="dropdown-item"
-                            href="{{ route('admin.seasonal-settings.index', ['tab' => 'overview']) }}">
-                            <i class="fa-solid fa-gears"></i> <span>
-                                {{ config('constants.role_modules.seasonal_renewals.name') }}
-                            </span>
-                        </a></li>
-                @endHasPermission
-
+       
 
                 @hasPermission(config('constants.role_modules.system_logs.value'))
                     <li><a class="dropdown-item" href="{{ route('admin.system_logs.index') }}">
@@ -370,10 +362,10 @@
 
 
 
-                {{-- @hasPermission(config('constants.role_modules.process_seasonals.value'))
-                    <li><a class="dropdown-item" href="{{ route('seasonal.customer.discounts.index', ['admin' => auth()->user()->id] ) }}">
+                {{-- @hasPermission(config('constants.role_modules.process_seasonalFilters.val'short term'e'))
+                    <li><a class="dropdown-item" href="{{ route('seasonalFilter.cust'short term'mer.discounts.index', ['admin' => auth()->user()->id] ) }}">
                             <i class="fa-solid fa-table-columns"></i> <span>
-                                {{ config('constants.role_modules.process_seasonals.name') }}
+                                {{ config('constants.role_modules.process_seasonalFilters.nam'short term'') }}
                             </span>
                         </a></li>
                 @endHasPermission --}}

@@ -2,34 +2,57 @@
 
 @section('title', 'Reservation List')
 @section('content-header')
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <h4 class="me-2">Reservation List</h4>
-            <div class="form-check form-switch">
-                <h4>
-                    <input class="form-check-input" type="checkbox" name="seasonal" id="seasonalFilter"
-                        {{ request('seasonal') == 1 ? 'checked' : '' }}>
-                    <label class="form-check-label mt-1" for="seasonalFilter">Show Seasonal Sites</label>
-                </h4>
-            </div>
-            <div class="me-3 d-flex justify-content-center align-items-center">
-                <h4>
-                    <a class="btn btn-primary"
-                        href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">Check
-                        Availability</a>
-                </h4>
-            </div>
+    <h4 class="mb-0 ">Reservation List</h4>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+
+
+        <div class="d-flex align-items-center mt-3">
+
+            <small for="seasonalFilter" class="text-muted small me-2" style="font-size: 1rem; white-space: nowrap;">
+                Seasonal Filter
+            </small>
+
+            <select id="seasonalFilter" name="seasonalFilter" class="form-select form-select-lg w-auto">
+                <option value="short" {{ request('seasonalFilter', 'short') === 'short' ? 'selected' : '' }}>
+                    Short Term
+                </option>
+                <option value="seasonal" {{ request('seasonalFilter') === 'seasonal' ? 'selected' : '' }}>
+                    Seasonal
+                </option>
+                <option value="all" {{ request('seasonalFilter') === 'all' ? 'selected' : '' }}>
+                    Show All
+                </option>
+            </select>
         </div>
+
+        <a class="btn btn-sm btn-primary"
+            href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">
+            Check Availability
+        </a>
     </div>
+
+
 @endsection
 @section('content-actions')
-    <div class="d-flex align-items-center justify-content-end mb-3">
-        <button class="btn btn-outline-secondary me-2" id="prev30">&larr;</button>
-        <input type="date" id="startDatePicker" value="{{ $filters['startDate'] }}" class="form-control w-auto">
-        <button class="btn btn-outline-secondary ms-2" id="next30">&rarr;</button>
-    </div>
-@endsection
+    <div class="d-flex justify-content-end mb-3">
+        <div class="text-end">
+            <div class="d-flex align-items-center justify-content-end">
+                <button class="btn btn-outline-secondary me-4" id="prev30">&larr;</button>
 
+                <input type="date" id="startDatePicker" value="{{ $filters['startDate'] }}" class="form-control w-auto">
+
+                <button class="btn btn-outline-secondary ms-4" id="next30">&rarr;</button>
+            </div>
+
+            <small class="text-muted d-block mt-1 me-2">
+                Select a start date to view the next 30 days.
+            </small>
+        </div>
+    </div>
+
+
+@endsection
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
 @section('content')
@@ -122,8 +145,6 @@
             outline: 3px dashed #00ffcc;
             outline-offset: -3px;
         }
-
-        
     </style>
 
 
@@ -131,7 +152,7 @@
         <table class="table management-table table-striped">
             <thead>
                 <tr class="t__head sticky-top bg-dark">
-                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3" >
+                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
                             <span class="me-2">Site</span>
                             <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
@@ -236,13 +257,13 @@
 
             function applyFiltersAndReload() {
                 const startDate = $('#startDatePicker').val();
-                const seasonal = $('#seasonalFilter').is(':checked') ? 1 : 0;
+                const seasonalFilter = $('#seasonalFilter').val() || 'short';
 
                 const selectedTypes = $('#typeFilter').val() || [];
                 const selectedTier = $('#tierFilter').val() || [];
                 const selectedSites = $('#siteFilter').val() || [];
 
-                let queryString = `?startDate=${startDate}&seasonal=${seasonal}`;
+                let queryString = `?startDate=${startDate}&seasonalFilter=${seasonalFilter}`;
 
                 selectedTypes.forEach(type => {
 
@@ -293,7 +314,7 @@
                 width: '100%'
             });
 
-            
+
 
         });
 

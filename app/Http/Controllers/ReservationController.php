@@ -60,19 +60,24 @@ class ReservationController extends Controller
         $filters = [
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
+            
         ];
 
         $query = $this->site::query();
+        
+        $query->where(function ($q) use ($request) {
+            $filter = $request->input('seasonalFilter', 'short');
 
-        $query->when(
-            $request->has('seasonal'),
-            function ($q) use ($request) {
-                $q->where('seasonal', $request->seasonal == '1' ? 1 : 0);
-            },
-            function ($q) {
+            if ($filter === 'short') {
                 $q->where('seasonal', 0);
-            },
-        );
+            } elseif ($filter === 'seasonal') {
+                $q->where('seasonal', 1);
+            } elseif ($filter === 'all') {
+                // show all → no filter
+            } else {
+                $q->where('seasonal', 0);
+            }
+        });
 
         if ($request->has('siteclass') && is_array($request->siteclass) && count($request->siteclass) > 0) {
             $selectedClasses = $request->siteclass;
@@ -105,7 +110,6 @@ class ReservationController extends Controller
             }
 
             if ($request->has('siteid')) {
-
                 $siteIds = $request->input('siteid', []);
 
                 if (is_array($siteIds) && count($siteIds) > 0) {
