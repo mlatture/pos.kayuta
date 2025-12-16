@@ -115,6 +115,8 @@
                           <div class="border rounded p-3 mb-3" id="totalsBox">
                               <div class="d-flex justify-content-between"><span>Subtotal</span><strong
                                       id="tSubtotal">—</strong></div>
+                              <div class="d-flex justify-content-between"><span>Platform Fee</span><strong
+                                      id="tPlatform">—</strong></div>
                               <div class="d-flex justify-content-between"><span>Site Lock Fee</span><strong
                                       id="tSiteLock">—</strong></div>
                               <div class="d-flex justify-content-between"><span>Discounts</span><strong

@@ -1004,6 +1004,8 @@
 
                     let itemsHtml = '';
                     let totalSubtotal = 0;
+                    let totalPlatformFee = 0;
+                    let totalTax = 0;
                     let totalLockFee = 0;
                     let totalGrand = 0;
 
@@ -1014,9 +1016,13 @@
                         const itemSubtotal = Number(item.price_snapshot?.subtotal ?? 0);
                         const itemSitelockFee = Number(item.price_snapshot?.sitelock_fee ?? 0);
                         const itemTotal = Number(item.price_snapshot?.total ?? 0);
+                        const itemTax = Number(item.price_snapshot?.tax ?? 0);
+                        const platformFee = itemTotal - (itemSubtotal + itemTax + itemSitelockFee);
 
                         // 2. Accumulate NUMBERS
                         totalSubtotal += itemSubtotal;
+                        totalPlatformFee += platformFee;
+                        totalTax += itemTax;
                         totalLockFee += itemSitelockFee;
                         totalGrand += itemTotal;
 
@@ -1038,6 +1044,8 @@
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                         <div>Base: $${itemSubtotal.toFixed(2)}</div>
+                                        <div>Platform Fee: $${platformFee.toFixed(2)}</div>
+                                        ${itemTax > 0 ? `<div>Tax: $${itemTax.toFixed(2)}</div>` : ''}
                                         ${itemSitelockFee > 0 ? `<div>Site Lock: $${itemSitelockFee.toFixed(2)}</div>` : ''}
                                         <strong>Total: $${itemTotal.toFixed(2)}</strong>
                                     </div>
@@ -1051,6 +1059,8 @@
                         <hr>
                         <div class="cart-summary text-end">
                             <div><strong>Subtotal:</strong> $${totalSubtotal.toFixed(2)}</div>
+                            <div><strong>Platform Fees:</strong> $${totalPlatformFee.toFixed(2)}</div>
+                            ${totalTax > 0 ? `<div><strong>Tax:</strong> $${totalTax.toFixed(2)}</div>` : ''}
                             ${totalLockFee > 0 ? `<div><strong>Site Lock Fees:</strong> $${totalLockFee.toFixed(2)}</div>` : ''}
                             <div class="fs-5"><strong>Grand Total:</strong> $${totalGrand.toFixed(2)}</div>
                             <input type="hidden" value="${totalGrand}" id="grandTotal">
@@ -1150,6 +1160,7 @@
 
                     // Calculate totals
                     let totalSubtotal = 0;
+                    let totalPlatformFee = 0;
                     let totalLockFee = 0;
                     let totalDiscounts = 0;
                     let totalTax = 0;
@@ -1158,6 +1169,7 @@
                     cart.items.forEach(item => {
                         const snapshot = item.price_snapshot || {};
                         totalSubtotal += snapshot.subtotal || 0;
+                        totalPlatformFee += (snapshot.total || 0) - (snapshot.subtotal + snapshot.tax + snapshot.sitelock_fee); 
                         totalLockFee += snapshot.sitelock_fee || 0;
                         totalDiscounts += snapshot.discounts || 0;
                         totalTax += snapshot.tax || 0;
@@ -1166,8 +1178,14 @@
 
                     // Update totals in modal
                     $('#tSubtotal').text(fmt(totalSubtotal));
-                    $('#tDiscounts').text('-' + fmt(totalDiscounts));
-                    $('#tTax').text(fmt(totalTax));
+                    $('#tPlatform').text(fmt(totalPlatformFee));
+                    if (totalDiscounts > 0) {
+                        $('#tDiscounts').text('-' + fmt(totalDiscounts));
+                    } 
+                    
+                    if (totalTax > 0) {
+                        $('#tTax').text(fmt(totalTax));
+                    } 
                     $('#tSiteLock').text(fmt(totalLockFee));
                     $('#tTotal').text(fmt(totalGrand));
 
@@ -1178,6 +1196,7 @@
                         const site = item.site || {};
                         const snapshot = item.price_snapshot || {};
                         const subtotal = snapshot.subtotal || 0;
+                        const platformfee = (snapshot.total || 0) - (subtotal + (snapshot.tax || 0) + (snapshot.sitelock_fee || 0));
                         const sitelockFee = snapshot.sitelock_fee || 0;
 
                         return `
@@ -1206,6 +1225,8 @@
                                 </div>
                                 <div class="text-end">
                                     <strong>Subtotal:</strong> $${subtotal.toFixed(2)}<br>
+                                    <small> Platform Fee: $${platformfee.toFixed(2)}</small><br>
+                                    ${snapshot.tax > 0 ? `<small>Tax: $${snapshot.tax.toFixed(2)}</small><br>` : ''}
                                     ${sitelockFee > 0 ? `<small>Site Lock Fee: $${sitelockFee.toFixed(2)}</small><br>` : ''}
                                     <strong>Total:</strong> $${(snapshot.total || 0).toFixed(2)}
                                 </div>
