@@ -96,9 +96,8 @@
             <div class="confirmation-box">
                 <div style="text-align: right; margin-bottom: 10px;">
                     Confirmation Number:
-                    @foreach ($reservation as $res)
-                        <strong>{{ $res->cartid }}</strong>,
-                    @endforeach
+                    <strong>{{ $reservation->first()->cartid }}</strong>
+
                 </div>
                 <table>
                     <tr>
