@@ -342,9 +342,11 @@ $(document).on("click", ".actionsbtn", function () {
     `);
 });
 
-$(document).on("click", "#action1", function () {
+
+$(document).on("click", "#action1", function() {
     const id = $(this).data("id");
-    url = "reservations/edit/" + id;
+    url = "{{ route('admin.reservations.show', ':id') }}"
+        .replace(':id', id);
     window.location = url;
 });
 

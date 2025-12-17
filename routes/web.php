@@ -368,7 +368,7 @@ Route::prefix('admin')
         Route::post('reservations/invoice/{id}/payBalanceCredit', [PayBalanceController::class, 'processCreditCardTerminal']);
         Route::patch('reservations/update_checked_in', [NewReservationController::class, 'updateCheckedIn'])->name('reservations.updateCheckedIn');
         Route::patch('reservations/update_checked_out', [NewReservationController::class, 'updateCheckedOut'])->name('reservations.updateCheckedOut');
-        Route::resource('reservations', ReservationController::class);
+        // Route::resource('reservations', ReservationController::class);
         Route::get('reservations/site-details/{id}', [ReservationController::class, 'siteDetails'])->name('reservations.site-details');
         Route::resource('tax-types', TaxTypeController::class);
         Route::resource('gift-cards', GiftCardController::class);
@@ -397,7 +397,12 @@ Route::prefix('admin')
         Route::get('/registers/get_name', [StationRegisterController::class, 'getStation'])->name('registers.station_name');
         Route::get('/registers/get', [StationRegisterController::class, 'getRegister'])->name('registers.get');
         Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
-        Route::get('reservations/edit/{id}', [CalendarReservationController::class, 'editReservations'])->name('reservations.edit');
+
+        /**
+         * Update to Single Canonical Reservation View
+         */ Route::get('reservations/{id}', [CalendarReservationController::class, 'show'])->name('admin.reservations.show');
+
+        
         Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');
         Route::post('filter-sites', [CalendarReservationController::class, 'filterSites'])->name('filter.sites');
 
