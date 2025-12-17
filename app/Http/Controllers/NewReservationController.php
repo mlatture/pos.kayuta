@@ -59,6 +59,8 @@ class NewReservationController extends Controller
     public function reservationHistory(Request $request, $id)
     {
         $reservations = $this->reservation->where('customernumber', $id)->select(['cid', 'cod', 'siteid', 'cartid', 'status', 'rigtype', 'riglength']);
+
+      
         return DataTables::of($reservations)
             ->editColumn('cid', function ($reservation) {
                 return Carbon::parse($reservation->cid)->format('M d, Y');

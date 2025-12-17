@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\User;
+use App\Models\CardsOnFile;
 use Carbon\Carbon;
 use App\Models\RateTier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,6 +51,11 @@ class Reservation extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class, 'cartid', 'cartid');
+    }
+
+    public function cardOnFile()
+    {
+        return $this->hasOne(CardsOnFile::class, 'customernumber', 'customernumber');
     }
 
     public function payments()

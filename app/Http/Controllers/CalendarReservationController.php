@@ -55,13 +55,14 @@ class CalendarReservationController extends Controller
     //     return view('reservations.edit', compact(['reservations', 'rigTypes', 'user', 'payment', 'allRefunded', 'cancellation']));
     // }
 
-    public function show($cartId)
+    public function show(Request $request, $cartId)
     {
         $reservations = Reservation::where('cartid', $cartId)
-            ->with(['payment', 'cart_reservation', 'refunds', 'site', 'user'])
+            ->with(['payment', 'cart_reservation', 'refunds', 'site', 'user', 'cardOnFile'])
             ->get();
 
         abort_if($reservations->isEmpty(), 404, 'Reservations not found.');
+
 
         $rigTypes = RigTypes::all();
 
@@ -73,6 +74,18 @@ class CalendarReservationController extends Controller
         $user = User::where('id', $reservations->first()->customernumber)->first();
 
         $allRefunded = $reservations->every(fn($reservation) => $reservation->refunds->isNotEmpty());
+
+
+        if ($request->has('print')) {
+            $reservation = $reservations->first();
+
+            return view('reservations.components.print', [
+                'reservation' => $reservations,
+                'payments' => $payments,
+                'user' => $user,
+            
+            ]);
+        }
 
         return view('reservations.edit', [
             'reservations' => $reservations,

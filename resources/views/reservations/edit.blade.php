@@ -186,7 +186,7 @@
 
                 <div class="col-md-3">
                     <label for="confirmation" class="form-label">Confirmation #</label>
-                    <input type="text" name="confirmation" id="confirmation" class="form-control"
+                    <input type="text" name="confirmation" data-id="{{ $reservations->first()->cartid ?? '' }}" id="confirmation" class="form-control"
                         value="{{ $reservations->first()->cartid ?? '' }}" readonly>
                 </div>
 
@@ -516,7 +516,8 @@
                                         <td>Cancelled Site</td>
 
                                         @if ($refund->cancellation_fee > 0)
-                                            <td class="text-end text-danger">Cancellation Fee ({{$cancellation['cancellation_fee']}}%)</td>
+                                            <td class="text-end text-danger">Cancellation Fee
+                                                ({{ $cancellation['cancellation_fee'] }}%)</td>
                                             <td class="text-danger">- ${{ number_format($refund->cancellation_fee, 2) }}
                                             </td>
                                         @else
@@ -594,7 +595,24 @@
                     ],
                     responsive: true,
                     dom: '<"dt-top-container"<"dt-left-in-div"f><"dt-center-in-div"l><"dt-right-in-div"B>>rt<ip>',
-                    buttons: ['colvis', 'copy', 'csv', 'excel', 'pdf', 'print'],
+                    buttons: [
+                        'colvis', 'copy', 'csv', 'excel', 'pdf',
+                        {
+                            text: 'Print', 
+                            className: 'buttons-print', 
+                            action: function(e, dt, node, config) {
+                                let cartId = $('#confirmation').data('id');
+
+                                if (customerId) {
+
+                                    window.open(`/admin/reservations/${cartId}?print=1`,
+                                        '_blank');
+                                } else {
+                                    alert('Customer ID not found');
+                                }
+                            }
+                        }
+                    ],
                     language: {
                         search: 'Search: ',
                         lengthMenu: 'Show _MENU_ entries'

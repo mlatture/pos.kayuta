@@ -28,6 +28,7 @@ class Payment extends Model
 
     protected $casts = [
         'payment' => 'float',
+        'created_at' => 'datetime',
     ];
 
     public function storePayment($data = [])
