@@ -168,7 +168,7 @@
                 </tr>
                 <tr>
                     <td colspan="3">Tax</td>
-                    <td colspan="4">{{ $accumulatedTax < 0 ? 'No Tax' : '' }}</td>
+                    <td colspan="4">{{ round($accumulatedTax, 2) <= 0 ? 'No Tax' : '' }}</td>
                     <td>${{ number_format($accumulatedTax, 2) }}</td>
                 </tr>
                 <tr>
