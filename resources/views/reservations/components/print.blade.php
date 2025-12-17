@@ -88,9 +88,9 @@
         <div class="header-section">
             <div class="customer-info">
 
-                <strong>{{ $user->f_name ?? '' }} {{ $user->l_name ?? '' }}</strong><br>
-                {{ $user->street_address }}<br>
-                {{ $user->city }}, {{ $user->state }} {{ $user->zip }}<br>
+                <strong>{{  ucfirst($user->f_name ?? '') }} {{  ucfirst($user->l_name ?? '') }}</strong><br>
+                {{ ucfirst($user->street_address ?? '') }}<br>
+                {{ ucfirst($user->city ?? '') }}, {{ strtoupper($user->state ?? '') }} {{ $user->zip }}<br>
                 {{ $user->email }}
             </div>
             <div class="confirmation-box">
@@ -168,7 +168,7 @@
                 </tr>
                 <tr>
                     <td colspan="3">Tax</td>
-                    <td colspan="4">{{ round($accumulatedTax, 2) <= 0 ? 'No Tax' : '' }}</td>
+                    <td colspan="4">{{ ($accumulatedTax <= 0.00 ? 'No Tax' : '') }}</td>
                     <td>${{ number_format($accumulatedTax, 2) }}</td>
                 </tr>
                 <tr>
