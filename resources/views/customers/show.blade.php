@@ -59,7 +59,7 @@
                                             data-bs-target="#reservationModal{{ $firstReservation->id }}">
                                             <i class="fas fa-info-circle"></i> View
                                         </button>
-                                        <a href="{{ route('reservations.edit', $firstReservation->cartid) }}"
+                                        <a href="{{ route('admin.reservations.show', $firstReservation->cartid) }}"
                                             class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
                                     </td>
                                     <td>Booking #{{ $firstReservation->cartid }}</td>
