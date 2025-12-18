@@ -454,7 +454,7 @@ Route::prefix('admin')
         Route::post('cart-settings/update', [BusinessSettingController::class, 'cartUpdate'])->name('admin.cart-settings.update');
         Route::post('electric-meter-rate/update', [BusinessSettingController::class, 'electricMeterRateUpdate'])->name('admin.electric-meter-rate.update');
         Route::post('dynamic-pricing-settings/update', [BusinessSettingController::class, 'dynamicPricingUpdate'])->name('admin.dynamic-pricing-settings.update');
-        Route::post('platform-fee-settings/update', [BusinessSettingController::class, 'platformFeeUpdate'])->name('admin.platform-fee-settings.update');
+        Route::post('platform-fee-settings/update', [BusinessSettingController::class, 'platformFeeAndDynamicUpdate'])->name('admin.platform-fee-settings.update');
         Route::post('api-channels', [ApiChannelController::class, 'store'])->name('admin.api_channels.store');
         Route::post('api-channels/{id}/rotate', [ApiChannelController::class, 'rotate'])->name('admin.api_channels.rotate');
         Route::post('api-channels/{id}/revoke', [ApiChannelController::class, 'revoke'])->name('admin.api_channels.revoke');

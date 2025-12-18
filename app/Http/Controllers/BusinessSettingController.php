@@ -42,15 +42,11 @@ class BusinessSettingController extends Controller
 
             $settings2[$key] = $row->$key ?? null;
         }
-        
-        $q = DB::table('booking_channels')
-            ->select('id','property_id','channel_id','name','status','sandbox','last_used_at','created_at')
-            ->when($request->get('status'), fn($qq,$s)=>$qq->where('status',$s))
-            ->when($request->get('channel_id'), fn($qq,$cid)=>$qq->where('channel_id',$cid))
-            ->orderByDesc('created_at');
+
+        $q = DB::table('booking_channels')->select('id', 'property_id', 'channel_id', 'name', 'status', 'sandbox', 'last_used_at', 'created_at')->when($request->get('status'), fn($qq, $s) => $qq->where('status', $s))->when($request->get('channel_id'), fn($qq, $cid) => $qq->where('channel_id', $cid))->orderByDesc('created_at');
 
         $settings['items'] = $q->paginate(25);
-        $settings['filters'] = $request->only(['status','channel_id']);
+        $settings['filters'] = $request->only(['status', 'channel_id']);
 
         return view('settings.index', compact('settings', 'settings2'));
     }
@@ -79,7 +75,9 @@ class BusinessSettingController extends Controller
             }
         }
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'general')->with('success', 'General Settings Updated Successfully!');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'general')
+            ->with('success', 'General Settings Updated Successfully!');
     }
 
     public function cookieUpdate(Request $request)
@@ -91,21 +89,18 @@ class BusinessSettingController extends Controller
 
         BusinessSettings::set('cookie_setting', json_encode($data));
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'cookie')->with('success', 'Cookie Settings updated.');
-    }
-
-    public function dynamicPricingUpdate(Request $request)
-    {
-        BusinessSettings::set('dynamic_pricing', $request->has('togglePricing') ? 1 : 0);
-
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'pricing')->with('success', 'Dynamic pricing settings updated.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'cookie')
+            ->with('success', 'Cookie Settings updated.');
     }
 
     public function searchUpdate(Request $request)
     {
         Setting::gridViewUpdate('is_grid_view', $request->has('grid_view') ? '1' : '0');
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'search')->with('success', 'Search Settings updated.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'search')
+            ->with('success', 'Search Settings updated.');
     }
 
     public function cartUpdate(Request $request)
@@ -131,7 +126,9 @@ class BusinessSettingController extends Controller
             }
         }
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'cart')->with('success', 'Cart Settings updated Successfully.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'cart')
+            ->with('success', 'Cart Settings updated Successfully.');
     }
 
     public function toggleMaintenance(Request $request)
@@ -166,7 +163,9 @@ class BusinessSettingController extends Controller
             ]);
         }
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'cancellation')->with('success', 'Cancellation settings updated.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'cancellation')
+            ->with('success', 'Cancellation settings updated.');
     }
 
     public function electricMeterRateUpdate(Request $request)
@@ -189,20 +188,33 @@ class BusinessSettingController extends Controller
             ]);
         }
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'utility')->with('success', 'Electric Meter Rate updated successfully.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'utility')
+            ->with('success', 'Electric Meter Rate updated successfully.');
     }
-    
-    public function platformFeeUpdate(Request $request)
+
+    public function platformFeeAndDynamicUpdate(Request $request)
     {
-        $settings = [
-            'platform_fee_percent' => 0,
-            'platform_fee_fixed'   => 0,
-        ];
-        
-        foreach ($settings as $key => $default) {
-            BusinessSettings::set($key, $request->input($key, $default));
+        $validated = $request->validate([
+            'platform_fee_percent' => 'nullable|numeric|min:0',
+            'platform_fee_fixed' => 'nullable|numeric|min:0',
+            'toggle_pricing' => 'sometimes|in:on,1,0',
+        ]);
+
+        $keys = ['platform_fee_percent', 'platform_fee_fixed', 'dynamic_pricing'];
+
+        foreach ($keys as $key) {
+            if ($key === 'dynamic_pricing') {
+                $value = $request->has('toggle_pricing') ? '1' : '0';
+            } else {
+                $value = $request->input($key, 0) ?? 0;
+            }
+
+            BusinessSettings::set($key, (string) $value);
         }
 
-        return redirect()->to(route('admin.business-settings.index') . '#' . 'platformFee')->with('success', 'Platform fee settings updated.');
+        return redirect()
+            ->to(route('admin.business-settings.index') . '#' . 'pricing')
+            ->with('success', 'Platform fee settings updated.');
     }
 }

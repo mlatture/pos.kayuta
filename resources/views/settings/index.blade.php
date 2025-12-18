@@ -33,8 +33,7 @@
                 <a class="nav-link text-dark" id="email-tab" data-bs-toggle="tab" href="#email" role="tab">Email Templates</a>
             </li> --}}
             <li class="nav-item">
-                <a class="nav-link text-dark" id="pricing-tab" data-bs-toggle="tab" href="#pricing" role="tab">Use Dynamic
-                    Pricing</a>
+                <a class="nav-link text-dark" id="pricing-tab" data-bs-toggle="tab" href="#pricing" role="tab">Pricing & Rates</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-dark" id="cancellation-tab" data-bs-toggle="tab" href="#cancellation" role="tab">Cancellation Settings</a>
@@ -42,9 +41,9 @@
             <li class="nav-item">
                 <a class="nav-link text-dark" id="utility-tab" data-bs-toggle="tab" href="#utility" role="tab">Utility Settings</a>
             </li>
-            <li class="nav-item">
+            {{-- <li class="nav-item">
                 <a class="nav-link text-dark" id="platformFee-tab" data-bs-toggle="tab" href="#platformFee" role="tab">Platform Fee Settings</a>
-            </li>
+            </li> --}}
             <li class="nav-item">
                 <a class="nav-link text-dark" id="apiChannels-tab" data-bs-toggle="tab" href="#apiChannels" role="tab">API Channels Settings</a>
             </li>
@@ -62,7 +61,7 @@
             @include('settings.components.use-dynamic-pricing')
             @include('settings.components.cancellation')
             @include('settings.components.utility')
-            @include('settings.components.platform-fee')
+            {{-- @include('settings.components.platform-fee') --}}
             @include('settings.components.api-channels')
         </div>
     </div>
