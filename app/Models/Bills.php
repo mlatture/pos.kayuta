@@ -37,5 +37,9 @@ class Bills extends Model
         return $this->belongsTo(User::class, 'customer_id');
     }
 
+    public function paymentBill()
+    {
+        return $this->hasOne(PaymentBill::class, 'customer_id', 'customer_id');
+    }
 
 }

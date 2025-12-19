@@ -180,7 +180,7 @@ class Order extends Model
     
     public function cardsOnFile()
     {
-        return $this->hasMany(CardOnFile::class, 'order_id', 'id');
+        return $this->hasMany(CardsOnFile::class, 'order_id', 'id');
     }
     
 }

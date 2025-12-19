@@ -229,7 +229,19 @@
             }
 
             function setBalanceColor(total) {
-                $('#balanceNumber').css('color', (total === 0) ? '#000' : (total < 0 ? 'green' : 'red'));
+                const balanceEl = $('#balanceNumber');
+                const statusEl = $('#balanceStatus');
+
+                if (total > 0) {
+                    balanceEl.css('color', '#dc3545'); 
+                    statusEl.html('<span class="badge bg-danger">Due</span>');
+                } else if (total < 0) {
+                    balanceEl.css('color', '#198754'); 
+                    statusEl.html('<span class="badge bg-success">Credit</span>');
+                } else {
+                    balanceEl.css('color', '#000000'); 
+                    statusEl.html('<span class="badge bg-secondary">Settled</span>');
+                }
             }
 
             /* ---------------- Balance ---------------- */
@@ -283,11 +295,11 @@
                     beforeSend: function() {
                         $tbody.html(
                             `<tr>
-           <td colspan="5" class="text-center py-4">
-             <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-             Loading receipts…
-           </td>
-         </tr>`
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                                    Loading receipts…
+                                </td>
+                            </tr>`
                         );
                     }
                 })
@@ -304,12 +316,12 @@
                     rows.forEach(function(row) {
                         $tbody.append(
                             `<tr>
-           <td>${row.date ?? ''}</td>
-           <td>${row.type ?? ''}</td>
-           <td>${row.reference ?? ''}</td>
-           <td class="text-end">${money(row.amount)}</td>
-           <td>${row.status_badge ?? ''}</td>
-         </tr>`
+                            <td>${row.date ?? ''}</td>
+                            <td>${row.type ?? ''}</td>
+                            <td>${row.reference ?? ''}</td>
+                            <td class="text-end">${money(row.amount)}</td>
+                            <td>${row.status_badge ?? ''}</td>
+                            </tr>`
                         );
                     });
                 })

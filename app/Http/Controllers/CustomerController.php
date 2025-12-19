@@ -18,6 +18,7 @@ use App\Models\SystemLog;
 use App\Models\SeasonalRate;
 use App\Models\GiftCard;
 
+use App\Services\CustomerBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -25,12 +26,15 @@ use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
-    public function __construct()
+    protected CustomerBalanceService $balanceService;
+    public function __construct(CustomerBalanceService $balanceService)
     {
         $this->middleware('admin_has_permission:' . config('constants.role_modules.list_customers.value'))->only(['index']);
         $this->middleware('admin_has_permission:' . config('constants.role_modules.create_customers.value'))->only(['create', 'store']);
         $this->middleware('admin_has_permission:' . config('constants.role_modules.edit_customers.value'))->only(['edit', 'update']);
         $this->middleware('admin_has_permission:' . config('constants.role_modules.delete_customers.value'))->only(['destroy']);
+
+        $this->balanceService = $balanceService;
     }
 
     /**
@@ -62,7 +66,7 @@ class CustomerController extends Controller
                                 ->orWhere(DB::raw("CONCAT(f_name, ' ', l_name)"), 'like', "%{$search}%")
                                 ->orWhere('email', 'like', "%{$search}%")
                                 ->orWhere('phone', 'like', "%{$search}%");
-                                // ->orWhere('street_address', 'like', "%{$search}%");
+                            // ->orWhere('street_address', 'like', "%{$search}%");
                         });
                     }
                 })
@@ -314,56 +318,36 @@ class CustomerController extends Controller
 
     public function balance(User $customer)
     {
-        $rDue = (float) Reservation::where('customernumber', $customer->id)
-            ->where(function ($q) {
-                $q->whereNull('status')->orWhere('status', '!==', 'Cancelled');
-            })
-            ->sum(DB::raw('COALESCE(totalcharges,0) - COALESCE(totalpayments,0)'));
-
-        $uDue = 0.0;
-        $sDue = 0.0;
-        $pDue = 0.0;
-        $gCredit = 0.0;
-
-        $total = round($rDue + $uDue + $sDue + $pDue - $gCredit, 2);
-
-        return response()->json([
-            'success' => true,
-            'total' => $total,
-            'parts' => [
-                'r' => ['due' => $rDue],
-                'u' => ['due' => $uDue],
-                's' => ['due' => $sDue],
-                'p' => ['due' => $pDue],
-                'g' => ['credit' => $gCredit],
-            ],
-        ]);
+        $balanceData = $this->balanceService->getDetailedBalance($customer);
+        return response()->json($balanceData);
     }
 
     public function receipts(User $customer)
     {
-        $rows = Reservation::where('customernumber', $customer->id)
-            ->select([DB::raw('COALESCE(created, created_at, createdate) as d'), 'status', 'confirmation', 'xconfnum', 'rid', 'id', 'totalpayments'])
+        $resPayments = DB::table('payments')
+            ->where('customernumber', $customer->id)
+            ->select(['created_at as d', 'payment as amount', 'cartid as ref', DB::raw("'Reservation' as type")]);
+
+        $utilPayments = DB::table('payment_bills')
+            ->where('customer_id', $customer->id)
+            ->select(['created_at as d', 'payment as amount', 'site as ref', DB::raw("'Utility' as type")]);
+
+        $posPayments = DB::table('pos_payments')
+            ->select(['created_at as d', 'amount as amount', 'order_id as ref', DB::raw("'POS' as type")]);
+
+        $rows = $resPayments
+            ->union($utilPayments)
+            ->union($posPayments)
             ->orderByDesc('d')
-            ->limit(10)
+            ->limit(20)
             ->get()
-            ->map(function ($r) {
-                $status = (string) ($r->status ?? 'N/A');
-                $cls = match ($status) {
-                    'Paid', 'Success', 'Confirmed' => 'bg-success',
-                    'Pending', 'Processing' => 'bg-warning text-dark',
-                    'Cancelled', 'Failed' => 'bg-danger',
-                    default => 'bg-secondary',
-                };
-
-                $reference = $r->confirmation ?: ($r->xconfnum ?: ($r->rid ?: $r->id));
-
+            ->map(function ($p) {
                 return [
-                    'date' => $this->fmtDate($r->d),
-                    'type' => 'Reservation',
-                    'reference' => (string) $reference,
-                    'amount' => (float) ($r->totalpayments ?? 0),
-                    'status_badge' => '<span class="badge ' . $cls . '">' . e($status) . '</span>',
+                    'date' => \Carbon\Carbon::parse($p->d)->format('M d, Y'),
+                    'type' => $p->type,
+                    'reference' => '#' . $p->ref,
+                    'amount' => (float) $p->amount,
+                    'status_badge' => '<span class="badge bg-success">Paid</span>',
                 ];
             });
 
