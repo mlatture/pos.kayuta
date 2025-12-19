@@ -398,9 +398,27 @@ Route::prefix('admin')
         Route::get('/registers/get', [StationRegisterController::class, 'getRegister'])->name('registers.get');
         Route::get('reservations/relocate/{id}', [CalendarReservationController::class, 'index']);
 
+        Route::get('reservations/global-search', [\App\Http\Controllers\AdminReservationController::class, 'globalSearch'])->name('admin.reservations.globalSearch');
+        
         /**
          * Update to Single Canonical Reservation View
-         */ Route::get('reservations/{id}', [CalendarReservationController::class, 'show'])->name('admin.reservations.show');
+         */ 
+        Route::get('reservations/{id}', [\App\Http\Controllers\AdminReservationController::class, 'show'])->name('admin.reservations.show');
+        Route::post('reservations/{id}/checkin', [\App\Http\Controllers\AdminReservationController::class, 'checkin'])->name('admin.reservations.checkin');
+        Route::post('reservations/{id}/checkout', [\App\Http\Controllers\AdminReservationController::class, 'checkout'])->name('admin.reservations.checkout');
+        
+        // Legacy Redirects
+        Route::get('reservations/edit/{id}', function ($id) {
+            return redirect()->route('admin.reservations.show', ['id' => $id]);
+        });
+        
+        Route::get('reservations/details', function () {
+             // If query param 'id' exists, redirect to canonical, else 404
+             if (request()->has('id')) {
+                 return redirect()->route('admin.reservations.show', ['id' => request('id')]);
+             }
+             abort(404);
+        })->name('reservations.details.legacy');
 
         
         Route::get('reservations/unavailable-dates', [CalendarReservationController::class, 'getUnavailableDates'])->name('reservations.unavailable-dates');

@@ -358,8 +358,12 @@
 
 
         $(document).on('click', '.reservation-details', function() {
-            let reservationId = $(this).data('reservation-id');
-            fetchReservationDetails(reservationId);
+            let cartId = $(this).data('cart-id');
+            if (cartId) {
+                window.location.href = "{{ route('admin.reservations.show', ':id') }}".replace(':id', cartId);
+            } else {
+                console.error('Cart ID not found for reservation');
+            }
         });
 
         function fetchReservationDetails(reservationId) {
