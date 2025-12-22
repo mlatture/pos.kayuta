@@ -33,6 +33,7 @@ use App\Models\Refund;
 use App\Mail\ReservationCancelled;
 use App\Models\BusinessSettings;
 use Illuminate\Support\Facades\Mail;
+use App\Services\ReservationLogService;
 
 class NewReservationController extends Controller
 {
@@ -91,9 +92,21 @@ class NewReservationController extends Controller
 
         try {
             $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
+            
+            $oldValue = ['checkedin' => $reservation->checkedin];
+
             $reservation->update([
                 'checkedin' => Carbon::now(),
             ]);
+
+            // Log event
+            app(ReservationLogService::class)->log(
+                $reservation->id,
+                'check_in',
+                $oldValue,
+                ['checkedin' => $reservation->checkedin],
+                'Guest checked in'
+            );
 
             return response()->json(['success' => true, 'message' => 'Reservation checked in successfully.', 'checked_in_date' => $reservation->checkedin->format('Y-m-d H:i:s')], 200);
         } catch (Exception $e) {
@@ -122,9 +135,20 @@ class NewReservationController extends Controller
             $reservation = Reservation::where('cartid', $cartid)->firstOrFail();
             $customer_email = User::where('id', $reservation->customernumber)->value('email');
 
+            $oldValue = ['checkedout' => $reservation->checkedout];
+
             $reservation->update([
                 'checkedout' => Carbon::now(),
             ]);
+
+            // Log event
+            app(ReservationLogService::class)->log(
+                $reservation->id,
+                'check_out',
+                $oldValue,
+                ['checkedout' => $reservation->checkedout],
+                'Guest checked out'
+            );
 
             // Generate unique token for survey
             do {
@@ -370,6 +394,17 @@ class NewReservationController extends Controller
         $customerNumber = $reservations->first()->customernumber;
 
         $customers = User::where('id', $customerNumber)->first();
+
+        // Log print/invoice view
+        if ($reservations->isNotEmpty()) {
+            app(ReservationLogService::class)->log(
+                $reservations->first()->id,
+                'print_invoice',
+                null,
+                null,
+                'Invoice viewed/printed'
+            );
+        }
 
         return view('reservations.payment', compact('payment', 'reservations', 'cart', 'customers'));
     }
@@ -645,6 +680,15 @@ class NewReservationController extends Controller
             ]);
 
             $reservation->save();
+            
+            // Log creation
+            app(ReservationLogService::class)->log(
+                $reservation->id,
+                'created',
+                null,
+                $reservation->toArray(),
+                'Reservation created'
+            );
         }
     }
 
@@ -1083,14 +1127,38 @@ class NewReservationController extends Controller
                 'method' => $refundMethod,
             ]);
 
+            $oldReservation = Reservation::find($reservationId);
+            $oldStatus = $oldReservation->status;
+
             Reservation::where('id', $reservationId)->update([
                 'status' => 'Cancelled',
                 'reason' => $reason,
             ]);
+
+            // Log cancellation
+            app(ReservationLogService::class)->log(
+                $reservationId,
+                'cancelled',
+                ['status' => $oldStatus],
+                ['status' => 'Cancelled', 'reason' => $reason],
+                "Reservation cancelled during refund. Method: $refundMethod"
+            );
         }
 
         try {
             Mail::to($userEmail)->send(new ReservationCancelled($cartid, $request->sites, $refundMethod));
+            
+            // Log email sent
+            $firstRes = Reservation::where('cartid', $cartid)->first();
+            if ($firstRes) {
+                app(ReservationLogService::class)->log(
+                    $firstRes->id,
+                    'email',
+                    null,
+                    ['type' => 'ReservationCancelled', 'to' => $userEmail],
+                    'Cancellation email sent to guest'
+                );
+            }
         } catch (\Exception $e) {
             Log::error('Mail sending failed: ' . $e->getMessage());
         }

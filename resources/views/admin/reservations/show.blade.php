@@ -230,44 +230,101 @@
     </div>
 
     <!-- System Logs -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-secondary">System Logs (Read-Only)</h6>
-        </div>
-        <div class="card-body">
-             @if($logs->isEmpty())
-                <p class="text-muted">No logs found for this reservation.</p>
-            @else
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-xs table-hover" style="font-size: 0.85rem;">
-                        <thead>
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-secondary">System Logs (Read-Only)</h6>
+    </div>
+
+    <div class="card-body">
+        @if($logs->isEmpty())
+            <p class="text-muted mb-0">No logs found for this reservation.</p>
+        @else
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0" style="font-size: 0.85rem;">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="white-space:nowrap;">Timestamp</th>
+                            <th>Type</th>
+                            <th>User</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach($logs as $log)
+                            @php
+                                // Human readable time (e.g., "2 minutes ago")
+                                $humanTime = optional($log->created_at)->diffForHumans() ?? '-';
+
+                                // Exact timestamp for tooltip
+                                $exactTime = optional($log->created_at)->format('Y-m-d H:i:s') ?? '';
+
+                                // User display
+                                $userName = $log->user
+                                    ? trim(($log->user->f_name ?? '') . ' ' . ($log->user->l_name ?? ''))
+                                    : 'System';
+
+                                if ($userName === '') $userName = 'User #' . ($log->user_id ?? '');
+                            @endphp
+
                             <tr>
-                                <th>Timestamp</th>
-                                <th>Type</th>
-                                <th>User</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($logs as $log)
-                            <tr>
-                                <td style="white-space:nowrap;">{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
-                                <td>{{ $log->transaction_type }}</td>
-                                <td>{{ $log->user_id ?? 'System' }}</td>
+                                <td style="white-space:nowrap;" title="{{ $exactTime }}">
+                                    {{ $humanTime }}
+                                    <div class="text-muted" style="font-size:0.75rem;">
+                                        {{ $exactTime }}
+                                    </div>
+                                </td>
+
+                                <td>{{ $log->event_type ?? $log->transaction_type ?? '-' }}</td>
+
+                                <td>
+                                    {{ $userName }}
+                                </td>
+
                                 <td>
                                     <details>
-                                        <summary>View Changes</summary>
-                                        <pre class="mt-2 bg-light p-2 rounded">{{ json_encode(json_decode($log->after), JSON_PRETTY_PRINT) }}</pre>
+                                        <summary>View</summary>
+
+                                        <div class="mt-2">
+                                            @if(!empty($log->comment))
+                                                <div class="mb-2">
+                                                    <strong>Comment:</strong>
+                                                    <div class="text-muted">{{ $log->comment }}</div>
+                                                </div>
+                                            @endif
+
+                                            <div class="mb-2">
+                                                <strong>IP:</strong>
+                                                <span class="text-muted">{{ $log->ip_address ?? '-' }}</span>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <strong>Old Value</strong>
+                                                <pre class="mt-1 bg-light p-2 rounded mb-2" style="white-space:pre-wrap;">{{ is_string($log->old_value) ? $log->old_value : json_encode($log->old_value, JSON_PRETTY_PRINT) }}</pre>
+
+                                                <strong>New Value</strong>
+                                                <pre class="mt-1 bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">{{ is_string($log->new_value) ? $log->new_value : json_encode($log->new_value, JSON_PRETTY_PRINT) }}</pre>
+                                            </div>
+
+                                            {{-- Optional: if you have a JSON column like `after` / `before`, show it --}}
+                                            @if(!empty($log->after))
+                                                <div class="mt-2">
+                                                    <strong>Raw</strong>
+                                                    <pre class="mt-1 bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">{{ json_encode(json_decode($log->after), JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </details>
                                 </td>
                             </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
+</div>
+
 
 </div>
 @endsection

@@ -10,6 +10,8 @@ use App\Models\SystemLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use App\Services\ReservationLogService;
+use App\Models\ReservationLog;
 
 class AdminReservationController extends Controller
 {
@@ -35,20 +37,11 @@ class AdminReservationController extends Controller
         }
 
         // Logs must never break the page
-        $logs = collect();
-
-        // Only attempt logs if table exists
-        if (Schema::hasTable('system_logs')) {
-            try {
-                $logs = SystemLog::where('confirmation_number', $id)
-                    ->orWhere('description', 'like', "%$id%")
-                    ->orderBy('created_at', 'desc')
-                    ->take(50)
-                    ->get();
-            } catch (\Throwable $e) {
-                $logs = collect(); // absolute safe fallback
-            }
-        }
+        $logs = ReservationLog::where('reservation_id', $mainReservation->id)
+            ->orWhere('reservation_id', $id) // in case it was logged by cart ID
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
 
         return view('admin.reservations.show', compact(
             'reservations', 'mainReservation', 'user', 'payments', 'logs'
@@ -176,30 +169,40 @@ class AdminReservationController extends Controller
 
     private function logAction($type, $cartId, $mainReservation)
     {
-        // Hard bypass: if table not ready, do nothing
-        if (!Schema::hasTable('system_logs')) {
-            return;
-        }
-
         try {
-            SystemLog::create([
-                'transaction_type' => $type,
-                'status' => 'Success',
-                'payment_type' => 'N/A',
-                'confirmation_number' => $cartId,
-                'customer_name' => trim(($mainReservation->fname ?? '') . ' ' . ($mainReservation->lname ?? '')),
-                'customer_email' => $mainReservation->email ?? '',
-                'user_id' => Auth::id(),
-                'description' => "Reservation #$cartId - $type",
-                'before' => null,
-                'after' => json_encode([
-                    'cartid' => $cartId,
-                    'action' => $type,
-                    'timestamp' => Carbon::now()->toDateTimeString(),
-                    'user' => Auth::user()->name ?? 'Unknown'
-                ]),
-                'created_at' => Carbon::now(),
-            ]);
+            // Mapping UI type to event_type
+            $eventType = strtolower(str_replace('-', '_', $type));
+            if ($type === 'Print') $eventType = 'print_invoice';
+
+            app(ReservationLogService::class)->log(
+                $mainReservation->id ?? $cartId,
+                $eventType,
+                null,
+                null,
+                "Reservation #$cartId - $type"
+            );
+
+            // Keep old logging for backward compatibility if table exists
+            if (Schema::hasTable('system_logs')) {
+                SystemLog::create([
+                    'transaction_type' => $type,
+                    'status' => 'Success',
+                    'payment_type' => 'N/A',
+                    'confirmation_number' => $cartId,
+                    'customer_name' => trim(($mainReservation->fname ?? '') . ' ' . ($mainReservation->lname ?? '')),
+                    'customer_email' => $mainReservation->email ?? '',
+                    'user_id' => Auth::id(),
+                    'description' => "Reservation #$cartId - $type",
+                    'before' => null,
+                    'after' => json_encode([
+                        'cartid' => $cartId,
+                        'action' => $type,
+                        'timestamp' => Carbon::now()->toDateTimeString(),
+                        'user' => Auth::user()->name ?? 'Unknown'
+                    ]),
+                    'created_at' => Carbon::now(),
+                ]);
+            }
         } catch (\Throwable $e) {
             // bypass silently
             return;
