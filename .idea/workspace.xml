@@ -5,13 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5da3a974-6b92-41bb-97d0-b8fc01c4d206" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminReservationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminReservationController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/NewReservationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/NewReservationController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/migrations/2024_10_07_113905_modify_column_in_pos_payments_table.php" beforeDir="false" afterPath="$PROJECT_DIR$/database/migrations/2024_10_07_113905_modify_column_in_pos_payments_table.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/admin/reservations/show.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/reservations/show.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/reservations/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/reservations/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Models/PaymentBill.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Services/CustomerBalanceService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/CustomerController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/CustomerController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Bills.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Bills.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Order.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Order.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Reservation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Reservation.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Site.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Site.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/User.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/User.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/customers/account.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/customers/account.blade.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,18 +27,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "malikahfaz"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;malikahfaz&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/mlatture/pos.kayuta.git",
-    "accountId": "e61d20ec-0756-4d9b-ba77-fe3a60d5b7b0"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/mlatture/pos.kayuta.git&quot;,
+    &quot;accountId&quot;: &quot;e61d20ec-0756-4d9b-ba77-fe3a60d5b7b0&quot;
   }
-}]]></component>
+}</component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../php/php.exe">
     <include_path>
       <path value="$PROJECT_DIR$/vendor/sabberworm/php-css-parser" />
@@ -208,10 +210,10 @@
       <path value="$PROJECT_DIR$/vendor/spatie/laravel-permission" />
     </include_path>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 4
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="37BaUsW3atATZd3IXpEPYQLJGbG" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -222,7 +224,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "reservationDetails",
+    "git-widget-placeholder": "Merging reservationDetails",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -253,6 +255,7 @@
       <option name="presentableId" value="Default" />
       <updated>1766378937025</updated>
       <workItem from="1766378937986" duration="1849000" />
+      <workItem from="1766424066769" duration="128000" />
     </task>
     <servers />
   </component>

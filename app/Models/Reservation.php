@@ -77,6 +77,11 @@ class Reservation extends Model
         return $this->hasOne(Site::class, 'siteid', 'siteid');
     }
 
+    public function sites()
+    {
+        return $this->belongsTo(Site::class, 'siteid', 'siteid');
+    }
+
     public function siteForSeasonal()
     {
         return $this->belongsTo(Site::class, 'siteid', 'siteid');

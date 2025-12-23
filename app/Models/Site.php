@@ -371,4 +371,6 @@ class Site extends Model
     {
         return $this->hasMany(Reservation::class, 'siteid', 'siteid');
     }
+    
+   
 }
