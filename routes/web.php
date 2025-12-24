@@ -59,6 +59,7 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\ContentIdeaController;
 
 use App\Http\Controllers\Api\IdeaController;
+use App\Http\Controllers\MoneyActionController;
 
 
 Route::get('/', function () {
@@ -406,6 +407,14 @@ Route::prefix('admin')
         Route::get('reservations/{id}', [\App\Http\Controllers\AdminReservationController::class, 'show'])->name('admin.reservations.show');
         Route::post('reservations/{id}/checkin', [\App\Http\Controllers\AdminReservationController::class, 'checkin'])->name('admin.reservations.checkin');
         Route::post('reservations/{id}/checkout', [\App\Http\Controllers\AdminReservationController::class, 'checkout'])->name('admin.reservations.checkout');
+
+        // Money Actions
+        Route::prefix('money')->group(function () {
+            Route::post('charge/{id}', [MoneyActionController::class, 'addCharge'])->name('admin.money.charge');
+            Route::post('cancel/{id}', [MoneyActionController::class, 'cancel'])->name('admin.money.cancel');
+            Route::post('move/{id}', [MoneyActionController::class, 'moveSite'])->name('admin.money.move');
+            Route::post('change-dates/{id}', [MoneyActionController::class, 'changeDates'])->name('admin.money.change-dates');
+        });
         
         // Legacy Redirects
         Route::get('reservations/edit/{id}', function ($id) {

@@ -100,6 +100,32 @@
                                 <i class="fas fa-sign-out-alt me-1"></i> Check Out
                             </button>
                         </form>
+
+                        <div class="vr mx-2"></div>
+
+                        <!-- Money Actions Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-warning btn-sm dropdown-toggle" type="button" id="moneyActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-hand-holding-usd me-1"></i> Money Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="moneyActionsDropdown">
+                                <li><h6 class="dropdown-header">Billing & Refunds</h6></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addChargeModal">
+                                    <i class="fas fa-plus-circle me-2 text-primary"></i> Add Charge
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#cancelReservationModal">
+                                    <i class="fas fa-times-circle me-2 text-danger"></i> Cancel / Refund
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Modification</h6></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#moveSiteModal">
+                                    <i class="fas fa-exchange-alt me-2 text-info"></i> Move Sites
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changeDatesModal">
+                                    <i class="fas fa-calendar-alt me-2 text-success"></i> Change Dates
+                                </a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -327,4 +353,307 @@
 
 
 </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Add Charge Modal -->
+<div class="modal fade" id="addChargeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="addChargeForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Additional Charge</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Amount ($)</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" required placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax (%) - Default 8.75%</label>
+                        <input type="number" step="0.01" name="tax_percent" id="addChargeTaxPercent" class="form-control" value="8.75">
+                        <input type="hidden" name="tax" id="addChargeTaxAmount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment / Reason</label>
+                        <textarea name="comment" class="form-control" required placeholder="Explain this charge..."></textarea>
+                    </div>
+                    <div class="alert alert-info py-2">
+                        <strong>Preview:</strong> Total including tax: $<span id="addChargePreview">0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Charge</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cancel Reservation Modal -->
+<div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form id="cancelReservationForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Reservation / Refund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Select Sites to Cancel:</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAllSites"></th>
+                                    <th>Site</th>
+                                    <th>Dates</th>
+                                    <th>Total Paid</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($reservations as $res)
+                                @if($res->status !== 'Cancelled')
+                                <tr>
+                                    <td><input type="checkbox" name="reservation_ids[]" value="{{ $res->id }}" class="site-checkbox" data-amount="{{ $res->total }}"></td>
+                                    <td>{{ $res->siteid }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($res->cid)->format('M d') }} - {{ \Carbon\Carbon::parse($res->cod)->format('M d') }}</td>
+                                    <td>${{ number_format($res->total, 2) }}</td>
+                                </tr>
+                                @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Refund Method</label>
+                            <select name="method" class="form-select" required>
+                                <option value="credit_card">Original Credit Card</option>
+                                <option value="cash">Cash</option>
+                                <option value="account_credit">Account Credit</option>
+                                <option value="gift_card">Gift Card</option>
+                                <option value="other">Other / Waive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Refund Amount ($)</label>
+                            <input type="number" step="0.01" name="refund_amount" class="form-control" value="0.00">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Fee ($)</label>
+                            <input type="number" step="0.01" name="fee" class="form-control" value="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cancellation Reason</label>
+                        <textarea name="reason" class="form-control" required placeholder="Passenger requested cancellation..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning py-2 mb-0">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Refunds to Credit Card are <strong>final</strong> and processed via Cardknox.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Move Site Modal -->
+<div class="modal fade" id="moveSiteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="moveSiteForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Move Site</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Site Segment</label>
+                        <select name="reservation_id" id="moveSiteResSelect" class="form-select" required>
+                            @foreach($reservations as $res)
+                                <option value="{{ $res->id }}" data-site="{{ $res->siteid }}">Site {{ $res->siteid }} ({{ \Carbon\Carbon::parse($res->cid)->format('M d') }} - {{ \Carbon\Carbon::parse($res->cod)->format('M d') }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Site ID</label>
+                        <input type="text" name="new_site_id" id="newSiteIdInput" class="form-control" required placeholder="e.g. 101">
+                        <small class="text-muted">Currently at: <span id="currentMoveSite">N/A</span></small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Override Price ($) <small class="text-muted">(Optional)</small></label>
+                        <input type="number" step="0.01" name="override_price" class="form-control" placeholder="Leave blank for auto-calc">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment</label>
+                        <textarea name="comment" class="form-control" required placeholder="Reason for move..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-white">Move Site</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Change Dates Modal -->
+<div class="modal fade" id="changeDatesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="changeDatesForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Reservation Dates</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Site Segment</label>
+                        <select name="reservation_id" id="changeDatesResSelect" class="form-select" required>
+                            @foreach($reservations as $res)
+                                <option value="{{ $res->id }}" data-cid="{{ $res->cid->format('Y-m-d') }}" data-cod="{{ $res->cod->format('Y-m-d') }}">Site {{ $res->siteid }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Arrival</label>
+                            <input type="date" name="cid" id="changeCid" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departure</label>
+                            <input type="date" name="cod" id="changeCod" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Override Price ($) <small class="text-muted">(Optional)</small></label>
+                        <input type="number" step="0.01" name="override_price" class="form-control" placeholder="Leave blank for auto-calc">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment</label>
+                        <textarea name="comment" class="form-control" required placeholder="Reason for date change..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('js')
+<script>
+$(function() {
+    // Shared AJAX Handler
+    const handleAction = (url, formData, modal) => {
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait while we update financial records.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: formData,
+            success: (res) => {
+                if (res.success) {
+                    Swal.fire('Success!', res.message, 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            },
+            error: (err) => {
+                Swal.fire('Error', err.responseJSON?.message || 'Something went wrong.', 'error');
+            }
+        });
+    };
+
+    // Add Charge Calculations
+    $('#addChargeForm input[name="amount"], #addChargeTaxPercent').on('input', function() {
+        const amount = parseFloat($('#addChargeForm input[name="amount"]').val()) || 0;
+        const taxPercent = parseFloat($('#addChargeTaxPercent').val()) || 0;
+        const taxAmount = amount * (taxPercent / 100);
+        const total = amount + taxAmount;
+        
+        $('#addChargeTaxAmount').val(taxAmount.toFixed(4));
+        $('#addChargePreview').text(total.toFixed(2));
+    });
+
+    $('#addChargeForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = '{{ $mainReservation->id }}';
+        handleAction('{{ url("admin/money/charge") }}/' + id, $(this).serialize(), '#addChargeModal');
+    });
+
+    // Cancel / Refund Logic
+    $('#selectAllSites').on('change', function() {
+        $('.site-checkbox').prop('checked', $(this).is(':checked')).trigger('change');
+    });
+
+    $('.site-checkbox').on('change', function() {
+        let totalVal = 0;
+        $('.site-checkbox:checked').each(function() {
+            totalVal += parseFloat($(this).data('amount')) || 0;
+        });
+        $('#cancelReservationForm input[name="refund_amount"]').val(totalVal.toFixed(2));
+    });
+
+    $('#cancelReservationForm').on('submit', function(e) {
+        e.preventDefault();
+        const cartId = '{{ $mainReservation->cartid }}';
+        if ($('.site-checkbox:checked').length === 0) {
+            return Swal.fire('Error', 'Please select at least one site to cancel.', 'error');
+        }
+        handleAction('{{ url("admin/money/cancel") }}/' + cartId, $(this).serialize(), '#cancelReservationModal');
+    });
+
+    // Move Site Initialize
+    $('#moveSiteResSelect').on('change', function() {
+        $('#currentMoveSite').text($(this).find(':selected').data('site'));
+    }).trigger('change');
+
+    $('#moveSiteForm').on('submit', function(e) {
+        e.preventDefault();
+        const resId = $('#moveSiteResSelect').val();
+        handleAction('{{ url("admin/money/move") }}/' + resId, $(this).serialize(), '#moveSiteModal');
+    });
+
+    // Change Dates Initialize
+    $('#changeDatesResSelect').on('change', function() {
+        const sel = $(this).find(':selected');
+        $('#changeCid').val(sel.data('cid'));
+        $('#changeCod').val(sel.data('cod'));
+    }).trigger('change');
+
+    $('#changeDatesForm').on('submit', function(e) {
+        e.preventDefault();
+        const resId = $('#changeDatesResSelect').val();
+        handleAction('{{ url("admin/money/change-dates") }}/' + resId, $(this).serialize(), '#changeDatesModal');
+    });
+});
+</script>
+@endpush
 @endsection
