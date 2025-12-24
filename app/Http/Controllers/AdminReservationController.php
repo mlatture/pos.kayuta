@@ -30,6 +30,8 @@ class AdminReservationController extends Controller
 
         // Fetch Payments (safe)
         $payments = Payment::where('cartid', $id)->get() ?? collect();
+        $additionalPayments = \App\Models\AdditionalPayment::where('cartid', $id)->get();
+        $refunds = \App\Models\Refund::where('cartid', $id)->get();
 
         // Handle Print Logging (safe)
         if ($request->has('print') && (int)$request->input('print') === 1) {
@@ -44,7 +46,7 @@ class AdminReservationController extends Controller
             ->get();
 
         return view('admin.reservations.show', compact(
-            'reservations', 'mainReservation', 'user', 'payments', 'logs'
+            'reservations', 'mainReservation', 'user', 'payments', 'logs', 'additionalPayments', 'refunds'
         ));
     }
 

@@ -138,6 +138,31 @@ class CardKnoxService
         return $response;
     }
 
+    public function refund(string $xRefNum, float $amount, string $reason): array
+    {
+        $data = [
+            'xKey' => $this->apiKey,
+            'xCommand' => 'cc:refund',
+            'xVersion' => '5.0.0',
+            'xRefNum' => $xRefNum,
+            'xAmount' => number_format($amount, 2, '.', ''),
+            'xSoftwareName' => 'KayutaLake',
+            'xSoftwareVersion' => '1.0',
+            'xAllowDuplicate' => 'true',
+            'xDescription' => $reason,
+        ];
+
+        $response = $this->send($data);
+
+        \Log::info('Cardknox cc:refund', [
+            'ref' => $xRefNum,
+            'amount' => $amount,
+            'response' => $response,
+        ]);
+
+        return $response;
+    }
+
     /**
      * Send the request to Cardknox and parse response.
      *

@@ -13,32 +13,64 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Models\AdditionalPayment;
 use App\Services\ReservationLogService;
+use App\Services\CardKnoxService;
 
 class MoneyActionService
 {
+    protected $gateway;
     protected $logService;
 
-    public function __construct(ReservationLogService $logService)
+    public function __construct(ReservationLogService $logService, CardKnoxService $gateway)
     {
         $this->logService = $logService;
+        $this->gateway = $gateway;
     }
 
     /**
      * Add an additional charge to a reservation.
      */
-    public function addCharge(Reservation $reservation, float $amount, float $tax, string $comment)
+    public function addCharge(Reservation $reservation, float $amount, float $tax, string $comment, string $method = 'cash', ?string $token = null)
     {
-        return DB::transaction(function () use ($reservation, $amount, $tax, $comment) {
+        return DB::transaction(function () use ($reservation, $amount, $tax, $comment, $method, $token) {
             $oldState = $reservation->toArray();
             
-            // In this system, 'total' seems to be the source of truth for charges.
-            // We'll create a payment record flagged as 'Charge' if needed, or just update the reservation total.
-            // Based on existing logic, adding to 'total' and 'subtotal' is the way.
-            
+            $totalAmount = $amount + $tax;
+            $gatewayResponse = null;
+
+            if ($method === 'credit_card_on_file' || $method === 'credit_card') {
+                if (!$token) {
+                    throw new \Exception("Credit card token required for automated charge.");
+                }
+                
+                // Use CardKnoxService to process sale
+                $response = $this->gateway->saveSale($token, '000', $totalAmount, $reservation->fname . ' ' . $reservation->lname, $reservation->email);
+                
+                if (!$response['success']) {
+                    throw new \Exception("Gateway Error: " . ($response['message'] ?? 'Unknown error'));
+                }
+                $gatewayResponse = $response['data'];
+            }
+
+            // Create Additional Payment Record
+            $payment = AdditionalPayment::create([
+                'cartid' => $reservation->cartid,
+                'reservation_id' => $reservation->id,
+                'method' => $method,
+                'amount' => $amount,
+                'tax' => $tax,
+                'total' => $totalAmount,
+                'x_ref_num' => $gatewayResponse['xRefNum'] ?? null,
+                'receipt' => 'AC-' . time(),
+                'comment' => $comment,
+                'created_by' => Auth::user()->name ?? 'System',
+            ]);
+
+            // Update Reservation Totals
             $reservation->subtotal += $amount;
             $reservation->totaltax += $tax;
-            $reservation->total += ($amount + $tax);
+            $reservation->total += $totalAmount;
             $reservation->save();
 
             $this->logService->log(
@@ -46,7 +78,7 @@ class MoneyActionService
                 'add_charge',
                 $oldState,
                 $reservation->refresh()->toArray(),
-                $comment
+                "Added charge of \${$amount} + \${$tax} tax via {$method}. Comment: {$comment}. Gateway Ref: " . ($payment->x_ref_num ?? 'N/A')
             );
 
             return $reservation;
@@ -56,30 +88,49 @@ class MoneyActionService
     /**
      * Cancel specific reservations and issue refund.
      */
-    public function cancel(Reservation $mainReservation, array $reservationIds, float $refundAmount, float $fee, string $reason, string $method)
+    public function cancel(Reservation $mainReservation, array $reservationIds, float $refundAmount, float $fee, string $reason, string $method, string $overrideReason = '')
     {
-        return DB::transaction(function () use ($mainReservation, $reservationIds, $refundAmount, $fee, $reason, $method) {
+        return DB::transaction(function () use ($mainReservation, $reservationIds, $refundAmount, $fee, $reason, $method, $overrideReason) {
             $reservations = Reservation::whereIn('id', $reservationIds)->get();
             
             $results = [];
             
             if ($method === 'credit_card' && $refundAmount > 0) {
-                $results['gateway'] = $this->processCardknoxRefund($mainReservation, $refundAmount, $reason);
+                 // Find original payment reference for the Cart
+                $payment = Payment::where('cartid', $mainReservation->cartid)
+                    ->whereNotNull('x_ref_num')
+                    ->latest()
+                    ->first();
+
+                if (!$payment) {
+                    throw new \Exception("Original credit card reference (xRefNum) not found for this cart.");
+                }
+
+                $gatewayResult = $this->gateway->refund($payment->x_ref_num, $refundAmount, $reason);
+
+                if (($gatewayResult['xStatus'] ?? '') !== 'Approved') {
+                    Log::error("Cardknox Refund Failed", ['response' => $gatewayResult, 'cartid' => $mainReservation->cartid]);
+                    throw new \Exception("Refund Failed: " . ($gatewayResult['xError'] ?? 'Unknown gateway error'));
+                }
+                $results['gateway'] = $gatewayResult;
             }
 
             foreach ($reservations as $res) {
                 $oldState = $res->toArray();
                 $res->status = 'Cancelled';
-                $res->reason = $reason;
+                $res->reason = $reason . ($overrideReason ? " (Override: $overrideReason)" : "");
                 $res->save();
 
                 Refund::create([
                     'cartid' => $res->cartid,
+                    'reservations_id' => $res->id,
                     'amount' => $refundAmount / count($reservations), // Pro-rated or simplified
                     'cancellation_fee' => $fee / count($reservations),
-                    'reservations_id' => $res->id,
-                    'reason' => $reason,
                     'method' => $method,
+                    'reason' => $reason,
+                    'override_reason' => $overrideReason,
+                    'x_ref_num' => $results['gateway']['xRefNum'] ?? null,
+                    'created_by' => Auth::user()->name ?? 'System',
                 ]);
 
                 $this->logService->log(
@@ -87,7 +138,9 @@ class MoneyActionService
                     'cancelled',
                     $oldState,
                     $res->refresh()->toArray(),
-                    "Cancelled via MoneyActionService. Method: $method. Refund: $refundAmount. Fee: $fee. Gateway Info: " . json_encode($results['gateway'] ?? 'N/A')
+                    "Cancelled via MoneyAction. Method: $method. Refund: \$$refundAmount. Fee: \$$fee. Reason: $reason. " . 
+                    ($overrideReason ? "Override Reason: $overrideReason. " : "") .
+                    "Gateway Info: " . json_encode($results['gateway'] ?? 'N/A')
                 );
             }
 

@@ -77,12 +77,20 @@
                                        is_null($r->checkedin);
                             });
 
-                            // Check-Out Logic
+                             // Check-Out Logic
                             // Valid if ANY reservation is ((Checked In OR Active) AND Not Checked Out)
                             $canCheckOut = $reservations->contains(function($r) use ($activeStatuses) {
                                 return (!is_null($r->checkedin) || in_array($r->status, $activeStatuses)) && 
                                        is_null($r->checkedout);
                             });
+
+                            // Cancellation Logic
+                            $cancellationSetting = \App\Models\BusinessSettings::where('type', 'cancellation')->first();
+                            $cancellationData = json_decode($cancellationSetting->value ?? '{}', true);
+                            $defaultFee = (float)($cancellationData['cancellation_fee'] ?? 0);
+                            
+                            $totalPaid = $payments->sum('payment');
+                            $cartTotal = $reservations->sum('total');
                         @endphp
                         
                         <!-- Check In -->
@@ -191,7 +199,7 @@
 
     <!-- Financials -->
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Charges Breakdown</h6>
@@ -222,19 +230,18 @@
             </div>
         </div>
         
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Payments</h6>
+                    <h6 class="m-0 font-weight-bold text-success">Original Payments</h6>
                 </div>
                 <div class="card-body">
                     @if($payments->isEmpty())
-                        <p class="text-center text-muted">No payments recorded.</p>
+                        <p class="text-center text-muted">No original payments.</p>
                     @else
                         <table class="table table-sm table-striped">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
                                     <th>Method</th>
                                     <th>Amount</th>
                                 </tr>
@@ -242,7 +249,6 @@
                             <tbody>
                                 @foreach($payments as $payment)
                                 <tr>
-                                    <td>{{ $payment->created_at->format('M d, Y') }}</td>
                                     <td>{{ $payment->method }}</td>
                                     <td class="text-success fw-bold">${{ number_format($payment->payment, 2) }}</td>
                                 </tr>
@@ -253,7 +259,70 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">Additional Payments</h6>
+                </div>
+                <div class="card-body">
+                    @if($additionalPayments->isEmpty())
+                        <p class="text-center text-muted">No additional payments.</p>
+                    @else
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($additionalPayments as $ap)
+                                <tr>
+                                    <td>{{ $ap->method }}</td>
+                                    <td class="text-warning fw-bold">${{ number_format($ap->total, 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Refunds -->
+    @if(!$refunds->isEmpty())
+    <div class="card shadow mb-4 border-left-danger">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-danger">Payment Refunds & Cancellations</h6>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Method</th>
+                        <th>Refund</th>
+                        <th>Fee</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($refunds as $refund)
+                    <tr>
+                        <td>{{ $refund->created_at->format('M d, Y') }}</td>
+                        <td>{{ $refund->method }}</td>
+                        <td class="text-danger">-${{ number_format($refund->amount, 2) }}</td>
+                        <td class="text-secondary">${{ number_format($refund->cancellation_fee, 2) }}</td>
+                        <td>{{ $refund->reason }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     <!-- System Logs -->
   <div class="card shadow mb-4">
@@ -369,17 +438,30 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="method" id="addChargeMethod" class="form-select" required>
+                            <option value="cash">Cash</option>
+                            @if($mainReservation->cardOnFile)
+                                <option value="credit_card_on_file" data-token="{{ $mainReservation->cardOnFile->xtoken }}">Card on File ({{ $mainReservation->cardOnFile->xmaskedcardnumber }})</option>
+                            @endif
+                            <option value="credit_card_new">New Credit Card (Requires Terminal/Manual)</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="hidden" name="token" id="addChargeToken">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Amount ($)</label>
                         <input type="number" step="0.01" name="amount" class="form-control" required placeholder="0.00">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tax (%) - Default 8.75%</label>
-                        <input type="number" step="0.01" name="tax_percent" id="addChargeTaxPercent" class="form-control" value="8.75">
-                        <input type="hidden" name="tax" id="addChargeTaxAmount">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="addChargeTaxable" checked>
+                        <label class="form-check-label" for="addChargeTaxable">Taxable (8.75%)</label>
+                        <input type="hidden" name="tax" id="addChargeTaxAmount" value="0">
+                        <input type="hidden" id="addChargeTaxRate" value="0.0875">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Comment / Reason</label>
-                        <textarea name="comment" class="form-control" required placeholder="Explain this charge..."></textarea>
+                        <textarea name="comment" class="form-control" required placeholder="Explain this charge (e.g. Cleaning Fee, Damages)..."></textarea>
                     </div>
                     <div class="alert alert-info py-2">
                         <strong>Preview:</strong> Total including tax: $<span id="addChargePreview">0.00</span>
@@ -435,20 +517,33 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Refund Method</label>
                             <select name="method" class="form-select" required>
-                                <option value="credit_card">Original Credit Card</option>
-                                <option value="cash">Cash</option>
+                                <option value="credit_card">Original Credit Card (Gateway Refund)</option>
+                                <option value="cash">Cash / Manual</option>
                                 <option value="account_credit">Account Credit</option>
                                 <option value="gift_card">Gift Card</option>
                                 <option value="other">Other / Waive</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label">Refund Amount ($)</label>
-                            <input type="number" step="0.01" name="refund_amount" class="form-control" value="0.00">
+                            <label class="form-label">Pro-rated Paid ($)</label>
+                            <input type="number" step="0.01" id="proRatedPaid" class="form-control" readonly value="0.00">
+                            <small class="text-muted">Paid amount for these sites</small>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label">Fee ($)</label>
-                            <input type="number" step="0.01" name="fee" class="form-control" value="0.00">
+                            <label class="form-label">Refund Amount ($)</label>
+                            <input type="number" step="0.01" name="refund_amount" id="finalRefundAmount" class="form-control" value="0.00">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Cancellation Fee ($)</label>
+                            <input type="number" step="0.01" name="fee" id="cancellationFeeInput" class="form-control" value="{{ number_format($defaultFee, 2) }}">
+                            <input type="hidden" id="defaultCancellationFee" value="{{ $defaultFee }}">
+                        </div>
+                        <div class="col-md-8 mb-3" id="overrideReasonGroup" style="display: none;">
+                            <label class="form-label text-danger">Fee Override Reason (Required)</label>
+                            <input type="text" name="override_reason" id="overrideReasonInput" class="form-control" placeholder="Explain why fee was changed...">
                         </div>
                     </div>
 
@@ -592,10 +687,16 @@ $(function() {
     };
 
     // Add Charge Calculations
-    $('#addChargeForm input[name="amount"], #addChargeTaxPercent').on('input', function() {
+    $('#addChargeMethod').on('change', function() {
+        const sel = $(this).find(':selected');
+        $('#addChargeToken').val(sel.data('token') || '');
+    }).trigger('change');
+
+    $('#addChargeForm input[name="amount"], #addChargeTaxable').on('input change', function() {
         const amount = parseFloat($('#addChargeForm input[name="amount"]').val()) || 0;
-        const taxPercent = parseFloat($('#addChargeTaxPercent').val()) || 0;
-        const taxAmount = amount * (taxPercent / 100);
+        const isTaxable = $('#addChargeTaxable').is(':checked');
+        const taxRate = parseFloat($('#addChargeTaxRate').val()) || 0;
+        const taxAmount = isTaxable ? (amount * taxRate) : 0;
         const total = amount + taxAmount;
         
         $('#addChargeTaxAmount').val(taxAmount.toFixed(4));
@@ -614,12 +715,44 @@ $(function() {
     });
 
     $('.site-checkbox').on('change', function() {
-        let totalVal = 0;
+        let selectedResTotal = 0;
         $('.site-checkbox:checked').each(function() {
-            totalVal += parseFloat($(this).data('amount')) || 0;
+            selectedResTotal += parseFloat($(this).data('amount')) || 0;
         });
-        $('#cancelReservationForm input[name="refund_amount"]').val(totalVal.toFixed(2));
+
+        const totalPaid = {{ $totalPaid }};
+        const cartTotal = {{ $cartTotal }};
+        
+        // Allocation rule: paid_alloc = payment_total * (reservation_total / group_total)
+        let proRatedPaid = 0;
+        if (cartTotal > 0) {
+            proRatedPaid = totalPaid * (selectedResTotal / cartTotal);
+        }
+
+        $('#proRatedPaid').val(proRatedPaid.toFixed(2));
+        updateRefundTotal();
     });
+
+    $('#cancellationFeeInput').on('input', function() {
+        const currentFee = parseFloat($(this).val()) || 0;
+        const defaultFee = parseFloat($('#defaultCancellationFee').val()) || 0;
+        
+        if (Math.abs(currentFee - defaultFee) > 0.01) {
+            $('#overrideReasonGroup').show();
+            $('#overrideReasonInput').attr('required', true);
+        } else {
+            $('#overrideReasonGroup').hide();
+            $('#overrideReasonInput').attr('required', false);
+        }
+        updateRefundTotal();
+    });
+
+    const updateRefundTotal = () => {
+        const paid = parseFloat($('#proRatedPaid').val()) || 0;
+        const fee = parseFloat($('#cancellationFeeInput').val()) || 0;
+        const refund = Math.max(0, paid - fee);
+        $('#finalRefundAmount').val(refund.toFixed(2));
+    };
 
     $('#cancelReservationForm').on('submit', function(e) {
         e.preventDefault();

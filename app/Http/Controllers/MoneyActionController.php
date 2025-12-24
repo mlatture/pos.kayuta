@@ -25,11 +25,20 @@ class MoneyActionController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'tax' => 'required|numeric|min:0',
             'comment' => 'required|string|max:500',
+            'method' => 'nullable|string',
+            'token' => 'nullable|string',
         ]);
 
         try {
             $reservation = Reservation::findOrFail($id);
-            $this->moneyService->addCharge($reservation, $request->amount, $request->tax, $request->comment);
+            $this->moneyService->addCharge(
+                $reservation, 
+                $request->amount, 
+                $request->tax, 
+                $request->comment,
+                $request->method ?? 'cash',
+                $request->token
+            );
 
             return response()->json([
                 'success' => true, 
@@ -52,6 +61,7 @@ class MoneyActionController extends Controller
             'fee' => 'required|numeric|min:0',
             'reason' => 'required|string|max:500',
             'method' => 'required|in:credit_card,cash,other,account_credit,gift_card',
+            'override_reason' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -62,7 +72,8 @@ class MoneyActionController extends Controller
                 $request->refund_amount, 
                 $request->fee, 
                 $request->reason, 
-                $request->method
+                $request->method,
+                $request->override_reason ?? ''
             );
 
             return response()->json([
