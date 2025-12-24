@@ -5,21 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Refund extends Model
+class AdditionalPayment extends Model
 {
     use HasFactory;
-    protected $table = 'refunds';
-
     protected $fillable = [
         'cartid',
+        'reservation_id',
         'amount',
-        'cancellation_fee',
-        'reservations_id',
-        'reason',
+        'tax',
+        'total',
         'method',
         'x_ref_num',
-        'override_reason',
+        'receipt',
+        'comment',
         'created_by',
     ];
-
 }

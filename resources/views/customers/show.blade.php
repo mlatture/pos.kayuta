@@ -55,10 +55,11 @@
                                 @php $firstReservation = $group->first(); @endphp
                                 <tr class="table-primary">
                                     <td>
-                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#reservationModal{{ $firstReservation->id }}">
-                                            <i class="fas fa-info-circle"></i> View
-                                        </button>
+                                        <a href="{{ route('admin.reservations.show', $firstReservation->cartid) }}" 
+                                           class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {{-- Edit button already points to admin.reservations.show --}}
                                         <a href="{{ route('admin.reservations.show', $firstReservation->cartid) }}"
                                             class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
                                     </td>
@@ -67,40 +68,6 @@
                                     <td>{{ \Carbon\Carbon::parse($firstReservation->cid)->format('F j, Y') }} To
                                         {{ \Carbon\Carbon::parse($firstReservation->cod)->format('F j, Y') }}</td>
                                 </tr>
-
-                                <div class="modal fade" id="reservationModal{{ $firstReservation->id }}" tabindex="-1"
-                                    aria-labelledby="reservationModalLabel{{ $firstReservation->id }}" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-secondary text-white">
-                                                <h5 class="modal-title"
-                                                    id="reservationModalLabel{{ $firstReservation->id }}">
-                                                    Reservation Group #{{ $cartid }} Details</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="row">
-                                                    @foreach ($group as $reservation)
-                                                        <div class="col-12 mb-3 border-bottom pb-2">
-                                                            <strong>Site:</strong> {{ $reservation->siteid }}<br>
-                                                            <strong>Class:</strong> {{ $reservation->siteclass }}<br>
-                                                            <strong>Check-in:</strong>
-                                                            {{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }}<br>
-                                                            <strong>Check-out:</strong>
-                                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}<br>
-                                                            <strong>Status:</strong> {{ $reservation->status }}
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary"
-                                                    data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             @endforeach
 
                         </tbody>
@@ -122,11 +89,11 @@
                             @foreach ($groupedCartReservations as $cartid => $sites)
                                 <tr>
                                     <td>
-                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#cartReservationModal{{ $cartid }}">
-                                            <i class="fas fa-info-circle"></i> View
-                                        </button>
-                                        <a href="{{ route('reservations.payment.index', $cartid) }}"
+                                        <a href="{{ route('admin.reservations.show', $cartid) }}" 
+                                            class="btn btn-info btn-sm">
+                                             <i class="fas fa-eye"></i> View
+                                         </a>
+                                        <a href="{{ route('admin.reservations.show', $cartid) }}"
                                             class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
                                     </td>
                                     <td>Booking #{{ $cartid }}</td>
@@ -138,44 +105,6 @@
                                         @endforeach
                                     </td>
                                 </tr>
-
-                                <!-- Modal for Cart Reservation Details -->
-                                <div class="modal fade" id="cartReservationModal{{ $cartid }}" tabindex="-1"
-                                    aria-labelledby="cartReservationModalLabel{{ $cartid }}" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-secondary text-white">
-                                                <h5 class="modal-title" id="cartReservationModalLabel{{ $cartid }}">
-                                                    Cart Reservation #{{ $cartid }} Details</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="row row-cols-1 row-cols-md-2">
-                                                    <div class="col"><strong>Cart ID:</strong> {{ $cartid }}
-                                                    </div>
-                                                    <div class="col"><strong>Site(s):</strong> {{ $sites }}
-                                                    </div>
-                                                    <div class="col"><strong>Check-in:</strong>
-                                                        @foreach ($customer->cart_reservations->where('cartid', $cartid)->take(1) as $reservation)
-                                                            {{ \Carbon\Carbon::parse($reservation->cid)->format('F j, Y') }}
-                                                        @endforeach
-                                                    </div>
-                                                    <div class="col"><strong>Check-out:</strong>
-                                                        @foreach ($customer->cart_reservations->where('cartid', $cartid)->take(1) as $reservation)
-                                                            {{ \Carbon\Carbon::parse($reservation->cod)->format('F j, Y') }}
-                                                        @endforeach
-                                                    </div>
-                                                    <!-- Add more details for the modal as needed -->
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary"
-                                                    data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             @endforeach
                         </tbody>
                     </table>

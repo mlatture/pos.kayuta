@@ -87,7 +87,7 @@
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
-                data-end-date="{{ $reservation->cod }}">
+                data-end-date="{{ $reservation->cod }}" data-cart-id="{{ $reservation->cartid }}">
                 {{ strtoupper($reservation->lname ?? 'Guest') }}
             </td>
             @php $i += $reservationColSpan; @endphp

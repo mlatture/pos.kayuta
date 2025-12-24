@@ -14,7 +14,9 @@ return new class extends Migration
     public function up()
     {
         Schema::table('pos_payments', function (Blueprint $table) {
-            $table->string('payment_status')->nullable();
+            if (!Schema::hasColumn('pos_payments', 'payment_status')) {
+                $table->string('payment_status')->nullable();
+            }
         });
     }
 

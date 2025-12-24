@@ -14,6 +14,28 @@
 @endsection
 @section('content')
     <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form action="{{ route('admin.reservations.globalSearch') }}" method="GET">
+                            <label for="globalSearchInput" class="form-label font-weight-bold text-primary">Global Reservation Search</label>
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control form-control-lg" id="globalSearchInput" placeholder="Enter Confirmation #, Name, Email, or Phone (min 3 chars)..." required minlength="3">
+                                <button class="btn btn-primary px-4" type="submit">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter exact Confirmation ID for direct access, or partial details to list matches.
+                            </small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <!-- Log on to codeastro.com for more projects -->
             <div class="col-lg-4 col-6">

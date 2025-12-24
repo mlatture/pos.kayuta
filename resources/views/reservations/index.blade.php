@@ -170,7 +170,7 @@
                             <span class="me-2">Type</span>
                             <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
                                 @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                    <option value="{{ $siteclass }}" 
+                                    <option value="{{ $siteclass }}"
                                         {{ in_array($siteclass, request('siteclass', [])) || ($siteclass === 'RV Sites' && !request()->has('siteclass')) ? 'selected' : '' }}>
                                         {{ $siteclass }}
                                     </option>
@@ -358,8 +358,12 @@
 
 
         $(document).on('click', '.reservation-details', function() {
-            let reservationId = $(this).data('reservation-id');
-            fetchReservationDetails(reservationId);
+            let cartId = $(this).data('cart-id');
+            if (cartId) {
+                window.location.href = "{{ route('admin.reservations.show', ':id') }}".replace(':id', cartId);
+            } else {
+                console.error('Cart ID not found for reservation');
+            }
         });
 
         function fetchReservationDetails(reservationId) {
@@ -760,7 +764,7 @@
                             <td><strong id="totalCost" data-total="${totalCost}">$${totalCost.toFixed(2)}</strong></td>
                             <td colspan="2"></td>
                             </tr>
-                            
+
                             `;
 
                     $('#quoteModalBody').html(`
@@ -783,7 +787,7 @@
                                                 ${tableFooter}
                                                 </tfoot>
                                                 </table>
-                                                
+
                                                 `);
 
                     $('#quoteModal').modal('show');
