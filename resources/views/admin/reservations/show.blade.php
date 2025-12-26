@@ -22,10 +22,10 @@
     <!-- Header Block -->
     <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
         <div>
-            <h1 class="h3 mb-0 text-gray-800">Reservation #{{ $mainReservation->cartid }}</h1>
+            <h1 class="h3 mb-0 text-gray-800">Reservation #{{ $mainReservation->xconfnum ?? $mainReservation->cartid }}</h1>
             <p class="mb-0 text-muted">
                 Created on {{ $mainReservation->created_at->format('M d, Y h:i A') }} 
-                by {{ $mainReservation->createdby }}
+                by {{ $mainReservation->createdby == 'Guest' ? 'Guest' : $mainReservation->createdby }}
             </p>
         </div>
         <div>
@@ -37,10 +37,10 @@
 
     <!-- Print Header (Visible only on print) -->
     <div class="d-none d-print-block mb-4">
-        <h1>Reservation #{{ $mainReservation->cartid }}</h1>
+        <h1>Reservation #{{ $mainReservation->xconfnum ?? $mainReservation->cartid }}</h1>
         <p>
             Created on {{ $mainReservation->created_at->format('M d, Y h:i A') }} 
-            by {{ $mainReservation->createdby }}
+            by {{ $mainReservation->createdby == 'Guest' ? 'Guest' : $mainReservation->createdby }}
         </p>
     </div>
 
@@ -205,24 +205,92 @@
                     <h6 class="m-0 font-weight-bold text-primary">Charges Breakdown</h6>
                 </div>
                 <div class="card-body">
+                    @php
+                        // 1. Charges (Debits)
+                        $baseCharges = $reservations->sum('base');
+                        $lockFees = $reservations->sum('sitelock');
+                        $taxes = $reservations->sum('totaltax');
+                        $additionalCharges = $additionalPayments->sum('total');
+                        $cancellationFees = $refunds->sum('cancellation_fee');
+                        
+                        // 2. Credits (Reductions in Charge / Payouts)
+                        $refundCredits = $refunds->sum('amount');
+                        
+                        // 3. Ledger Total (Total charges customer is responsible for)
+                        $ledgerTotal = $baseCharges + $lockFees + $taxes + $additionalCharges + $cancellationFees - $refundCredits;
+                        
+                        // 4. Payments (Money received)
+                        $totalPayments = $payments->sum('payment') + $additionalPayments->sum('total');
+                        
+                        // 5. Balance Due
+                        $balanceDue = max(0, $ledgerTotal - $totalPayments);
+                    @endphp
+                    
+                    <div class="mb-3 text-center">
+                        <h4 class="mb-0">Balance Due</h4>
+                        <div class="display-6 fw-bold {{ $balanceDue > 0 ? 'text-danger' : 'text-success' }}">
+                            ${{ number_format($balanceDue, 2) }}
+                        </div>
+                    </div>
+
                     <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach($reservations as $res)
+                            @php
+                                $displayBase = $res->base > 0 ? $res->base : ($res->total - $res->totaltax - $res->sitelock);
+                            @endphp
+                            {{-- Only show if there's an actual charge --}}
+                            @if($displayBase > 0 || $res->sitelock > 0 || $res->totaltax > 0)
                             <tr>
-                                <td>Site: {{ $res->siteid }}</td>
-                                <td class="text-end">${{ number_format($res->base, 2) }}</td>
+                                <td>Site: {{ $res->siteid }} (Base)</td>
+                                <td class="text-end">${{ number_format($displayBase, 2) }}</td>
                             </tr>
                             @if($res->sitelock > 0)
                             <tr>
-                                <td class="ps-4 text-muted">Site Lock Fee</td>
+                                <td class="ps-3 text-muted">Site Lock Fee</td>
                                 <td class="text-end text-muted">${{ number_format($res->sitelock, 2) }}</td>
                             </tr>
                             @endif
+                            @if($res->totaltax > 0)
+                            <tr>
+                                <td class="ps-3 text-muted">Taxes</td>
+                                <td class="text-end text-muted">${{ number_format($res->totaltax, 2) }}</td>
+                            </tr>
+                            @endif
+                            @endif
                             @endforeach
-                            <!-- Summary -->
+                            
+                            @foreach($additionalPayments as $ap)
+                            <tr>
+                                <td>Additional Charge: {{ $ap->comment ?: 'Other' }}</td>
+                                <td class="text-end">${{ number_format($ap->amount + $ap->tax, 2) }}</td>
+                            </tr>
+                            @endforeach
+
+                            @foreach($refunds as $rf)
+                            @if($rf->cancellation_fee > 0)
+                            <tr>
+                                <td>Cancellation Fee</td>
+                                <td class="text-end">${{ number_format($rf->cancellation_fee, 2) }}</td>
+                            </tr>
+                            @endif
+                            @if($rf->amount > 0)
+                            <tr class="text-danger">
+                                <td>Refund Payout / Credit</td>
+                                <td class="text-end">-${{ number_format($rf->amount, 2) }}</td>
+                            </tr>
+                            @endif
+                            @endforeach
+
                              <tr class="table-active fw-bold">
-                                <td>Total</td>
-                                <td class="text-end">${{ number_format($reservations->sum('total'), 2) }}</td>
+                                <td>Ledger Total</td>
+                                <td class="text-end">${{ number_format($ledgerTotal, 2) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -230,61 +298,48 @@
             </div>
         </div>
         
-        <div class="col-md-4 mb-4">
+        <div class="col-md-8 mb-4">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-success">Original Payments</h6>
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-success">Payments & Credits Log</h6>
                 </div>
                 <div class="card-body">
-                    @if($payments->isEmpty())
-                        <p class="text-center text-muted">No original payments.</p>
+                    @if($payments->isEmpty() && $additionalPayments->isEmpty())
+                        <p class="text-center text-muted">No payments recorded.</p>
                     @else
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Method</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($payments as $payment)
-                                <tr>
-                                    <td>{{ $payment->method }}</td>
-                                    <td class="text-success fw-bold">${{ number_format($payment->payment, 2) }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-warning">Additional Payments</h6>
-                </div>
-                <div class="card-body">
-                    @if($additionalPayments->isEmpty())
-                        <p class="text-center text-muted">No additional payments.</p>
-                    @else
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Method</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($additionalPayments as $ap)
-                                <tr>
-                                    <td>{{ $ap->method }}</td>
-                                    <td class="text-warning fw-bold">${{ number_format($ap->total, 2) }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Method</th>
+                                        <th>Type</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Ref / Register</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($payments as $p)
+                                    <tr>
+                                        <td>{{ $p->created_at->format('M d, Y') }}</td>
+                                        <td>{{ ucwords(str_replace('_', ' ', $p->method)) }}</td>
+                                        <td><span class="badge bg-success">Original</span></td>
+                                        <td class="text-end fw-bold">${{ number_format($p->payment, 2) }}</td>
+                                        <td><small class="text-muted">{{ $p->x_ref_num ?? 'N/A' }}</small></td>
+                                    </tr>
+                                    @endforeach
+                                    @foreach($additionalPayments as $ap)
+                                    <tr>
+                                        <td>{{ $ap->created_at->format('M d, Y') }}</td>
+                                        <td>{{ ucwords(str_replace('_', ' ', $ap->method)) }}</td>
+                                        <td><span class="badge bg-warning text-dark">Additional</span></td>
+                                        <td class="text-end fw-bold">${{ number_format($ap->total, 2) }}</td>
+                                        <td><small class="text-muted">{{ $ap->x_ref_num ?? ($ap->register_id ? "Reg: $ap->register_id" : 'N/A') }}</small></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -449,6 +504,15 @@
                         </select>
                         <input type="hidden" name="token" id="addChargeToken">
                     </div>
+                    <div class="mb-3" id="addChargeRegisterGroup" style="display:none;">
+                        <label class="form-label">Cash Register</label>
+                        <select name="register_id" class="form-select">
+                            <option value="">-- Select Register --</option>
+                            @foreach($registers ?? [] as $reg)
+                                <option value="{{ $reg->id }}">{{ $reg->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Amount ($)</label>
                         <input type="number" step="0.01" name="amount" class="form-control" required placeholder="0.00">
@@ -516,12 +580,21 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Refund Method</label>
-                            <select name="method" class="form-select" required>
+                            <select name="method" id="cancelMethod" class="form-select" required>
                                 <option value="credit_card">Original Credit Card (Gateway Refund)</option>
                                 <option value="cash">Cash / Manual</option>
                                 <option value="account_credit">Account Credit</option>
                                 <option value="gift_card">Gift Card</option>
                                 <option value="other">Other / Waive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="cancelRegisterGroup" style="display:none;">
+                            <label class="form-label">Cash Register</label>
+                            <select name="register_id" id="cancelRegisterSelect" class="form-select">
+                                <option value="">-- Select Register --</option>
+                                @foreach($registers ?? [] as $reg)
+                                    <option value="{{ $reg->id }}">{{ $reg->name }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
@@ -537,9 +610,13 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Cancellation Fee ($)</label>
-                            <input type="number" step="0.01" name="fee" id="cancellationFeeInput" class="form-control" value="{{ number_format($defaultFee, 2) }}">
-                            <input type="hidden" id="defaultCancellationFee" value="{{ $defaultFee }}">
+                            <label class="form-label">Cancellation Fee (%)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" name="fee_percent" id="cancellationFeePercent" class="form-control" value="0.0">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <input type="hidden" name="fee" id="cancellationFeeAmount" value="0">
+                            <input type="hidden" id="defaultCancellationFeePercent" value="0">
                         </div>
                         <div class="col-md-8 mb-3" id="overrideReasonGroup" style="display: none;">
                             <label class="form-label text-danger">Fee Override Reason (Required)</label>
@@ -586,8 +663,10 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">New Site ID</label>
-                        <input type="text" name="new_site_id" id="newSiteIdInput" class="form-control" required placeholder="e.g. 101">
+                        <label class="form-label">New Site</label>
+                        <select name="new_site_id" id="newSiteIdSelect" class="form-select" required>
+                            <option value="">Loading sites...</option>
+                        </select>
                         <small class="text-muted">Currently at: <span id="currentMoveSite">N/A</span></small>
                     </div>
                     <div class="mb-3">
@@ -605,6 +684,26 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Payment Detail Modal -->
+<div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment/Credit Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentDetailPlaceholder">
+                    <p class="text-center">Loading details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -686,10 +785,22 @@ $(function() {
         });
     };
 
-    // Add Charge Calculations
     $('#addChargeMethod').on('change', function() {
         const sel = $(this).find(':selected');
         $('#addChargeToken').val(sel.data('token') || '');
+        if ($(this).val() === 'cash') {
+            $('#addChargeRegisterGroup').show().find('select').attr('required', true);
+        } else {
+            $('#addChargeRegisterGroup').hide().find('select').attr('required', false);
+        }
+    }).trigger('change');
+
+    $('#cancelMethod').on('change', function() {
+        if ($(this).val() === 'cash') {
+            $('#cancelRegisterGroup').show().find('select').attr('required', true);
+        } else {
+            $('#cancelRegisterGroup').hide().find('select').attr('required', false);
+        }
     }).trigger('change');
 
     $('#addChargeForm input[name="amount"], #addChargeTaxable').on('input change', function() {
@@ -733,11 +844,11 @@ $(function() {
         updateRefundTotal();
     });
 
-    $('#cancellationFeeInput').on('input', function() {
-        const currentFee = parseFloat($(this).val()) || 0;
-        const defaultFee = parseFloat($('#defaultCancellationFee').val()) || 0;
+    $('#cancellationFeePercent').on('input', function() {
+        const currentPercent = parseFloat($(this).val()) || 0;
+        const defaultPercent = parseFloat($('#defaultCancellationFeePercent').val()) || 0;
         
-        if (Math.abs(currentFee - defaultFee) > 0.01) {
+        if (Math.abs(currentPercent - defaultPercent) > 0.01) {
             $('#overrideReasonGroup').show();
             $('#overrideReasonInput').attr('required', true);
         } else {
@@ -749,8 +860,11 @@ $(function() {
 
     const updateRefundTotal = () => {
         const paid = parseFloat($('#proRatedPaid').val()) || 0;
-        const fee = parseFloat($('#cancellationFeeInput').val()) || 0;
-        const refund = Math.max(0, paid - fee);
+        const percent = parseFloat($('#cancellationFeePercent').val()) || 0;
+        const feeAmount = paid * (percent / 100);
+        const refund = Math.max(0, paid - feeAmount);
+        
+        $('#cancellationFeeAmount').val(feeAmount.toFixed(2));
         $('#finalRefundAmount').val(refund.toFixed(2));
     };
 
@@ -765,7 +879,21 @@ $(function() {
 
     // Move Site Initialize
     $('#moveSiteResSelect').on('change', function() {
+        const id = $(this).val();
         $('#currentMoveSite').text($(this).find(':selected').data('site'));
+        $('#newSiteIdSelect').html('<option value="">Loading sites...</option>');
+        
+        $.get('{{ url("admin/money/move-options") }}/' + id, function(res) {
+            if (res.success) {
+                let html = '<option value="">-- Select New Site --</option>';
+                res.options.forEach(opt => {
+                    html += `<option value="${opt.siteid}" data-diff="${opt.price_diff}">${opt.label}</option>`;
+                });
+                $('#newSiteIdSelect').html(html);
+            } else {
+                $('#newSiteIdSelect').html('<option value="">Failed to load sites</option>');
+            }
+        });
     }).trigger('change');
 
     $('#moveSiteForm').on('submit', function(e) {

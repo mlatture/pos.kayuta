@@ -45,8 +45,10 @@ class AdminReservationController extends Controller
             ->take(50)
             ->get();
 
+        $registers = \App\Models\StationRegisters::all();
+
         return view('admin.reservations.show', compact(
-            'reservations', 'mainReservation', 'user', 'payments', 'logs', 'additionalPayments', 'refunds'
+            'reservations', 'mainReservation', 'user', 'payments', 'logs', 'additionalPayments', 'refunds', 'registers'
         ));
     }
 

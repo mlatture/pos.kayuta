@@ -27,6 +27,7 @@ class MoneyActionController extends Controller
             'comment' => 'required|string|max:500',
             'method' => 'nullable|string',
             'token' => 'nullable|string',
+            'register_id' => 'nullable|string',
         ]);
 
         try {
@@ -37,7 +38,8 @@ class MoneyActionController extends Controller
                 $request->tax, 
                 $request->comment,
                 $request->method ?? 'cash',
-                $request->token
+                $request->token,
+                $request->register_id
             );
 
             return response()->json([
@@ -57,11 +59,12 @@ class MoneyActionController extends Controller
         $request->validate([
             'reservation_ids' => 'required|array',
             'reservation_ids.*' => 'exists:reservations,id',
-            'refund_amount' => 'required|numeric|min:0',
-            'fee' => 'required|numeric|min:0',
+            'refund_amount' => 'nullable|numeric|min:0',
+            'fee_percent' => 'required|numeric|min:0',
             'reason' => 'required|string|max:500',
             'method' => 'required|in:credit_card,cash,other,account_credit,gift_card',
             'override_reason' => 'nullable|string|max:500',
+            'register_id' => 'nullable|string',
         ]);
 
         try {
@@ -69,11 +72,11 @@ class MoneyActionController extends Controller
             $this->moneyService->cancel(
                 $mainReservation, 
                 $request->reservation_ids, 
-                $request->refund_amount, 
-                $request->fee, 
+                $request->fee_percent, 
                 $request->reason, 
                 $request->method,
-                $request->override_reason ?? ''
+                $request->override_reason ?? '',
+                $request->register_id
             );
 
             return response()->json([
@@ -113,6 +116,23 @@ class MoneyActionController extends Controller
             return response()->json([
                 'success' => false, 
                 'message' => 'Move failed: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function moveOptions($id)
+    {
+        try {
+            $reservation = Reservation::findOrFail($id);
+            $options = $this->moneyService->moveOptions($reservation);
+            return response()->json([
+                'success' => true,
+                'options' => $options
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch move options: ' . $e->getMessage()
             ], 422);
         }
     }

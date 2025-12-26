@@ -410,6 +410,7 @@ Route::prefix('admin')
 
         // Money Actions
         Route::prefix('money')->group(function () {
+            Route::get('move-options/{id}', [MoneyActionController::class, 'moveOptions'])->name('admin.money.move-options');
             Route::post('charge/{id}', [MoneyActionController::class, 'addCharge'])->name('admin.money.charge');
             Route::post('cancel/{id}', [MoneyActionController::class, 'cancel'])->name('admin.money.cancel');
             Route::post('move/{id}', [MoneyActionController::class, 'moveSite'])->name('admin.money.move');
