@@ -31,9 +31,9 @@ class MoneyActionService
     /**
      * Add an additional charge to a reservation.
      */
-    public function addCharge(Reservation $reservation, float $amount, float $tax, string $comment, string $method = 'cash', ?string $token = null)
+    public function addCharge(Reservation $reservation, float $amount, float $tax, string $comment, string $method = 'cash', ?string $token = null, ?string $registerId = null)
     {
-        return DB::transaction(function () use ($reservation, $amount, $tax, $comment, $method, $token) {
+        return DB::transaction(function () use ($reservation, $amount, $tax, $comment, $method, $token, $registerId) {
             $oldState = $reservation->toArray();
             
             $totalAmount = $amount + $tax;
@@ -65,6 +65,7 @@ class MoneyActionService
                 'receipt' => 'AC-' . time(),
                 'comment' => $comment,
                 'created_by' => Auth::user()->name ?? 'System',
+                'register_id' => $registerId,
             ]);
 
             // Update Reservation Totals
@@ -88,11 +89,14 @@ class MoneyActionService
     /**
      * Cancel specific reservations and issue refund.
      */
-    public function cancel(Reservation $mainReservation, array $reservationIds, float $refundAmount, float $fee, string $reason, string $method, string $overrideReason = '')
+    public function cancel(Reservation $mainReservation, array $reservationIds, float $feePercent, string $reason, string $method, string $overrideReason = '', ?string $registerId = null)
     {
-        return DB::transaction(function () use ($mainReservation, $reservationIds, $refundAmount, $fee, $reason, $method, $overrideReason) {
+        return DB::transaction(function () use ($mainReservation, $reservationIds, $feePercent, $reason, $method, $overrideReason, $registerId) {
             $reservations = Reservation::whereIn('id', $reservationIds)->get();
-            
+            $totalPaidForSelected = $reservations->sum('total');
+            $feeAmount = round($totalPaidForSelected * ($feePercent / 100), 2);
+            $refundAmount = max(0, $totalPaidForSelected - $feeAmount);
+
             $results = [];
             
             if ($method === 'credit_card' && $refundAmount > 0) {
@@ -124,13 +128,14 @@ class MoneyActionService
                 Refund::create([
                     'cartid' => $res->cartid,
                     'reservations_id' => $res->id,
-                    'amount' => $refundAmount / count($reservations), // Pro-rated or simplified
-                    'cancellation_fee' => $fee / count($reservations),
+                    'amount' => count($reservations) > 0 ? $refundAmount / count($reservations) : 0,
+                    'cancellation_fee' => count($reservations) > 0 ? $feeAmount / count($reservations) : 0,
                     'method' => $method,
                     'reason' => $reason,
                     'override_reason' => $overrideReason,
                     'x_ref_num' => $results['gateway']['xRefNum'] ?? null,
                     'created_by' => Auth::user()->name ?? 'System',
+                    'register_id' => $registerId,
                 ]);
 
                 $this->logService->log(
@@ -138,7 +143,7 @@ class MoneyActionService
                     'cancelled',
                     $oldState,
                     $res->refresh()->toArray(),
-                    "Cancelled via MoneyAction. Method: $method. Refund: \$$refundAmount. Fee: \$$fee. Reason: $reason. " . 
+                    "Cancelled via MoneyAction. Method: $method. Refund: \${$refundAmount}. Fee Percentage: {$feePercent}%. Fee Amount: \${$feeAmount}. Reason: $reason. " . 
                     ($overrideReason ? "Override Reason: $overrideReason. " : "") .
                     "Gateway Info: " . json_encode($results['gateway'] ?? 'N/A')
                 );
@@ -148,6 +153,50 @@ class MoneyActionService
         });
     }
 
+    public function moveOptions(Reservation $reservation)
+    {
+        $availableSites = Site::where('available', 1)->get()->filter(function ($site) use ($reservation) {
+            if ($site->siteid == $reservation->siteid) return false;
+            return $site->checkAvailable($reservation->cid, $reservation->cod, [$reservation->cartid]);
+        });
+
+        $options = [];
+        $currentSite = Site::where('siteid', $reservation->siteid)->first();
+
+        foreach ($availableSites as $site) {
+            $isSameClass = $currentSite && ($currentSite->siteclass == $site->siteclass);
+            $isSameTier = $currentSite && ($currentSite->ratetier == $site->ratetier);
+            
+            $newPrice = $this->calculatePriceForMove($reservation, $site);
+            $priceDiff = $newPrice - $reservation->base;
+
+            $label = $site->sitename;
+            if ($isSameClass && $isSameTier) {
+                $label .= " (Same Class/Tier - No Charge)";
+                $priceDiff = 0;
+            } else {
+                $diffText = ($priceDiff >= 0) ? "+$" . number_format($priceDiff, 2) : "-$" . number_format(abs($priceDiff), 2);
+                $label .= " ({$diffText})";
+            }
+
+            $options[] = [
+                'siteid' => $site->siteid,
+                'sitename' => $site->sitename,
+                'price_diff' => $priceDiff,
+                'is_same_category' => ($isSameClass && $isSameTier),
+                'label' => $label
+            ];
+        }
+
+        usort($options, function ($a, $b) {
+            if ($a['is_same_category'] && !$b['is_same_category']) return -1;
+            if (!$a['is_same_category'] && $b['is_same_category']) return 1;
+            return $a['price_diff'] <=> $b['price_diff'];
+        });
+
+        return $options;
+    }
+
     /**
      * Move a reservation to a different site.
      */
@@ -155,28 +204,25 @@ class MoneyActionService
     {
         return DB::transaction(function () use ($reservation, $newSiteId, $overridePrice, $comment) {
             $oldState = $reservation->toArray();
-            
             $newSite = Site::where('siteid', $newSiteId)->firstOrFail();
-            
-            $newPrice = $overridePrice;
-            if (is_null($newPrice)) {
-                // Simplified price calculation logic based on NewReservationController
-                $newPrice = $this->calculatePriceForMove($reservation, $newSite);
+
+            if (!$newSite->checkAvailable($reservation->cid, $reservation->cod, [$reservation->cartid])) {
+                throw new \Exception("Site {$newSite->sitename} is no longer available.");
             }
 
             $reservation->siteid = $newSiteId;
-            $reservation->siteclass = $newSite->siteclass;
-            
-            if (!is_null($newPrice)) {
-                $diff = $newPrice - $reservation->base;
-                $reservation->base = $newPrice;
-                // Recalculate tax and total
-                $taxRate = $reservation->taxrate ?: 0.0875;
-                $reservation->subtotal += $diff;
-                $reservation->totaltax = round($reservation->subtotal * $taxRate, 2);
-                $reservation->total = $reservation->subtotal + $reservation->totaltax;
+            if (isset($reservation->site_id)) {
+                $reservation->site_id = $newSite->id;
             }
 
+            if ($overridePrice !== null) {
+                $reservation->base = $overridePrice;
+            } else {
+                $reservation->base = $this->calculatePriceForMove($reservation, $newSite);
+            }
+
+            $reservation->subtotal = $reservation->base + ($reservation->sitelock ?? 0);
+            $reservation->total = $reservation->subtotal + $reservation->totaltax;
             $reservation->save();
 
             $this->logService->log(
@@ -184,7 +230,7 @@ class MoneyActionService
                 'move_site',
                 $oldState,
                 $reservation->refresh()->toArray(),
-                "Moved from {$oldState['siteid']} to {$newSiteId}. Comment: $comment" . (is_null($overridePrice) ? "" : " (Price Override Applied)")
+                "Moved to site {$newSite->sitename}. Price: \${$reservation->base}. Comment: {$comment}"
             );
 
             return $reservation;

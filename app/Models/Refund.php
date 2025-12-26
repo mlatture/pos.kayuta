@@ -20,6 +20,7 @@ class Refund extends Model
         'x_ref_num',
         'override_reason',
         'created_by',
+        'register_id',
     ];
 
 }

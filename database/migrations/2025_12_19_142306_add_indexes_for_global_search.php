@@ -13,23 +13,23 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('reservations', function (Blueprint $table) {
-            $table->index('cartid');
-            $table->index('fname');
-            $table->index('lname');
-        });
+        try {
+            Schema::table('reservations', function (Blueprint $table) {
+                $table->index('cartid');
+                $table->index('fname');
+                $table->index('lname');
+            });
+        } catch (\Exception $e) {}
 
-        Schema::table('users', function (Blueprint $table) {
-            // Email usually indexed being unique, but for partial we rely on prefix index often standard.
-            // Phone might not be present in all setups, assuming it exists based on requirements.
-            if (!Schema::hasColumn('users', 'phone')) {
-                // If phone doesn't exist, we skip or add it. Assuming it exists.
-            } else {
-                 $table->index('phone');
-            }
-            $table->index('f_name');
-            $table->index('l_name');
-        });
+        try {
+            Schema::table('users', function (Blueprint $table) {
+                if (Schema::hasColumn('users', 'phone')) {
+                     $table->index('phone');
+                }
+                $table->index('f_name');
+                $table->index('l_name');
+            });
+        } catch (\Exception $e) {}
     }
 
     /**

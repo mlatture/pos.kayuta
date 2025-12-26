@@ -14,9 +14,9 @@ return new class extends Migration
     public function up()
     {
         Schema::table('scheduled_payments', function (Blueprint $table) {
-            $table->unsignedBigInteger('customer_id')->null();
-            $table->foreignId('customer_id')->constrained('users')->nullOnDelete();
-
+            if (!Schema::hasColumn('scheduled_payments', 'customer_id')) {
+                $table->foreignId('customer_id')->nullable()->constrained('users')->nullOnDelete();
+            }
         });
     }
 

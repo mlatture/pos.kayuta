@@ -19,5 +19,6 @@ class AdditionalPayment extends Model
         'receipt',
         'comment',
         'created_by',
+        'register_id',
     ];
 }
