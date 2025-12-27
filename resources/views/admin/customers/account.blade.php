@@ -211,15 +211,15 @@
                                 <input type="text" class="form-control" name="cc" id="emailCc"
                                     placeholder="Optional, comma-separated" autocomplete="off">
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 mt-3">
                                 <label class="form-label">Email Content</label>
-                                <textarea class="form-control" name="content" id="emailContent" rows="12" placeholder="Loading template…"></textarea>
-                                <div class="form-text">This content is pre-filled from your existing confirmation template
-                                    and is fully editable.</div>
+                                <textarea class="form-control" name="content" id="emailContent" rows="12"
+                                    placeholder="Type your email content here..."></textarea>
+
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer py-1 px-2" style="font-size: 0.85rem;">
                         <div class="me-auto small" id="emailFeedback" aria-live="polite"></div>
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="emailSendBtn">
