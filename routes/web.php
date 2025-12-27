@@ -159,10 +159,7 @@ Route::prefix('admin')
 
             Route::get('/receipts', [CustomerController::class, 'receipts'])->name('admin.customers.account.receipts');
 
-            Route::get('/email/template', [CustomerController::class, 'emailTemplate'])->name('admin.customers.account.email.template');
-
-            // send email
-            Route::post('/email/send', [CustomerController::class, 'sendConfirmationEmail'])->name('admin.customers.account.email.send');
+            Route::post('/send/email', [CustomerController::class, 'send'])->name('admin.customers.account.send.email');
         });
 
         Route::prefix('documents')->group(function () {

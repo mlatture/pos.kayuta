@@ -145,7 +145,54 @@
             outline: 3px dashed #00ffcc;
             outline-offset: -3px;
         }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
     </style>
+
+    <div class="reservation-legend mb-3 d-flex gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: red;"></span>
+            <span>Cancelled</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: purple;"></span>
+            <span>Paid (Booking.com / Airbnb)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: yellow;"></span>
+            <span>Not Fully Paid (Booking.com / Airbnb)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: green;"></span>
+            <span>Fully Paid (Customer)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: yellow-orange;"></span>
+            <span>Not Fully Paid (Customer)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: #FFAA33;"></span>
+            <span>Fully Paid (Other)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="background-color: orange;"></span>
+            <span>Not Fully Paid (Other)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="border: 4px solid red;"></span>
+            <span>Site Lock Applied</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="legend-color" style="border: 4px solid blue;"></span>
+            <span>Current Day</span>
+        </div>
+    </div>
 
 
     <div class="table-responsive">
@@ -296,11 +343,14 @@
                 const startDate = $('#startDatePicker').val();
                 const seasonalFilter = $('#seasonalFilter').val() || 'short';
 
+                const rigLength = $('#rigLength').val() || '';
                 const selectedTypes = $('#typeFilter').val() || [];
                 const selectedTier = $('#tierFilter').val() || [];
                 const selectedSites = $('#siteFilter').val() || [];
 
                 let queryString = `?startDate=${startDate}&seasonalFilter=${seasonalFilter}`;
+
+                rigLength && (queryString += `&riglength=${encodeURIComponent(rigLength)}`);
 
                 selectedTypes.forEach(type => {
 

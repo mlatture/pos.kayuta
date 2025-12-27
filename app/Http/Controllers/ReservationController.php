@@ -60,11 +60,11 @@ class ReservationController extends Controller
         $filters = [
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
-            
+            'riglength' => $request->input('riglength', null),
         ];
 
         $query = $this->site::query();
-        
+
         $query->where(function ($q) use ($request) {
             $filter = $request->input('seasonalFilter', 'short');
 
@@ -78,6 +78,12 @@ class ReservationController extends Controller
                 $q->where('seasonal', 0);
             }
         });
+
+        if (!empty($filters['riglength'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('maxlength', '>=', $filters['riglength']);
+            });
+        }
 
         if ($request->has('siteclass') && is_array($request->siteclass) && count($request->siteclass) > 0) {
             $selectedClasses = $request->siteclass;
@@ -118,10 +124,26 @@ class ReservationController extends Controller
             }
         }
 
+        $orderby = $request->input('orderby', 'siteid');
+        $orderDirection = $request->input('orderdir', 'asc');
+
+        $allowedColumns = ['siteid', 'siteclass', 'minlength', 'maxlength', 'ratetier'];
+        $allowedDirections = ['asc', 'desc'];
+
+        if (!in_array($orderby, $allowedColumns)) {
+            $orderby = 'siteid';
+        }
+
+        if (!in_array(strtolower($orderDirection), $allowedDirections)) {
+            $orderDirection = 'asc';
+        }
+
+        $query->orderBy($orderby, $orderDirection);
+
         $sites = $query
             ->with([
                 'reservations' => function ($resQ) use ($filters) {
-                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', DB::raw('DATEDIFF(cod, cid) as days'));
+                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->where('status', '!=', 'cancelled')->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', DB::raw('DATEDIFF(cod, cid) as days'));
                 },
             ])
             ->paginate(50);
