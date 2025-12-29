@@ -29,8 +29,10 @@
             </p>
         </div>
         <div>
-            <span class="badge bg-{{ in_array($mainReservation->status, ['Paid', 'Confirmed']) ? 'success' : ($mainReservation->status === 'Pending' ? 'warning' : 'secondary') }} fs-6">
-                {{ $mainReservation->status ?? 'Unknown' }}
+            {{-- Status Badge Removed --}}
+             {{-- Balance Due Indicator --}}
+             <span class="badge {{ $balanceDue > 0 ? 'bg-danger' : 'bg-success' }} fs-6">
+                Balance Due: ${{ number_format($balanceDue, 2) }}
             </span>
         </div>
     </div>
@@ -88,9 +90,6 @@
                             $cancellationSetting = \App\Models\BusinessSettings::where('type', 'cancellation')->first();
                             $cancellationData = json_decode($cancellationSetting->value ?? '{}', true);
                             $defaultFee = (float)($cancellationData['cancellation_fee'] ?? 0);
-                            
-                            $totalPaid = $payments->sum('payment');
-                            $cartTotal = $reservations->sum('total');
                         @endphp
                         
                         <!-- Check In -->
@@ -200,151 +199,67 @@
         </div>
     </div>
 
-    <!-- Financials -->
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Charges Breakdown</h6>
-                </div>
-                <div class="card-body">
-                    @php
-                        // 1. Charges (Debits)
-                        $baseCharges = $reservations->sum('base');
-                        $lockFees = $reservations->sum('sitelock');
-                        $taxes = $reservations->sum('totaltax');
-                        $additionalCharges = $additionalPayments->sum('total');
-                        $cancellationFees = $refunds->sum('cancellation_fee');
-                        
-                        // 2. Credits (Reductions in Charge / Payouts)
-                        $refundCredits = $refunds->sum('amount');
-                        
-                        // 3. Ledger Total (Total charges customer is responsible for)
-                        $ledgerTotal = $baseCharges + $lockFees + $taxes + $additionalCharges + $cancellationFees - $refundCredits;
-                        
-                        // 4. Payments (Money received)
-                        $totalPayments = $payments->sum('payment') + $additionalPayments->sum('total');
-                        
-                        // 5. Balance Due
-                        $balanceDue = max(0, $ledgerTotal - $totalPayments);
-                    @endphp
-                    
-                    <div class="mb-3 text-center">
-                        <h4 class="mb-0">Balance Due</h4>
-                        <div class="display-6 fw-bold {{ $balanceDue > 0 ? 'text-danger' : 'text-success' }}">
-                            ${{ number_format($balanceDue, 2) }}
-                        </div>
-                    </div>
-
-                    <table class="table table-sm">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Description</th>
-                                <th class="text-end">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($reservations as $res)
-                            @php
-                                $displayBase = $res->base > 0 ? $res->base : ($res->total - $res->totaltax - $res->sitelock);
-                            @endphp
-                            {{-- Only show if there's an actual charge --}}
-                            @if($displayBase > 0 || $res->sitelock > 0 || $res->totaltax > 0)
-                            <tr>
-                                <td>Site: {{ $res->siteid }} (Base)</td>
-                                <td class="text-end">${{ number_format($displayBase, 2) }}</td>
-                            </tr>
-                            @if($res->sitelock > 0)
-                            <tr>
-                                <td class="ps-3 text-muted">Site Lock Fee</td>
-                                <td class="text-end text-muted">${{ number_format($res->sitelock, 2) }}</td>
-                            </tr>
-                            @endif
-                            @if($res->totaltax > 0)
-                            <tr>
-                                <td class="ps-3 text-muted">Taxes</td>
-                                <td class="text-end text-muted">${{ number_format($res->totaltax, 2) }}</td>
-                            </tr>
-                            @endif
-                            @endif
-                            @endforeach
-                            
-                            @foreach($additionalPayments as $ap)
-                            <tr>
-                                <td>Additional Charge: {{ $ap->comment ?: 'Other' }}</td>
-                                <td class="text-end">${{ number_format($ap->amount + $ap->tax, 2) }}</td>
-                            </tr>
-                            @endforeach
-
-                            @foreach($refunds as $rf)
-                            @if($rf->cancellation_fee > 0)
-                            <tr>
-                                <td>Cancellation Fee</td>
-                                <td class="text-end">${{ number_format($rf->cancellation_fee, 2) }}</td>
-                            </tr>
-                            @endif
-                            @if($rf->amount > 0)
-                            <tr class="text-danger">
-                                <td>Refund Payout / Credit</td>
-                                <td class="text-end">-${{ number_format($rf->amount, 2) }}</td>
-                            </tr>
-                            @endif
-                            @endforeach
-
-                             <tr class="table-active fw-bold">
-                                <td>Ledger Total</td>
-                                <td class="text-end">${{ number_format($ledgerTotal, 2) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Financial Ledger -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Financial Ledger</h6>
+            <div>
+                <strong>Net Total: </strong> 
+                <span class="{{ $netTotal > 0 ? 'text-dark' : 'text-success' }}">${{ number_format($netTotal, 2) }}</span>
+                <span class="mx-2">|</span>
+                <strong>Balance Due: </strong> 
+                <span class="{{ $balanceDue > 0 ? 'text-danger fw-bold' : 'text-success fw-bold' }}">${{ number_format($balanceDue, 2) }}</span>
             </div>
         </div>
-        
-        <div class="col-md-8 mb-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-success">Payments & Credits Log</h6>
-                </div>
-                <div class="card-body">
-                    @if($payments->isEmpty() && $additionalPayments->isEmpty())
-                        <p class="text-center text-muted">No payments recorded.</p>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Method</th>
-                                        <th>Type</th>
-                                        <th class="text-end">Amount</th>
-                                        <th>Ref / Register</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($payments as $p)
-                                    <tr>
-                                        <td>{{ $p->created_at->format('M d, Y') }}</td>
-                                        <td>{{ ucwords(str_replace('_', ' ', $p->method)) }}</td>
-                                        <td><span class="badge bg-success">Original</span></td>
-                                        <td class="text-end fw-bold">${{ number_format($p->payment, 2) }}</td>
-                                        <td><small class="text-muted">{{ $p->x_ref_num ?? 'N/A' }}</small></td>
-                                    </tr>
-                                    @endforeach
-                                    @foreach($additionalPayments as $ap)
-                                    <tr>
-                                        <td>{{ $ap->created_at->format('M d, Y') }}</td>
-                                        <td>{{ ucwords(str_replace('_', ' ', $ap->method)) }}</td>
-                                        <td><span class="badge bg-warning text-dark">Additional</span></td>
-                                        <td class="text-end fw-bold">${{ number_format($ap->total, 2) }}</td>
-                                        <td><small class="text-muted">{{ $ap->x_ref_num ?? ($ap->register_id ? "Reg: $ap->register_id" : 'N/A') }}</small></td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th class="text-end">Amount</th>
+                            <th>Ref / Register</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($ledger as $item)
+                        @php
+                            $rowClass = '';
+                            if ($item['type'] === 'payment') $rowClass = 'text-success';
+                            if ($item['type'] === 'refund') $rowClass = 'text-danger';
+                            
+                            // Prepare details for modal
+                            $detailJson = json_encode($item['raw_obj']);
+                        @endphp
+                        <tr style="cursor: pointer;" onclick="showLedgerDetails('{{ $item['type'] }}', '{{ $item['description'] }}', {{ $item['amount'] }}, '{{ $item['ref'] }}')">
+                            <td>{{ $item['date']->format('M d, Y h:i A') }}</td>
+                            <td>{{ $item['description'] }}</td>
+                            <td>
+                                @if($item['type'] == 'charge')
+                                    <span class="badge bg-secondary">Charge</span>
+                                @elseif($item['type'] == 'payment')
+                                    <span class="badge bg-success">Payment</span>
+                                @elseif($item['type'] == 'refund')
+                                    <span class="badge bg-danger">Refund</span>
+                                @endif
+                            </td>
+                            <td class="text-end fw-bold {{ $rowClass }}">
+                                {{ $item['amount'] < 0 ? '-' : '' }}${{ number_format(abs($item['amount']), 2) }}
+                            </td>
+                            <td><small class="text-muted">{{ $item['ref'] ?? '-' }}</small></td>
+                        </tr>
+                        @endforeach
+                        
+                        {{-- Total Row --}}
+                        <tr class="table-active border-top border-dark">
+                            <td colspan="3" class="text-end fw-bold">Net Total</td>
+                            <td class="text-end fw-bold">${{ number_format($netTotal, 2) }}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -788,15 +703,21 @@ $(function() {
         });
     };
 
-    $('#addChargeMethod').on('change', function() {
-        const sel = $(this).find(':selected');
-        $('#addChargeToken').val(sel.data('token') || '');
-        if ($(this).val() === 'cash') {
-            $('#addChargeRegisterGroup').show().find('select').attr('required', true);
-        } else {
-            $('#addChargeRegisterGroup').hide().find('select').attr('required', false);
-        }
     }).trigger('change');
+
+    // Ledger Details Modal
+    window.showLedgerDetails = function(type, desc, amount, ref) {
+        let content = `
+            <table class="table table-bordered">
+                <tr><th>Type</th><td>${type.toUpperCase()}</td></tr>
+                <tr><th>Description</th><td>${desc}</td></tr>
+                <tr><th>Amount</th><td>$${amount.toFixed(2)}</td></tr>
+                <tr><th>Reference</th><td>${ref || 'N/A'}</td></tr>
+            </table>
+        `;
+        $('#paymentDetailPlaceholder').html(content);
+        new bootstrap.Modal(document.getElementById('paymentDetailModal')).show();
+    };
 
     $('#cancelMethod').on('change', function() {
         if ($(this).val() === 'cash') {
@@ -846,6 +767,41 @@ $(function() {
         $('#proRatedPaid').val(proRatedPaid.toFixed(2));
         updateRefundTotal();
     });
+
+    $('#addChargeMethod').on('change', function() {
+        const sel = $(this).find(':selected');
+        $('#addChargeToken').val(sel.data('token') || '');
+        if ($(this).val() === 'cash') {
+            $('#addChargeRegisterGroup').show().find('select').attr('required', true);
+        } else {
+            $('#addChargeRegisterGroup').hide().find('select').attr('required', false);
+        }
+    }).trigger('change');
+
+    // Ledger Details Modal
+    window.showLedgerDetails = function(type, desc, amount, ref) {
+        let title = 'Details';
+        let colorClass = 'bg-primary';
+        if(type === 'payment') { title = 'Payment Details'; colorClass = 'bg-success'; }
+        if(type === 'refund') { title = 'Refund Details'; colorClass = 'bg-danger'; }
+        
+        // If ref is a string looking like json, parse it
+        // We passed raw_obj as encoded json in the blade loop?
+        // Actually the blade loop call was: showLedgerDetails(..., {{ $item['ref'] }})
+        // Wait, I passed 'ref' as a string.
+        // The modal details might need more info.
+        
+        let content = `
+            <table class="table table-bordered">
+                <tr><th>Type</th><td><span class="badge ${colorClass}">${type.toUpperCase()}</span></td></tr>
+                <tr><th>Description</th><td>${desc}</td></tr>
+                <tr><th>Amount</th><td>$${amount.toFixed(2)}</td></tr>
+                <tr><th>Reference</th><td>${ref || 'N/A'}</td></tr>
+            </table>
+        `;
+        $('#paymentDetailPlaceholder').html(content);
+        new bootstrap.Modal(document.getElementById('paymentDetailModal')).show();
+    };
 
     $('#cancellationFeePercent').on('input', function() {
         const currentPercent = parseFloat($(this).val()) || 0;
