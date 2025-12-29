@@ -54,119 +54,133 @@ class AdminReservationController extends Controller
         // ---------------------------------------------------------
         // Financial Ledger Construction (STRICT MODE)
         // ---------------------------------------------------------
-        $ledger = collect();
+       $ledger = collect();
 
-        // 1. Reservation Charges
-        foreach ($reservations as $res) {
-            // User Rule: "reservation.total is the final amount owed"
-            // "If reservation.sitelock ... included inside reservation.total"
-            // "If addons exist ... included inside reservation.total"
-            
-            $finalTotal = $res->total;
-            $siteLock = $res->sitelock;
-            $totalTax = $res->totaltax;
-            
-            // Calculate Addons Total
-            $addonsTotal = 0;
-            $addonsLines = [];
-            if (!empty($res->addons_json)) {
-                $decodedAddons = json_decode($res->addons_json, true);
-                
-                // Handle structure: {"items": [...], "addons_total": 50}
-                $itemsToProcess = [];
-                if (isset($decodedAddons['items']) && is_array($decodedAddons['items'])) {
-                    $itemsToProcess = $decodedAddons['items'];
-                } elseif (is_array($decodedAddons) && !isset($decodedAddons['items'])) {
-                    // Legacy or simple list structure
-                    $itemsToProcess = $decodedAddons; 
-                }
+// If TRUE: $res->total already includes tax (common in “final total owed” fields).
+// If FALSE: tax is NOT included in total and should be added as a separate ledger line.
+$total_includes_tax = true;
 
-                foreach ($itemsToProcess as $addon) {
-                    if (!is_array($addon)) continue;
-                    
-                    // Fields: type, price, total_price, qty, site_id
-                    $price = $addon['total_price'] ?? $addon['price'] ?? $addon['amount'] ?? 0;
-                    $rawName = $addon['type'] ?? $addon['name'] ?? 'Addon';
-                    
-                    // Build descriptive name: "Boat Slip (PB06) x1"
-                    $details = [];
-                    if (!empty($addon['site_id'])) {
-                        $details[] = $addon['site_id'];
-                    }
-                    if (!empty($addon['qty']) && $addon['qty'] > 1) {
-                        $details[] = "x" . $addon['qty'];
-                    }
-                    
-                    $name = $rawName . (count($details) > 0 ? " (" . implode(' ', $details) . ")" : "");
-                    
-                    if ($price > 0) {
-                        $addonsTotal += $price;
-                        $addonsLines[] = ['name' => $name, 'price' => $price];
-                    }
-                }
+foreach ($reservations as $res) {
+    // User Rule:
+    // - reservation.total is the final amount owed
+    // - addons are INCLUDED in reservation.total
+    // - base should be total - sitelock (only subtract sitelock if present)
+
+    $finalTotal = (float) $res->total;
+    $siteLock   = (float) ($res->sitelock ?? 0);
+    $totalTax   = (float) ($res->totaltax ?? 0);
+
+    // ---------
+    // Parse addons for DISPLAY lines (do NOT subtract from base)
+    // ---------
+    $addonsLines = [];
+
+    if (!empty($res->addons_json)) {
+        $decodedAddons = json_decode($res->addons_json, true);
+
+        // Handle structure: {"items": [...], "addons_total": 50}
+        // or legacy simple list: [...]
+        $itemsToProcess = [];
+        if (is_array($decodedAddons) && isset($decodedAddons['items']) && is_array($decodedAddons['items'])) {
+            $itemsToProcess = $decodedAddons['items'];
+        } elseif (is_array($decodedAddons)) {
+            $itemsToProcess = $decodedAddons;
+        }
+
+        foreach ($itemsToProcess as $addon) {
+            if (!is_array($addon)) continue;
+
+            // Fields: type, price, total_price, qty, site_id
+            $price   = (float) ($addon['total_price'] ?? $addon['price'] ?? $addon['amount'] ?? 0);
+            $rawName = (string) ($addon['type'] ?? $addon['name'] ?? 'Addon');
+
+            // Build descriptive name: "Boat Slip (PB06) x2"
+            $details = [];
+            if (!empty($addon['site_id'])) {
+                $details[] = $addon['site_id'];
+            }
+            if (!empty($addon['qty']) && (int)$addon['qty'] > 1) {
+                $details[] = "x" . (int)$addon['qty'];
             }
 
-            // Calculate Base
-            // Base = Total - SiteLock - Addons - Tax
-            $calculatedBase = $finalTotal - $siteLock - $addonsTotal - $totalTax;
-            
-            // Allow for float precision issues
-            $calculatedBase = round($calculatedBase, 2);
+            $name = $rawName . (!empty($details) ? " (" . implode(' ', $details) . ")" : "");
 
-            // Ledger Entries
-            
-            // A. Base Charge
-            if ($calculatedBase != 0) { // Allow negative if it's a credit/discount, but typically positive
-                $ledger->push([
-                    'id' => 'base-' . $res->id,
-                    'date' => $res->created_at,
-                    'description' => "Site Base Charge: {$res->siteid} ({$res->nights} nights)",
-                    'type' => 'charge',
-                    'amount' => $calculatedBase,
-                    'ref' => $res->xconfnum,
-                    'raw_obj' => $res
-                ]);
-            }
-
-            // B. Site Lock
-            if ($siteLock > 0) {
-                $ledger->push([
-                    'id' => 'lock-' . $res->id,
-                    'date' => $res->created_at,
-                    'description' => "Site Lock Fee: {$res->siteid}",
-                    'type' => 'charge',
-                    'amount' => $siteLock,
-                    'ref' => null,
-                    'raw_obj' => $res
-                ]);
-            }
-
-            // C. Addons
-            foreach ($addonsLines as $idx => $al) {
-                $ledger->push([
-                    'id' => 'addon-' . $res->id . '-' . $idx,
-                    'date' => $res->created_at,
-                    'description' => "Addon: " . $al['name'],
-                    'type' => 'charge',
-                    'amount' => $al['price'],
-                    'ref' => null,
-                    'raw_obj' => $res
-                ]);
-            }
-
-            // D. Tax
-            if ($totalTax > 0) {
-                $ledger->push([
-                    'id' => 'tax-' . $res->id,
-                    'date' => $res->created_at,
-                    'description' => "Taxes",
-                    'type' => 'charge',
-                    'amount' => $totalTax,
-                    'ref' => null,
-                    'raw_obj' => $res
-                ]);
+            if ($price != 0.0) {
+                $addonsLines[] = ['name' => $name, 'price' => $price];
             }
         }
+    }
+
+    // ---------
+    // Calculate Base
+    // New rule: Base = Total - SiteLock (addons are already INCLUDED in total)
+    // ---------
+    $calculatedBase = $finalTotal - ($siteLock > 0 ? $siteLock : 0);
+    $calculatedBase = round($calculatedBase, 2);
+
+    // ---------
+    // Ledger Entries
+    // ---------
+
+    // A. Base Charge
+    if ($calculatedBase != 0.0) {
+        $ledger->push([
+            'id'          => 'base-' . $res->id,
+            'date'        => $res->created_at,
+            'description' => "Site Base Charge: {$res->siteid} ({$res->nights} nights)",
+            'type'        => 'charge',
+            'amount'      => $calculatedBase,
+            'ref'         => $res->xconfnum,
+            'raw_obj'     => $res,
+        ]);
+    }
+
+    // B. Site Lock
+    if ($siteLock > 0) {
+        $ledger->push([
+            'id'          => 'lock-' . $res->id,
+            'date'        => $res->created_at,
+            'description' => "Site Lock Fee: {$res->siteid}",
+            'type'        => 'charge',
+            'amount'      => round($siteLock, 2),
+            'ref'         => null,
+            'raw_obj'     => $res,
+        ]);
+    }
+
+    // C. Addons (DISPLAY lines; do NOT use them to compute base)
+    foreach ($addonsLines as $idx => $al) {
+        $ledger->push([
+            'id'          => 'addon-' . $res->id . '-' . $idx,
+            'date'        => $res->created_at,
+            'description' => "Addon: " . $al['name'],
+            'type'        => 'charge',
+            'amount'      => round((float)$al['price'], 2),
+            'ref'         => null,
+            'raw_obj'     => $res,
+        ]);
+    }
+
+    // D. Tax (ONLY if total does NOT already include tax)
+    if (!$total_includes_tax && $totalTax > 0) {
+        $ledger->push([
+            'id'          => 'tax-' . $res->id,
+            'date'        => $res->created_at,
+            'description' => "Taxes",
+            'type'        => 'charge',
+            'amount'      => round($totalTax, 2),
+            'ref'         => null,
+            'raw_obj'     => $res,
+        ]);
+    }
+}
+
+// Optional: sort by date then id (useful if you have multiple reservations)
+$ledger = $ledger->sortBy([
+    fn ($a, $b) => $a['date'] <=> $b['date'],
+    fn ($a, $b) => strcmp($a['id'], $b['id']),
+])->values();
+
 
         // 2. Additional Payments (The ONLY source of payments)
         // Note: If additional payments include charges (e.g. electric), they add to the total debt?
