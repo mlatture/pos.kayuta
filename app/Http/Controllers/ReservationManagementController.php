@@ -541,8 +541,13 @@ class ReservationManagementController extends Controller
                  // Note: Frontend JS adds site lock fee to subtotal for display? 
                  // Actually frontend logic sums price_quote.total.
 
+                 // Try to inherit customer info from existing items (e.g. Credit item)
+                 $existingItem = CartReservation::where('cartid', $request['cart_id'])->first();
+                 $customerNumber = $existingItem ? $existingItem->customernumber : 0;
+                 $email = $existingItem ? $existingItem->email : 'modification@temp.com';
+
                  CartReservation::create([
-                    'customernumber' => 0, // Guest/User will be attached at checkout or derived
+                    'customernumber' => $customerNumber, 
                     'cid' => $startDate,
                     'cod' => $endDate,
                     'cartid' => $request['cart_id'],
@@ -558,7 +563,7 @@ class ReservationManagementController extends Controller
                     'holduntil' => now()->addMinutes(15), 
                     'people' => 1,
                     'pets' => 0,
-                    'email' => 'modification@temp.com' // Temp email
+                    'email' => $email
                  ]);
 
                  return response()->json([
@@ -573,7 +578,7 @@ class ReservationManagementController extends Controller
 
              } catch (\Exception $e) {
                  Log::error("Local Cart Add Failed", ['error' => $e->getMessage()]);
-                 return response()->json(['ok' => false, 'message' => 'Failed to add to local cart.'], 500);
+                 return response()->json(['ok' => false, 'message' => 'Failed to add to local cart: ' . $e->getMessage()], 500);
              }
         }
         // ---------------------------------------------------------
