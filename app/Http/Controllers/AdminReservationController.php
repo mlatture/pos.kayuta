@@ -141,6 +141,124 @@ class AdminReservationController extends Controller
                     'raw_obj' => $res
                 ]);
             }
+
+            // C. Addons
+            foreach ($addonsLines as $idx => $al) {
+                $ledger->push([
+                    'id' => 'addon-' . $res->id . '-' . $idx,
+                    'date' => $res->created_at,
+                    'description' => "Addon: " . $al['name'],
+                    'type' => 'charge',
+                    'amount' => $al['price'],
+                    'ref' => null,
+                    'raw_obj' => $res
+                ]);
+            }
+
+            // D. Tax
+            if ($totalTax > 0) {
+                $ledger->push([
+                    'id' => 'tax-' . $res->id,
+                    'date' => $res->created_at,
+                    'description' => "Taxes",
+                    'type' => 'charge',
+                    'amount' => $totalTax,
+                    'ref' => null,
+                    'raw_obj' => $res
+                ]);
+            }
+        }
+
+        // 2. Additional Payments (The ONLY source of payments)
+        foreach ($additionalPayments as $ap) {
+            // CHARGE SIDE
+            $ledger->push([
+                'id' => 'add-charge-' . $ap->id,
+                'date' => $ap->created_at,
+                'description' => ($ap->comment ?: 'Additional Charge'),
+                'type' => 'charge',
+                'amount' => $ap->amount,
+                'ref' => $ap->x_ref_num,
+                'raw_obj' => $ap
+            ]);
+
+            if ($ap->tax > 0) {
+                 $ledger->push([
+                    'id' => 'add-tax-' . $ap->id,
+                    'date' => $ap->created_at,
+                    'description' => "Tax (Additional)",
+                    'type' => 'charge',
+                    'amount' => $ap->tax,
+                    'ref' => null,
+                    'raw_obj' => $ap
+                ]);
+            }
+
+            // PAYMENT SIDE
+            $ledger->push([
+                'id' => 'add-payment-' . $ap->id,
+                'date' => $ap->created_at,
+                'description' => "Payment (" . ($ap->method ?? 'Unknown') . ")",
+                'type' => 'payment',
+                'amount' => -($ap->total), // Negative for payment
+                'ref' => $ap->x_ref_num,
+                'raw_obj' => $ap
+            ]);
+        }
+
+        // 3. Refunds & Cancellations
+        foreach ($refunds as $rf) {
+            // Cancellation Fee (Charge)
+            if ($rf->cancellation_fee > 0) {
+                 $ledger->push([
+                    'id' => 'cancel-fee-' . $rf->id,
+                    'date' => $rf->created_at,
+                    'description' => "Cancellation Fee",
+                    'type' => 'charge',
+                    'amount' => $rf->cancellation_fee,
+                    'ref' => null,
+                    'raw_obj' => $rf
+                ]);
+            }
+
+            // Refund (Positive Value to increase Balance / Offset Payment)
+            if ($rf->amount > 0) {
+                 $ledger->push([
+                    'id' => 'refund-' . $rf->id,
+                    'date' => $rf->created_at,
+                    'description' => "Refund Issued",
+                    'type' => 'refund',
+                    'amount' => $rf->amount, 
+                    'ref' => $rf->method,
+                    'raw_obj' => $rf
+                ]);
+            }
+        }
+
+        // Sort by Date
+        $ledger = $ledger->sortBy('date');
+
+        // Calculate Totals
+        // Charges: Type = charge
+        $totalCharges = $ledger->where('type', 'charge')->sum('amount');
+        
+        // Payments: Type = payment (Negative values)
+        $totalPayments = $ledger->where('type', 'payment')->sum('amount');
+        
+        // Refunds: Type = refund (Positive values)
+        $totalRefunds = $ledger->where('type', 'refund')->sum('amount');
+        
+        // Net Total = Charges + Payments + Refunds
+        $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
+        
+        // Balance Due - Force to 0 if status is Paid. 
+        if (strcasecmp($mainReservation->status, 'Paid') == 0 || $netTotal < 0) {
+            $balanceDue = 0;
+        } else {
+            $balanceDue = $netTotal;
+        }
+
+        // Variables for View / JS
             
             // ... (Addons and Tax loops continue below) ...
         }
