@@ -203,7 +203,7 @@
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Financial Ledger</h6>
-            <div>
+            <!-- <div>
                 @if($netTotal < 0)
                     <strong>Credit: </strong> 
                     <span class="text-success fw-bold">${{ number_format(abs($netTotal), 2) }}</span>
@@ -214,7 +214,7 @@
                 <span class="mx-2">|</span>
                 <strong>Balance Due: </strong> 
                 <span class="{{ $balanceDue > 0 ? 'text-danger fw-bold' : 'text-success fw-bold' }}">${{ number_format($balanceDue, 2) }}</span>
-            </div>
+            </div> -->
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
