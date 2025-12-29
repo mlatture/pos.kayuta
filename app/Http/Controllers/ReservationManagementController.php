@@ -432,7 +432,7 @@ class ReservationManagementController extends Controller
                     ],
                     'site' => [
                         'name' => $item->siteid === 'CREDIT' ? 'Modification Credit' : $item->siteid,
-                        'hookup' => 'N/A',
+                        'hookup' => 'None',
                     ],
                     'is_lock' => false,
                     'price_snapshot' => [
