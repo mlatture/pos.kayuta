@@ -107,7 +107,8 @@ class AdminReservationController extends Controller
             }
 
             // Calculate Base
-            // Base = Total - SiteLock - Addons - Tax
+            // User Logic: "total - sitelock". 
+            // We must also subtract Addons and Tax to avoid double counting since they are displayed separately.
             $calculatedBase = $finalTotal - $siteLock - $addonsTotal - $totalTax;
             
             // Allow for float precision issues
@@ -116,7 +117,7 @@ class AdminReservationController extends Controller
             // Ledger Entries
             
             // A. Base Charge
-            if ($calculatedBase != 0) { // Allow negative if it's a credit/discount, but typically positive
+            if ($calculatedBase != 0) { 
                 $ledger->push([
                     'id' => 'base-' . $res->id,
                     'date' => $res->created_at,
@@ -140,6 +141,36 @@ class AdminReservationController extends Controller
                     'raw_obj' => $res
                 ]);
             }
+            
+            // ... (Addons and Tax loops continue below) ...
+        }
+
+        // ... (Additional Payments and Refunds loops) ...
+
+        // Sort by Date
+        $ledger = $ledger->sortBy('date');
+
+        // Calculate Totals
+        // Charges: Type = charge
+        $totalCharges = $ledger->where('type', 'charge')->sum('amount');
+        
+        // Payments: Type = payment (Negative values)
+        $totalPayments = $ledger->where('type', 'payment')->sum('amount');
+        
+        // Refunds: Type = refund (Positive values)
+        $totalRefunds = $ledger->where('type', 'refund')->sum('amount');
+        
+        // Net Total = Charges + Payments + Refunds
+        $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
+        
+        // Balance Due - Force to 0 if status is Paid. 
+        // User Request: "here balance due will $0 ok".
+        // We assume if the admin sees a discrepancy, they might have set the status to Paid.
+        if (strcasecmp($mainReservation->status, 'Paid') == 0 || $netTotal < 0) {
+            $balanceDue = 0;
+        } else {
+            $balanceDue = $netTotal;
+        }
 
             // C. Addons
             foreach ($addonsLines as $idx => $al) {
@@ -285,8 +316,10 @@ class AdminReservationController extends Controller
         // Net Total = Charges + Payments + Refunds
         $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
         
-        // Balance Due - Force to 0 if status is Paid, or if Net Total is negative (credit)
-        if ($mainReservation->status === 'Paid' || $netTotal < 0) {
+        // Balance Due - Force to 0 if status is Paid. 
+        // User Request: "here balance due will $0 ok".
+        // We assume if the admin sees a discrepancy, they might have set the status to Paid.
+        if (strcasecmp($mainReservation->status, 'Paid') == 0 || $netTotal < 0) {
             $balanceDue = 0;
         } else {
             $balanceDue = $netTotal;
