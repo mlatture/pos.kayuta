@@ -4,8 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Reservation;
+use App\Models\CartReservation;
+use App\Models\Payment;
+use App\Models\Refund;
+use App\Models\AdditionalPayment;
 use App\Services\MoneyActionService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class MoneyActionController extends Controller
 {
@@ -165,6 +171,83 @@ class MoneyActionController extends Controller
                 'success' => false, 
                 'message' => 'Date change failed: ' . $e->getMessage()
             ], 422);
+        }
+    }
+
+    public function startModification(Request $request, $id)
+    {
+        try {
+            // 1. Load existing reservation(s) by cartid (some carts have multiple sites)
+            $reservations = Reservation::where('cartid', $id)->get();
+            if ($reservations->isEmpty()) {
+                // Try finding by single ID if cartid not found
+                $singleRes = Reservation::find($id);
+                if ($singleRes) {
+                    $reservations = Reservation::where('cartid', $singleRes->cartid)->get();
+                }
+            }
+
+            if ($reservations->isEmpty()) {
+                return redirect()->back()->with('error', 'Reservation not found.');
+            }
+
+            $mainRes = $reservations->first();
+            $cartId = $mainRes->cartid;
+
+            // 2. Calculate Net Paid Amount (Credit to be applied)
+            // Logic from show.blade.php ledger
+            $payments = Payment::where('cartid', $cartId)->get();
+            $additionalPayments = AdditionalPayment::where('cartid', $cartId)->get();
+            $refunds = Refund::where('cartid', $cartId)->get();
+
+            $totalPaid = $payments->sum('payment') + $additionalPayments->sum('total');
+            $totalRefunded = $refunds->sum('amount');
+            $creditAmount = $totalPaid - $totalRefunded;
+
+            if ($creditAmount < 0) $creditAmount = 0;
+
+            // 3. Clear existing cart for guest/system
+            // Carts are currently linked to customernumber in CartReservation
+            CartReservation::where('customernumber', $mainRes->customernumber)->delete();
+
+            // 4. Add Credit Line Item to Cart
+            CartReservation::create([
+                'customernumber' => $mainRes->customernumber,
+                'cid' => $mainRes->cid,
+                'cod' => $mainRes->cod,
+                'cartid' => 'MOD-' . strtoupper(bin2hex(random_bytes(3))), // Temporary cart ID for the process
+                'siteid' => 'CREDIT',
+                'description' => "Credit from Reservation #{$cartId}",
+                'base' => -$creditAmount,
+                'subtotal' => -$creditAmount,
+                'total' => -$creditAmount,
+                'taxrate' => 0,
+                'totaltax' => 0,
+                'nights' => 0,
+                'rid' => $cartId, // Using rid to store originating cartid for reference at checkout
+                'holduntil' => now()->addHours(2),
+                'email' => $mainRes->email
+            ]);
+
+            // Log modification start
+            app(ReservationLogService::class)->log(
+                $mainRes->id,
+                'modification_started',
+                null,
+                ['credit_amount' => $creditAmount, 'cart_id' => $cartId],
+                "Modification process started. Credit of $".number_format($creditAmount, 2)." applied."
+            );
+
+            // 5. Redirect to Search / Availability page with pre-fills
+            return redirect()->route('reservations.create-reservation', [
+                'checkin' => $mainRes->cid->format('Y-m-d'),
+                'checkout' => $mainRes->cod->format('Y-m-d'),
+                'customer_id' => $mainRes->customernumber
+            ])->with('success', 'Modification started. Credit of $' . number_format($creditAmount, 2) . ' applied to cart.');
+
+        } catch (\Exception $e) {
+            Log::error("Modification Start Failed: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to start modification: ' . $e->getMessage());
         }
     }
 }

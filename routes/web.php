@@ -415,6 +415,7 @@ Route::prefix('admin')
             Route::post('cancel/{id}', [MoneyActionController::class, 'cancel'])->name('admin.money.cancel');
             Route::post('move/{id}', [MoneyActionController::class, 'moveSite'])->name('admin.money.move');
             Route::post('change-dates/{id}', [MoneyActionController::class, 'changeDates'])->name('admin.money.change-dates');
+            Route::get('modify/{id}', [MoneyActionController::class, 'startModification'])->name('admin.reservations.modify');
         });
         
         // Legacy Redirects
