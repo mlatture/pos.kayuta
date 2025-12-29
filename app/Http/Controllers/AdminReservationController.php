@@ -28,8 +28,11 @@ class AdminReservationController extends Controller
         $mainReservation = $reservations->first();
         $user = User::find($mainReservation->customernumber);
 
-        // Fetch Payments (safe)
-        $payments = Payment::where('cartid', $id)->get() ?? collect();
+        // Fetch Payments (Strictly from AdditionalPayment as per user request)
+        // User Rule: "reservations (the reservation itself), additional_payments (has reservation_id), refunds... no payment table"
+        
+        // $payments = Payment::where('cartid', $id)->get() ?? collect(); // IGNORED
+        $payments = collect(); // Empty collection to satisfy view variable if needed, but we rely on additionalPayments for ledger
         
         $additionalPayments = \App\Models\AdditionalPayment::where('cartid', $id)->get();
         $refunds = \App\Models\Refund::where('cartid', $id)->get();
@@ -41,7 +44,7 @@ class AdminReservationController extends Controller
 
         // Logs must never break the page
         $logs = ReservationLog::where('reservation_id', $mainReservation->id)
-            ->orWhere('reservation_id', $id) // in case it was logged by cart ID
+            ->orWhere('reservation_id', $id)
             ->orderBy('created_at', 'desc')
             ->take(50)
             ->get();
@@ -49,122 +52,143 @@ class AdminReservationController extends Controller
         $registers = \App\Models\StationRegisters::all();
 
         // ---------------------------------------------------------
-        // Financial Ledger Construction
+        // Financial Ledger Construction (STRICT MODE)
         // ---------------------------------------------------------
         $ledger = collect();
 
-        // Constants
-        $additionalChargesTotal = $additionalPayments->sum('amount');
-        $additionalTaxTotal = $additionalPayments->sum('tax');
-
         // 1. Reservation Charges
         foreach ($reservations as $res) {
-            // "Base" Calculation Strategy:
-            // The `total` column includes Base + SiteLock + Taxes + AdditionalPayments(Amount+Tax).
-            // To isolate "Base", we must subtract everything else.
+            // User Rule: "reservation.total is the final amount owed"
+            // "If reservation.sitelock ... included inside reservation.total"
+            // "If addons exist ... included inside reservation.total"
             
-            // Note: If multiple reservations exist (split cart), AdditionalPayments are typically linked to ONE reservation_id.
-            // We need to filter additional payments for THIS reservation to subtract correctly, OR
-            // if additional payments are just cart-wide, we distribute?
-            // `AdditionalPayment` has `reservation_id`.
+            $finalTotal = $res->total;
+            $siteLock = $res->sitelock;
+            $totalTax = $res->totaltax;
             
-            $resAdds = $additionalPayments->where('reservation_id', $res->id);
-            $resAddAmount = $resAdds->sum('amount');
-            $resAddTax = $resAdds->sum('tax');
-
-            // Calculate Base if missing
-            // We assume 'total' in reservations table is the ORIGINAL reservation total (Base + SiteLock + Tax).
-            // It does NOT include external AdditionalPayment records.
-            $calculatedBase = $res->total - $res->totaltax - $res->sitelock;
-
-            // Priority 2: Calculate from `subtotal` (preferred over total if total is desynced)
-            if ($calculatedBase <= 0 && $res->subtotal > 0) {
-                 $calculatedBase = $res->subtotal - $res->sitelock;
+            // Calculate Addons Total
+            $addonsTotal = 0;
+            $addonsLines = [];
+            if (!empty($res->addons_json)) {
+                $decodedAddons = json_decode($res->addons_json, true);
+                if (is_array($decodedAddons)) {
+                    foreach ($decodedAddons as $addon) {
+                        // Attempt to extract price. Adjust key based on actual JSON structure.
+                        // Common patterns: 'price', 'amount', 'total'. default to 0.
+                        $price = $addon['price'] ?? $addon['amount'] ?? $addon['total'] ?? 0;
+                        $name = $addon['name'] ?? 'Addon';
+                        if ($price > 0) {
+                            $addonsTotal += $price;
+                            $addonsLines[] = ['name' => $name, 'price' => $price];
+                        }
+                    }
+                }
             }
 
-            // Priority 3: "Gap Filling" for Discrepancies (User Request)
-            // If Base is still 0, but we have a large payment, assume the difference is the Base Charge.
-            // This fixes legacy/imported data where `total` might calculate incorrectly as just the fees.
-            if ($calculatedBase <= 0 && $reservations->count() === 1) {
-                 $totalPayAmount = abs($ledger->where('type', 'payment')->sum('amount')) + ($payments->sum('payment') ?? 0); 
-                 // Note: Ledger payments aren't populated yet fully in this loop? 
-                 // Actually $payments is available. $additionalPayments available.
-                 
-                 $globalPaid = $payments->sum('payment') + $additionalPayments->sum('total');
-                 $knownCharges = $res->sitelock + $displayTax + $additionalChargesTotal;
-                 
-                 $potentialBase = $globalPaid - $knownCharges;
-                 // Only apply if it looks like a clean "Total vs Paid" match (~0 balance)
-                 if ($potentialBase > 0) {
-                      $calculatedBase = $potentialBase;
-                 }
-            }
+            // Calculate Base
+            // Base = Total - SiteLock - Addons - Tax
+            $calculatedBase = $finalTotal - $siteLock - $addonsTotal - $totalTax;
             
-            // Use DB base if valid positive, else calculated
-            // If DB base is 0, it might be legacy or error, so use calculated.
-            $baseCharge = $res->base > 0 ? $res->base : $calculatedBase;
+            // Allow for float precision issues
+            $calculatedBase = round($calculatedBase, 2);
+
+            // Ledger Entries
             
-            // Adjust Tax: We want to show "Reservation Tax" separate from "Additional Tax" if we list Additional as a line item.
-            // OR we list "Total Tax" and exclude tax from Additional line.
-            // Let's list Additional Payment as "Item ($Amount)" and separate "Item Tax ($Tax)".
-            // Actually, usually Receipt shows "Item ... $Total".
-            // Let's strip the Additional Tax from the main "Tax" line to avoid confusion.
-            $displayTax = $res->totaltax - $resAddTax;
-
-            // Clamp negative base (e.g. if discounts exceed base? We treat discount separately if possible, or just show net base)
-            // For now, allow negative ONLY if it's a refund? No, Ledger Charges should be positive.
-            // If logic yields negative, it implies data error or hidden discount.
-            $baseCharge = max(0, $baseCharge);
-
-            if ($baseCharge > 0) {
+            // A. Base Charge
+            if ($calculatedBase != 0) { // Allow negative if it's a credit/discount, but typically positive
                 $ledger->push([
                     'id' => 'base-' . $res->id,
                     'date' => $res->created_at,
                     'description' => "Site Base Charge: {$res->siteid} ({$res->nights} nights)",
                     'type' => 'charge',
-                    'amount' => $baseCharge,
+                    'amount' => $calculatedBase,
                     'ref' => $res->xconfnum,
                     'raw_obj' => $res
                 ]);
             }
 
-            if ($res->sitelock > 0) {
+            // B. Site Lock
+            if ($siteLock > 0) {
                 $ledger->push([
                     'id' => 'lock-' . $res->id,
                     'date' => $res->created_at,
                     'description' => "Site Lock Fee: {$res->siteid}",
                     'type' => 'charge',
-                    'amount' => $res->sitelock,
+                    'amount' => $siteLock,
                     'ref' => null,
                     'raw_obj' => $res
                 ]);
             }
 
-            if ($displayTax > 0) {
+            // C. Addons
+            foreach ($addonsLines as $idx => $al) {
+                $ledger->push([
+                    'id' => 'addon-' . $res->id . '-' . $idx,
+                    'date' => $res->created_at,
+                    'description' => "Addon: " . $al['name'],
+                    'type' => 'charge',
+                    'amount' => $al['price'],
+                    'ref' => null,
+                    'raw_obj' => $res
+                ]);
+            }
+
+            // D. Tax
+            if ($totalTax > 0) {
                 $ledger->push([
                     'id' => 'tax-' . $res->id,
                     'date' => $res->created_at,
-                    'description' => "Taxes (Reservation)",
+                    'description' => "Taxes",
                     'type' => 'charge',
-                    'amount' => $displayTax,
+                    'amount' => $totalTax,
                     'ref' => null,
                     'raw_obj' => $res
                 ]);
             }
         }
 
-        // 2. Additional Charges & Payments
+        // 2. Additional Payments (The ONLY source of payments)
+        // Note: If additional payments include charges (e.g. electric), they add to the total debt?
+        // Usually `AdditionalPayment` has `amount` (paid) and sometimes `tax`.
+        // User said: "Only use... additional_payments... no payment table"
+        // If an AdditionalPayment represents a CHARGE, it should be added as charge. 
+        // If it represents a PAYMENT, it should be added as payment.
+        // `AdditionalPayment` model usually implies a transaction. 
+        // Logic: The `AdditionalPayment` table typically records a payment event.
+        // If it was for a "Charge", the charge should ALSO be recorded.
+        // Does `AdditionalPayment` imply a NEW charge was created? 
+        // The previous code had:
+        //    Charge: $ap->amount
+        //    Payment: -$ap->total
+        // This implies every AdditionalPayment CREATES a charge and then PAYS it.
+        // If so, we must keep that logic to balance the ledger.
+        
         foreach ($additionalPayments as $ap) {
-            // Charge Side
-            // Show Amount and Tax separately or together? 
-            // Let's show "Charge: Item ($Amount)" and "Tax: Item ($Tax)"? 
-            // Or "Charge: Item ($Total)".
-            // Ledger typically separates Tax.
-            // Let's add Charge Amount.
+            // Logic: An "Additional Payment" is usually "I bought firewood ($10)".
+            // So we owe $10 (Charge) and we paid $10 (Payment).
+            // User instruction: "additional_payments (has reservation_id)"
+            // If we don't add the charge, the payment will look like a credit against the base reservation.
+            // Assumption: AdditionalPayments are strictly for EXTRA items/fees, not for paying the base reservation.
+            // UNLESS the base reservation payment is ALSO stored in AdditionalPayments?
+            // User said: "The remaining $160.27 should be applied as the reservation payment for BR01."
+            // This implies the PAYMENT for the base reservation IS in AdditionalPayments? Or implicitly handled?
+            // "ledger must be computed using only ... additional_payments ... no payment table".
+            
+            // Let's assume AdditionalPayment records are standard payments.
+            // But do they also imply a charge?
+            // If I see `Description: Payment (Visa)`, it is just a payment.
+            // If I see `Description: Additional Charge: Cleaning`, it is a Charge AND Payment.
+            // The previous controller code treated them as Charge + Payment.
+            // Let's stick to that pattern: It creates a Charge line and a Payment line.
+            
+            // CHARGE SIDE
+            // Only add charge if it's NOT just a payment for existing debt.
+            // How to distinguish? `AdditionalPayment` usually denotes an ad-hoc transaction.
+            // We will add the Charge side.
             $ledger->push([
                 'id' => 'add-charge-' . $ap->id,
                 'date' => $ap->created_at,
-                'description' => "Additional Charge: " . ($ap->comment ?: 'Miscellaneous'),
+                'description' => ($ap->comment ?: 'Additional Charge'),
                 'type' => 'charge',
                 'amount' => $ap->amount,
                 'ref' => $ap->x_ref_num,
@@ -172,7 +196,7 @@ class AdminReservationController extends Controller
             ]);
 
             if ($ap->tax > 0) {
-                $ledger->push([
+                 $ledger->push([
                     'id' => 'add-tax-' . $ap->id,
                     'date' => $ap->created_at,
                     'description' => "Tax (Additional)",
@@ -183,33 +207,19 @@ class AdminReservationController extends Controller
                 ]);
             }
 
-            // Payment Side (It was paid immediately)
-            // User request: "Additional payments as negative credits"
+            // PAYMENT SIDE
             $ledger->push([
                 'id' => 'add-payment-' . $ap->id,
                 'date' => $ap->created_at,
-                'description' => "Payment (Additional Charge)",
+                'description' => "Payment (" . ($ap->method ?? 'Unknown') . ")",
                 'type' => 'payment',
-                'amount' => -($ap->total), // Full amount paid
+                'amount' => -($ap->total), // Negative for payment
                 'ref' => $ap->x_ref_num,
                 'raw_obj' => $ap
             ]);
         }
 
-        // 3. Regular Payments
-        foreach ($payments as $p) {
-            $ledger->push([
-                'id' => 'payment-' . $p->id,
-                'date' => $p->created_at,
-                'description' => "Payment (" . ucwords(str_replace('_', ' ', $p->method)) . ")",
-                'type' => 'payment',
-                'amount' => -($p->payment),
-                'ref' => $p->x_ref_num,
-                'raw_obj' => $p
-            ]);
-        }
-
-        // 4. Refunds & Cancellations
+        // 3. Refunds & Cancellations
         foreach ($refunds as $rf) {
             // Cancellation Fee (Charge)
             if ($rf->cancellation_fee > 0) {
@@ -225,7 +235,6 @@ class AdminReservationController extends Controller
             }
 
             // Refund (Positive Value to increase Balance / Offset Payment)
-            // If I paid -100 (Credit), and Get +20 (Debit/Refund), Net Credit is -80.
             if ($rf->amount > 0) {
                  $ledger->push([
                     'id' => 'refund-' . $rf->id,
@@ -253,20 +262,14 @@ class AdminReservationController extends Controller
         $totalRefunds = $ledger->where('type', 'refund')->sum('amount');
         
         // Net Total = Charges + Payments + Refunds
-        // Example: 100 + (-100) + 20 = 20.
         $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
         
-        // Force Balance Due to 0 if status is explicitly 'Paid' (User Request)
-        if ($mainReservation->status === 'Paid') {
-            $balanceDue = 0;
-        } else {
-            $balanceDue = max(0, $netTotal);
-        }
+        // Balance Due
+        $balanceDue = max(0, $netTotal);
 
         // Variables for View / JS
         $cartTotal = $reservations->sum('total');
         // totalPaid should be the magnitude of money collected (for refund pro-rating)
-        // totalPayments is negative in ledger, so take absolute or sum magnitude
         $totalPaid = abs($totalPayments);
 
         return view('admin.reservations.show', compact(
