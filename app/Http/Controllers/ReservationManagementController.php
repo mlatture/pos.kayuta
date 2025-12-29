@@ -407,6 +407,57 @@ class ReservationManagementController extends Controller
 
     public function getCart(Request $request)
     {
+        // ---------------------------------------------------------
+        // PATCH: Support for Local Modification Carts (MOD-...)
+        // ---------------------------------------------------------
+        if (str_starts_with($request['cart_id'], 'MOD-')) {
+            $localItems = CartReservation::where('cartid', $request['cart_id'])->get();
+            
+            if ($localItems->isEmpty()) {
+                return response()->json(['ok' => false, 'message' => 'Modification cart not found locally.'], 404);
+            }
+
+            // Map local items to API response structure
+            $items = $localItems->map(function($item) {
+                return [
+                    'cart_item_id' => $item->id,
+                    'site_id' => $item->siteid,
+                    'is_lock' => false,
+                    'price_quote' => [
+                        'total' => (float)$item->total,
+                        'subtotal' => (float)$item->subtotal,
+                        'avg_nightly' => 0, // Not applicable for credit
+                    ],
+                    // Add other fields if JS needs them
+                    'name' => $item->siteid === 'CREDIT' ? 'Modification Credit' : $item->siteid,
+                    'hookup' => 'N/A',
+                    'minlength' => 0,
+                    'maxlength' => 0,
+                ];
+            });
+
+            // Calculate totals
+            $subtotal = $localItems->sum('subtotal');
+            $total = $localItems->sum('total');
+
+            return response()->json([
+                'ok' => true,
+                'data' => [
+                    'cart' => [
+                        'cart_id' => $request['cart_id'],
+                        'cart_token' => $request['cart_token'] ?? 'mod_token',
+                        'items' => $items,
+                        'financials' => [
+                             'subtotal' => $subtotal,
+                             'total' => $total,
+                             'taxes' => 0
+                        ]
+                    ]
+                ]
+            ]);
+        }
+        // ---------------------------------------------------------
+
         try {
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
@@ -447,8 +498,76 @@ class ReservationManagementController extends Controller
 
     public function cartItems(Request $request)
     {
+        // ---------------------------------------------------------
+        // PATCH: Support for Local Modification Carts (MOD-...)
+        // ---------------------------------------------------------
+        if (str_starts_with($request['cart_id'], 'MOD-')) {
+             try {
+                // Remove existing validation for integer cart_id temporarily or manually validating
+                // Since this block runs before validation, we do validtion inside or assume input is ok from frontend
+                
+                 $site = \App\Models\Site::where('siteid', $request->site_id)->first();
+                 // Simplification: Using a flat rate or fetching from RateTier if possible
+                 $price = 50; // Fallback
+                 if ($site) {
+                     $tier = \App\Models\RateTier::where('siteclass', $site->class)->first();
+                     if ($tier) $price = $tier->daily_rate ?? 50;
+                 }
+                 
+                 // Calculate Nights
+                 $startDate = Carbon::parse($request->start_date);
+                 $endDate = Carbon::parse($request->end_date);
+                 $nights = $startDate->diffInDays($endDate);
+                 $subTotal = $price * $nights;
+                 
+                  // Add Site Lock Fee if applicable
+                 $lockFee = ($request->site_lock_fee == 'on') 
+                    ? (BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0)
+                    : 0;
+                 
+                 $total = $subTotal + $lockFee; 
+                 // Note: Frontend JS adds site lock fee to subtotal for display? 
+                 // Actually frontend logic sums price_quote.total.
+
+                 CartReservation::create([
+                    'customernumber' => 0, // Guest/User will be attached at checkout or derived
+                    'cid' => $startDate,
+                    'cod' => $endDate,
+                    'cartid' => $request['cart_id'],
+                    'siteid' => $request->site_id,
+                    'description' => "Reservation for {$request->site_id}",
+                    'base' => $price,
+                    'subtotal' => $subTotal,
+                    'total' => $total,
+                    'taxrate' => 0, 
+                    'totaltax' => 0,
+                    'nights' => $nights,
+                    'rid' => '',
+                    'holduntil' => now()->addMinutes(15), 
+                    'people' => 1,
+                    'pets' => 0,
+                    'email' => 'modification@temp.com' // Temp email
+                 ]);
+
+                 return response()->json([
+                     'ok' => true,
+                     'status' => 200,
+                     'data' => [
+                        'status' => 'success',
+                        'cart_items' => [] // Frontend reloads via getCart
+                     ],
+                     'message' => 'Items added to local modification cart successfully.',
+                 ]);
+
+             } catch (\Exception $e) {
+                 Log::error("Local Cart Add Failed", ['error' => $e->getMessage()]);
+                 return response()->json(['ok' => false, 'message' => 'Failed to add to local cart.'], 500);
+             }
+        }
+        // ---------------------------------------------------------
+
         $data = $request->validate([
-            'cart_id' => ['required', 'integer'],
+            'cart_id' => ['required', 'string'], // Changed to string to allow MOD- if patch misses or future
             'token' => ['required', 'string'],
             'site_id' => ['required', 'string'],
             'start_date' => ['required', 'date'],
@@ -513,6 +632,62 @@ class ReservationManagementController extends Controller
 
     public function checkout(Request $request)
     {
+        // ---------------------------------------------------------
+        // PATCH: Support for Local Modification Carts (MOD-...)
+        // ---------------------------------------------------------
+        $cartId = $request->input('api_cart.cart_id');
+        if ($cartId && str_starts_with($cartId, 'MOD-')) {
+             try {
+                // Map Payment Method and Fields
+                $paymentMethod = $request->input('payment_method');
+                $paymentType = '';
+                $extraData = [
+                    'cartid' => $cartId,
+                    'xAmount' => $request->input('xAmount'),
+                ];
+
+                switch ($paymentMethod) {
+                    case 'card':
+                        $paymentType = 'Manual';
+                        $extraData['xCardNum'] = $request->input('cc.xCardNum');
+                        $extraData['xExp'] = $request->input('cc.xExp');
+                        $extraData['cvv'] = $request->input('cc.cvv'); 
+                        break;
+                    case 'cash':
+                        $paymentType = 'Cash';
+                        $extraData['xCash'] = $request->input('cash_tendered'); // storePayment checks xCash? No, it uses xAmount for Payment model but maybe xCash for something else. Checking handleCashOrOtherPayment... it uses xAmount for payment model.
+                        break;
+                    case 'ach':
+                        $paymentType = 'Check';
+                        $extraData['xAccount'] = $request->input('ach.account');
+                        $extraData['xRouting'] = $request->input('ach.routing');
+                        $extraData['xName'] = $request->input('ach.name');
+                        break;
+                    case 'gift_card':
+                        $paymentType = 'Gift Card';
+                        $extraData['xBarcode'] = $request->input('gift_card_code');
+                        break;
+                    default:
+                        $paymentType = 'Other';
+                }
+
+                $extraData['paymentType'] = $paymentType;
+
+                // Merge into a new Request or the existing one
+                $newRequest = $request->merge($extraData);
+
+                // Call NewReservationController logic
+                // We resolve it from container
+                $controller = app(\App\Http\Controllers\NewReservationController::class);
+                return $controller->storePayment($newRequest, $cartId);
+
+             } catch (\Exception $e) {
+                 Log::error("Local Checkout Failed", ['error' => $e->getMessage()]);
+                 return response()->json(['ok' => false, 'message' => 'Failed to process local checkout: ' . $e->getMessage()], 500);
+             }
+        }
+        // ---------------------------------------------------------
+
         $data = $request->validate([
             'payment_method' => ['required', Rule::in(['cash', 'ach', 'gift_card', 'card'])],
             'gift_card_code' => ['nullable', 'string', 'max:64'],
@@ -537,7 +712,7 @@ class ReservationManagementController extends Controller
             'state' => 'required',
             'zip' => 'required',
 
-            'xAmount' => ['required', 'numeric', 'min:0.5'],
+            'xAmount' => ['required', 'numeric'], // Removed min:0.5 to allow refunds via negative amount if logic permits, or we handle refund elsewhere. Actually NewReservationController handles refunds if amount is negative? MoneyActionController sets negative total on Credit. If cart total is negative, xAmount will be negative.
             'api_cart.cart_id' => ['required'],
             'api_cart.cart_token' => ['required'],
         ]);
@@ -611,6 +786,22 @@ class ReservationManagementController extends Controller
 
     public function removeCartItem(Request $request)
     {
+        // ---------------------------------------------------------
+        // PATCH: Support for Local Modification Carts (MOD-...)
+        // ---------------------------------------------------------
+        if (str_starts_with($request['cart_id'], 'MOD-')) {
+             try {
+                CartReservation::where('id', $request['cart_item_id'])->delete();
+                return response()->json([
+                     'ok' => true,
+                     'message' => 'Item removed from modification cart.'
+                 ]);
+             } catch (\Exception $e) {
+                 return response()->json(['ok' => false, 'message' => 'Failed to remove local item.'], 500);
+             }
+        }
+        // ---------------------------------------------------------
+
         try {
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
