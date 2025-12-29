@@ -149,9 +149,35 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No reservations to display.</td>
-                                </tr>
+                            <tbody>
+                                @forelse ($customer->reservations as $reservation)
+                                    <tr>
+                                        <td>{{ $reservation->cid->format('m/d/Y') }}</td>
+                                        <td>{{ $reservation->cod->format('m/d/Y') }}</td>
+                                        <td>{{ $reservation->siteid ?? '-' }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ ucfirst($reservation->status) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $reservation->cartid }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-primary js-email"
+                                                    data-reservation-id="{{ $reservation->id }}">
+                                                    Email
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No reservations to display.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
 
                             </tbody>
                         </table>
@@ -166,8 +192,7 @@
     <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <form id="emailForm" method="POST"
-                    action="{{ route('admin.customers.account.email.send', $customer->id) }}">
+                <form id="emailForm">
                     @csrf
                     <input type="hidden" name="reservation_id" id="emailReservationId">
                     <div class="modal-header">
@@ -186,15 +211,15 @@
                                 <input type="text" class="form-control" name="cc" id="emailCc"
                                     placeholder="Optional, comma-separated" autocomplete="off">
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 mt-3">
                                 <label class="form-label">Email Content</label>
-                                <textarea class="form-control" name="content" id="emailContent" rows="12" placeholder="Loading template…"></textarea>
-                                <div class="form-text">This content is pre-filled from your existing confirmation template
-                                    and is fully editable.</div>
+                                <textarea class="form-control" name="content" id="emailContent" rows="12"
+                                    placeholder="Type your email content here..."></textarea>
+
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer py-1 px-2" style="font-size: 0.85rem;">
                         <div class="me-auto small" id="emailFeedback" aria-live="polite"></div>
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="emailSendBtn">
@@ -233,13 +258,13 @@
                 const statusEl = $('#balanceStatus');
 
                 if (total > 0) {
-                    balanceEl.css('color', '#dc3545'); 
+                    balanceEl.css('color', '#dc3545');
                     statusEl.html('<span class="badge bg-danger">Due</span>');
                 } else if (total < 0) {
-                    balanceEl.css('color', '#198754'); 
+                    balanceEl.css('color', '#198754');
                     statusEl.html('<span class="badge bg-success">Credit</span>');
                 } else {
-                    balanceEl.css('color', '#000000'); 
+                    balanceEl.css('color', '#000000');
                     statusEl.html('<span class="badge bg-secondary">Settled</span>');
                 }
             }
@@ -332,39 +357,6 @@
                     );
                 });
 
-            /* ---------------- Email Modal (open) ---------------- */
-            $(document).on('click', '.js-email', function() {
-                const $btn = $(this);
-                const reservationId = $btn.data('reservation-id') || '';
-                const conf = $btn.data('confirmation') || '';
-                const email = $btn.data('customer-email') || @json($customer->email);
-
-                $('#emailReservationId').val(reservationId);
-                $('#emailTo').val(email);
-                $('#emailCc').val('');
-                $('#emailModalTitle').text(`Resend Confirmation Email — ${conf || 'Reservation'}`);
-
-                const url = '{{ route('admin.customers.account.email.template', $customer->id) }}' + (
-                    reservationId ? (`?reservation_id=${reservationId}`) : '');
-                $.ajax({
-                        url,
-                        method: 'GET',
-                        dataType: 'html',
-                        timeout: 15000,
-                        beforeSend: function() {
-                            $('#emailContent').val('Loading template…');
-                        }
-                    })
-                    .done(function(html) {
-                        $('#emailContent').val(html || '[[ Confirmation template content here ]]');
-                        $('#emailModal').modal('show');
-                    })
-                    .fail(function(xhr, status, err) {
-                        console.error('Email template error:', status, err, xhr?.responseText);
-                        $('#emailContent').val('[[ Confirmation template content here ]]');
-                        $('#emailModal').modal('show');
-                    });
-            });
 
             const $emailForm = $('#emailForm');
             const $sendBtn = $('#emailSendBtn');
@@ -383,7 +375,7 @@
                 const formData = new FormData(this);
 
                 $.ajax({
-                        url: '{{ route('admin.customers.account.email.send', $customer->id) }}',
+                        url: `{{ route('admin.customers.account.send.email', $customer->id) }}`,
                         method: 'POST',
                         data: formData,
                         processData: false,
@@ -409,6 +401,26 @@
                         $sendText.text('Send');
                     });
             });
+
+
+
+            $(document).on('click', '#reservationsTable .js-email', function() {
+                const reservationId = $(this).data('reservation-id');
+
+                $('#emailReservationId').val(reservationId);
+                $('#emailCc').val('');
+                $('#emailFeedback').text('').removeClass('text-success text-danger');
+
+                $('#emailModal').modal('show');
+            });
+
+
+
+
+            // End of jQuery on-ready
+            /* ---------------- Email Modal (open) ---------------- */
+
+
         });
     </script>
 @endpush

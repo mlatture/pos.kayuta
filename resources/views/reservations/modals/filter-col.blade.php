@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <form id="managementFilterForm" method="GET" action="{{ url()->current() }}">
-                    
+
                     <div class="mb-3">
                         <label for="siteFilter" class="form-label">Site ID</label>
                         <select id="siteFilter" name="siteid[]" class="form-select w-100" multiple="multiple">
@@ -21,11 +21,15 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="rigLength" class="form-label">Rig Length</label>
+                        <input type="text" id="rigLength" name="riglength" class="form-control w-100" value="{{ request('riglength', '') }}">
+                    </div>
+
+                    <div class="mb-3">
                         <label for="typeFilter" class="form-label">Site Type</label>
                         <select id="typeFilter" name="siteclass[]" class="form-select w-100" multiple="multiple">
                             @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                <option value="{{ $siteclass }}"
-                                    {{ in_array($siteclass, request('siteclass', [])) || ($siteclass === 'RV Sites' && !request()->has('siteclass')) ? 'selected' : '' }}>
+                                <option value="{{ $siteclass }}">
                                     {{ $siteclass }}
                                 </option>
                             @endforeach
@@ -44,7 +48,7 @@
                         </select>
                     </div>
 
-                    <button type="button" class="btn btn-primary applyFilter" >Apply</button>
+                    <button type="button" class="btn btn-primary applyFilter">Apply</button>
                     <a href="{{ url()->current() }}" class="btn btn-secondary">Clear Filters</a>
                 </form>
             </div>

@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\ReservationConfirmation;
+
 class CustomerController extends Controller
 {
     protected CustomerBalanceService $balanceService;
@@ -313,6 +316,7 @@ class CustomerController extends Controller
 
     public function account(User $customer)
     {
+        $customer->reservations = $customer->reservations()->orderBy('cartid', 'desc')->get();
         return view('admin.customers.account', compact('customer'));
     }
 
@@ -332,8 +336,7 @@ class CustomerController extends Controller
             ->where('customer_id', $customer->id)
             ->select(['created_at as d', 'payment as amount', 'site as ref', DB::raw("'Utility' as type")]);
 
-        $posPayments = DB::table('pos_payments')
-            ->select(['created_at as d', 'amount as amount', 'order_id as ref', DB::raw("'POS' as type")]);
+        $posPayments = DB::table('pos_payments')->select(['created_at as d', 'amount as amount', 'order_id as ref', DB::raw("'POS' as type")]);
 
         $rows = $resPayments
             ->union($utilPayments)
@@ -365,5 +368,34 @@ class CustomerController extends Controller
         } catch (\Exception $e) {
             return $value; // fallback if parsing fails
         }
+    }
+
+    public function send(Request $request, $customerId)
+    {
+        $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
+            'to' => 'required|string',
+            'cc' => 'nullable|string',
+            'content' => 'nullable|string',
+        ]);
+
+        $reservation = Reservation::findOrFail($request->reservation_id);
+
+        $to = array_map('trim', explode(',', $request->to));
+        $cc = $request->filled('cc') ? array_map('trim', explode(',', $request->cc)) : [];
+
+        Notification::route('mail', $to)->notify(new ReservationConfirmation($reservation, $cc, $request->content));
+
+        SystemLog::create([
+            'transaction_type' => 'Email Resent',
+            'reference_id' => $reservation->id,
+            'description' => 'Confirmation email resent',
+            'performed_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Confirmation email resent successfully.',
+        ]);
     }
 }

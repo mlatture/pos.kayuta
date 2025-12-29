@@ -11,7 +11,7 @@
                 data-bs-placement="right" title=""
                 data-site-data="{{ json_encode([
                     'Class' => str_replace('_', ' ', $site->siteclass),
-                    'Tier' => $site->ratetier,
+                    'Rate Tier' => $site->ratetier,
                     'Rig Length' =>
                         str_replace('_', ' ', $site->siteclass) == 'RV Sites' ||
                         str_replace('_', ' ', $site->siteclass) == 'RV Sites,Tent Sites'
