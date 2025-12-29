@@ -33,7 +33,9 @@ use App\Models\Refund;
 use App\Mail\ReservationCancelled;
 use App\Models\BusinessSettings;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\ReservationModified;
 use App\Services\ReservationLogService;
+use App\Models\AdditionalPayment;
 
 class NewReservationController extends Controller
 {
@@ -610,6 +612,27 @@ class NewReservationController extends Controller
     {
         $firstReservation = $cart_reservation->first();
         $user = User::where('id', $firstReservation->customernumber)->first();
+        $isRefund = $request->xAmount < 0;
+
+        // Determine if this is a modification flow with a credit
+        $creditItem = $cart_reservation->firstWhere('siteid', 'CREDIT');
+        
+        if ($isRefund) {
+            $data['xCommand'] = 'cc:refund';
+            $data['xAmount'] = abs($request->xAmount); // Send positive amount to gateway
+            
+            // If it's a modification refund, find the original transaction ref
+            if ($creditItem && $creditItem->rid) {
+                $originalPayment = Payment::where('cartid', $creditItem->rid)
+                    ->whereNotNull('x_ref_num')
+                    ->latest()
+                    ->first();
+                if ($originalPayment) {
+                    $data['xRefNum'] = $originalPayment->x_ref_num;
+                }
+            }
+        }
+
         $ch = curl_init('https://x1.cardknox.com/gateway');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
@@ -626,30 +649,90 @@ class NewReservationController extends Controller
         parse_str($responseContent, $responseArray);
 
         if (isset($responseArray['xStatus']) && $responseArray['xStatus'] === 'Approved') {
-            $payment = new Payment([
-                'cartid' => $request->cartid,
-                'receipt' => $randomReceiptID,
-                'method' => $paymentType,
-                'customernumber' => $firstReservation->customernumber,
-                'email' => $user->email,
-                'payment' => $request->xAmount,
-                'x_ref_num' => $responseArray['xRefNum'] ?? null,
-            ]);
-            $payment->save();
+            if ($isRefund) {
+                // Record as Refund
+                Refund::create([
+                    'cartid' => $request->cartid,
+                    'reservations_id' => 0, // Assigned later or 0 for generic cart refund
+                    'amount' => abs($request->xAmount),
+                    'cancellation_fee' => 0,
+                    'method' => 'Credit Card',
+                    'reason' => 'Modification Refund',
+                    'x_ref_num' => $responseArray['xRefNum'] ?? null,
+                    'created_by' => auth()->user()->name ?? 'System'
+                ]);
+            } else {
+                // Record as Payment
+                $payment = new Payment([
+                    'cartid' => $request->cartid,
+                    'receipt' => $randomReceiptID,
+                    'method' => $paymentType,
+                    'customernumber' => $firstReservation->customernumber,
+                    'email' => $user->email,
+                    'payment' => $request->xAmount,
+                    'x_ref_num' => $responseArray['xRefNum'] ?? null,
+                ]);
+                $payment->save();
+            }
 
             $this->saveReservation($cart_reservation, $randomReceiptID, $request);
-            if ($paymentType === 'Manual') {
+            if ($paymentType === 'Manual' && !$isRefund) {
                 $this->saveCardonFiles($cart_reservation, $randomReceiptID, $request, $uniqueTransactionId);
             }
             return response()->json(['success' => true]);
         } else {
-            return response()->json(['message' => 'Payment failed: ' . ($responseArray['xError'] ?? 'Unknown error')], 400);
+            return response()->json(['message' => 'Transaction failed: ' . ($responseArray['xError'] ?? 'Unknown error')], 400);
         }
     }
 
     private function saveReservation($cartReservations, $randomReceiptID, $request)
     {
+        $movedPayments = false;
+        $modificationData = null;
+        $createdReservations = [];
+
         foreach ($cartReservations as $cart_reservation) {
+            // Handle Credit Item (Modification Flow)
+            if ($cart_reservation->siteid === 'CREDIT') {
+                $oldCartId = $cart_reservation->rid;
+
+                // Move Payments from Old Cart to New Cart (Only once)
+                if (!$movedPayments && $oldCartId) {
+                    Payment::where('cartid', $oldCartId)->update(['cartid' => $request->cartid]);
+                    AdditionalPayment::where('cartid', $oldCartId)->update(['cartid' => $request->cartid]);
+                    Refund::where('cartid', $oldCartId)->update(['cartid' => $request->cartid]);
+                    $movedPayments = true;
+
+                    // Cancel Old Reservation
+                    $oldReservations = Reservation::where('cartid', $oldCartId)->get();
+                    foreach ($oldReservations as $oldRes) {
+                        $oldState = $oldRes->toArray();
+                        $oldRes->update([
+                            'status' => 'Cancelled',
+                            'reason' => 'Modified to Reservation #' . $request->cartid
+                        ]);
+                        
+                        // Log Cancellation
+                        app(ReservationLogService::class)->log(
+                            $oldRes->id,
+                            'cancelled',
+                            $oldState,
+                            $oldRes->refresh()->toArray(),
+                            'Reservation cancelled due to modification. Rebooked as #' . $request->cartid
+                        );
+                    }
+                }
+                
+                $modificationData = [
+                    'oldCartId' => $oldCartId,
+                    'creditAmount' => $cart_reservation->base
+                ];
+                
+                // Skip creating a reservation for the CREDIT item
+                continue;
+            }
+
+            // Normal Reservation Creation
             $customer = User::where('id', $cart_reservation->customernumber)->first();
 
             $reservation = new Reservation([
@@ -680,6 +763,7 @@ class NewReservationController extends Controller
             ]);
 
             $reservation->save();
+            $createdReservations[] = $reservation;
             
             // Log creation
             app(ReservationLogService::class)->log(
@@ -689,6 +773,32 @@ class NewReservationController extends Controller
                 $reservation->toArray(),
                 'Reservation created'
             );
+        }
+
+        // Send Modification Email if applicable
+        if ($modificationData && !empty($createdReservations)) {
+            $customerEmail = $createdReservations[0]->email ?? null;
+            if ($customerEmail) {
+                try {
+                    Mail::to($customerEmail)->send(new ReservationModified(
+                        $modificationData['oldCartId'],
+                        $request->cartid,
+                        $modificationData['creditAmount'],
+                        collect($createdReservations)->toArray() // formatted for view
+                    ));
+                    
+                    // Log email sent on new reservation
+                    app(ReservationLogService::class)->log(
+                        $createdReservations[0]->id,
+                        'email',
+                        null,
+                        ['type' => 'ReservationModified', 'to' => $customerEmail],
+                        'Modification confirmation email sent to guest'
+                    );
+                } catch (\Exception $e) {
+                    Log::error("Failed to send modification email: " . $e->getMessage());
+                }
+            }
         }
     }
 

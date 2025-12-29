@@ -126,11 +126,14 @@
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Modification</h6></li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#moveSiteModal">
-                                    <i class="fas fa-exchange-alt me-2 text-info"></i> Move Sites
+                                <li><a class="dropdown-item" href="{{ route('admin.reservations.modify', $mainReservation->cartid) }}">
+                                    <i class="fas fa-edit me-2 text-primary"></i> Modify Reservation
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changeDatesModal">
-                                    <i class="fas fa-calendar-alt me-2 text-success"></i> Change Dates
+                                <li><a class="dropdown-item disabled" href="#" data-bs-toggle="modal" data-bs-target="#moveSiteModal" title="Use Modify Flow">
+                                    <i class="fas fa-exchange-alt me-2 text-muted"></i> Move Sites (Legacy)
+                                </a></li>
+                                <li><a class="dropdown-item disabled" href="#" data-bs-toggle="modal" data-bs-target="#changeDatesModal" title="Use Modify Flow">
+                                    <i class="fas fa-calendar-alt me-2 text-muted"></i> Change Dates (Legacy)
                                 </a></li>
                             </ul>
                         </div>
