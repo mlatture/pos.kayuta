@@ -584,7 +584,7 @@ class ReservationManagementController extends Controller
         // ---------------------------------------------------------
 
         $data = $request->validate([
-            'cart_id' => ['required', 'string'], // Changed to string to allow MOD- if patch misses or future
+            'cart_id' => ['required'], // Changed to required to allow both int and string
             'token' => ['required', 'string'],
             'site_id' => ['required', 'string'],
             'start_date' => ['required', 'date'],
