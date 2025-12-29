@@ -73,7 +73,9 @@ class AdminReservationController extends Controller
             $resAddTax = $resAdds->sum('tax');
 
             // Calculate Base if missing
-            $calculatedBase = $res->total - $res->totaltax - $res->sitelock - $resAddAmount - $resAddTax;
+            // We assume 'total' in reservations table is the ORIGINAL reservation total (Base + SiteLock + Tax).
+            // It does NOT include external AdditionalPayment records.
+            $calculatedBase = $res->total - $res->totaltax - $res->sitelock;
             
             // Use DB base if valid positive, else calculated
             // If DB base is 0, it might be legacy or error, so use calculated.

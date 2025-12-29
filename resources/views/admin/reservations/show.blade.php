@@ -204,8 +204,13 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Financial Ledger</h6>
             <div>
-                <strong>Net Total: </strong> 
-                <span class="{{ $netTotal > 0 ? 'text-dark' : 'text-success' }}">${{ number_format($netTotal, 2) }}</span>
+                @if($netTotal < 0)
+                    <strong>Credit: </strong> 
+                    <span class="text-success fw-bold">${{ number_format(abs($netTotal), 2) }}</span>
+                @else
+                    <strong>Net Total: </strong> 
+                    <span class="{{ $netTotal > 0 ? 'text-dark' : 'text-success' }}">${{ number_format($netTotal, 2) }}</span>
+                @endif
                 <span class="mx-2">|</span>
                 <strong>Balance Due: </strong> 
                 <span class="{{ $balanceDue > 0 ? 'text-danger fw-bold' : 'text-success fw-bold' }}">${{ number_format($balanceDue, 2) }}</span>
