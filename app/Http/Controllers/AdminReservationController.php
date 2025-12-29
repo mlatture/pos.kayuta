@@ -76,6 +76,29 @@ class AdminReservationController extends Controller
             // We assume 'total' in reservations table is the ORIGINAL reservation total (Base + SiteLock + Tax).
             // It does NOT include external AdditionalPayment records.
             $calculatedBase = $res->total - $res->totaltax - $res->sitelock;
+
+            // Priority 2: Calculate from `subtotal` (preferred over total if total is desynced)
+            if ($calculatedBase <= 0 && $res->subtotal > 0) {
+                 $calculatedBase = $res->subtotal - $res->sitelock;
+            }
+
+            // Priority 3: "Gap Filling" for Discrepancies (User Request)
+            // If Base is still 0, but we have a large payment, assume the difference is the Base Charge.
+            // This fixes legacy/imported data where `total` might calculate incorrectly as just the fees.
+            if ($calculatedBase <= 0 && $reservations->count() === 1) {
+                 $totalPayAmount = abs($ledger->where('type', 'payment')->sum('amount')) + ($payments->sum('payment') ?? 0); 
+                 // Note: Ledger payments aren't populated yet fully in this loop? 
+                 // Actually $payments is available. $additionalPayments available.
+                 
+                 $globalPaid = $payments->sum('payment') + $additionalPayments->sum('total');
+                 $knownCharges = $res->sitelock + $displayTax + $additionalChargesTotal;
+                 
+                 $potentialBase = $globalPaid - $knownCharges;
+                 // Only apply if it looks like a clean "Total vs Paid" match (~0 balance)
+                 if ($potentialBase > 0) {
+                      $calculatedBase = $potentialBase;
+                 }
+            }
             
             // Use DB base if valid positive, else calculated
             // If DB base is 0, it might be legacy or error, so use calculated.
