@@ -420,19 +420,31 @@ class ReservationManagementController extends Controller
             // Map local items to API response structure
             $items = $localItems->map(function($item) {
                 return [
+                    'id' => $item->id, // Frontend uses .id in remove button
                     'cart_item_id' => $item->id,
                     'site_id' => $item->siteid,
+                    'start_date' => $item->cid instanceof \Carbon\Carbon ? $item->cid->format('Y-m-d') : $item->cid,
+                    'end_date' => $item->cod instanceof \Carbon\Carbon ? $item->cod->format('Y-m-d') : $item->cod,
+                    'nights' => $item->nights ?? 0,
+                    'occupants' => [
+                        'adults' => $item->people ?? 0,
+                        'children' => 0 // Not stored in CartReservation usually?
+                    ],
+                    'site' => [
+                        'name' => $item->siteid === 'CREDIT' ? 'Modification Credit' : $item->siteid,
+                        'hookup' => 'N/A',
+                    ],
                     'is_lock' => false,
-                    'price_quote' => [
+                    'price_snapshot' => [
                         'total' => (float)$item->total,
                         'subtotal' => (float)$item->subtotal,
-                        'avg_nightly' => 0, // Not applicable for credit
+                        'tax' => (float)$item->totaltax,
+                        'sitelock_fee' => 0,
+                        'nights' => $item->nights ?? 0,
+                        'discounts' => 0
                     ],
-                    // Add other fields if JS needs them
+                    // Keep for safety if some parts use this
                     'name' => $item->siteid === 'CREDIT' ? 'Modification Credit' : $item->siteid,
-                    'hookup' => 'N/A',
-                    'minlength' => 0,
-                    'maxlength' => 0,
                 ];
             });
 
