@@ -212,11 +212,16 @@ class MoneyActionController extends Controller
             CartReservation::where('customernumber', $mainRes->customernumber)->delete();
 
             // 4. Add Credit Line Item to Cart
+            $modCartId = '';
+            do {
+                $modCartId = 'MOD-' . strtoupper(bin2hex(random_bytes(3)));
+            } while (Reservation::where('cartid', $modCartId)->exists());
+
             CartReservation::create([
                 'customernumber' => $mainRes->customernumber,
                 'cid' => $mainRes->cid,
                 'cod' => $mainRes->cod,
-                'cartid' => 'MOD-' . strtoupper(bin2hex(random_bytes(3))), // Temporary cart ID for the process
+                'cartid' => $modCartId, // Temporary cart ID for the process
                 'siteid' => 'CREDIT',
                 'description' => "Credit from Reservation #{$cartId}",
                 'base' => -$creditAmount,
@@ -240,11 +245,12 @@ class MoneyActionController extends Controller
             );
 
             // 5. Redirect to Search / Availability page with pre-fills
-            return redirect()->route('reservations.create-reservation', [
-                'checkin' => $mainRes->cid->format('Y-m-d'),
-                'checkout' => $mainRes->cod->format('Y-m-d'),
-                'customer_id' => $mainRes->customernumber
-            ])->with('success', 'Modification started. Credit of $' . number_format($creditAmount, 2) . ' applied to cart.');
+            return redirect()->route('admin.reservation_mgmt.index', [
+                'admin' => auth()->id(),
+                'cid' => $mainRes->cid->format('Y-m-d'),
+                'cod' => $mainRes->cod->format('Y-m-d'),
+                'cart_id' => $modCartId
+            ])->with('success', 'Modification initiated. Credit of $' . number_format($creditAmount, 2) . ' applied to cart.');
 
         } catch (\Exception $e) {
             Log::error("Modification Start Failed: " . $e->getMessage());

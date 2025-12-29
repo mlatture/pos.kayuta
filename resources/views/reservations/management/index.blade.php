@@ -281,7 +281,18 @@
         function getQueryParam(name) {
             const params = new URLSearchParams(window.location.search);
             return params.get(name);
+        }
 
+        // Handle Cart ID passed from Modify Flow
+        const urlCartId = getQueryParam('cart_id');
+        if (urlCartId) {
+            console.log('Modification Flow: Setting Cart ID from URL', urlCartId);
+            const currentCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
+            localStorage.setItem('cartInfo', JSON.stringify({ 
+                ...currentCart, 
+                cart_id: urlCartId,
+                cart_token: currentCart.cart_token || 'legacy_token_' + Date.now() // Ensure token exists for checks
+            }));
         }
 
 
