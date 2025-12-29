@@ -254,8 +254,8 @@
                         
                         {{-- Total Row --}}
                         <tr class="table-active border-top border-dark">
-                            <td colspan="3" class="text-end fw-bold">Net Total</td>
-                            <td class="text-end fw-bold">${{ number_format($netTotal, 2) }}</td>
+                            <td colspan="3" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold">${{ number_format($totalCharges, 2) }}</td>
                             <td></td>
                         </tr>
                     </tbody>
