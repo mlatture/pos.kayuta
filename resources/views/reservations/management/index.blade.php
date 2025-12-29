@@ -949,7 +949,7 @@
 
 
                     const payload = {
-                        cart_id: parseInt(cartId),
+                        cart_id: cartId,
                         token: cartToken,
                         site_id: btn.data('site-id'),
                         start_date: btn.data('start'),
