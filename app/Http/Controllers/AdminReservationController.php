@@ -71,16 +71,37 @@ class AdminReservationController extends Controller
             $addonsLines = [];
             if (!empty($res->addons_json)) {
                 $decodedAddons = json_decode($res->addons_json, true);
-                if (is_array($decodedAddons)) {
-                    foreach ($decodedAddons as $addon) {
-                        // Attempt to extract price. Adjust key based on actual JSON structure.
-                        // Common patterns: 'price', 'amount', 'total'. default to 0.
-                        $price = $addon['price'] ?? $addon['amount'] ?? $addon['total'] ?? 0;
-                        $name = $addon['name'] ?? 'Addon';
-                        if ($price > 0) {
-                            $addonsTotal += $price;
-                            $addonsLines[] = ['name' => $name, 'price' => $price];
-                        }
+                
+                // Handle structure: {"items": [...], "addons_total": 50}
+                $itemsToProcess = [];
+                if (isset($decodedAddons['items']) && is_array($decodedAddons['items'])) {
+                    $itemsToProcess = $decodedAddons['items'];
+                } elseif (is_array($decodedAddons) && !isset($decodedAddons['items'])) {
+                    // Legacy or simple list structure
+                    $itemsToProcess = $decodedAddons; 
+                }
+
+                foreach ($itemsToProcess as $addon) {
+                    if (!is_array($addon)) continue;
+                    
+                    // Fields: type, price, total_price, qty, site_id
+                    $price = $addon['total_price'] ?? $addon['price'] ?? $addon['amount'] ?? 0;
+                    $rawName = $addon['type'] ?? $addon['name'] ?? 'Addon';
+                    
+                    // Build descriptive name: "Boat Slip (PB06) x1"
+                    $details = [];
+                    if (!empty($addon['site_id'])) {
+                        $details[] = $addon['site_id'];
+                    }
+                    if (!empty($addon['qty']) && $addon['qty'] > 1) {
+                        $details[] = "x" . $addon['qty'];
+                    }
+                    
+                    $name = $rawName . (count($details) > 0 ? " (" . implode(' ', $details) . ")" : "");
+                    
+                    if ($price > 0) {
+                        $addonsTotal += $price;
+                        $addonsLines[] = ['name' => $name, 'price' => $price];
                     }
                 }
             }
@@ -264,12 +285,17 @@ class AdminReservationController extends Controller
         // Net Total = Charges + Payments + Refunds
         $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
         
-        // Balance Due
-        $balanceDue = max(0, $netTotal);
+        // Balance Due - Force to 0 if status is Paid, or if Net Total is negative (credit)
+        if ($mainReservation->status === 'Paid' || $netTotal < 0) {
+            $balanceDue = 0;
+        } else {
+            $balanceDue = $netTotal;
+        }
 
         // Variables for View / JS
         $cartTotal = $reservations->sum('total');
         // totalPaid should be the magnitude of money collected (for refund pro-rating)
+        // totalPayments is negative in ledger, so take absolute or sum magnitude
         $totalPaid = abs($totalPayments);
 
         return view('admin.reservations.show', compact(
