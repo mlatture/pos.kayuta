@@ -939,7 +939,7 @@ class NewReservationController extends Controller
     {
         do {
             $confirmationNumber = 'CN' . rand(100000, 999999);
-        } while (CartReservation::where('cartid', $confirmationNumber)->exists());
+        } while (Reservation::where('cartid', $confirmationNumber)->exists());
 
         $siteIds = $request->input('siteIds', []);
         $rate = $request->input('rate', []);
