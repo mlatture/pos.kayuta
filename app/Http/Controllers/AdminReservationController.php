@@ -15,309 +15,358 @@ use App\Models\ReservationLog;
 
 class AdminReservationController extends Controller
 {
-    public function show(Request $request, $id)
-    {
-        $reservations = Reservation::where('cartid', $id)
-            ->with(['payment', 'site', 'user'])
-            ->get();
+    
+public function show(Request $request, $id)
+{
+    // ---------------------------------------------------------
+    // 1) Find clicked reservation
+    // ---------------------------------------------------------
+    $clickedReservation = Reservation::where('cartid', $id)->first();
 
-        if ($reservations->isEmpty()) {
-            return redirect()->route('reservations.index')->with('error', 'Reservation not found.');
+    if (!$clickedReservation && is_numeric($id)) {
+        $clickedReservation = Reservation::find((int)$id);
+    }
+
+    if (!$clickedReservation) {
+        return redirect()->route('reservations.index')->with('error', 'Reservation not found.');
+    }
+
+    $customerId = $clickedReservation->customernumber ?? null;
+
+    // Normalize cid/cod to DATE only (ignore time)
+    $cidDate = null;
+    $codDate = null;
+
+    try {
+        if (!empty($clickedReservation->cid)) {
+            $cidDate = \Carbon\Carbon::parse($clickedReservation->cid)->format('Y-m-d');
         }
-
-        $mainReservation = $reservations->first();
-        $user = User::find($mainReservation->customernumber);
-
-        // Fetch Payments (Strictly from AdditionalPayment as per user request)
-        // User Rule: "reservations (the reservation itself), additional_payments (has reservation_id), refunds... no payment table"
-        
-        // $payments = Payment::where('cartid', $id)->get() ?? collect(); // IGNORED
-        $payments = collect(); // Empty collection to satisfy view variable if needed, but we rely on additionalPayments for ledger
-        
-        $additionalPayments = \App\Models\AdditionalPayment::where('cartid', $id)->get();
-        $refunds = \App\Models\Refund::where('cartid', $id)->get();
-
-        // Handle Print Logging (safe)
-        if ($request->has('print') && (int)$request->input('print') === 1) {
-            $this->logAction('Print', $id, $mainReservation);
+        if (!empty($clickedReservation->cod)) {
+            $codDate = \Carbon\Carbon::parse($clickedReservation->cod)->format('Y-m-d');
         }
+    } catch (\Throwable $e) {
+        $cidDate = null;
+        $codDate = null;
+    }
 
-        // Logs must never break the page
-        $logs = ReservationLog::where('reservation_id', $mainReservation->id)
-            ->orWhere('reservation_id', $id)
-            ->orderBy('created_at', 'desc')
-            ->take(50)
-            ->get();
+    // ---------------------------------------------------------
+    // 2) Group reservations (fixes missing SH08)
+    // Primary: same customer + same cid/cod (date-only)
+    // Secondary: payment_id / group code / xconfnum
+    // ---------------------------------------------------------
+    $paymentId = $clickedReservation->payment_id ?? null;
+    $groupCode = $clickedReservation->group_confirmation_code ?? null;
+    $xconfnum  = $clickedReservation->xconfnum ?? null;
 
-        $registers = \App\Models\StationRegisters::all();
+    $reservations = Reservation::query()
+        ->where(function ($q) use ($customerId, $cidDate, $codDate, $paymentId, $groupCode, $xconfnum) {
 
-        // ---------------------------------------------------------
-        // Financial Ledger Construction (STRICT MODE)
-        // ---------------------------------------------------------
-       $ledger = collect();
-
-// If TRUE: $res->total already includes tax (common in “final total owed” fields).
-// If FALSE: tax is NOT included in total and should be added as a separate ledger line.
-$total_includes_tax = true;
-
-foreach ($reservations as $res) {
-    // User Rule:
-    // - reservation.total is the final amount owed
-    // - addons are INCLUDED in reservation.total
-    // - base should be total - sitelock (only subtract sitelock if present)
-
-    $finalTotal = (float) $res->total;
-    $siteLock   = (float) ($res->sitelock ?? 0);
-    $totalTax   = (float) ($res->totaltax ?? 0);
-
-    // ---------
-    // Parse addons for DISPLAY lines (do NOT subtract from base)
-    // ---------
-    $addonsLines = [];
-
-    if (!empty($res->addons_json)) {
-        $decodedAddons = json_decode($res->addons_json, true);
-
-        // Handle structure: {"items": [...], "addons_total": 50}
-        // or legacy simple list: [...]
-        $itemsToProcess = [];
-        if (is_array($decodedAddons) && isset($decodedAddons['items']) && is_array($decodedAddons['items'])) {
-            $itemsToProcess = $decodedAddons['items'];
-        } elseif (is_array($decodedAddons)) {
-            $itemsToProcess = $decodedAddons;
-        }
-
-        foreach ($itemsToProcess as $addon) {
-            if (!is_array($addon)) continue;
-
-            // Fields: type, price, total_price, qty, site_id
-            $price   = (float) ($addon['total_price'] ?? $addon['price'] ?? $addon['amount'] ?? 0);
-            $rawName = (string) ($addon['type'] ?? $addon['name'] ?? 'Addon');
-
-            // Build descriptive name: "Boat Slip (PB06) x2"
-            $details = [];
-            if (!empty($addon['site_id'])) {
-                $details[] = $addon['site_id'];
-            }
-            if (!empty($addon['qty']) && (int)$addon['qty'] > 1) {
-                $details[] = "x" . (int)$addon['qty'];
+            // A) Same customer + same stay dates (core use case)
+            if (!empty($customerId) && !empty($cidDate) && !empty($codDate)) {
+                $q->orWhere(function ($q2) use ($customerId, $cidDate, $codDate) {
+                    $q2->where('customernumber', $customerId)
+                       ->whereDate('cid', $cidDate)
+                       ->whereDate('cod', $codDate);
+                });
             }
 
-            $name = $rawName . (!empty($details) ? " (" . implode(' ', $details) . ")" : "");
-
-            if ($price != 0.0) {
-                $addonsLines[] = ['name' => $name, 'price' => $price];
+            // B) Same checkout payment (if linked)
+            if (!empty($paymentId)) {
+                $q->orWhere('payment_id', $paymentId);
             }
+
+            // C) Group confirmation code (if you added it)
+            if (!empty($groupCode)) {
+                $q->orWhere('group_confirmation_code', $groupCode);
+            }
+
+            // D) Fallback: auth code
+            if (!empty($xconfnum)) {
+                $q->orWhere('xconfnum', $xconfnum);
+            }
+        })
+        ->with(['payment', 'site', 'user'])
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+    if ($reservations->isEmpty()) {
+        return redirect()->route('reservations.index')->with('error', 'Reservation not found.');
+    }
+
+    $mainReservation = $reservations->first();
+    $user = User::find($mainReservation->customernumber);
+
+    // ---------------------------------------------------------
+    // 3) Pull ledger sources for the whole group
+    // ---------------------------------------------------------
+    $cartIds = $reservations->pluck('cartid')->filter()->unique()->values();
+
+    $payments = collect(); // view compatibility
+    $additionalPayments = \App\Models\AdditionalPayment::whereIn('cartid', $cartIds)->get();
+    $refunds            = \App\Models\Refund::whereIn('cartid', $cartIds)->get();
+
+    // Checkout payment: prefer payment_id on ANY reservation in group
+    $checkoutPayment = null;
+    $groupPaymentId = $reservations->pluck('payment_id')->filter()->unique()->first();
+
+    if (!empty($groupPaymentId)) {
+        $checkoutPayment = \App\Models\Payment::find($groupPaymentId);
+    } else {
+        $checkoutPayment = $mainReservation->payment ?? null;
+    }
+
+    // Print logging
+    if ($request->has('print') && (int)$request->input('print') === 1) {
+        $this->logAction('Print', $id, $mainReservation);
+    }
+
+    // Logs
+    $logs = ReservationLog::where('reservation_id', $mainReservation->id)
+        ->orWhere('reservation_id', $id)
+        ->orderBy('created_at', 'desc')
+        ->take(50)
+        ->get();
+
+    $registers = \App\Models\StationRegisters::all();
+
+    // ---------------------------------------------------------
+    // 4) Build ledger rows
+    // ---------------------------------------------------------
+    $ledger = collect();
+
+    // If TRUE: reservation.total includes tax already
+    $total_includes_tax = true;
+
+    // A) Reservation charges
+    foreach ($reservations as $res) {
+        $finalTotal = (float) $res->total;
+        $siteLock   = (float) ($res->sitelock ?? 0);
+        $totalTax   = (float) ($res->totaltax ?? 0);
+
+        // Site Charge excludes sitelock
+        $siteCharge = round($finalTotal - ($siteLock > 0 ? $siteLock : 0), 2);
+
+        $stayLabel = '';
+        try {
+            if (!empty($res->cid) && !empty($res->cod)) {
+                $stayLabel = ' (' .
+                    \Carbon\Carbon::parse($res->cid)->format('M d') .
+                    '–' .
+                    \Carbon\Carbon::parse($res->cod)->format('M d') .
+                    ')';
+            }
+        } catch (\Throwable $e) {}
+
+        if ($siteCharge != 0.0) {
+            $ledger->push([
+                'id'          => 'site-charge-' . $res->id,
+                'date'        => $res->created_at,
+                'description' => "Site Charge: {$res->siteid}{$stayLabel}",
+                'type'        => 'charge',
+                'amount'      => $siteCharge, // +
+                'ref'         => $res->group_confirmation_code ?? ($res->xconfnum ?: ($res->confirmation_code ?? null)),
+                'raw_obj'     => $res,
+                'seq'         => 10,
+            ]);
+        }
+
+        if ($siteLock > 0) {
+            $ledger->push([
+                'id'          => 'site-lock-' . $res->id,
+                'date'        => $res->created_at,
+                'description' => "Site Lock Fee",
+                'type'        => 'charge',
+                'amount'      => round($siteLock, 2), // +
+                'ref'         => null,
+                'raw_obj'     => $res,
+                'seq'         => 20,
+            ]);
+        }
+
+        if (!$total_includes_tax && $totalTax > 0) {
+            $ledger->push([
+                'id'          => 'tax-' . $res->id,
+                'date'        => $res->created_at,
+                'description' => "Taxes",
+                'type'        => 'charge',
+                'amount'      => round($totalTax, 2),
+                'ref'         => null,
+                'raw_obj'     => $res,
+                'seq'         => 30,
+            ]);
         }
     }
 
-    // ---------
-    // Calculate Base
-    // New rule: Base = Total - SiteLock (addons are already INCLUDED in total)
-    // ---------
-    $calculatedBase = $finalTotal - ($siteLock > 0 ? $siteLock : 0);
-    $calculatedBase = round($calculatedBase, 2);
+    // B) One checkout payment line
+    if ($checkoutPayment) {
+        $masked = null;
+        try {
+            $card = \App\Models\CardsOnFile::where('customernumber', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $masked = $card->xmaskedcardnumber ?? null;
+        } catch (\Throwable $e) {}
 
-    // ---------
-    // Ledger Entries
-    // ---------
+        $method = $checkoutPayment->method ?? 'Card';
+        $desc   = "Payment – {$method}";
+        if (!empty($masked)) {
+            $desc .= " {$masked}";
+        }
 
-    // A. Base Charge
-    if ($calculatedBase != 0.0) {
         $ledger->push([
-            'id'          => 'base-' . $res->id,
-            'date'        => $res->created_at,
-            'description' => "Site Base Charge: {$res->siteid} ({$res->nights} nights)",
-            'type'        => 'charge',
-            'amount'      => $calculatedBase,
-            'ref'         => $res->xconfnum,
-            'raw_obj'     => $res,
+            'id'          => 'checkout-payment-' . $checkoutPayment->id,
+            'date'        => $checkoutPayment->created_at ?? $mainReservation->created_at,
+            'description' => $desc,
+            'type'        => 'payment',
+            'amount'      => -abs((float) ($checkoutPayment->payment ?? 0)), // -
+            'ref'         => $checkoutPayment->x_ref_num ?? null,
+            'raw_obj'     => $checkoutPayment,
+            'seq'         => 90,
         ]);
     }
 
-    // B. Site Lock
-    if ($siteLock > 0) {
-        $ledger->push([
-            'id'          => 'lock-' . $res->id,
-            'date'        => $res->created_at,
-            'description' => "Site Lock Fee: {$res->siteid}",
-            'type'        => 'charge',
-            'amount'      => round($siteLock, 2),
-            'ref'         => null,
-            'raw_obj'     => $res,
-        ]);
+    // C) Additional charges/payments
+    foreach ($additionalPayments as $ap) {
+        $apAmount = (float) ($ap->amount ?? 0);
+        $apTax    = (float) ($ap->tax ?? 0);
+        $apTotal  = (float) ($ap->total ?? 0);
+
+        $looksLikePayment = !empty($ap->method) || !empty($ap->x_ref_num);
+
+        if ($apAmount > 0) {
+            $ledger->push([
+                'id'          => 'add-charge-' . $ap->id,
+                'date'        => $ap->created_at,
+                'description' => ($ap->comment ?: 'Additional Charge'),
+                'type'        => 'charge',
+                'amount'      => $apAmount,
+                'ref'         => $ap->x_ref_num,
+                'raw_obj'     => $ap,
+                'seq'         => 40,
+            ]);
+        }
+
+        if ($apTax > 0) {
+            $ledger->push([
+                'id'          => 'add-tax-' . $ap->id,
+                'date'        => $ap->created_at,
+                'description' => "Tax (Additional)",
+                'type'        => 'charge',
+                'amount'      => $apTax,
+                'ref'         => null,
+                'raw_obj'     => $ap,
+                'seq'         => 50,
+            ]);
+        }
+
+        if ($looksLikePayment && $apTotal > 0) {
+            $method = $ap->method ?? 'Card';
+            $ledger->push([
+                'id'          => 'add-payment-' . $ap->id,
+                'date'        => $ap->created_at,
+                'description' => "Payment – {$method}",
+                'type'        => 'payment',
+                'amount'      => -abs($apTotal),
+                'ref'         => $ap->x_ref_num,
+                'raw_obj'     => $ap,
+                'seq'         => 60,
+            ]);
+        }
     }
 
-    // C. Addons (DISPLAY lines; do NOT use them to compute base)
-    foreach ($addonsLines as $idx => $al) {
-        $ledger->push([
-            'id'          => 'addon-' . $res->id . '-' . $idx,
-            'date'        => $res->created_at,
-            'description' => "Addon: " . $al['name'],
-            'type'        => 'charge',
-            'amount'      => round((float)$al['price'], 2),
-            'ref'         => null,
-            'raw_obj'     => $res,
-        ]);
+    // D) Refunds
+    foreach ($refunds as $rf) {
+        if (($rf->cancellation_fee ?? 0) > 0) {
+            $ledger->push([
+                'id'          => 'cancel-fee-' . $rf->id,
+                'date'        => $rf->created_at,
+                'description' => "Cancellation Fee",
+                'type'        => 'charge',
+                'amount'      => (float) $rf->cancellation_fee,
+                'ref'         => null,
+                'raw_obj'     => $rf,
+                'seq'         => 70,
+            ]);
+        }
+
+        if (($rf->amount ?? 0) > 0) {
+            $ledger->push([
+                'id'          => 'refund-' . $rf->id,
+                'date'        => $rf->created_at,
+                'description' => "Refund Issued",
+                'type'        => 'refund',
+                'amount'      => (float) $rf->amount,
+                'ref'         => $rf->method ?? null,
+                'raw_obj'     => $rf,
+                'seq'         => 80,
+            ]);
+        }
     }
 
-    // D. Tax (ONLY if total does NOT already include tax)
-    if (!$total_includes_tax && $totalTax > 0) {
-        $ledger->push([
-            'id'          => 'tax-' . $res->id,
-            'date'        => $res->created_at,
-            'description' => "Taxes",
-            'type'        => 'charge',
-            'amount'      => round($totalTax, 2),
-            'ref'         => null,
-            'raw_obj'     => $res,
-        ]);
-    }
+    // Stable sort (same timestamps)
+    $ledger = $ledger->sortBy([
+        fn ($a, $b) => $a['date'] <=> $b['date'],
+        fn ($a, $b) => ($a['seq'] ?? 0) <=> ($b['seq'] ?? 0),
+        fn ($a, $b) => strcmp($a['id'], $b['id']),
+    ])->values();
+
+    // ---------------------------------------------------------
+    // 5) Running balance EXACTLY like screenshot
+    // ---------------------------------------------------------
+    $running = 0.0;
+    $ledger = $ledger->map(function ($row) use (&$running) {
+        $running = round($running + (float) $row['amount'], 2);
+
+        // Do not show negative balance; stop at 0.00
+        $row['balance'] = max(0, $running);
+
+        return $row;
+    });
+
+    // ---------------------------------------------------------
+    // 6) Summary (separate from ledger rows)
+    // ---------------------------------------------------------
+    $totalCharges = round($ledger->where('type', 'charge')->sum('amount'), 2);
+
+    // Payments are negative in ledger; display positive in summary
+    $totalPaymentsSigned  = round($ledger->where('type', 'payment')->sum('amount'), 2);
+    $totalPaymentsDisplay = round(abs($totalPaymentsSigned), 2);
+
+    $outstandingBalance = (float) ($ledger->last()['balance'] ?? 0);
+    $outstandingBalance = max(0, round($outstandingBalance, 2));
+
+    // Compatibility
+    $totalRefunds = round($ledger->where('type', 'refund')->sum('amount'), 2);
+    $netTotal     = round($totalCharges + $totalPaymentsSigned + $totalRefunds, 2);
+    $balanceDue   = $outstandingBalance;
+
+    $cartTotal = $reservations->sum('total');
+    $totalPaid = $totalPaymentsDisplay;
+
+    return view('admin.reservations.show', compact(
+        'reservations',
+        'mainReservation',
+        'user',
+        'payments',
+        'logs',
+        'additionalPayments',
+        'refunds',
+        'registers',
+        'ledger',
+        'totalCharges',
+        'totalPaymentsSigned',
+        'totalPaymentsDisplay',
+        'totalRefunds',
+        'netTotal',
+        'balanceDue',
+        'outstandingBalance',
+        'cartTotal',
+        'totalPaid'
+    ));
 }
 
-// Optional: sort by date then id (useful if you have multiple reservations)
-$ledger = $ledger->sortBy([
-    fn ($a, $b) => $a['date'] <=> $b['date'],
-    fn ($a, $b) => strcmp($a['id'], $b['id']),
-])->values();
 
 
-        // 2. Additional Payments (The ONLY source of payments)
-        // Note: If additional payments include charges (e.g. electric), they add to the total debt?
-        // Usually `AdditionalPayment` has `amount` (paid) and sometimes `tax`.
-        // User said: "Only use... additional_payments... no payment table"
-        // If an AdditionalPayment represents a CHARGE, it should be added as charge. 
-        // If it represents a PAYMENT, it should be added as payment.
-        // `AdditionalPayment` model usually implies a transaction. 
-        // Logic: The `AdditionalPayment` table typically records a payment event.
-        // If it was for a "Charge", the charge should ALSO be recorded.
-        // Does `AdditionalPayment` imply a NEW charge was created? 
-        // The previous code had:
-        //    Charge: $ap->amount
-        //    Payment: -$ap->total
-        // This implies every AdditionalPayment CREATES a charge and then PAYS it.
-        // If so, we must keep that logic to balance the ledger.
-        
-        foreach ($additionalPayments as $ap) {
-            // Logic: An "Additional Payment" is usually "I bought firewood ($10)".
-            // So we owe $10 (Charge) and we paid $10 (Payment).
-            // User instruction: "additional_payments (has reservation_id)"
-            // If we don't add the charge, the payment will look like a credit against the base reservation.
-            // Assumption: AdditionalPayments are strictly for EXTRA items/fees, not for paying the base reservation.
-            // UNLESS the base reservation payment is ALSO stored in AdditionalPayments?
-            // User said: "The remaining $160.27 should be applied as the reservation payment for BR01."
-            // This implies the PAYMENT for the base reservation IS in AdditionalPayments? Or implicitly handled?
-            // "ledger must be computed using only ... additional_payments ... no payment table".
-            
-            // Let's assume AdditionalPayment records are standard payments.
-            // But do they also imply a charge?
-            // If I see `Description: Payment (Visa)`, it is just a payment.
-            // If I see `Description: Additional Charge: Cleaning`, it is a Charge AND Payment.
-            // The previous controller code treated them as Charge + Payment.
-            // Let's stick to that pattern: It creates a Charge line and a Payment line.
-            
-            // CHARGE SIDE
-            // Only add charge if it's NOT just a payment for existing debt.
-            // How to distinguish? `AdditionalPayment` usually denotes an ad-hoc transaction.
-            // We will add the Charge side.
-            $ledger->push([
-                'id' => 'add-charge-' . $ap->id,
-                'date' => $ap->created_at,
-                'description' => ($ap->comment ?: 'Additional Charge'),
-                'type' => 'charge',
-                'amount' => $ap->amount,
-                'ref' => $ap->x_ref_num,
-                'raw_obj' => $ap
-            ]);
-
-            if ($ap->tax > 0) {
-                 $ledger->push([
-                    'id' => 'add-tax-' . $ap->id,
-                    'date' => $ap->created_at,
-                    'description' => "Tax (Additional)",
-                    'type' => 'charge',
-                    'amount' => $ap->tax,
-                    'ref' => null,
-                    'raw_obj' => $ap
-                ]);
-            }
-
-            // PAYMENT SIDE
-            $ledger->push([
-                'id' => 'add-payment-' . $ap->id,
-                'date' => $ap->created_at,
-                'description' => "Payment (" . ($ap->method ?? 'Unknown') . ")",
-                'type' => 'payment',
-                'amount' => -($ap->total), // Negative for payment
-                'ref' => $ap->x_ref_num,
-                'raw_obj' => $ap
-            ]);
-        }
-
-        // 3. Refunds & Cancellations
-        foreach ($refunds as $rf) {
-            // Cancellation Fee (Charge)
-            if ($rf->cancellation_fee > 0) {
-                 $ledger->push([
-                    'id' => 'cancel-fee-' . $rf->id,
-                    'date' => $rf->created_at,
-                    'description' => "Cancellation Fee",
-                    'type' => 'charge',
-                    'amount' => $rf->cancellation_fee,
-                    'ref' => null,
-                    'raw_obj' => $rf
-                ]);
-            }
-
-            // Refund (Positive Value to increase Balance / Offset Payment)
-            if ($rf->amount > 0) {
-                 $ledger->push([
-                    'id' => 'refund-' . $rf->id,
-                    'date' => $rf->created_at,
-                    'description' => "Refund Issued",
-                    'type' => 'refund',
-                    'amount' => $rf->amount, 
-                    'ref' => $rf->method,
-                    'raw_obj' => $rf
-                ]);
-            }
-        }
-
-        // Sort by Date
-        $ledger = $ledger->sortBy('date');
-
-        // Calculate Totals
-        // Charges: Type = charge
-        $totalCharges = $ledger->where('type', 'charge')->sum('amount');
-        
-        // Payments: Type = payment (Negative values)
-        $totalPayments = $ledger->where('type', 'payment')->sum('amount');
-        
-        // Refunds: Type = refund (Positive values)
-        $totalRefunds = $ledger->where('type', 'refund')->sum('amount');
-        
-        // Net Total = Charges + Payments + Refunds
-        $netTotal = round($totalCharges + $totalPayments + $totalRefunds, 2);
-        
-        // Balance Due - Force to 0 if status is Paid, or if Net Total is negative (credit)
-        if ($mainReservation->status === 'Paid' || $netTotal < 0) {
-            $balanceDue = 0;
-        } else {
-            $balanceDue = $netTotal;
-        }
-
-        // Variables for View / JS
-        $cartTotal = $reservations->sum('total');
-        // totalPaid should be the magnitude of money collected (for refund pro-rating)
-        // totalPayments is negative in ledger, so take absolute or sum magnitude
-        $totalPaid = abs($totalPayments);
-
-        return view('admin.reservations.show', compact(
-            'reservations', 'mainReservation', 'user', 'payments', 'logs', 'additionalPayments', 'refunds', 'registers',
-            'ledger', 'totalCharges', 'totalPayments', 'totalRefunds', 'netTotal', 'balanceDue', 
-            'cartTotal', 'totalPaid'
-        ));
-    }
 
     public function globalSearch(Request $request)
     {
