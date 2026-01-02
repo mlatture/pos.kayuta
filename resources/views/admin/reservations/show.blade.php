@@ -229,10 +229,16 @@
                             $sign = ((float)$item['amount'] >= 0) ? '+' : '-';
                         @endphp
 
-                        <tr style="cursor: pointer;"
-                            onclick="showLedgerDetails('{{ $item['type'] }}', '{{ $item['description'] }}', {{ (float)$item['amount'] }}, '{{ $item['ref'] }}')">
+                        <tr style="cursor:pointer;"
+                            onclick="showLedgerDetails(
+                                '{{ $item['type'] }}',
+                                '{{ addslashes($item['description']) }}',
+                                {{ (float)$item['amount'] }},
+                                '{{ $item['ref'] }}'
+                            )">
 
                             <td>{{ \Carbon\Carbon::parse($item['date'])->format('M d g:i A') }}</td>
+
                             <td>{{ $item['description'] }}</td>
 
                             <td>
@@ -250,7 +256,7 @@
                             </td>
 
                             <td class="text-end fw-bold">
-                                ${{ number_format((float)($item['balance'] ?? 0), 2) }}
+                                ${{ number_format((float)($item['running_balance'] ?? 0), 2) }}
                             </td>
 
                             <td>
@@ -258,6 +264,33 @@
                             </td>
                         </tr>
                     @endforeach
+
+                    {{-- Summary Rows --}}
+                    <tr class="table-active border-top border-dark">
+                        <td colspan="3" class="text-end fw-bold">Total Charges</td>
+                        <td class="text-end fw-bold">+${{ number_format($totalCharges, 2) }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+
+                    <tr class="table-active">
+                        <td colspan="3" class="text-end fw-bold">Total Payments</td>
+                        <td class="text-end fw-bold text-success">-${{ number_format(abs($totalPayments), 2) }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+
+                    {{-- Ending balance row intentionally hidden (client request) --}}
+                    {{--
+                    <tr class="table-active">
+                        <td colspan="3" class="text-end fw-bold">Ending Balance</td>
+                        <td></td>
+                        <td class="text-end fw-bold {{ $balanceDue > 0 ? 'text-danger' : 'text-success' }}">
+                            ${{ number_format($balanceDue, 2) }}
+                        </td>
+                        <td></td>
+                    </tr>
+                    --}}
                 </tbody>
             </table>
         </div>
@@ -265,33 +298,6 @@
 </div>
 
 
-<!-- Summary (separate from ledger rows) -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Summary</h6>
-    </div>
-
-    <div class="card-body">
-        <div class="d-flex flex-column gap-2" style="max-width: 420px;">
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">Total Charges:</span>
-                <span>${{ number_format($totalCharges, 2) }}</span>
-            </div>
-
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">Total Payments:</span>
-                <span>${{ number_format($totalPaymentsDisplay, 2) }}</span>
-            </div>
-
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">Outstanding Balance:</span>
-                <span class="{{ ($outstandingBalance ?? 0) > 0 ? 'text-danger fw-bold' : 'text-success fw-bold' }}">
-                    ${{ number_format($outstandingBalance ?? 0, 2) }}
-                </span>
-            </div>
-        </div>
-    </div>
-</div>
 
 
     <!-- Refunds -->
