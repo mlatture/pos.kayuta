@@ -18,6 +18,8 @@ use App\Models\Site;
 use App\Models\SiteClass;
 use App\Models\SiteHookup;
 use App\Models\User;
+use App\Models\AdditionalPayment;
+use App\Models\Refund;
 use App\Services\CardKnoxService;
 use Carbon\Carbon;
 use DateTime;
@@ -143,8 +145,17 @@ class ReservationController extends Controller
         $sites = $query
             ->with([
                 'reservations' => function ($resQ) use ($filters) {
-                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->where('status', '!=', 'cancelled')->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', 'checkedin',DB::raw('DATEDIFF(cod, cid) as days'));
+                    $resQ->where('cod', '>=', $filters['startDate'])
+                        ->where('cid', '<=', $filters['endDate'])
+                        ->where('status', '!=', 'cancelled')
+                        ->orderBy('cid')
+                        ->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 
+                                'lname', 'sitelock', 'source', 'createdby', 'status', 'checkedin',
+                                'total', 'payment_id', 'group_confirmation_code', 'xconfnum', 
+                                DB::raw('DATEDIFF(cod, cid) as days'));
+                        
                 },
+                'reservations.payment',
             ])
             ->paginate(50);
 
@@ -157,6 +168,25 @@ class ReservationController extends Controller
             $availability = array_fill_keys($calendar, null);
 
             foreach ($site->reservations as $res) {
+                $relatedCartIds = Reservation::where(function($q) use ($res) {
+                    if($res->payment_id) $q->orWhere('payment_id', $res->payment_id);
+                    if($res->group_confirmation_code) $q->orWhere('group_confirmation_code', $res->group_confirmation_code);
+                    $q->orWhere('cartid', $res->cartid);
+                })->pluck('cartid');
+
+                $groupTotalCharges = Reservation::whereIn('cartid', $relatedCartIds)->sum('total');
+
+                $initialPayment = $res->payment ? (float) $res->payment->payment : 0;
+                $extraPayments = AdditionalPayment::whereIn('cartid', $relatedCartIds)->sum('amount');
+
+
+                $refunds =  Refund::whereIn('cartid', $relatedCartIds)->sum('amount');
+                $cancelFees = Refund::whereIn('cartid', $relatedCartIds)->sum('cancellation_fee');
+
+                $netBalance = ($groupTotalCharges + $cancelFees) - ($initialPayment + $extraPayments ) + $refunds;
+
+                $res->balance_due = max(0, round($netBalance, 2));
+
                 $resStart = Carbon::parse($res->cid);
                 $resEnd = Carbon::parse($res->cod);
 

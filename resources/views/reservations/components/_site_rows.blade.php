@@ -68,7 +68,7 @@
                 // } elseif (in_array($source, ['booking.com', 'airbnb'])) {
                 //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
                 //     $textColor = $fullyPaid ? 'white' : 'black';
-                } elseif ($createdBy === 'customer') {
+                } elseif ($reservation->balance_due > 0) {
                     $bgColor = $fullyPaid ? '#58D68D' : 'yellow-orange';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 } else {
