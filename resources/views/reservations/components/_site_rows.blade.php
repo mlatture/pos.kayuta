@@ -69,10 +69,10 @@
                 //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
                 //     $textColor = $fullyPaid ? 'white' : 'black';
                 } elseif ($reservation->balance_due > 0) {
-                    $bgColor = $fullyPaid ? '#58D68D' : 'yellow-orange';
+                    $bgColor = $fullyPaid ? '#58D68D' : '#FFAE42';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 } else {
-                    $bgColor = $fullyPaid ? '#58D68D' : 'yellow-orange';
+                    $bgColor = $fullyPaid ? '#58D68D' : '#FFAE42';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 }
 
