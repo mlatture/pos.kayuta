@@ -65,24 +65,29 @@
                 if ($isCancelled) {
                     $bgColor = 'red';
                     $textColor = 'white';
-                } elseif (in_array($source, ['booking.com', 'airbnb'])) {
-                    $bgColor = $fullyPaid ? 'purple' : 'yellow';
-                    $textColor = $fullyPaid ? 'white' : 'black';
+                // } elseif (in_array($source, ['booking.com', 'airbnb'])) {
+                //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
+                //     $textColor = $fullyPaid ? 'white' : 'black';
                 } elseif ($createdBy === 'customer') {
-                    $bgColor = $fullyPaid ? 'green' : 'yellow-orange';
+                    $bgColor = $fullyPaid ? '#58D68D' : 'yellow-orange';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 } else {
-                    $bgColor = $fullyPaid ? '#FFAA33' : 'orange';
+                    $bgColor = $fullyPaid ? '#58D68D' : 'yellow-orange';
                     $textColor = $fullyPaid ? 'white' : 'black';
                 }
 
-                $borderColor = $siteLock ? 'red' : 'black';
+                $borderColor = $siteLock ? 'red' : 'green';
 
-                $hasStarted = $today->greaterThanOrEqualTo($resStart);
+                $hasCheckedIn = $reservation->checkedin !== null ? 'black' : $borderColor;
+                $borderColor  = $hasCheckedIn;
 
-                if ($hasStarted && $borderColor === 'black') {
-                    $borderColor = 'blue';
-                }
+                // dd([$borderColor, $reservation->checkedin, $reservation]);
+
+                // $hasStarted = $today->greaterThanOrEqualTo($resStart);
+
+                // if ($hasStarted && $borderColor === 'black') {
+                //     $borderColor = 'blue';
+                // }
             @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "

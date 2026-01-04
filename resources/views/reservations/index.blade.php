@@ -61,13 +61,6 @@
             overflow: hidden !important;
         }
 
-        .table-responsive {
-            overflow-x: auto;
-            width: 100%;
-            max-width: 100%;
-            position: relative;
-            max-height: 80vh !important;
-        }
 
         table.management-table {
             border-collapse: separate;
@@ -130,76 +123,91 @@
             width: 100% !important;
         }
 
-        body,
-        html {
-            height: 100%;
-        }
-
-        main.content {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .highlight-today {
-            outline: 3px dashed #00ffcc;
-            outline-offset: -3px;
-        }
 
         .legend-color {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 4px;
-            border: 1px solid #ccc;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .paid-full {
+            background-color: #58D68D;
+        }
+
+        .paid-partial {
+            background-color: #FFAA33;
+        }
+
+        .site-lock {
+            background-color: transparent;
+            border: 4px solid red;
+        }
+
+        .site-unlock {
+            background-color: transparent;
+            border: 4px dashed green;
+        }
+
+        .checked-in {
+            background-color: transparent;
+            border: 4px solid black;
+            color: black;
         }
     </style>
 
-    <div class="reservation-legend mb-3 d-flex gap-3 flex-wrap">
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: red;"></span>
-            <span>Cancelled</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: purple;"></span>
-            <span>Paid (Booking.com / Airbnb)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: yellow;"></span>
-            <span>Not Fully Paid (Booking.com / Airbnb)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: green;"></span>
-            <span>Fully Paid (Customer)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: yellow-orange;"></span>
-            <span>Not Fully Paid (Customer)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: #FFAA33;"></span>
-            <span>Fully Paid (Other)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="background-color: orange;"></span>
-            <span>Not Fully Paid (Other)</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="border: 4px solid red;"></span>
-            <span>Site Lock Applied</span>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-            <span class="legend-color" style="border: 4px solid blue;"></span>
-            <span>Current Day</span>
-        </div>
-    </div>
 
 
-    <div class="table-responsive">
-        <table class="table management-table table-striped">
-            <thead>
-                <tr class="t__head sticky-top bg-dark">
-                    {{-- <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
+    <div class="card p-3" style="max-height: 70vh">
+        <div class="reservation-legend mb-3 d-flex gap-4 flex-wrap">
+
+            <!-- Fully Paid -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="legend-color paid-full">
+                    <i class="fa fa-check"></i>
+                </span>
+                <span>Fully Paid (Customer)</span>
+            </div>
+
+            <!-- Not Fully Paid -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="legend-color paid-partial">
+                    <i class="fa fa-exclamation"></i>
+                </span>
+                <span>Not Fully Paid (Customer)</span>
+            </div>
+
+            <!-- Site Lock Applied -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="legend-color site-lock"></span>
+                <span>Site Lock Applied</span>
+            </div>
+
+            <!-- Site Lock Not Applied -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="legend-color site-unlock"></span>
+                <span>Site Lock Not Applied</span>
+            </div>
+
+            <!-- Checked In -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="legend-color checked-in">
+                    <i class="fa fa-user-check"></i>
+                </span>
+                <span>Checked In (Customer)</span>
+            </div>
+
+        </div>
+
+        <div class="table-responsive mb-3" style="overflow: auto;">
+            <table class="table management-table table-striped">
+                <thead>
+                    <tr class="t__head sticky-top bg-dark">
+                        {{-- <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
                         <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
                             <span class="me-2">Site</span>
                             <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
@@ -239,66 +247,68 @@
                         </div>
                     </th> --}}
 
-                    <th class="sticky-col sticky-top bg-dark text-white text-center" rowspan="3" style="width: 120px;">
-                        <button type="button" class="btn btn-sm btn-light mb-2" data-bs-toggle="modal"
-                            data-bs-target="#filtersModal">
-                            <i class="fa fa-filter"></i> Filters
-                        </button>
-                        <div class="d-flex flex-column justify-content-between align-items-center">
-                        </div>
-                    </th>
+                        <th class="sticky-col sticky-top bg-dark text-white text-center" rowspan="3"
+                            style="width: 120px;">
+                            <button type="button" class="btn btn-sm btn-light mb-2" data-bs-toggle="modal"
+                                data-bs-target="#filtersModal">
+                                <i class="fa fa-filter"></i> Filters
+                            </button>
+                            <div class="d-flex flex-column justify-content-between align-items-center">
+                            </div>
+                        </th>
 
 
-                    @php
-                        $recurringMonth = '';
-                        $colspan = 0;
-                    @endphp
-                    @foreach ($calendar as $key => $dates)
-                        @if ($key < 1)
-                            @php
-                                $recurringMonth = date('M Y', strtotime($dates));
-                            @endphp
-                        @endif
-                        @if ($recurringMonth == date('M Y', strtotime($dates)) && count($calendar) - 1 != $key)
-                            @php
-                                $colspan += 1;
-                            @endphp
-                        @else
-                            @if (count($calendar) - 1 == $key)
+                        @php
+                            $recurringMonth = '';
+                            $colspan = 0;
+                        @endphp
+                        @foreach ($calendar as $key => $dates)
+                            @if ($key < 1)
+                                @php
+                                    $recurringMonth = date('M Y', strtotime($dates));
+                                @endphp
+                            @endif
+                            @if ($recurringMonth == date('M Y', strtotime($dates)) && count($calendar) - 1 != $key)
                                 @php
                                     $colspan += 1;
                                 @endphp
+                            @else
+                                @if (count($calendar) - 1 == $key)
+                                    @php
+                                        $colspan += 1;
+                                    @endphp
+                                @endif
+                                <td colspan="{{ $colspan }}"
+                                    class="month sticky-top bg-dark text-center text-white text-uppercase">
+                                    {{ $recurringMonth }}
+                                </td>
+                                @php
+                                    $colspan = 1;
+                                    $recurringMonth = date('M Y', strtotime($dates));
+                                @endphp
                             @endif
-                            <td colspan="{{ $colspan }}"
-                                class="month sticky-top bg-dark text-center text-white text-uppercase">
-                                {{ $recurringMonth }}
-                            </td>
-                            @php
-                                $colspan = 1;
-                                $recurringMonth = date('M Y', strtotime($dates));
-                            @endphp
-                        @endif
+                        @endforeach
+                    </tr>
+                    <tr>
+                        @foreach ($calendar as $dates)
+                            <th data-date="{{ $dates }}" class="sticky-top custom--dates">
+                                {{ date('D', strtotime($dates)) }}
+                                <hr class="m-0">{{ date('d', strtotime($dates)) }}
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody id="siteTableBody">
+                    @foreach ($sites as $site)
+                        @include('reservations.components._site_rows', [
+                            'site' => $site,
+                            'calendar' => $calendar,
+                        ])
                     @endforeach
-                </tr>
-                <tr>
-                    @foreach ($calendar as $dates)
-                        <th data-date="{{ $dates }}" class="sticky-top custom--dates">
-                            {{ date('D', strtotime($dates)) }}
-                            <hr class="m-0">{{ date('d', strtotime($dates)) }}
-                        </th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody id="siteTableBody">
-                @foreach ($sites as $site)
-                    @include('reservations.components._site_rows', [
-                        'site' => $site,
-                        'calendar' => $calendar,
-                    ])
-                @endforeach
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 @endsection

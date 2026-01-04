@@ -143,7 +143,7 @@ class ReservationController extends Controller
         $sites = $query
             ->with([
                 'reservations' => function ($resQ) use ($filters) {
-                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->where('status', '!=', 'cancelled')->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', DB::raw('DATEDIFF(cod, cid) as days'));
+                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->where('status', '!=', 'cancelled')->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', 'checkedin',DB::raw('DATEDIFF(cod, cid) as days'));
                 },
             ])
             ->paginate(50);
