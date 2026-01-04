@@ -65,21 +65,24 @@
                 if ($isCancelled) {
                     $bgColor = 'red';
                     $textColor = 'white';
-                // } elseif (in_array($source, ['booking.com', 'airbnb'])) {
-                //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
-                //     $textColor = $fullyPaid ? 'white' : 'black';
-                } elseif ($reservation->balance_due > 0) {
-                    $bgColor = $fullyPaid ? '#58D68D' : '#FFAE42';
-                    $textColor = $fullyPaid ? 'white' : 'black';
+                    // } elseif (in_array($source, ['booking.com', 'airbnb'])) {
+                    //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
+                    //     $textColor = $fullyPaid ? 'white' : 'black';
+                }
+                if ($reservation->balance_due == 0) {
+                    // No balance
+                    $bgColor = '#58D68D';
+                    $textColor = 'white';
                 } else {
-                    $bgColor = $fullyPaid ? '#58D68D' : '#FFAE42';
-                    $textColor = $fullyPaid ? 'white' : 'black';
+                    // Has balance (positive or negative)
+                    $bgColor = '#FFAE42';
+                    $textColor = 'black';
                 }
 
                 $borderColor = $siteLock ? 'red' : 'green';
 
                 $hasCheckedIn = $reservation->checkedin !== null ? 'black' : $borderColor;
-                $borderColor  = $hasCheckedIn;
+                $borderColor = $hasCheckedIn;
 
                 // dd([$borderColor, $reservation->checkedin, $reservation]);
 
@@ -88,6 +91,7 @@
                 // if ($hasStarted && $borderColor === 'black') {
                 //     $borderColor = 'blue';
                 // }
+
             @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
