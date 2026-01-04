@@ -90,7 +90,6 @@
                 //     $borderColor = 'blue';
                 // }
 
-                dd('reservations', $reservation);
 
             @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
