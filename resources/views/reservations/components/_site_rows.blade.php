@@ -93,7 +93,7 @@
                 // }
 
             @endphp
-            <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
+            <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center"
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
                 data-end-date="{{ $reservation->cod }}" data-cart-id="{{ $reservation->cartid }}">
@@ -104,7 +104,10 @@
             @php $i++; @endphp
         @else
             @php $i++; @endphp
-            <td class="text-center text-dark {{ $highlightToday }}" style="opacity: 50%">
+            <td class="text-center text-dark {{ $highlightToday }} selectable-site" 
+                style="opacity: 50%; cursor: pointer;"
+                data-date="{{ $dayData['date'] }}"
+                data-site-id="{{ $site->siteid }}">
                 Available
             </td>
         @endif

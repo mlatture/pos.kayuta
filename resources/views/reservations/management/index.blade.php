@@ -280,7 +280,17 @@
     <script>
         function getQueryParam(name) {
             const params = new URLSearchParams(window.location.search);
+
+            if (name.includes('[]')) {
+                return params.getAll(name);
+            }
             return params.get(name);
+        }
+
+        function parseUrlDate(dateStr) {
+            if (!dateStr) return null;
+
+            return new Date(dateStr.replace(/-/g, '/'));
         }
 
         // Handle Cart ID passed from Modify Flow
@@ -288,16 +298,19 @@
         if (urlCartId) {
             console.log('Modification Flow: Setting Cart ID from URL', urlCartId);
             const currentCart = JSON.parse(localStorage.getItem('cartInfo') || '{}');
-            localStorage.setItem('cartInfo', JSON.stringify({ 
-                ...currentCart, 
+            localStorage.setItem('cartInfo', JSON.stringify({
+                ...currentCart,
                 cart_id: urlCartId,
-                cart_token: currentCart.cart_token || 'legacy_token_' + Date.now() // Ensure token exists for checks
+                cart_token: currentCart.cart_token || 'legacy_token_' + Date
+                .now() // Ensure token exists for checks
             }));
         }
 
 
-        const checkin = $('#checkinHidden').val() || getQueryParam('cid');
-        const checkout = $('#checkoutHidden').val() || getQueryParam('cod');
+        const checkin = $('#checkinHidden').val() || getQueryParam('cid') || parseUrlDate(getQueryParam('startDate'))
+            ?.toLocaleDateString('en-US');
+        const checkout = $('#checkoutHidden').val() || getQueryParam('cod') || parseUrlDate(getQueryParam('endDate'))
+            ?.toLocaleDateString('en-US');
 
         if (checkin) $('[name="start_date"]').val(checkin);
         if (checkout) $('[name="end_date"]').val(checkout);
@@ -323,9 +336,15 @@
                             .config.dateFormat);
 
 
+
                         // document.getElementById('dateRange').value =
                         //     `${instance.formatDate(d1, instance.config.dateFormat)} — ${instance.formatDate(d2, instance.config.dateFormat)}`;
+                        const cleanUrl = window.location.protocol + "//" + window.location.host + window
+                            .location.pathname;
 
+                        window.history.replaceState({
+                            path: cleanUrl
+                        }, '', cleanUrl);
 
 
                         if (window.__availabilityTrigger) window.__availabilityTrigger();
@@ -416,15 +435,19 @@
 
             function runAvailabilitySearch() {
 
-                let ci = $form.find('[name="start_date"]').val() || getQueryParam('cid');
-                let co = $form.find('[name="end_date"]').val() || getQueryParam('cod');
+                let ci = $form.find('[name="start_date"]').val() || getQueryParam('cid') || parseUrlDate(getQueryParam('startDate'))?.toLocaleDateString('en-US');
+                let co = $form.find('[name="end_date"]').val() || getQueryParam('cod') || parseUrlDate(getQueryParam('endDate'))?.toLocaleDateString('en-US');  
+
+
+                const targetSiteIds = getQueryParam('siteid[]') || []; 
+
 
                 const fp = document.querySelector('#dateRange')._flatpickr;
                 if ((!ci || !co) && fp && fp.selectedDates.length === 2) {
                     const [d1, d2] = fp.selectedDates;
 
-                    ci = fp.formatDate(d1, fp.config.dateFormat) || getQueryParam('cid');
-                    co = fp.formatDate(d2, fp.config.dateFormat) || getQueryParam('cod');
+                    ci = fp.formatDate(d1, fp.config.dateFormat) || getQueryParam('cid') || parseUrlDate(getQueryParam('startDate'))?.toLocaleDateString('en-US');
+                    co = fp.formatDate(d2, fp.config.dateFormat) || getQueryParam('cod') || parseUrlDate(getQueryParam('endDate'))?.toLocaleDateString('en-US');
 
                     $form.find('[name="start_date"]').val(ci);
                     $form.find('[name="end_date"]').val(co);
@@ -544,6 +567,14 @@
 
 
                             rows = results.units
+                                .filter(unit => {
+                                    if (targetSiteIds.length > 0) {
+                                        return targetSiteIds.includes(unit.site_id);
+                                    }
+
+                                    console.log('Unit', unit);
+                                    return true;
+                                })
                                 .map(unit => {
                                     const isAvailable = unit?.status?.available;
                                     const subTotal = Number(unit.price_quote.total ?? 0);
@@ -1180,7 +1211,8 @@
                     cart.items.forEach(item => {
                         const snapshot = item.price_snapshot || {};
                         totalSubtotal += snapshot.subtotal || 0;
-                        totalPlatformFee += (snapshot.total || 0) - (snapshot.subtotal + snapshot.tax + snapshot.sitelock_fee); 
+                        totalPlatformFee += (snapshot.total || 0) - (snapshot.subtotal + snapshot
+                            .tax + snapshot.sitelock_fee);
                         totalLockFee += snapshot.sitelock_fee || 0;
                         totalDiscounts += snapshot.discounts || 0;
                         totalTax += snapshot.tax || 0;
@@ -1192,11 +1224,11 @@
                     $('#tPlatform').text(fmt(totalPlatformFee));
                     if (totalDiscounts > 0) {
                         $('#tDiscounts').text('-' + fmt(totalDiscounts));
-                    } 
-                    
+                    }
+
                     if (totalTax > 0) {
                         $('#tTax').text(fmt(totalTax));
-                    } 
+                    }
                     $('#tSiteLock').text(fmt(totalLockFee));
                     $('#tTotal').text(fmt(totalGrand));
 
@@ -1207,7 +1239,8 @@
                         const site = item.site || {};
                         const snapshot = item.price_snapshot || {};
                         const subtotal = snapshot.subtotal || 0;
-                        const platformfee = (snapshot.total || 0) - (subtotal + (snapshot.tax || 0) + (snapshot.sitelock_fee || 0));
+                        const platformfee = (snapshot.total || 0) - (subtotal + (snapshot.tax ||
+                            0) + (snapshot.sitelock_fee || 0));
                         const sitelockFee = snapshot.sitelock_fee || 0;
 
                         return `

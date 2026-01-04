@@ -30,6 +30,10 @@
             href="{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}">
             Check Availability
         </a>
+
+        <a href="" class="btn btn-sm btn-primary d-none" id="btnCreateReservation">
+            Create Reservation
+        </a>
     </div>
 
 
@@ -1092,6 +1096,46 @@
                         });
                     }
                 });
+        }
+
+        let selectedCells = [];
+
+        $('.selectable-site').on('click', function() {
+            const cell = $(this);
+            const data = {
+                date: cell.data('date'),
+                siteId: cell.data('site-id')
+            };
+
+            cell.toggleClass('bg-primary text-white');
+
+            const index = selectedCells.findIndex(c => c.date === data.date && c.siteId === data.siteId);
+            if (index > -1) {
+                selectedCells.splice(index, 1);
+            } else {
+                selectedCells.push(data);
+            }
+
+            updateReservationButton();
+        });
+
+        function updateReservationButton() {
+            if (selectedCells.length === 0) {
+                $('#btnCreateReservation').addClass('d-none');
+                return;
+            }
+
+            const dates = selectedCells.map(c => new Date(c.date)).sort((a, b) => a - b);
+            const startDate = dates[0].toISOString().split('T')[0];
+            const endDate = dates[dates.length - 1].toISOString().split('T')[0];
+
+            const siteIds = [...new Set(selectedCells.map(c => c.siteId))];
+
+            const searchUrl = "{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}" +
+                `?startDate=${startDate}&endDate=${endDate}` +
+                siteIds.map(id => `&siteid[]=${encodeURIComponent(id)}`).join('');
+            $('#btnCreateReservation').attr('href', searchUrl).removeClass('d-none');
+
         }
     </script>
 @endpush
