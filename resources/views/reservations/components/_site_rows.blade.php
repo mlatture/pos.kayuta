@@ -69,7 +69,7 @@
                     //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
                     //     $textColor = $fullyPaid ? 'white' : 'black';
                 }
-                if (abs($reservation->balance_due) < 0.01) {
+                if (abs($reservation->balance_due) === 0) {
                     $bgColor = '#58D68D';
                     $textColor = 'white';
                 } else {
