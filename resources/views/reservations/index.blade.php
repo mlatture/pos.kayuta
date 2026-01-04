@@ -207,46 +207,6 @@
             <table class="table management-table table-striped">
                 <thead>
                     <tr class="t__head sticky-top bg-dark">
-                        {{-- <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
-                        <div class="d-flex flex-column justify-content-between align-items-start" style="width: 100px">
-                            <span class="me-2">Site</span>
-                            <select id="siteFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($sites->pluck('siteid')->unique()->sort() as $siteId)
-                                    <option value="{{ $siteId }}"
-                                        {{ in_array($siteId, request('siteid', [])) ? 'selected' : '' }}>
-                                        {{ $siteId }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </th>
-                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
-                        <div class="d-flex flex-column justify-content-between align-items-start">
-                            <span class="me-2">Type</span>
-                            <select id="typeFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($site_classes->pluck('siteclass')->unique()->sort() as $siteclass)
-                                    <option value="{{ $siteclass }}"
-                                        {{ in_array($siteclass, request('siteclass', [])) || ($siteclass === 'RV Sites' && !request()->has('siteclass')) ? 'selected' : '' }}>
-                                        {{ $siteclass }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </th>
-                    <th class="sticky-col sticky-top bg-dark text-white" rowspan="3">
-                        <div class="d-flex flex-column justify-content-between align-items-start" style="width: 10vw">
-                            <span class="me-2">Tier</span>
-                            <select id="tierFilter" class="form-select form-select-sm w-100" multiple="multiple">
-                                @foreach ($rate_tiers->pluck('tier')->unique()->sort() as $rateTier)
-                                    <option value="{{ $rateTier }}"
-                                        {{ in_array($rateTier, request('ratetier', [])) ? 'selected' : '' }}>
-                                        {{ $rateTier }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </th> --}}
-
                         <th class="sticky-col sticky-top bg-dark text-white text-center" rowspan="3"
                             style="width: 120px;">
                             <button type="button" class="btn btn-sm btn-light mb-2" data-bs-toggle="modal"
@@ -262,38 +222,63 @@
                             $recurringMonth = '';
                             $colspan = 0;
                         @endphp
-                        @foreach ($calendar as $key => $dates)
-                            @if ($key < 1)
-                                @php
-                                    $recurringMonth = date('M Y', strtotime($dates));
-                                @endphp
+                        @foreach ($calendar as $key => $day)
+                            @php
+                                $currentMonth = date('M Y', strtotime($day['date']));
+                            @endphp
+
+                            @if ($key === 0)
+                                @php $recurringMonth = $currentMonth; @endphp
                             @endif
-                            @if ($recurringMonth == date('M Y', strtotime($dates)) && count($calendar) - 1 != $key)
-                                @php
-                                    $colspan += 1;
-                                @endphp
+
+                            @if ($recurringMonth == $currentMonth)
+                                @php $colspan++; @endphp
                             @else
-                                @if (count($calendar) - 1 == $key)
-                                    @php
-                                        $colspan += 1;
-                                    @endphp
-                                @endif
                                 <td colspan="{{ $colspan }}"
                                     class="month sticky-top bg-dark text-center text-white text-uppercase">
                                     {{ $recurringMonth }}
                                 </td>
                                 @php
                                     $colspan = 1;
-                                    $recurringMonth = date('M Y', strtotime($dates));
+                                    $recurringMonth = $currentMonth;
                                 @endphp
+                            @endif
+
+                            @if ($loop->last)
+                                <td colspan="{{ $colspan }}"
+                                    class="month sticky-top bg-dark text-center text-white text-uppercase">
+                                    {{ $recurringMonth }}
+                                </td>
                             @endif
                         @endforeach
                     </tr>
                     <tr>
-                        @foreach ($calendar as $dates)
-                            <th data-date="{{ $dates }}" class="sticky-top custom--dates">
-                                {{ date('D', strtotime($dates)) }}
-                                <hr class="m-0">{{ date('d', strtotime($dates)) }}
+                        @foreach ($calendar as $day)
+                            @php
+                                $hasEvent = !empty($day['event']);
+                                $dateObj = strtotime($day['date']);
+
+                            @endphp
+
+                            <th data-date="{{ $day['date'] }}"
+                                class="sticky-top custom--dates {{ $hasEvent ? 'border border-danger' : '' }}"
+                                @if ($hasEvent) data-bs-toggle="tooltip" 
+                                    data-bs-placement="bottom" 
+                                    title="{{ $day['event']['title'] }} requires a {{ $day['event']['nights'] }} night(s) minimum stay." @endif>
+
+                                {{ date('D', $dateObj) }}
+                                <hr class="m-0">
+                                <div class="d-flex flex-column align-items-center">
+                                    <span>
+                                        {{ date('d', $dateObj) }}
+                                        @if ($hasEvent)
+                                            <small class="text-danger fw-bold " style="font-size: 0.7rem; cursor: pointer;">
+                                                {{ $day['event']['nights'] }}N ⓘ
+                                            </small>
+                                        @endif
+                                    </span>
+
+                                </div>
                             </th>
                         @endforeach
                     </tr>

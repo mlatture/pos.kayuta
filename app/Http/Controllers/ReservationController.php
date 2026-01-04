@@ -159,13 +159,16 @@ class ReservationController extends Controller
             ])
             ->paginate(50);
 
-        $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
+        $events = Event::where('minimumstay', '>', 1)->get();
+        $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate'], $events);
+
+        $calendarDates = collect($calendar)->pluck('date')->toArray();
 
         foreach ($sites as $site) {
             $site->totalDays = $site->reservations->sum('days');
             $site->isVacant = $site->reservations->isEmpty();
 
-            $availability = array_fill_keys($calendar, null);
+            $availability = array_fill_keys($calendarDates, null);
 
             foreach ($site->reservations as $res) {
                 $relatedCartIds = Reservation::where(function($q) use ($res) {
@@ -190,7 +193,7 @@ class ReservationController extends Controller
                 $resStart = Carbon::parse($res->cid);
                 $resEnd = Carbon::parse($res->cod);
 
-                foreach ($calendar as $date) {
+                foreach ($calendarDates as $date) {
                     $day = Carbon::parse($date);
 
                     if ($day->gte($resStart) && $day->lt($resEnd)) {
@@ -208,14 +211,38 @@ class ReservationController extends Controller
         return view('reservations.index', compact('site_classes', 'rate_tiers', 'sites', 'calendar', 'filters'));
     }
 
-    private function generateSeasonCalendar($startDate, $endDate)
+    private function generateSeasonCalendar($startDate, $endDate, $events = [])
     {
         $calendar = [];
         $currentDate = Carbon::parse($startDate);
         $endDate = Carbon::parse($endDate);
 
+        $minStayEvents = [];
+
+        foreach ($events as $event) {
+            if ($event->minimumstay <= 1) continue;
+            
+            $start = Carbon::parse($event->eventstart);
+            $end = Carbon::parse($event->eventend);
+
+            while ($start <= $end) {
+                $minStayEvents[$start->format('Y-m-d')] = [
+                    'nights' => $event->minimumstay,
+                    'title' => $event->eventname,
+                ];
+                $start->addDay();
+            }
+
+        }
+
         while ($currentDate <= $endDate) {
-            $calendar[] = $currentDate->format('Y-m-d');
+            $dateStr = $currentDate->format('Y-m-d');
+            
+            $calendar[] = [
+                'date' => $dateStr, 
+                'event' => $minStayEvents[$dateStr] ?? null
+            ];
+
             $currentDate->addDay();
         }
 

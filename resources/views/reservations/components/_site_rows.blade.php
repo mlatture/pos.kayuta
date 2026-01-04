@@ -35,12 +35,14 @@
 
     @while ($i < $calendarCount)
         @php
-            $date = $calendar[$i];
-            $highlightToday = $date === now()->format('Y-m-d') ? 'border border-warning' : '';
-            $availability_value = $site->availability[$date] ?? null;
+            $dayData = $calendar[$i];
+
+            $dateStr = $dayData['date'];
+
+            $highlightToday = $dateStr === now()->format('Y-m-d') ? 'border border-warning' : '';
+            $availability_value = $site->availability[$dateStr] ?? null;
 
             $reservation = is_object($availability_value) ? $availability_value : null;
-
             $isOccupiedButNotStart = $availability_value === true;
         @endphp
 
@@ -89,7 +91,6 @@
                 // if ($hasStarted && $borderColor === 'black') {
                 //     $borderColor = 'blue';
                 // }
-
 
             @endphp
             <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
