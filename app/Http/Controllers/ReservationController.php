@@ -18,6 +18,8 @@ use App\Models\Site;
 use App\Models\SiteClass;
 use App\Models\SiteHookup;
 use App\Models\User;
+use App\Models\AdditionalPayment;
+use App\Models\Refund;
 use App\Services\CardKnoxService;
 use Carbon\Carbon;
 use DateTime;
@@ -143,24 +145,55 @@ class ReservationController extends Controller
         $sites = $query
             ->with([
                 'reservations' => function ($resQ) use ($filters) {
-                    $resQ->where('cod', '>=', $filters['startDate'])->where('cid', '<=', $filters['endDate'])->where('status', '!=', 'cancelled')->orderBy('cid')->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 'lname', 'sitelock', 'source', 'createdby', 'status', DB::raw('DATEDIFF(cod, cid) as days'));
+                    $resQ->where('cod', '>=', $filters['startDate'])
+                        ->where('cid', '<=', $filters['endDate'])
+                        ->where('status', '!=', 'cancelled')
+                        ->orderBy('cid')
+                        ->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 
+                                'lname', 'sitelock', 'source', 'createdby', 'status', 'checkedin',
+                                'total', 'payment_id', 'group_confirmation_code', 'xconfnum', 
+                                DB::raw('DATEDIFF(cod, cid) as days'));
+                        
                 },
+                'reservations.payment',
             ])
             ->paginate(50);
 
-        $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate']);
+        $events = Event::where('minimumstay', '>', 1)->get();
+        $calendar = $this->generateSeasonCalendar($filters['startDate'], $filters['endDate'], $events);
+
+        $calendarDates = collect($calendar)->pluck('date')->toArray();
 
         foreach ($sites as $site) {
             $site->totalDays = $site->reservations->sum('days');
             $site->isVacant = $site->reservations->isEmpty();
 
-            $availability = array_fill_keys($calendar, null);
+            $availability = array_fill_keys($calendarDates, null);
 
             foreach ($site->reservations as $res) {
+                $relatedCartIds = Reservation::where(function($q) use ($res) {
+                    if($res->payment_id) $q->orWhere('payment_id', $res->payment_id);
+                    if($res->group_confirmation_code) $q->orWhere('group_confirmation_code', $res->group_confirmation_code);
+                    $q->orWhere('cartid', $res->cartid);
+                })->pluck('cartid');
+
+                $groupTotalCharges = Reservation::whereIn('cartid', $relatedCartIds)->sum('total');
+
+                $initialPayment = $res->payment ? (float) $res->payment->payment : 0;
+                $extraPayments = AdditionalPayment::whereIn('cartid', $relatedCartIds)->sum('amount');
+
+
+                $refunds =  Refund::whereIn('cartid', $relatedCartIds)->sum('amount');
+                $cancelFees = Refund::whereIn('cartid', $relatedCartIds)->sum('cancellation_fee');
+
+                $netBalance = ($groupTotalCharges + $cancelFees) - ($initialPayment + $extraPayments ) + $refunds;
+
+                $res->balance_due = max(0, round($netBalance, 2));
+
                 $resStart = Carbon::parse($res->cid);
                 $resEnd = Carbon::parse($res->cod);
 
-                foreach ($calendar as $date) {
+                foreach ($calendarDates as $date) {
                     $day = Carbon::parse($date);
 
                     if ($day->gte($resStart) && $day->lt($resEnd)) {
@@ -178,14 +211,38 @@ class ReservationController extends Controller
         return view('reservations.index', compact('site_classes', 'rate_tiers', 'sites', 'calendar', 'filters'));
     }
 
-    private function generateSeasonCalendar($startDate, $endDate)
+    private function generateSeasonCalendar($startDate, $endDate, $events = [])
     {
         $calendar = [];
         $currentDate = Carbon::parse($startDate);
         $endDate = Carbon::parse($endDate);
 
+        $minStayEvents = [];
+
+        foreach ($events as $event) {
+            if ($event->minimumstay <= 1) continue;
+            
+            $start = Carbon::parse($event->eventstart);
+            $end = Carbon::parse($event->eventend);
+
+            while ($start <= $end) {
+                $minStayEvents[$start->format('Y-m-d')] = [
+                    'nights' => $event->minimumstay,
+                    'title' => $event->eventname,
+                ];
+                $start->addDay();
+            }
+
+        }
+
         while ($currentDate <= $endDate) {
-            $calendar[] = $currentDate->format('Y-m-d');
+            $dateStr = $currentDate->format('Y-m-d');
+            
+            $calendar[] = [
+                'date' => $dateStr, 
+                'event' => $minStayEvents[$dateStr] ?? null
+            ];
+
             $currentDate->addDay();
         }
 

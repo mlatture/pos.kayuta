@@ -35,12 +35,14 @@
 
     @while ($i < $calendarCount)
         @php
-            $date = $calendar[$i];
-            $highlightToday = $date === now()->format('Y-m-d') ? 'border border-warning' : '';
-            $availability_value = $site->availability[$date] ?? null;
+            $dayData = $calendar[$i];
+
+            $dateStr = $dayData['date'];
+
+            $highlightToday = $dateStr === now()->format('Y-m-d') ? 'border border-warning' : '';
+            $availability_value = $site->availability[$dateStr] ?? null;
 
             $reservation = is_object($availability_value) ? $availability_value : null;
-
             $isOccupiedButNotStart = $availability_value === true;
         @endphp
 
@@ -65,26 +67,33 @@
                 if ($isCancelled) {
                     $bgColor = 'red';
                     $textColor = 'white';
-                } elseif (in_array($source, ['booking.com', 'airbnb'])) {
-                    $bgColor = $fullyPaid ? 'purple' : 'yellow';
-                    $textColor = $fullyPaid ? 'white' : 'black';
-                } elseif ($createdBy === 'customer') {
-                    $bgColor = $fullyPaid ? 'green' : 'yellow-orange';
-                    $textColor = $fullyPaid ? 'white' : 'black';
+                    // } elseif (in_array($source, ['booking.com', 'airbnb'])) {
+                    //     $bgColor = $fullyPaid ? 'purple' : 'yellow';
+                    //     $textColor = $fullyPaid ? 'white' : 'black';
+                }
+                if (abs($reservation->balance_due) === 0) {
+                    $bgColor = '#58D68D';
+                    $textColor = 'white';
                 } else {
-                    $bgColor = $fullyPaid ? '#FFAA33' : 'orange';
-                    $textColor = $fullyPaid ? 'white' : 'black';
+                    $bgColor = '#FFAE42';
+                    $textColor = 'black';
                 }
 
-                $borderColor = $siteLock ? 'red' : 'black';
+                $borderColor = $siteLock ? 'red' : 'green';
 
-                $hasStarted = $today->greaterThanOrEqualTo($resStart);
+                $hasCheckedIn = $reservation->checkedin !== null ? 'black' : $borderColor;
+                $borderColor = $hasCheckedIn;
 
-                if ($hasStarted && $borderColor === 'black') {
-                    $borderColor = 'blue';
-                }
+                // dd([$borderColor, $reservation->checkedin, $reservation]);
+
+                // $hasStarted = $today->greaterThanOrEqualTo($resStart);
+
+                // if ($hasStarted && $borderColor === 'black') {
+                //     $borderColor = 'blue';
+                // }
+
             @endphp
-            <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center {{ $highlightToday }}"
+            <td colspan="{{ $reservationColSpan }}" class="reservation-details text-center"
                 style="cursor:pointer; background-color: {{ $bgColor }}; color: {{ $textColor }}; border: 4px solid {{ $borderColor }}; "
                 data-reservation-id="{{ $reservation->id }}" data-start-date="{{ $reservation->cid }}"
                 data-end-date="{{ $reservation->cod }}" data-cart-id="{{ $reservation->cartid }}">
@@ -95,7 +104,10 @@
             @php $i++; @endphp
         @else
             @php $i++; @endphp
-            <td class="text-center text-dark {{ $highlightToday }}" style="opacity: 50%">
+            <td class="text-center text-dark {{ $highlightToday }} selectable-site" 
+                style="opacity: 50%; cursor: pointer;"
+                data-date="{{ $dayData['date'] }}"
+                data-site-id="{{ $site->siteid }}">
                 Available
             </td>
         @endif
