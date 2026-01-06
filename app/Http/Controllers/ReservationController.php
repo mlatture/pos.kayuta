@@ -149,11 +149,11 @@ class ReservationController extends Controller
                         ->where('cid', '<=', $filters['endDate'])
                         ->where('status', '!=', 'cancelled')
                         ->orderBy('cid')
-                        ->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname', 
+                        ->select('siteid', 'cid', 'cod', 'id', 'cartid', 'fname',
                                 'lname', 'sitelock', 'source', 'createdby', 'status', 'checkedin',
-                                'total', 'payment_id', 'group_confirmation_code', 'xconfnum', 
+                                'total', 'payment_id', 'group_confirmation_code', 'xconfnum',
                                 DB::raw('DATEDIFF(cod, cid) as days'));
-                        
+
                 },
                 'reservations.payment',
             ])
@@ -181,7 +181,6 @@ class ReservationController extends Controller
 
                 $initialPayment = $res->payment ? (float) $res->payment->payment : 0;
                 $extraPayments = AdditionalPayment::whereIn('cartid', $relatedCartIds)->sum('amount');
-
 
                 $refunds =  Refund::whereIn('cartid', $relatedCartIds)->sum('amount');
                 $cancelFees = Refund::whereIn('cartid', $relatedCartIds)->sum('cancellation_fee');
@@ -211,6 +210,8 @@ class ReservationController extends Controller
         return view('reservations.index', compact('site_classes', 'rate_tiers', 'sites', 'calendar', 'filters'));
     }
 
+   
+
     private function generateSeasonCalendar($startDate, $endDate, $events = [])
     {
         $calendar = [];
@@ -220,8 +221,10 @@ class ReservationController extends Controller
         $minStayEvents = [];
 
         foreach ($events as $event) {
-            if ($event->minimumstay <= 1) continue;
-            
+            if ($event->minimumstay <= 1) {
+                continue;
+            }
+
             $start = Carbon::parse($event->eventstart);
             $end = Carbon::parse($event->eventend);
 
@@ -232,15 +235,14 @@ class ReservationController extends Controller
                 ];
                 $start->addDay();
             }
-
         }
 
         while ($currentDate <= $endDate) {
             $dateStr = $currentDate->format('Y-m-d');
-            
+
             $calendar[] = [
-                'date' => $dateStr, 
-                'event' => $minStayEvents[$dateStr] ?? null
+                'date' => $dateStr,
+                'event' => $minStayEvents[$dateStr] ?? null,
             ];
 
             $currentDate->addDay();

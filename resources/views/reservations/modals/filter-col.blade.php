@@ -22,7 +22,8 @@
 
                     <div class="mb-3">
                         <label for="rigLength" class="form-label">Rig Length</label>
-                        <input type="text" id="rigLength" name="riglength" class="form-control w-100" value="{{ request('riglength', '') }}">
+                        <input type="text" id="rigLength" name="riglength" class="form-control w-100"
+                            value="{{ request('riglength', '') }}">
                     </div>
 
                     <div class="mb-3">
@@ -45,6 +46,24 @@
                                     {{ $rateTier }}
                                 </option>
                             @endforeach
+                        </select>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label for="seasonalFilter" class="form-label">Seasonal Filter</label>
+
+                        <select id="seasonalFilter" name="seasonalFilter" class="form-select w-100">
+                            <option value="short"
+                                {{ request('seasonalFilter', 'short') === 'short' ? 'selected' : '' }}>
+                                Short Term
+                            </option>
+                            <option value="seasonal" {{ request('seasonalFilter') === 'seasonal' ? 'selected' : '' }}>
+                                Seasonal
+                            </option>
+                            <option value="all" {{ request('seasonalFilter') === 'all' ? 'selected' : '' }}>
+                                Show All
+                            </option>
                         </select>
                     </div>
 

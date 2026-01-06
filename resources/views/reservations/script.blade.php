@@ -70,8 +70,7 @@
                 applyFiltersAndReload();
             }
 
-            $('#seasonalFilter, #startDatePicker').on('change',
-                applyFiltersAndReload);
+
 
             $('#prev30').on('click', function() {
                 navigateAndReload(-30);
@@ -458,156 +457,7 @@
 
 
 
-        function quoteSites() {
-            let selectedCards = document.querySelectorAll('.site-card.selected');
 
-            let siteIds = [...new Set(Array.from(selectedCards).map(card => card.getAttribute("data-id")))];
-            let nights = $('#nights').val();
-            console.log('Unique Selected Site IDs:', siteIds);
-            $.ajax({
-                url: '{{ route('reservations.quoteSite') }}',
-                type: 'GET',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    siteIds: siteIds,
-                    nights: nightsCounts
-                },
-                success: function(response) {
-                    console.log('Quote response:', response);
-
-                    let checkinDate = $('#checkin').val();
-                    let checkoutDate = $('#checkout').val();
-
-                    let tableBody = "";
-                    let totalCost = 0;
-
-                    response.forEach(site => {
-                        let frequency = nightsCounts === 7 ? "Weekly" : (nightsCounts > 7 ?
-                            "Weekly + Extra Nights" : "Nightly");
-                        let description = `Booking for ${nightsCounts} ${nightsCounts === 1
-                        ? 'night' : 'nights'} from ${checkinDate} to ${checkoutDate}`;
-
-                        totalCost += site.rate;
-
-                        tableBody += `
-                        <tr>
-                            <td>${checkinDate} - ${checkoutDate}</td>
-                            <td>${site.siteid}</td>
-                            <td id="table-rate" data-rate="${site.rate}">$${site.rate.toFixed(2)}</td>
-                            <td>${frequency}</td>
-                            <td>${description}</td>
-                            </tr>
-                            `;
-
-                    });
-
-                    let tableFooter = `
-                        <tr>
-                            <td colspan="2"><strong>Total</strong></td>
-                            <td><strong id="totalCost" data-total="${totalCost}">$${totalCost.toFixed(2)}</strong></td>
-                            <td colspan="2"></td>
-                            </tr>
-
-                            `;
-
-                    $('#quoteModalBody').html(`
-                            <p><strong>Check-in:</strong> ${checkinDate}</p>
-                            <p><strong>Check-out:</strong> ${checkoutDate}</p>
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Site</th>
-                                        <th>Rate</th>
-                                        <th>Frequency</th>
-                                        <th>Description</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${tableBody}
-                                            </tbody>
-                                            <tfoot>
-                                                ${tableFooter}
-                                                </tfoot>
-                                                </table>
-
-                                                `);
-
-                    $('#quoteModal').modal('show');
-
-                    $('#createReservation').on('click', function() {
-
-
-
-
-                        $.ajax({
-                            url: " {{ route('reservations.create-reservation') }}",
-                            type: "GET",
-                            data: {
-                                siteIds: siteIds,
-                                nights: nightsCounts,
-                                checkin: checkinDate,
-                                checkout: checkoutDate,
-
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response_reservation) {
-                                console.log(response_reservation);
-
-                                $.ajax({
-                                    url: " {{ route('reservations.update-availability') }} ",
-                                    type: "PATCH",
-                                    data: {
-                                        siteIds: siteIds,
-                                        _token: '{{ csrf_token() }}'
-
-                                    },
-                                    success: function(response_availability) {
-                                        console.log('Availability: ',
-                                            response_availability);
-                                    },
-                                    error: function(error) {
-                                        console.log(error);
-                                    }
-
-                                });
-
-                                window.location.href =
-                                    "{{ route('reservations.payment.index', ['confirmationNumber' => ':confirmationNumber']) }}"
-                                    .replace(':confirmationNumber', response_reservation
-                                        .confirmationNumber);
-                            },
-                            error: function(error) {
-                                console.log(error);
-                            }
-                        })
-
-                    })
-
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
-                button.addEventListener("click", function() {
-                    let modal = document.getElementById("quoteModal");
-                    let modalInstance = bootstrap.Modal.getInstance(modal);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-
-                    setTimeout(() => {
-                        document.body.classList.remove('modal-open');
-                        document.querySelectorAll('.modal-backdrop').forEach(el => el
-                            .remove());
-                    }, 300);
-                });
-            });
-        });
 
         let today = new Date().toISOString().split('T')[0];
         let tomorrow = new Date();
@@ -794,42 +644,61 @@
 
         let selectedCells = [];
 
-        $('.selectable-site').on('click', function() {
+        $('.selectable-site').on('click', function(e) {
             const cell = $(this);
-            const data = {
-                date: cell.data('date'),
-                siteId: cell.data('site-id')
-            };
+            const siteId = cell.data('site-id');
+            const date = cell.data('date');
 
             cell.toggleClass('bg-primary text-white');
 
-            const index = selectedCells.findIndex(c => c.date === data.date && c.siteId === data.siteId);
+            const index = selectedCells.findIndex(c => c.date === date && c.siteId === siteId);
             if (index > -1) {
                 selectedCells.splice(index, 1);
             } else {
-                selectedCells.push(data);
+                selectedCells.push({
+                    date,
+                    siteId
+                });
             }
 
-            updateReservationButton();
+            updateMultiSiteCartButton();
         });
 
-        function updateReservationButton() {
-            if (selectedCells.length === 0) {
-                $('#btnCreateReservation').addClass('d-none');
-                return;
+        function updateMultiSiteCartButton() {
+            const btn = $('#btnCreateReservation');
+
+            if (selectedCells.length > 0) {
+                const groups = selectedCells.reduce((acc, current) => {
+                    if (!acc[current.siteId]) acc[current.siteId] = [];
+                    acc[current.siteId].push(current.date);
+                    return acc;
+                }, {});
+
+                let queryString = "";
+                const siteIds = Object.keys(groups);
+
+                siteIds.forEach((siteId, index) => {
+                    const dates = groups[siteId].sort();
+                    const cid = dates[0];
+
+                    const lastDate = new Date(dates[dates.length - 1]);
+                    lastDate.setDate(lastDate.getDate() + 1);
+                    const cod = lastDate.toISOString().split('T')[0];
+
+                    queryString +=
+                        `items[${index}][siteId]=${siteId}&items[${index}][cid]=${cid}&items[${index}][cod]=${cod}`;
+
+                    if (index < siteIds.length - 1) queryString += "&";
+                });
+
+                const url = `{{ route('flow-reservation.step1') }}?${queryString}`;
+
+                btn.attr('href', url);
+                btn.text(`Add ${siteIds.length} Site(s) to Cart`);
+                btn.removeClass('d-none');
+            } else {
+                btn.addClass('d-none');
             }
-
-            const dates = selectedCells.map(c => new Date(c.date)).sort((a, b) => a - b);
-            const startDate = dates[0].toISOString().split('T')[0];
-            const endDate = dates[dates.length - 1].toISOString().split('T')[0];
-
-            const siteIds = [...new Set(selectedCells.map(c => c.siteId))];
-
-            const searchUrl = "{{ route('admin.reservation_mgmt.index', ['admin' => auth()->user()->id]) }}" +
-                `?startDate=${startDate}&endDate=${endDate}` +
-                siteIds.map(id => `&siteid[]=${encodeURIComponent(id)}`).join('');
-            $('#btnCreateReservation').attr('href', searchUrl).removeClass('d-none');
-
         }
     </script>
 @endpush
