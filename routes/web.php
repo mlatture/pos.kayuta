@@ -152,6 +152,17 @@ Route::prefix('admin')
                 Route::get('{admin}/view/map/information', [ReservationManagementController::class, 'information'])->name('admin.reservation_mgmt.map.information');
             });
 
+        // Flow Reservation (Step 1 & 2)
+        Route::prefix('flow-reservation')->group(function () {
+            Route::get('/step-1', [\App\Http\Controllers\FlowReservationController::class, 'step1'])->name('flow-reservation.step1');
+            Route::get('/search', [\App\Http\Controllers\FlowReservationController::class, 'search'])->name('flow-reservation.search');
+            Route::post('/save-draft', [\App\Http\Controllers\FlowReservationController::class, 'saveDraft'])->name('flow-reservation.save-draft');
+            Route::get('/step-2/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'step2'])->name('flow-reservation.step2');
+            Route::post('/update-customer/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'updateCustomer'])->name('flow-reservation.update-customer');
+            Route::post('/remove-item/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'removeItem'])->name('flow-reservation.remove-item');
+            Route::post('/finalize/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'finalize'])->name('flow-reservation.finalize');
+        });
+
         Route::prefix('customers/{customer}/account')->group(function () {
             Route::get('/', [CustomerController::class, 'account'])->name('admin.customers.account');
 
@@ -345,7 +356,7 @@ Route::prefix('admin')
         Route::post('reservations/payment/{id}/postTerminalPayment', [NewReservationController::class, 'processPayment']);
         Route::get('reservations/payment/{id}/checkPaymentStatus', [NewReservationController::class, 'checkPaymentStatus']);
         Route::get('reservations/payment/{confirmationNumber}', [NewReservationController::class, 'paymentIndex'])->name('reservations.payment.index');
-        Route::get('reservations/invoice/{confirmationNumber}', [NewReservationController::class, 'invoice']);
+        Route::get('reservations/invoice/{confirmationNumber}', [NewReservationController::class, 'invoice'])->name('reservations.invoice');
         Route::delete('reservations/delete/add-to-cart', [NewReservationController::class, 'deleteCart'])->name('reservations.delete.add-to-cart');
         Route::get('reservation-in-cart', [NewReservationController::class, 'reservationInCart'])->name('reservations.reservation-in-cart');
         Route::delete('reservation-in-cart', [NewReservationController::class, 'clearAbandoned'])->name('cart-reservation.clear-abandoned');

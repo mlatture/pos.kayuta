@@ -137,6 +137,16 @@
                 </a>
             </li>
         @endHasPermission
+        
+        <li class="nav-item">
+            <a href="{{ route('flow-reservation.step1') }}"
+                class="nav-link {{ activeSegment('flow-reservation') }}">
+                <div class="d-flex align-items-center">
+                    <i class="nav-icon fas fa-route me-2"></i>
+                    <span>Web Flow</span>
+                </div>
+            </a>
+        </li>
 
         @hasPermission(config('constants.role_modules.list_gift_cards.value'))
             <li class="nav-item">
