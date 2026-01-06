@@ -65,6 +65,23 @@
                         <p class="float-right" id="offcanvasTax"></p>
                     </div>
 
+                    {{-- Reservation Specific Fees --}}
+                    <div class="col-6" id="platform-fee-section" hidden>
+                        <p>Platform Fee</p>
+                    </div>
+                    <div class="col-6" id="platform-fee-section1" hidden>
+                        <span>$</span>
+                        <p class="float-right" id="offcanvasPlatformFee">0.00</p>
+                    </div>
+
+                    <div class="col-6" id="site-lock-fee-section" hidden>
+                        <p>Site Lock Fee</p>
+                    </div>
+                    <div class="col-6" id="site-lock-fee-section1" hidden>
+                        <span>$</span>
+                        <p class="float-right" id="offcanvasSiteLockFee">0.00</p>
+                    </div>
+
                     {{-- <div class="col-sm-12 border-top">
                         <div class="row pt-2">
                             <div class="col-6">

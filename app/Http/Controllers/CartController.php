@@ -8,6 +8,8 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\CartReservation;
+use App\Models\Reservation;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +62,28 @@ class CartController extends Controller
         $orderId = $request->order_id;
     
         $order_item = OrderItem::where('order_id', $orderId)->get();
+        
+        if ($order_item->isEmpty()) {
+            // Check if it's a reservation cart
+            $reservations = CartReservation::where('cartid', $orderId)->get();
+            if ($reservations->isNotEmpty()) {
+                $productDetails = $reservations->map(function ($res) {
+                    return [
+                        'product_name' => "Site: " . ($res->site->siteid ?? $res->siteid) . " ({$res->nights} nights)",
+                        'price' => $res->base,
+                        'quantity' => 1,
+                        'tax' => $res->totaltax,
+                        'discount' => 0,
+                        'total' => $res->total,
+                    ];
+                });
+
+                return response()->json([
+                    'success' => true,
+                    'products' => $productDetails  
+                ]);
+            }
+        }
     
         $productIds = $order_item->pluck('product_id');
     

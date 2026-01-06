@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ReservationDraft extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'draft_id',
+        'cart_data',
+        'subtotal',
+        'discount_total',
+        'estimated_tax',
+        'platform_fee_total',
+        'grand_total',
+    ];
+
+    protected $casts = [
+        'cart_data' => 'array',
+    ];
+}
