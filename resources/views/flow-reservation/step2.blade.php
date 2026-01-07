@@ -392,8 +392,8 @@ $(function() {
         $('#displayTotalAmount').text(fmt(draft.grand_total));
         $('#remainingBalance').text(fmt(draft.grand_total));
         
-        $('#total-amount').val(draft.grand_total.toFixed(2));
-        $('#subtotal-amount').val(draft.subtotal.toFixed(2));
+        $('#total-amount').val(parseFloat(draft.grand_total).toFixed(2));
+        $('#subtotal-amount').val(parseFloat(draft.subtotal).toFixed(2));
         $('#tax-amount').text(fmt(draft.estimated_tax));
 
         // Reservation Specific Fees
@@ -402,7 +402,7 @@ $(function() {
         $('#offcanvasSiteLock').text(fmt(draft.sitelock_fee || 0));
 
         // Discounts
-        if (draft.discount_total > 0) {
+        if (parseFloat(draft.discount_total || 0) > 0) {
             $('#discount-section, #discount-section1').show();
             $('#offcanvasDiscount').text(fmt(draft.discount_total));
         } else {
