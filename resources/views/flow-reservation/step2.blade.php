@@ -30,7 +30,7 @@
             <button class="btn btn-outline-secondary me-2" id="returnBtn">
                 <i class="fas fa-arrow-left me-1"></i> Return to Step 1
             </button>
-            <button class="btn btn-primary" id="topPayBtn">
+            <button class="btn btn-primary" id="flowTopPayBtn">
                 Pay <i class="fas fa-credit-card ms-1"></i>
             </button>
         </div>
@@ -192,7 +192,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white border-top-0">
-                    <button class="btn btn-success w-100 py-3 fw-bold" id="payBtn">
+                    <button class="btn btn-success w-100 py-3 fw-bold" id="flowPayBtn">
                         Pay Now <i class="fas fa-credit-card ms-1"></i>
                     </button>
                     <div class="text-center mt-2 small text-muted">
@@ -365,7 +365,7 @@ $(function() {
     });
 
     // Payment Drawer Integration
-    $('#payBtn, #topPayBtn').on('click', async function() {
+    $('#flowPayBtn, #flowTopPayBtn').on('click', async function() {
         const fname = $('[name="primary[f_name]"]').val();
         const email = $('[name="primary[email]"]').val();
         const phone = $('[name="primary[phone]"]').val();
