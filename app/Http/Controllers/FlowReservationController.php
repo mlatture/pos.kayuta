@@ -15,6 +15,7 @@ use App\Models\User; // Added
 use App\Models\CartReservation; // Added
 use App\Models\Reservation; // Added
 use App\Models\Payment; // Added
+use App\Models\GiftCard; // Added
 use App\Services\ReservationLogService; // Added
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -28,9 +29,8 @@ class FlowReservationController extends Controller
     {
         $siteClasses = SiteClass::orderBy('siteclass')->get();
         $siteHookups = SiteHookup::orderBy('orderby')->get();
-        $addons = Addon::all();
         
-        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'addons'));
+        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups'));
     }
 
     public function saveDraft(Request $request)
@@ -154,9 +154,6 @@ class FlowReservationController extends Controller
             $platformFeeTotal = 0;
             foreach ($cart as $item) {
                 $subtotal += ($item['base'] ?? 0) + ($item['fee'] ?? 0);
-                foreach ($item['addons'] ?? [] as $addon) {
-                    $subtotal += $addon['price'] ?? 0;
-                }
                 $platformFeeTotal += $item['fee'] ?? 0;
             }
 
@@ -238,9 +235,7 @@ class FlowReservationController extends Controller
 
     public function finalize(Request $request, $draft_id)
     {
-        $draft = ReservationDraft::where('draft_id', $draft_id)
-            ->where('status', 'draft')
-            ->firstOrFail();
+        $draft = ReservationDraft::where('draft_id', $draft_id)->firstOrFail();
 
         if (!$draft->customer_id) {
             return response()->json(['success' => false, 'message' => 'Customer must be bound before finalization.'], 422);
@@ -248,111 +243,120 @@ class FlowReservationController extends Controller
 
         $customer = User::findOrFail($draft->customer_id);
 
+        // Map payment method from POS drawer format to API format
+        $paymentMethod = $request->payment_method ?? 'Cash';
+        $apiPaymentMethod = 'cash'; // default
+        $paymentData = [];
+
+        switch ($paymentMethod) {
+            case 'CreditCard':
+            case 'Manual':
+                $apiPaymentMethod = 'card';
+                $paymentData = [
+                    'cc' => [
+                        'xCardNum' => $request->xCardNum ?? '',
+                        'xExp' => $request->xExp ?? '',
+                        'cvv' => $request->cvv ?? '',
+                    ]
+                ];
+                break;
+            case 'Check':
+                $apiPaymentMethod = 'ach';
+                $paymentData = [
+                    'ach' => [
+                        'routing' => $request->xRouting ?? '',
+                        'account' => $request->xAccount ?? '',
+                        'name' => $request->xName ?? ($customer->f_name . ' ' . $customer->l_name),
+                    ]
+                ];
+                break;
+            case 'GiftCard':
+            case 'Gift Card':
+                $apiPaymentMethod = 'gift_card';
+                $paymentData = [
+                    'gift_card_code' => $request->xBarcode ?? $request->gift_card_code ?? '',
+                ];
+                break;
+            case 'Cash':
+            default:
+                $apiPaymentMethod = 'cash';
+                $paymentData = [
+                    'cash_tendered' => $request->amount ?? $draft->grand_total,
+                ];
+                break;
+        }
+
+        // Prepare checkout data for external API
+        $checkoutData = array_merge([
+            'payment_method' => $apiPaymentMethod,
+            'xAmount' => $request->amount ?? $draft->grand_total,
+            'fname' => $customer->f_name,
+            'lname' => $customer->l_name,
+            'email' => $customer->email,
+            'phone' => $customer->phone ?? '',
+            'street_address' => $customer->street_address ?? '',
+            'city' => $customer->city ?? '',
+            'state' => $customer->state ?? '',
+            'zip' => $customer->zip ?? '',
+            'custId' => $customer->id,
+            'api_cart' => [
+                'cart_id' => $draft->draft_id,
+                'cart_token' => 'flow_' . $draft->draft_id,
+            ],
+        ], $paymentData);
+
         try {
-            return DB::transaction(function () use ($draft, $request, $customer) {
-                $randomReceiptID = rand(1000, 9999);
-                $cartId = $draft->draft_id;
+            // Call external Checkout API
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->post(env('BOOK_API_URL') . 'v1/checkout', $checkoutData);
 
-                $paymentType = $request->payment_method ?? 'Cash';
-                $amountPaid = $request->amount ?? $draft->grand_total;
-
-                $normalizedMethod = $paymentType;
-                if ($paymentType === 'GiftCard') $normalizedMethod = 'Gift Card';
-                if ($paymentType === 'CreditCard') $normalizedMethod = 'Manual';
-                if ($paymentType === 'Check') $normalizedMethod = 'Check';
-
-                $payment = new Payment([
-                    'cartid' => $cartId,
-                    'receipt' => $randomReceiptID,
-                    'method' => $normalizedMethod,
-                    'customernumber' => $customer->id,
-                    'email' => $customer->email,
-                    'payment' => $amountPaid,
-                    'x_ref_num' => $request->x_ref_num ?? null,
-                    'acc_number' => $request->acc_number ?? null,
+            if ($response->failed()) {
+                Log::error('Checkout API failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'draft_id' => $draft_id,
                 ]);
-                $payment->save();
 
-                // 2. Create Reservations
-                foreach ($draft->cart_data as $item) {
-                    $addons = $item['addons'] ?? [];
-                    $addonsJson = json_encode($addons);
+                return response()->json([
+                    'success' => false,
+                    'message' => $response->json()['message'] ?? 'Payment processing failed.',
+                    'errors' => $response->json()['errors'] ?? [],
+                ], $response->status());
+            }
 
-                    // Create CartReservation (Detail Line)
-                    $cartRes = new CartReservation([
-                        'cartid' => $cartId,
-                        'siteid' => $item['site_id'],
-                        'cid' => $item['start_date'],
-                        'cod' => $item['end_date'],
-                        'customernumber' => $customer->id,
-                        'email' => $customer->email,
-                        'total' => $item['totals']['total'],
-                        'subtotal' => $item['totals']['subtotal'],
-                        'taxrate' => 0.07, 
-                        'totaltax' => $item['totals']['tax'],
-                        'siteclass' => $item['site_type'] ?? 'RV',
-                        'nights' => $item['nights'],
-                        'base' => $item['totals']['subtotal'],
-                        'sitelock' => $item['totals']['sitelock_fee'] ?? 0,
-                        'hookups' => $item['rig_type'] ?? '',
-                        'riglength' => $item['rig_length'] ?? 0,
-                        'addon_id' => !empty($addons) ? $addons[0]['id'] : null, // Simplified for CartReservation
-                    ]);
-                    $cartRes->save();
-
-                    // Create Reservation (Main Entry)
-                    $reservation = new Reservation([
-                        'cartid' => $cartId,
-                        'source' => 'Web Flow',
-                        'email' => $customer->email,
-                        'fname' => $customer->f_name,
-                        'lname' => $customer->l_name,
-                        'customernumber' => $customer->id,
-                        'siteid' => $item['site_id'],
-                        'cid' => $item['start_date'],
-                        'cod' => $item['end_date'],
-                        'total' => $item['totals']['total'],
-                        'subtotal' => $item['totals']['subtotal'],
-                        'taxrate' => 7,
-                        'totaltax' => $item['totals']['tax'],
-                        'siteclass' => $item['site_type'] ?? 'RV',
-                        'nights' => $item['nights'],
-                        'base' => $item['totals']['subtotal'],
-                        'sitelock' => $item['totals']['sitelock_fee'] ?? 0,
-                        'rigtype' => $item['rig_type'] ?? '',
-                        'riglength' => $item['rig_length'] ?? 0,
-                        'xconfnum' => $cartId,
-                        'createdby' => auth()->user()->name ?? 'system',
-                        'receipt' => $randomReceiptID,
-                        'rid' => 'uc',
-                        'status' => 'Confirmed',
-                        'addons_json' => $addonsJson,
-                    ]);
-                    $reservation->save();
-
-                    if (app()->bound(ReservationLogService::class)) {
-                        try {
-                            app(ReservationLogService::class)->log(
-                                $reservation->id,
-                                'created',
-                                null,
-                                $reservation->toArray(),
-                                "Reservation #{$reservation->id} confirmed via Web Flow"
-                            );
-                        } catch (\Exception $logEx) {
-                            Log::warning("Logging failed: " . $logEx->getMessage());
-                        }
-                    }
+            // Handle gift card deduction
+            if ($apiPaymentMethod === 'gift_card') {
+                $giftCardCode = $paymentData['gift_card_code'] ?? null;
+                if ($giftCardCode) {
+                    GiftCard::where('barcode', $giftCardCode)->decrement('amount', $draft->grand_total);
                 }
+            }
 
-                $draft->status = 'confirmed';
-                $draft->save();
+            // Mark draft as confirmed
+            $draft->status = 'confirmed';
+            $draft->save();
 
-                return response()->json(['success' => true, 'message' => 'Confirmed', 'order_id' => $cartId]);
-            });
+            $apiResponse = $response->json();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Reservation confirmed successfully',
+                'order_id' => $draft->draft_id,
+                'api_response' => $apiResponse,
+            ]);
+
         } catch (\Exception $e) {
-            Log::error("Finalize Error: " . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error("Finalize Error: " . $e->getMessage(), [
+                'draft_id' => $draft_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error connecting to booking service: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
