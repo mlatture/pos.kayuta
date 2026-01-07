@@ -167,10 +167,6 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
-                                <div class="addons-list small">
-                                    @foreach($item['addons'] as $addon)
-                                        <div class="text-muted">+ {{ $addon['name'] }}</div>
-                                    @endforeach
                                 </div>
                             </div>
                         @endforeach
@@ -208,24 +204,6 @@
     </div>
 </div>
 
-{{-- Return Warning Modal --}}
-<div class="modal fade" id="returnWarningModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Unsaved Changes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                You have unsaved customer changes. Continuing will discard them.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel (Stay Step 2)</button>
-                <a href="{{ route('flow-reservation.step1', ['draft_id' => $draft->draft_id]) }}" class="btn btn-danger">Continue (Discard & Return)</a>
-            </div>
-        </div>
-    </div>
-</div>
 
 @include('cart.components.summary', ['subtotal' => $draft->subtotal, 'totalDiscount' => $draft->discount_total, 'totalTax' => $draft->estimated_tax, 'order_id' => $draft->draft_id])
 
@@ -357,7 +335,7 @@ $(function() {
             if (err.responseJSON && err.responseJSON.message) {
                 errorMessage = err.responseJSON.message;
             } else if (err.status === 422) {
-                errorMessage = 'Validation failed. Please ensure First Name and either Email or Phone are provided.';
+                errorMessage = 'Validation failed. Please ensure First Name is provided.';
             }
             toastr.error(errorMessage);
             return false;
@@ -366,13 +344,8 @@ $(function() {
         }
     }
 
-    // Return Logic
     $('#returnBtn').on('click', function() {
-        if (isDirty) {
-            $('#returnWarningModal').modal('show');
-        } else {
-            window.location.href = "{{ route('flow-reservation.step1', ['draft_id' => $draft->draft_id]) }}";
-        }
+        window.location.href = "{{ route('flow-reservation.step1', ['draft_id' => $draft->draft_id]) }}";
     });
 
     // Remove Item
@@ -397,8 +370,8 @@ $(function() {
         const email = $('[name="primary[email]"]').val();
         const phone = $('[name="primary[phone]"]').val();
 
-        if (!fname || (!email && !phone)) {
-            toastr.warning('Please select a customer or add a new one (First Name + Email/Phone required).');
+        if (!fname) {
+            toastr.warning('First Name is required.');
             return;
         }
 
@@ -425,7 +398,7 @@ $(function() {
 
         // Reservation Specific Fees
         $('.res-fee-row').show();
-        $('#offcanvasPlatformFee').text(fmt(draft.platform_fee || 0));
+        $('#offcanvasPlatformFee').text(fmt(draft.platform_fee_total || 0));
         $('#offcanvasSiteLock').text(fmt(draft.sitelock_fee || 0));
 
         // Discounts

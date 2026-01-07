@@ -173,22 +173,6 @@
         </div>
     </div>
 
-    {{-- Add-on Template --}}
-    <template id="addonTemplate">
-        <div class="mt-2 small">
-            <label class="d-block mb-1 text-muted">Add-ons:</label>
-            <select class="form-select form-select-sm add-on-select">
-                <option value="">Select Add-on...</option>
-                @foreach ($addons as $addon)
-                    <option value="{{ $addon->id }}" data-price="{{ $addon->price }}">{{ $addon->name }}
-                        (${{ number_format($addon->price, 2) }})
-                    </option>
-                @endforeach
-            </select>
-            <div class="selected-addons mt-1"></div>
-        </div>
-    </template>
-
 @endsection
 
 @push('js')
@@ -269,8 +253,7 @@
                     id: $(this).data('id'),
                     name: $(this).data('name'),
                     base: parseFloat($(this).data('base')),
-                    fee: parseFloat($(this).data('fee')),
-                    addons: []
+                    fee: parseFloat($(this).data('fee'))
                 };
 
                 cart.push(item);
@@ -290,32 +273,6 @@
                 updateCartUI();
             });
 
-            // Handle Add-ons
-            $(document).on('change', '.add-on-select', function() {
-                const $select = $(this);
-                const addonId = $select.val();
-                if (!addonId) return;
-
-                const itemIndex = $select.closest('.cart-item').data('index');
-                const $option = $select.find('option:selected');
-                const addon = {
-                    id: addonId,
-                    name: $option.text(),
-                    price: parseFloat($option.data('price'))
-                };
-
-                cart[itemIndex].addons.push(addon);
-                updateCartUI();
-            });
-
-            // Remove Add-on
-            $(document).on('click', '.remove-addon', function() {
-                const itemIndex = $(this).closest('.cart-item').data('index');
-                const addonIndex = $(this).data('addon-index');
-                cart[itemIndex].addons.splice(addonIndex, 1);
-                updateCartUI();
-            });
-
             // Recalculate on manual discount change
             $('#instantDiscount').on('input', updateTotals);
 
@@ -331,16 +288,6 @@
                     $('#nextBtn').prop('disabled', false);
 
                     cart.forEach((item, index) => {
-                        let addonsHtml = '';
-                        item.addons.forEach((addon, aIdx) => {
-                            addonsHtml += `
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span>+ ${addon.name}</span>
-                            <a href="javascript:void(0)" class="text-danger small remove-addon" data-addon-index="${aIdx}"><i class="fas fa-times"></i></a>
-                        </div>
-                    `;
-                        });
-
                         $container.append(`
                     <div class="cart-item" data-index="${index}">
                         <div class="d-flex justify-content-between">
@@ -348,10 +295,6 @@
                             <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
                         </div>
                         <div class="small text-muted">Base: $${(item.base + item.fee).toFixed(2)}</div>
-                        <div class="addons-list">${addonsHtml}</div>
-                        <div class="mt-2">
-                            ${$('#addonTemplate').html()}
-                        </div>
                     </div>
                 `);
                     });
@@ -365,7 +308,6 @@
                 let subtotal = 0;
                 cart.forEach(item => {
                     subtotal += item.base + item.fee;
-                    item.addons.forEach(addon => subtotal += addon.price);
                 });
 
                 const instantDiscount = parseFloat($('#instantDiscount').val()) || 0;

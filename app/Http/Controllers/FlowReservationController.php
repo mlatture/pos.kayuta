@@ -28,9 +28,8 @@ class FlowReservationController extends Controller
     {
         $siteClasses = SiteClass::orderBy('siteclass')->get();
         $siteHookups = SiteHookup::orderBy('orderby')->get();
-        $addons = Addon::all();
         
-        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'addons'));
+        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups'));
     }
 
     public function saveDraft(Request $request)
@@ -154,9 +153,6 @@ class FlowReservationController extends Controller
             $platformFeeTotal = 0;
             foreach ($cart as $item) {
                 $subtotal += ($item['base'] ?? 0) + ($item['fee'] ?? 0);
-                foreach ($item['addons'] ?? [] as $addon) {
-                    $subtotal += $addon['price'] ?? 0;
-                }
                 $platformFeeTotal += $item['fee'] ?? 0;
             }
 
@@ -275,9 +271,6 @@ class FlowReservationController extends Controller
 
                 // 2. Create Reservations
                 foreach ($draft->cart_data as $item) {
-                    $addons = $item['addons'] ?? [];
-                    $addonsJson = json_encode($addons);
-
                     // Create CartReservation (Detail Line)
                     $cartRes = new CartReservation([
                         'cartid' => $cartId,
@@ -296,7 +289,6 @@ class FlowReservationController extends Controller
                         'sitelock' => $item['totals']['sitelock_fee'] ?? 0,
                         'hookups' => $item['rig_type'] ?? '',
                         'riglength' => $item['rig_length'] ?? 0,
-                        'addon_id' => !empty($addons) ? $addons[0]['id'] : null, // Simplified for CartReservation
                     ]);
                     $cartRes->save();
 
@@ -326,7 +318,6 @@ class FlowReservationController extends Controller
                         'receipt' => $randomReceiptID,
                         'rid' => 'uc',
                         'status' => 'Confirmed',
-                        'addons_json' => $addonsJson,
                     ]);
                     $reservation->save();
 
