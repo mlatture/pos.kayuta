@@ -243,70 +243,132 @@ class FlowReservationController extends Controller
 
         $customer = User::findOrFail($draft->customer_id);
 
-        // Map payment method from POS drawer format to API format
-        $paymentMethod = $request->payment_method ?? 'Cash';
-        $apiPaymentMethod = 'cash'; // default
-        $paymentData = [];
-
-        switch ($paymentMethod) {
-            case 'CreditCard':
-            case 'Manual':
-                $apiPaymentMethod = 'card';
-                $paymentData = [
-                    'cc' => [
-                        'xCardNum' => $request->xCardNum ?? '',
-                        'xExp' => $request->xExp ?? '',
-                        'cvv' => $request->cvv ?? '',
-                    ]
-                ];
-                break;
-            case 'Check':
-                $apiPaymentMethod = 'ach';
-                $paymentData = [
-                    'ach' => [
-                        'routing' => $request->xRouting ?? '',
-                        'account' => $request->xAccount ?? '',
-                        'name' => $request->xName ?? ($customer->f_name . ' ' . $customer->l_name),
-                    ]
-                ];
-                break;
-            case 'GiftCard':
-            case 'Gift Card':
-                $apiPaymentMethod = 'gift_card';
-                $paymentData = [
-                    'gift_card_code' => $request->xBarcode ?? $request->gift_card_code ?? '',
-                ];
-                break;
-            case 'Cash':
-            default:
-                $apiPaymentMethod = 'cash';
-                $paymentData = [
-                    'cash_tendered' => $request->amount ?? $draft->grand_total,
-                ];
-                break;
-        }
-
-        // Prepare checkout data for external API
-        $checkoutData = array_merge([
-            'payment_method' => $apiPaymentMethod,
-            'xAmount' => $request->amount ?? $draft->grand_total,
-            'fname' => $customer->f_name,
-            'lname' => $customer->l_name,
-            'email' => $customer->email,
-            'phone' => $customer->phone ?? '',
-            'street_address' => $customer->street_address ?? '',
-            'city' => $customer->city ?? '',
-            'state' => $customer->state ?? '',
-            'zip' => $customer->zip ?? '',
-            'custId' => $customer->id,
-            'api_cart' => [
-                'cart_id' => $draft->draft_id,
-                'cart_token' => 'flow_' . $draft->draft_id,
-            ],
-        ], $paymentData);
-
         try {
-            // Call external Checkout API
+            // Step 1: Create cart in external API
+            $cartResponse = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->post(env('BOOK_API_URL') . 'v1/cart', [
+                'utm_source' => 'rvparkhq',
+                'utm_medium' => 'referral',
+                'utm_campaign' => 'flow_reservation',
+            ]);
+
+            if ($cartResponse->failed()) {
+                Log::error('Failed to create cart in external API', [
+                    'status' => $cartResponse->status(),
+                    'body' => $cartResponse->body(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to initialize cart with booking service.',
+                ], 500);
+            }
+
+            $cartData = $cartResponse->json();
+            $externalCartId = $cartData['data']['cart']['cart_id'] ?? null;
+            $externalCartToken = $cartData['data']['cart']['cart_token'] ?? null;
+
+            if (!$externalCartId || !$externalCartToken) {
+                Log::error('External API did not return cart ID or token', ['response' => $cartData]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid response from booking service.',
+                ], 500);
+            }
+
+            // Step 2: Add items to external cart
+            foreach ($draft->cart_data as $item) {
+                $itemResponse = Http::withHeaders([
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+                ])->post(env('BOOK_API_URL') . 'v1/cart/items', [
+                    'cart_id' => $externalCartId,
+                    'token' => $externalCartToken,
+                    'site_id' => $item['site_id'],
+                    'start_date' => $item['start_date'],
+                    'end_date' => $item['end_date'],
+                    'occupants' => [
+                        'adults' => $item['adults'] ?? 2,
+                        'children' => $item['children'] ?? 0,
+                    ],
+                    'site_lock_fee' => ($item['totals']['sitelock_fee'] ?? 0) > 0 ? 'on' : 'off',
+                ]);
+
+                if ($itemResponse->failed()) {
+                    Log::error('Failed to add item to external cart', [
+                        'status' => $itemResponse->status(),
+                        'body' => $itemResponse->body(),
+                        'item' => $item,
+                    ]);
+                    // Continue with other items or fail completely?
+                    // For now, we'll continue
+                }
+            }
+
+            // Step 3: Map payment method from POS drawer format to API format
+            $paymentMethod = $request->payment_method ?? 'Cash';
+            $apiPaymentMethod = 'cash'; // default
+            $paymentData = [];
+
+            switch ($paymentMethod) {
+                case 'CreditCard':
+                case 'Manual':
+                    $apiPaymentMethod = 'card';
+                    $paymentData = [
+                        'cc' => [
+                            'xCardNum' => $request->xCardNum ?? '',
+                            'xExp' => $request->xExp ?? '',
+                            'cvv' => $request->cvv ?? '',
+                        ]
+                    ];
+                    break;
+                case 'Check':
+                    $apiPaymentMethod = 'ach';
+                    $paymentData = [
+                        'ach' => [
+                            'routing' => $request->xRouting ?? '',
+                            'account' => $request->xAccount ?? '',
+                            'name' => $request->xName ?? ($customer->f_name . ' ' . $customer->l_name),
+                        ]
+                    ];
+                    break;
+                case 'GiftCard':
+                case 'Gift Card':
+                    $apiPaymentMethod = 'gift_card';
+                    $paymentData = [
+                        'gift_card_code' => $request->xBarcode ?? $request->gift_card_code ?? '',
+                    ];
+                    break;
+                case 'Cash':
+                default:
+                    $apiPaymentMethod = 'cash';
+                    $paymentData = [
+                        'cash_tendered' => $request->amount ?? $draft->grand_total,
+                    ];
+                    break;
+            }
+
+            // Step 4: Prepare checkout data for external API
+            $checkoutData = array_merge([
+                'payment_method' => $apiPaymentMethod,
+                'xAmount' => $request->amount ?? $draft->grand_total,
+                'fname' => $customer->f_name,
+                'lname' => $customer->l_name,
+                'email' => $customer->email,
+                'phone' => $customer->phone ?? '',
+                'street_address' => $customer->street_address ?? '',
+                'city' => $customer->city ?? '',
+                'state' => $customer->state ?? '',
+                'zip' => $customer->zip ?? '',
+                'custId' => $customer->id,
+                'api_cart' => [
+                    'cart_id' => $externalCartId,
+                    'cart_token' => $externalCartToken,
+                ],
+            ], $paymentData);
+
+            // Step 5: Call external Checkout API
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
@@ -336,6 +398,7 @@ class FlowReservationController extends Controller
 
             // Mark draft as confirmed
             $draft->status = 'confirmed';
+            $draft->external_cart_id = $externalCartId;
             $draft->save();
 
             $apiResponse = $response->json();
@@ -344,6 +407,7 @@ class FlowReservationController extends Controller
                 'success' => true,
                 'message' => 'Reservation confirmed successfully',
                 'order_id' => $draft->draft_id,
+                'external_cart_id' => $externalCartId,
                 'api_response' => $apiResponse,
             ]);
 
