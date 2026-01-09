@@ -683,14 +683,19 @@ $(document).ready(function () {
         printWindow.document.close(); 
         // printWindow.document.write("\x1b\x69");
      
-        toastr.success("Order placed successfully!", "Success", {
+        let successMsg = window.checkoutSuccessMessage || "Order placed successfully!";
+        toastr.success(successMsg, "Success", {
             positionClass: "toast-top-right",
             timeOut: 2000
         });
     
         setTimeout(function () {
             clearInputFields(true);
-            window.location.reload();
+            if (window.checkoutSuccessRedirectUrl) {
+                window.location.href = window.checkoutSuccessRedirectUrl;
+            } else {
+                window.location.reload();
+            }
         }, 3000);
     }
     

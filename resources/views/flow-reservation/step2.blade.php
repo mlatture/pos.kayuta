@@ -429,6 +429,10 @@ $(function() {
     window.processingCheckPayment = "{{ route('cart.processCheckPayment') }}";
     window.cardknoxApiKey = "{{ env('CARDKNOX_API_KEY') }}";
     window.insertCardsOnFiles = "{{ route('insert.cards.on.files') }}";
+
+    // Checkout Success Redirection
+    window.checkoutSuccessRedirectUrl = "{{ route('flow-reservation.step1') }}";
+    window.checkoutSuccessMessage = "Checkout successfully!";
 });
 </script>
 @endpush
