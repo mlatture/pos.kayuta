@@ -392,9 +392,22 @@ class FlowReservationController extends Controller
                     'draft_id' => $draft_id,
                 ]);
 
+                $errorMessage = $response->json()['message'] ?? 'Payment processing failed.';
+                // If error message contains "email", replace it with a generic message
+                if (str_contains(strtolower($errorMessage), 'email')) {
+                    $errorMessage = 'Payment processed, but there was a notification issue. Please contact support if you do not receive a confirmation.';
+                    // Or simply:
+                    // $errorMessage = 'Payment processing failed.'; 
+                    // But based on "irrelevant message of email not sent", it often means payment worked but email failed? 
+                    // The user code block shows it is treated as a FAILURE ($response->failed()). 
+                    // So if email failed, the whole thing failed? 
+                    // Actually, if the API fails because email failed, we probably still want to show an error, but a cleaner one.
+                    $errorMessage = 'Payment processing failed.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => $response->json()['message'] ?? 'Payment processing failed.',
+                    'message' => $errorMessage,
                     'errors' => $response->json()['errors'] ?? [],
                 ], $response->status());
             }
@@ -414,13 +427,8 @@ class FlowReservationController extends Controller
 
             $apiResponse = $response->json();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation confirmed successfully',
-                'order_id' => $draft->draft_id,
-                'external_cart_id' => $externalCartId,
-                'api_response' => $apiResponse,
-            ]);
+            // Redirect to Step 1 as requested
+            return redirect()->route('flow-reservation.step1');
 
         } catch (\Exception $e) {
             Log::error("Finalize Error: " . $e->getMessage(), [
