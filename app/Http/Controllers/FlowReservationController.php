@@ -225,7 +225,8 @@ class FlowReservationController extends Controller
                         'view' => 'units'
                     ]
                 ],
-                'platform_fee' => BusinessSettings::where('type', 'platform_fee')->value('value') ?? 5.00
+                'platform_fee' => BusinessSettings::where('type', 'platform_fee')->value('value') ?? 5.00,
+                'site_lock_fee' => BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0,
             ]);
 
         } catch (\Exception $e) {
@@ -233,7 +234,7 @@ class FlowReservationController extends Controller
         }
     }
 
-    public function finalize(Request $request, $draft_id)
+     public function finalize(Request $request, $draft_id)
     {
         $draft = ReservationDraft::where('draft_id', $draft_id)->firstOrFail();
 
@@ -254,6 +255,7 @@ class FlowReservationController extends Controller
                 'utm_campaign' => 'flow_reservation',
             ]);
 
+// dd($cartResponse->json());
             if ($cartResponse->failed()) {
                 Log::error('Failed to create cart in external API', [
                     'status' => $cartResponse->status(),
@@ -266,8 +268,8 @@ class FlowReservationController extends Controller
             }
 
             $cartData = $cartResponse->json();
-            $externalCartId = $cartData['data']['cart']['cart_id'] ?? null;
-            $externalCartToken = $cartData['data']['cart']['cart_token'] ?? null;
+            $externalCartId = $cartData['data']['cart_id'] ?? null;
+            $externalCartToken = $cartData['data']['cart_token'] ?? null;
 
             if (!$externalCartId || !$externalCartToken) {
                 Log::error('External API did not return cart ID or token', ['response' => $cartData]);
@@ -277,24 +279,31 @@ class FlowReservationController extends Controller
                 ], 500);
             }
 
+// dd($draft);
+
             // Step 2: Add items to external cart
             foreach ($draft->cart_data as $item) {
+                // dd($item);
                 $itemResponse = Http::withHeaders([
                     'Accept' => 'application/json',
                     'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
                 ])->post(env('BOOK_API_URL') . 'v1/cart/items', [
                     'cart_id' => $externalCartId,
                     'token' => $externalCartToken,
-                    'site_id' => $item['site_id'],
-                    'start_date' => $item['start_date'],
-                    'end_date' => $item['end_date'],
+                    'site_id' => $item['id'],
+                    'start_date' => $item['start_date'] ?? $item['cid'],
+                    'end_date' => $item['end_date'] ?? $item['cod'],
                     'occupants' => [
-                        'adults' => $item['adults'] ?? 2,
-                        'children' => $item['children'] ?? 0,
+                      'adults'   => $item['occupants']['adults'] ?? 2,
+                      'children' => $item['occupants']['children'] ?? 0,
                     ],
-                    'site_lock_fee' => ($item['totals']['sitelock_fee'] ?? 0) > 0 ? 'on' : 'off',
-                ]);
 
+                    'site_lock_fee' => (($item['site_lock_fee'] ?? 'off') === 'on') 
+                        ? (float) (BusinessSettings::where('type', 'site_lock_fee')->value('value') ?? 0) 
+                        : 0,
+                 ]);
+
+// dd($itemResponse->status(),$itemResponse->body());
                 if ($itemResponse->failed()) {
                     Log::error('Failed to add item to external cart', [
                         'status' => $itemResponse->status(),
@@ -363,10 +372,12 @@ class FlowReservationController extends Controller
                 'zip' => $customer->zip ?? '',
                 'custId' => $customer->id,
                 'api_cart' => [
-                    'cart_id' => $externalCartId,
-                    'cart_token' => $externalCartToken,
-                ],
+        'cart_id'    => (string) $externalCartId,     // 👈 FIX
+        'cart_token' => (string) $externalCartToken,  // 👈 SAFE
+    ],
             ], $paymentData);
+
+// dd($checkoutData);
 
             // Step 5: Call external Checkout API
             $response = Http::withHeaders([

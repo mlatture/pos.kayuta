@@ -33,6 +33,10 @@
             color: #666;
             font-style: italic;
         }
+        .occupants-input {
+            width: 60px;
+            display: inline-block;
+        }
     </style>
 @endpush
 
@@ -93,11 +97,15 @@
                             <table class="table table-hover mb-0" id="resultsTable">
                                 <thead class="table-light">
                                     <tr>
+                                    <tr>
                                         <th>Site</th>
                                         <th>Class</th>
                                         <th>Hookup</th>
-                                        <th>Price</th>
+                                        <th>Rig Length</th>
+                                        <th>Occupants / Extras</th>
+                                        <th>Price Breakdown</th>
                                         <th class="text-end">Action</th>
+                                    </tr>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -202,40 +210,76 @@
                 const $btn = $(this).find('button[type="submit"]');
                 $btn.prop('disabled', true).text('Searching...');
 
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+
                 $.get("{{ route('flow-reservation.search') }}", $(this).serialize())
                     .done(function(res) {
                         platformFee = parseFloat(res.platform_fee) || 5.00;
+                        const siteLockFee = parseFloat(res.site_lock_fee) || 0;
                         const units = res.data.response.results.units;
                         const tbody = $('#resultsTable tbody');
                         tbody.empty();
 
                         if (units.length === 0) {
                             tbody.append(
-                                '<tr><td colspan="5" class="text-center py-5">No available sites found for these criteria.</td></tr>'
+                                '<tr><td colspan="7" class="text-center py-5">No available sites found for these criteria.</td></tr>'
                             );
                         } else {
                             units.forEach(unit => {
-                                const price = parseFloat(unit.price_quote.total) + platformFee;
+                                const basePrice = parseFloat(unit.price_quote.total);
+                                const avgNight = parseFloat(unit.price_quote.avg_nightly || 0);
+                                const total = basePrice + siteLockFee; // Initial view assumes site lock checked
+                                
                                 tbody.append(`
-                            <tr>
-                                <td>
-                                    <strong>${unit.name}</strong><br>
-                                    <small class="text-muted">ID: ${unit.site_id}</small>
-                                </td>
-                                <td>${unit.class.replace(/_/g, ' ')}</td>
-                                <td>${unit.hookup || 'N/A'}</td>
-                                <td>$${price.toFixed(2)}</td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary add-to-cart" 
-                                        data-id="${unit.site_id}" 
-                                        data-name="${unit.name}" 
-                                        data-base="${unit.price_quote.total}"
-                                        data-fee="${platformFee}">
-                                        Add to Cart
-                                    </button>
-                                </td>
-                            </tr>
-                        `);
+                                    <tr data-id="${unit.site_id}">
+                                        <td>
+                                            <strong>${unit.name}</strong><br>
+                                            <small class="text-muted">ID: ${unit.site_id}</small>
+                                        </td>
+                                        <td>${unit.class.replace(/_/g, ' ')}</td>
+                                        <td>${unit.hookup || 'N/A'}</td>
+                                        <td>${unit.maxlength || 'N/A'} ft</td>
+                                        <td>
+                                            <div class="d-flex gap-2 mb-2">
+                                                <div>
+                                                    <label class="small text-muted d-block">Adults</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input adults" value="2" min="1">
+                                                </div>
+                                                <div>
+                                                    <label class="small text-muted d-block">Children</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input children" value="0" min="0">
+                                                </div>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input site-lock-toggle" type="checkbox" id="lock_${unit.site_id}" checked data-fee="${siteLockFee}">
+                                                <label class="form-check-label small" for="lock_${unit.site_id}">
+                                                    Site Lock Fee ($${siteLockFee.toFixed(2)})
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <div>Site Lock Fee: $<span class="fee-display">${siteLockFee.toFixed(2)}</span></div>
+                                                <div>Sub Total: $${basePrice.toFixed(2)}</div>
+                                                <div>Avg/Night: $${avgNight.toFixed(2)}</div>
+                                                <div>Extras: $<span class="extras-display">0.00</span></div>
+                                                <div class="fw-bold border-top mt-1 pt-1">Total: $<span class="total-display">${total.toFixed(2)}</span></div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-primary add-to-cart" 
+                                                data-id="${unit.site_id}" 
+                                                data-name="${unit.name}" 
+                                                data-base="${basePrice}"
+                                                data-fee="${platformFee}"
+                                                data-start="${startDate}"
+                                                data-end="${endDate}">
+                                                Add to Cart
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `);
                             });
                         }
                     })
@@ -247,13 +291,40 @@
                     });
             });
 
+            // Handle Site Lock Toggle for Price Update
+            $(document).on('change', '.site-lock-toggle', function() {
+                const $row = $(this).closest('tr');
+                const fee = parseFloat($(this).data('fee'));
+                const isChecked = $(this).is(':checked');
+                const basePrice = parseFloat($row.find('.add-to-cart').data('base'));
+                
+                const currentFee = isChecked ? fee : 0;
+                const total = basePrice + currentFee;
+                
+                $row.find('.fee-display').text(currentFee.toFixed(2));
+                $row.find('.total-display').text(total.toFixed(2));
+            });
+
             // Add to Cart
             $(document).on('click', '.add-to-cart', function() {
+                const $row = $(this).closest('tr');
+                const adults = parseInt($row.find('.adults').val()) || 0;
+                const children = parseInt($row.find('.children').val()) || 0;
+                const siteLockChecked = $row.find('.site-lock-toggle').is(':checked');
+                const siteLockFee = siteLockChecked ? 'on' : 'off';
+                
                 const item = {
                     id: $(this).data('id'),
                     name: $(this).data('name'),
                     base: parseFloat($(this).data('base')),
-                    fee: parseFloat($(this).data('fee'))
+                    fee: parseFloat($(this).data('fee')),
+                    start_date: $(this).data('start'),
+                    end_date: $(this).data('end'),
+                    occupants: {
+                        adults: adults,
+                        children: children
+                    },
+                    site_lock_fee: siteLockFee
                 };
 
                 cart.push(item);
