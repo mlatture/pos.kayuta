@@ -33,6 +33,7 @@
             color: #666;
             font-style: italic;
         }
+
         .occupants-input {
             width: 60px;
             display: inline-block;
@@ -122,14 +123,23 @@
 
             {{-- Right 1/3: Cart Panel --}}
             <div class="col-lg-4">
+
+
                 <div class="card shadow-sm cart-panel">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Your Cart</h5>
                         <span class="badge bg-primary" id="cartCount">0</span>
                     </div>
                     <div class="card-body">
+
+
                         <div id="cartItems">
-                            <p class="text-muted text-center py-3" id="emptyCartMsg">Cart is empty.</p>
+                            <p class="text-muted text-center py-3" id="emptyCartMsg">
+                                Cart is empty.
+                            </p>
+                            <div id="auto-fetch-loader" class="d-none text-muted" style="font-size:20px">
+                                <i class="fa fa-spinner fa-spin"></i> Updating cart…
+                            </div>
                         </div>
 
                         <hr>
@@ -229,8 +239,9 @@
                             units.forEach(unit => {
                                 const basePrice = parseFloat(unit.price_quote.total);
                                 const avgNight = parseFloat(unit.price_quote.avg_nightly || 0);
-                                const total = basePrice + siteLockFee; // Initial view assumes site lock checked
-                                
+                                const total = basePrice +
+                                    siteLockFee; // Initial view assumes site lock checked
+
                                 tbody.append(`
                                     <tr data-id="${unit.site_id}">
                                         <td>
@@ -297,10 +308,10 @@
                 const fee = parseFloat($(this).data('fee'));
                 const isChecked = $(this).is(':checked');
                 const basePrice = parseFloat($row.find('.add-to-cart').data('base'));
-                
+
                 const currentFee = isChecked ? fee : 0;
                 const total = basePrice + currentFee;
-                
+
                 $row.find('.fee-display').text(currentFee.toFixed(2));
                 $row.find('.total-display').text(total.toFixed(2));
             });
@@ -312,7 +323,7 @@
                 const children = parseInt($row.find('.children').val()) || 0;
                 const siteLockChecked = $row.find('.site-lock-toggle').is(':checked');
                 const siteLockFee = siteLockChecked ? 'on' : 'off';
-                
+
                 const item = {
                     id: $(this).data('id'),
                     name: $(this).data('name'),
@@ -448,6 +459,9 @@
             }
 
             function autoFetchAndAdd(siteId, cid, cod) {
+                const loader = $('#auto-fetch-loader');
+                loader.removeClass('d-none');
+
                 return $.get("{{ route('flow-reservation.search') }}", {
                         start_date: cid,
                         end_date: cod,
@@ -459,16 +473,19 @@
 
                         const unit = units.find(u => u.site_id === siteId);
 
+
+
                         if (unit) {
                             const automatedItem = {
                                 id: unit.site_id,
                                 name: unit.name,
                                 base: parseFloat(unit.price_quote.total),
                                 fee: platformFee,
-                                cid: cid, // We store the specific dates for this site
+                                cid: cid,
                                 cod: cod,
-                                addons: []
                             };
+
+
 
                             // Push to global cart array
                             cart.push(automatedItem);
@@ -476,11 +493,13 @@
                             // Update Sidebar UI and Totals
                             updateCartUI();
 
-                            console.log(`Automated: Added ${unit.name} (${cid} to ${cod})`);
                         }
                     })
                     .fail(function() {
                         console.error(`Failed to automate site: ${siteId}`);
+                    })
+                    .always(function() {
+                        loader.addClass('d-none');
                     });
             }
 
