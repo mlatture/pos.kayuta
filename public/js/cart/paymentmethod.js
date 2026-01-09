@@ -10,22 +10,22 @@ $(document).ready(function () {
             $("#expire").attr("hidden", true);
 
             $("#checks").attr("hidden", true);
-       
+
         } else if ($(this).val() === "CreditCard") {
             $("#gift-card-section").attr("hidden", true);
             label.show().text("Payment Amount: ");
             input.attr("placeholder", "Payment Amount").removeAttr("readonly");
 
             $("#checks").attr("hidden", true);
-      
-        } else if ($(this).val() === 'Check'){
+
+        } else if ($(this).val() === 'Check') {
             $("#gift-card-section").attr("hidden", true);
             $("#checks").attr("hidden", false);
-      
+
 
             label.show().text("Check Amount");
             input.attr("placeholder", "Check Amount").removeAttr("readonly");
-        
+
         } else {
 
             label.show().text("Payment Amount: ");
@@ -33,7 +33,7 @@ $(document).ready(function () {
             $("#gift-card-section").attr("hidden", true);
 
             $("#checks").attr("hidden", true);
-    
+
 
         }
 
@@ -74,11 +74,11 @@ $(document).ready(function () {
             title:
                 change >= 0
                     ? `Change is: $${change.toFixed(
-                          2
-                      )}. Do you want to proceed?`
+                        2
+                    )}. Do you want to proceed?`
                     : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
-                          2
-                      )}`,
+                        2
+                    )}`,
             showCancelButton: true,
             confirmButtonText: "Save",
             cancelButtonText: `Don't save`,
@@ -102,6 +102,12 @@ $(document).ready(function () {
                             x_ref_num: x_ref_num,
                         },
                         success: function (response) {
+                            if (response.success === false) {
+                                Swal.fire("Error", response.message || "An error occurred", "error");
+                                resolve(false);
+                                return;
+                            }
+
                             resolve(response);
                             appendToPaymentHistory(paymentMethod, amount);
 
@@ -127,7 +133,7 @@ $(document).ready(function () {
                                     jsonResponse.xStatus,
                                     jsonResponse.xErrorCode,
                                     jsonResponse.xName,
-                                   
+
                                 );
 
                             } else {
@@ -151,14 +157,19 @@ $(document).ready(function () {
                                     jsonResponse.xResult,
                                     jsonResponse.xStatus,
                                     jsonResponse.xErrorCode,
-                                   
+
                                 );
                             }
 
-                         
+
                         },
                         error: function (reject) {
-                            resolve(reject);
+                            let msg = "An error occurred";
+                            if (reject.responseJSON && reject.responseJSON.message) {
+                                msg = reject.responseJSON.message;
+                            }
+                            Swal.fire("Error", msg, "error");
+                            resolve(false);
                         },
                     });
                 });
@@ -245,7 +256,7 @@ $(document).ready(function () {
                 amount,
                 change,
                 paymentMethod,
-                0, 
+                0,
                 0,
                 totalAmount,
                 isPartial,
@@ -264,9 +275,9 @@ $(document).ready(function () {
         }
     }
 
-    
 
-    function processCheckPayment( customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount) {
+
+    function processCheckPayment(customer_id, amount, totalAmount, isPartial, orderId, customer_email, xname, xrouting, xaccount) {
         $.ajax({
             url: processingCheckPayment,
             type: 'GET',
@@ -284,7 +295,7 @@ $(document).ready(function () {
             success: function (response) {
                 console.log('Check response', resp)
 
-                if(response.xResult === 'A'){
+                if (response.xResult === 'A') {
                     handlePayment(
                         customer_id,
                         response.xAuthAmount,
@@ -306,7 +317,7 @@ $(document).ready(function () {
 
                     console.log('Response:', response);
                 }
-             },
+            },
             error: function (xhr, error) {
                 console.error('Error', xhr, error);
             }
@@ -314,7 +325,7 @@ $(document).ready(function () {
     }
 
     function processGiftCardPayment(
-     
+
         giftCardNumber,
         customer_id,
         amount,
@@ -322,7 +333,7 @@ $(document).ready(function () {
         isPartial,
         orderId,
         customer_email,
-    
+
     ) {
         $.ajax({
             url: processGiftCard,
@@ -385,7 +396,7 @@ $(document).ready(function () {
     }
 
     function processCreditCardPayment(
-    
+
         customer_id,
         amount,
         totalAmount,
@@ -393,7 +404,7 @@ $(document).ready(function () {
         orderId,
         customer_email
     ) {
-      
+
         $.ajax({
             url: 'https://localemv.com:8887',
             type: 'POST',
@@ -426,27 +437,27 @@ $(document).ready(function () {
                         jsonResponse,
                     );
 
-                
-                }else if(jsonResponse.xError === 'NaN is not a valid integer'){
+
+                } else if (jsonResponse.xError === 'NaN is not a valid integer') {
                     Swal.fire(
                         "Error",
                         `${amount} is not a valid integer`,
                         "error"
                     );
-                }else{
+                } else {
                     Swal.fire(
                         "Canceled",
                         "The transaction was canceled.",
                         "warning"
                     );
-                
+
                 }
             },
             error: function (xhr, error) {
                 console.error('Error', xhr, error);
             }
         })
-      
+
     }
 
     function handleCardsOnFiles(
@@ -461,7 +472,7 @@ $(document).ready(function () {
         status,
         errorCode,
         name
-    ){
+    ) {
         $.ajax({
             url: insertCardsOnFiles,
             type: 'POST',
@@ -485,14 +496,14 @@ $(document).ready(function () {
             },
             success: function (response) {
                 console.log('Success', response);
-            }, 
-            error: function(xhr, error){
+            },
+            error: function (xhr, error) {
                 console.error('Error', xhr, error);
             }
         })
     }
 
-  
+
 
 
     function finalizeOrder(
@@ -515,13 +526,13 @@ $(document).ready(function () {
         $("#updateOrderButton").attr("hidden", false);
 
         if (
-            order_amount >= totalAmount 
+            order_amount >= totalAmount
             // response.totalpayAmount.amount >= response.OrderItem.price
         ) {
             offcanvas.hide();
             $("#selected-product tbody").empty();
             $("#card-summary").empty();
-         
+
 
             $.ajax({
                 url: 'cart/get-product-for-receipt',
@@ -539,10 +550,10 @@ $(document).ready(function () {
                 }
             });
 
-            if(customer_email && customer_email.trim() !== ''){
+            if (customer_email && customer_email.trim() !== '') {
                 sendInvoiceEmail(customer_email, orderId);
             }
-           
+
         } else {
             $.toast({
                 heading: response[0] || "Success",
@@ -561,11 +572,11 @@ $(document).ready(function () {
     }
 
     function receiptPrint(order_amount, totalAmount, orderId, customer_email, response, orders_response) {
-        
+
         let storedLogo = localStorage.getItem("receiptLogo");
         let storedHeaderText = localStorage.getItem("receiptHeaderText") || "";
         let storedFooterText = localStorage.getItem("receiptFooterText") || "";
-    
+
         let receiptDetails = `
         <html>
         <head>
@@ -637,7 +648,7 @@ $(document).ready(function () {
                 </thead>
                 <tbody>
         `;
-    
+
         if (Array.isArray(orders_response.products) && orders_response.products.length > 0) {
             orders_response.products.forEach((item) => {
                 let totalPrice = (item.quantity * item.price) + (item.tax || 0) - (item.discount || 0);
@@ -657,7 +668,7 @@ $(document).ready(function () {
             </tr>
             `;
         }
-        
+
         receiptDetails += `
                 </tbody>
             </table>
@@ -676,19 +687,19 @@ $(document).ready(function () {
         </script>
         </html>
         `;
-        
-    
-        var printWindow = window.open('', '', 'width=400,height=600'); 
-        printWindow.document.write(receiptDetails); 
-        printWindow.document.close(); 
+
+
+        var printWindow = window.open('', '', 'width=400,height=600');
+        printWindow.document.write(receiptDetails);
+        printWindow.document.close();
         // printWindow.document.write("\x1b\x69");
-     
+
         let successMsg = window.checkoutSuccessMessage || "Order placed successfully!";
         toastr.success(successMsg, "Success", {
             positionClass: "toast-top-right",
             timeOut: 2000
         });
-    
+
         setTimeout(function () {
             clearInputFields(true);
             if (window.checkoutSuccessRedirectUrl) {
@@ -698,9 +709,9 @@ $(document).ready(function () {
             }
         }, 3000);
     }
-    
-    
-    
+
+
+
 
     function clearInputFields(isFullPayment = false) {
         $("#orderAmountInput").val("");
@@ -713,7 +724,7 @@ $(document).ready(function () {
             console.error("Invalid customer email:", customer_email);
             return;
         }
-    
+
         $.ajax({
             url: sentInvoiceEmail,
             type: "POST",
@@ -737,8 +748,8 @@ $(document).ready(function () {
             },
         });
     }
-    
-    $('#customer_id').on('change', function(){
+
+    $('#customer_id').on('change', function () {
         let customer_email = $(this).find('option:selected').data('email');
         $('#cust_email').val(customer_email);
         $('#email_invoice').val(customer_email);
@@ -761,11 +772,11 @@ $(document).ready(function () {
                 </div>
             </div>
         `;
-    
+
         // Insert after the "Total" row
         $("#displayTotalAmount").closest('.col-sm-12').after(paymentHtml);
     }
-    
+
 });
 
 
