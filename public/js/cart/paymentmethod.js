@@ -689,10 +689,17 @@ $(document).ready(function () {
         `;
 
 
-        var printWindow = window.open('', '', 'width=400,height=600');
-        printWindow.document.write(receiptDetails);
-        printWindow.document.close();
-        // printWindow.document.write("\x1b\x69");
+        try {
+            var printWindow = window.open('', '', 'width=400,height=600');
+            if (printWindow) {
+                printWindow.document.write(receiptDetails);
+                printWindow.document.close();
+            } else {
+                console.warn("Popup blocked. Receipt could not be printed.");
+            }
+        } catch (e) {
+            console.error("Error attempting to print receipt:", e);
+        }
 
         let successMsg = window.checkoutSuccessMessage || "Order placed successfully!";
         toastr.success(successMsg, "Success", {
@@ -707,7 +714,7 @@ $(document).ready(function () {
             } else {
                 window.location.reload();
             }
-        }, 3000);
+        }, 1500);
     }
 
 
