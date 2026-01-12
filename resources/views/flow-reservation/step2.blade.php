@@ -486,6 +486,7 @@ $(function() {
     // Checkout Success Redirection
     window.checkoutSuccessRedirectUrl = "{{ route('flow-reservation.step1') }}";
     window.checkoutSuccessMessage = "Checkout successfully!";
+    window.skipReceiptAndEmail = true;
 });
 </script>
 @endpush
