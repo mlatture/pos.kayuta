@@ -22,18 +22,15 @@
     </style>
 @endpush
 
-@section('content-header')
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0">Reservation Draft – Customer (Step 2)</h1>
-        <div>
-            <button class="btn btn-outline-secondary me-2" id="returnBtn">
-                <i class="fas fa-arrow-left me-1"></i> Return to Step 1
-            </button>
-            <button class="btn btn-primary" id="flowTopPayBtn">
-                Pay <i class="fas fa-credit-card ms-1"></i>
-            </button>
-        </div>
-    </div>
+@section('content-header', 'Reservation Draft – Customer (Step 2)')
+
+@section('content-actions')
+    <button class="btn btn-outline-secondary me-2" id="returnBtn">
+        <i class="fas fa-arrow-left me-1"></i> Return to Step 1
+    </button>
+    <button class="btn btn-primary" id="flowTopPayBtn">
+        Pay <i class="fas fa-credit-card ms-1"></i>
+    </button>
 @endsection
 
 @section('content')
@@ -212,7 +209,7 @@
         </div>
     </div>
 </div>
-
+@endsection
 
 @include('cart.components.summary', ['subtotal' => $draft->subtotal, 'totalDiscount' => $draft->discount_total, 'totalTax' => $draft->estimated_tax, 'order_id' => $draft->draft_id])
 
