@@ -255,7 +255,7 @@ class FlowReservationController extends Controller
                 'utm_campaign' => 'flow_reservation',
             ]);
 
-// dd($cartResponse->json());
+
             if ($cartResponse->failed()) {
                 Log::error('Failed to create cart in external API', [
                     'status' => $cartResponse->status(),
@@ -279,11 +279,11 @@ class FlowReservationController extends Controller
                 ], 500);
             }
 
-// dd($draft);
+
 
             // Step 2: Add items to external cart
             foreach ($draft->cart_data as $item) {
-                // dd($item);
+
                 $itemResponse = Http::withHeaders([
                     'Accept' => 'application/json',
                     'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
@@ -303,7 +303,7 @@ class FlowReservationController extends Controller
                         : 0,
                  ]);
 
-// dd($itemResponse->status(),$itemResponse->body());
+
                 if ($itemResponse->failed()) {
                     Log::error('Failed to add item to external cart', [
                         'status' => $itemResponse->status(),
@@ -377,7 +377,7 @@ class FlowReservationController extends Controller
     ],
             ], $paymentData);
 
-// dd($checkoutData);
+
 
             // Step 5: Call external Checkout API
             $response = Http::withHeaders([
@@ -395,13 +395,6 @@ class FlowReservationController extends Controller
                 $errorMessage = $response->json()['message'] ?? 'Payment processing failed.';
                 // If error message contains "email", replace it with a generic message
                 if (str_contains(strtolower($errorMessage), 'email')) {
-                    $errorMessage = 'Payment processed, but there was a notification issue. Please contact support if you do not receive a confirmation.';
-                    // Or simply:
-                    // $errorMessage = 'Payment processing failed.'; 
-                    // But based on "irrelevant message of email not sent", it often means payment worked but email failed? 
-                    // The user code block shows it is treated as a FAILURE ($response->failed()). 
-                    // So if email failed, the whole thing failed? 
-                    // Actually, if the API fails because email failed, we probably still want to show an error, but a cleaner one.
                     $errorMessage = 'Payment processing failed.';
                 }
 
@@ -425,13 +418,10 @@ class FlowReservationController extends Controller
             $draft->external_cart_id = $externalCartId;
             $draft->save();
 
-            // Return JSON success (Frontend will handle the redirect)
-            return response()->json([
-                'success' => true,
-                'message' => 'Checkout successful!',
-                'redirect_url' => route('flow-reservation.step1'),
-                'order_id' => $draft->id // or external cart id if needed for receipt
-            ]);
+            $apiResponse = $response->json();
+            
+            // Redirect to Step 1 as requested
+            return redirect()->route('flow-reservation.step1');
 
         } catch (\Exception $e) {
             Log::error("Finalize Error: " . $e->getMessage(), [
