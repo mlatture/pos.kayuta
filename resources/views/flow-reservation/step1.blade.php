@@ -198,7 +198,8 @@
     <script>
         $(function() {
             let cart = [];
-            let platformFee = 0;
+            // Platform fee removed to match manage/reservation logic
+            // let platformFee = 0; 
             let taxRate = 0.07; // 7% placeholder, should come from settings
 
             // Initialize Flatpickr
@@ -225,7 +226,7 @@
 
                 $.get("{{ route('flow-reservation.search') }}", $(this).serialize())
                     .done(function(res) {
-                        platformFee = parseFloat(res.platform_fee) || 5.00;
+                        // platformFee = parseFloat(res.platform_fee) || 5.00; // Removed
                         const siteLockFee = parseFloat(res.site_lock_fee) || 0;
                         const units = res.data.response.results.units;
                         const tbody = $('#resultsTable tbody');
@@ -283,7 +284,7 @@
                                                 data-id="${unit.site_id}" 
                                                 data-name="${unit.name}" 
                                                 data-base="${basePrice}"
-                                                data-fee="${platformFee}"
+                                                data-fee="0"
                                                 data-start="${startDate}"
                                                 data-end="${endDate}">
                                                 Add to Cart
@@ -376,7 +377,7 @@
                             <strong>${item.name}</strong>
                             <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
                         </div>
-                        <div class="small text-muted">Base: $${(item.base + item.fee).toFixed(2)}</div>
+                        <div class="small text-muted">Base: $${(item.base).toFixed(2)}</div>
                     </div>
                 `);
                     });
@@ -389,7 +390,7 @@
             function updateTotals() {
                 let subtotal = 0;
                 cart.forEach(item => {
-                    subtotal += item.base + item.fee;
+                    subtotal += item.base; // + item.fee (Removed)
                 });
 
                 const instantDiscount = parseFloat($('#instantDiscount').val()) || 0;
@@ -406,11 +407,10 @@
                 $('#taxDisplay').text('$' + tax.toFixed(2));
                 $('#grandTotalDisplay').text('$' + grandTotal.toFixed(2));
 
-                window.currentTotals = {
                     subtotal: subtotal,
                     discount_total: totalDiscount,
                     estimated_tax: tax,
-                    platform_fee_total: cart.length * platformFee,
+                    platform_fee_total: 0, // cart.length * platformFee (Removed)
                     grand_total: grandTotal
                 };
             }
@@ -468,7 +468,7 @@
                         siteid: siteId
                     })
                     .done(function(res) {
-                        const platformFee = parseFloat(res.platform_fee) || 5.00;
+                        // const platformFee = parseFloat(res.platform_fee) || 5.00; // Removed
                         const units = res.data.response.results.units;
 
                         const unit = units.find(u => u.site_id === siteId);
@@ -480,8 +480,8 @@
                                 id: unit.site_id,
                                 name: unit.name,
                                 base: parseFloat(unit.price_quote.total),
-                                fee: platformFee,
-                                cid: cid,
+                                fee: 0, // platformFee (Removed)
+                                cid: cid, // We store the specific dates for this site
                                 cod: cod,
                             };
 
