@@ -407,6 +407,7 @@
                 $('#taxDisplay').text('$' + tax.toFixed(2));
                 $('#grandTotalDisplay').text('$' + grandTotal.toFixed(2));
 
+                window.currentTotals = {
                     subtotal: subtotal,
                     discount_total: totalDiscount,
                     estimated_tax: tax,
