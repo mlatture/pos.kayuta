@@ -533,6 +533,22 @@ $(document).ready(function () {
             $("#selected-product tbody").empty();
             $("#card-summary").empty();
 
+            if (window.skipReceiptAndEmail) {
+                let successMsg = window.checkoutSuccessMessage || "Order placed successfully!";
+                toastr.success(successMsg, "Success", {
+                    positionClass: "toast-top-right",
+                    timeOut: 2000
+                });
+                setTimeout(function () {
+                    clearInputFields(true);
+                    if (window.checkoutSuccessRedirectUrl) {
+                        window.location.href = window.checkoutSuccessRedirectUrl;
+                    } else {
+                        window.location.reload();
+                    }
+                }, 1500);
+                return;
+            }
 
             $.ajax({
                 url: window.getProductForReceiptUrl || 'cart/get-product-for-receipt',
