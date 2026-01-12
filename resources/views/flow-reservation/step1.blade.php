@@ -98,7 +98,6 @@
                             <table class="table table-hover mb-0" id="resultsTable">
                                 <thead class="table-light">
                                     <tr>
-                                    <tr>
                                         <th>Site</th>
                                         <th>Class</th>
                                         <th>Hookup</th>
@@ -106,7 +105,6 @@
                                         <th>Occupants / Extras</th>
                                         <th>Price Breakdown</th>
                                         <th class="text-end">Action</th>
-                                    </tr>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -374,26 +372,20 @@
                     $('#nextBtn').prop('disabled', false);
 
                     cart.forEach((item, index) => {
-                        $container.append(`
-                    <div class="cart-item" data-index="${index}">
-                        <div class="d-flex justify-content-between">
-                            <strong>${item.name}</strong>
-                            <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
-                        </div>
                         const itemTotal = item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
                         $container.append(`
-                    <div class="cart-item" data-index="${index}">
-                        <div class="d-flex justify-content-between">
-                            <strong>${item.name}</strong>
-                            <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
-                        </div>
-                        <div class="small text-muted">
-                            Base: $${item.base.toFixed(2)}
-                            ${item.lock_fee_amount > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${item.lock_fee_amount.toFixed(2)}</span>` : ''}
-                        </div>
-                        <div class="small fw-bold text-end">Item Total: $${itemTotal.toFixed(2)}</div>
-                    </div>
-                `);
+                            <div class="cart-item" data-index="${index}">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${item.name}</strong>
+                                    <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
+                                </div>
+                                <div class="small text-muted">
+                                    Base: $${item.base.toFixed(2)}
+                                    ${item.lock_fee_amount > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${item.lock_fee_amount.toFixed(2)}</span>` : ''}
+                                </div>
+                                <div class="small fw-bold text-end">Item Total: $${itemTotal.toFixed(2)}</div>
+                            </div>
+                        `);
                     });
                 }
 
