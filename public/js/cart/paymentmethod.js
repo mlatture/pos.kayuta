@@ -549,7 +549,7 @@ $(document).ready(function () {
                     } else {
                         window.location.reload();
                     }
-                }, 1500);
+                }, 3000);
                 return;
             }
 
