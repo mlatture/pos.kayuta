@@ -131,8 +131,8 @@ $(document).ready(function () {
                                     jsonResponse ? jsonResponse.xToken : '',
                                     jsonResponse ? jsonResponse.xResult : '',
                                     jsonResponse ? jsonResponse.xStatus : '',
-                                    jsonResponse.xErrorCode,
-                                    jsonResponse.xName,
+                                    jsonResponse ? jsonResponse.xErrorCode : '',
+                                    jsonResponse ? jsonResponse.xName : '',
 
                                 );
 

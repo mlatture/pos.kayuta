@@ -22,8 +22,7 @@
     </style>
 @endpush
 
-@section('content')
-<div class="container-fluid py-3">
+@section('content-header')
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0">Reservation Draft – Customer (Step 2)</h1>
         <div>
@@ -35,6 +34,11 @@
             </button>
         </div>
     </div>
+@endsection
+
+@section('content')
+<div class="container-fluid py-3">
+
 
     {{-- Top Section: Customer Actions --}}
     <div class="card shadow-sm mb-4">
