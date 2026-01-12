@@ -124,13 +124,13 @@ $(document).ready(function () {
                                 handleCardsOnFiles(
                                     customer_id,
                                     orderId,
-                                    jsonResponse.xInvoice,
+                                    jsonResponse ? jsonResponse.xInvoice : '',
                                     customer_email,
-                                    jsonResponse.xMaskedCardNumber,
-                                    jsonResponse.xCardType,
-                                    jsonResponse.xToken,
-                                    jsonResponse.xResult,
-                                    jsonResponse.xStatus,
+                                    jsonResponse ? jsonResponse.xMaskedCardNumber : '',
+                                    jsonResponse ? jsonResponse.xCardType : '',
+                                    jsonResponse ? jsonResponse.xToken : '',
+                                    jsonResponse ? jsonResponse.xResult : '',
+                                    jsonResponse ? jsonResponse.xStatus : '',
                                     jsonResponse.xErrorCode,
                                     jsonResponse.xName,
 
@@ -535,7 +535,7 @@ $(document).ready(function () {
 
 
             $.ajax({
-                url: 'cart/get-product-for-receipt',
+                url: window.getProductForReceiptUrl || 'cart/get-product-for-receipt',
                 type: "GET",
                 data: { order_id: orderId },
                 success: function (orders_response) {
