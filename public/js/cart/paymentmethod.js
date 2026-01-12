@@ -533,7 +533,7 @@ $(document).ready(function () {
             $("#selected-product tbody").empty();
             $("#card-summary").empty();
 
-            if (window.skipReceiptAndEmail) {
+            if (window.skipReceiptAndEmail || window.location.href.includes('step-2')) {
                 let successMsg = window.checkoutSuccessMessage || "Order placed successfully!";
                 toastr.success(successMsg, "Success", {
                     positionClass: "toast-top-right",
@@ -543,6 +543,9 @@ $(document).ready(function () {
                     clearInputFields(true);
                     if (window.checkoutSuccessRedirectUrl) {
                         window.location.href = window.checkoutSuccessRedirectUrl;
+                    } else if (window.location.href.includes('step-2')) {
+                        // Fallback redirect if variable missing
+                        window.location.href = '/admin/flow-reservation/step-1';
                     } else {
                         window.location.reload();
                     }
@@ -762,12 +765,8 @@ $(document).ready(function () {
                 console.log(response.message);
             },
             error: function (xhr) {
-                Swal.fire(
-                    "Error",
-                    "Failed to send the invoice email. Please verify the email address.",
-                    "error"
-                );
-                console.error(xhr);
+                // Silently fail or log to console only, per user request to avoid annoying errors
+                console.error("Failed to send invoice email", xhr);
             },
         });
     }
