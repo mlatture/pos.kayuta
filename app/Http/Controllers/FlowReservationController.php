@@ -420,8 +420,12 @@ class FlowReservationController extends Controller
 
             $apiResponse = $response->json();
             
-            // Redirect to Step 1 as requested
-            return redirect()->route('flow-reservation.step1');
+            // Return JSON for AJAX handler to trigger success message and redirect
+            return response()->json([
+                'success' => true,
+                'order_id' => $draft->draft_id,
+                'message' => 'Reservation confirmed successfully.'
+            ]);
 
         } catch (\Exception $e) {
             Log::error("Finalize Error: " . $e->getMessage(), [

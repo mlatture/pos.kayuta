@@ -323,20 +323,23 @@
                 const adults = parseInt($row.find('.adults').val()) || 0;
                 const children = parseInt($row.find('.children').val()) || 0;
                 const siteLockChecked = $row.find('.site-lock-toggle').is(':checked');
-                const siteLockFee = siteLockChecked ? 'on' : 'off';
+                const siteLockFeeStatus = siteLockChecked ? 'on' : 'off';
+                // Get fee from the checkbox data attribute
+                const siteLockFeeVal = siteLockChecked ? parseFloat($row.find('.site-lock-toggle').data('fee')) : 0;
 
                 const item = {
                     id: $(this).data('id'),
                     name: $(this).data('name'),
                     base: parseFloat($(this).data('base')),
-                    fee: parseFloat($(this).data('fee')),
+                    fee: parseFloat($(this).data('fee')), // This is platform fee (0)
+                    lock_fee_amount: siteLockFeeVal,      // Store the actual fee amount
                     start_date: $(this).data('start'),
                     end_date: $(this).data('end'),
                     occupants: {
                         adults: adults,
                         children: children
                     },
-                    site_lock_fee: siteLockFee
+                    site_lock_fee: siteLockFeeStatus
                 };
 
                 cart.push(item);
@@ -377,7 +380,18 @@
                             <strong>${item.name}</strong>
                             <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
                         </div>
-                        <div class="small text-muted">Base: $${(item.base).toFixed(2)}</div>
+                        const itemTotal = item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                        $container.append(`
+                    <div class="cart-item" data-index="${index}">
+                        <div class="d-flex justify-content-between">
+                            <strong>${item.name}</strong>
+                            <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
+                        </div>
+                        <div class="small text-muted">
+                            Base: $${item.base.toFixed(2)}
+                            ${item.lock_fee_amount > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${item.lock_fee_amount.toFixed(2)}</span>` : ''}
+                        </div>
+                        <div class="small fw-bold text-end">Item Total: $${itemTotal.toFixed(2)}</div>
                     </div>
                 `);
                     });
@@ -390,7 +404,7 @@
             function updateTotals() {
                 let subtotal = 0;
                 cart.forEach(item => {
-                    subtotal += item.base; // + item.fee (Removed)
+                    subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
                 });
 
                 const instantDiscount = parseFloat($('#instantDiscount').val()) || 0;
@@ -484,6 +498,8 @@
                                 fee: 0, // platformFee (Removed)
                                 cid: cid, // We store the specific dates for this site
                                 cod: cod,
+                                lock_fee_amount: 0, // Auto-add assumes no lock fee initially, or we could fetch it?
+                                site_lock_fee: 'off'
                             };
 
 
