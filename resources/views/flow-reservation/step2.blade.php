@@ -480,6 +480,8 @@ $(function() {
     window.processingCheckPayment = "{{ route('cart.processCheckPayment') }}";
     window.cardknoxApiKey = "{{ env('CARDKNOX_API_KEY') }}";
     window.insertCardsOnFiles = "{{ route('insert.cards.on.files') }}";
+    // Add missing route for receipt details
+    window.getProductForReceiptUrl = "{{ route('cart.get-product-for-receipt') }}";
 
     // Checkout Success Redirection
     window.checkoutSuccessRedirectUrl = "{{ route('flow-reservation.step1') }}";
