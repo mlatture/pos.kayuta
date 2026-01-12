@@ -161,7 +161,12 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <strong>{{ $item['name'] }}</strong><br>
-                                        <small class="text-muted">Base: ${{ number_format($item['base'] + $item['fee'], 2) }}</small>
+                                        <small class="text-muted">
+                                            Base: ${{ number_format($item['base'], 2) }}
+                                            @if(($item['lock_fee_amount'] ?? 0) > 0)
+                                                <br><span class="text-info fs-xs">+ Site Lock: ${{ number_format($item['lock_fee_amount'], 2) }}</span>
+                                            @endif
+                                        </small>
                                     </div>
                                     <button class="btn btn-sm btn-link text-danger remove-item" data-index="{{ $index }}">
                                         <i class="fas fa-trash"></i>
