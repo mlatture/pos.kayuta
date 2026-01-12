@@ -212,7 +212,53 @@
 
 @include('cart.components.summary', ['subtotal' => $draft->subtotal, 'totalDiscount' => $draft->discount_total, 'totalTax' => $draft->estimated_tax, 'order_id' => $draft->draft_id])
 
-@endsection
+{{-- Payment Drawer (Offcanvas) --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasOrder" aria-labelledby="offcanvasOrderLabel" style="width: 500px;">
+    <div class="offcanvas-header bg-light">
+        <h5 class="offcanvas-title" id="offcanvasOrderLabel">Process Payment</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+         {{-- Summary in Drawer --}}
+         <div class="card mb-3 bg-light border-0">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Subtotal:</span>
+                    <span id="offcanvasSubtotal">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1 res-fee-row" style="display:none;">
+                    <span>Site Lock:</span>
+                    <span id="offcanvasSiteLock">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1 text-danger" id="discount-section" style="display:none;">
+                    <span>Discount:</span>
+                    <span id="offcanvasDiscount">-$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Tax:</span>
+                    <span id="offcanvasTax">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-2">
+                    <span>Total Due:</span>
+                    <span id="displayTotalAmount">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold text-success mt-1">
+                    <span>Balance Remaining:</span>
+                    <span id="remainingBalance">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Hidden Inputs for JS Logic --}}
+        <input type="hidden" id="total-amount">
+        <input type="hidden" id="subtotal-amount">
+        <input type="hidden" id="tax-adjustment">
+        <input type="hidden" id="order_id" value="{{ $draft->draft_id }}">
+        
+        {{-- Include Shared Payment Method Form --}}
+        @include('cart.components.paymentmethod')
+    </div>
+</div>
 
 @push('js')
 <script>
