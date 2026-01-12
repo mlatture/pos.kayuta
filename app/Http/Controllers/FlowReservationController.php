@@ -425,10 +425,13 @@ class FlowReservationController extends Controller
             $draft->external_cart_id = $externalCartId;
             $draft->save();
 
-            $apiResponse = $response->json();
-            
-            // Redirect to Step 1 as requested
-            return redirect()->route('flow-reservation.step1');
+            // Return JSON success (Frontend will handle the redirect)
+            return response()->json([
+                'success' => true,
+                'message' => 'Checkout successful!',
+                'redirect_url' => route('flow-reservation.step1'),
+                'order_id' => $draft->id // or external cart id if needed for receipt
+            ]);
 
         } catch (\Exception $e) {
             Log::error("Finalize Error: " . $e->getMessage(), [
