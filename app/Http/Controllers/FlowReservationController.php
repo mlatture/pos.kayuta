@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB; // Added
 use Illuminate\Support\Str;
+use App\Models\Infos;
 use Carbon\Carbon;
 
 class FlowReservationController extends Controller
@@ -495,5 +496,12 @@ class FlowReservationController extends Controller
                 500,
             );
         }
+    }
+
+    public function information()
+    {
+        $information = Infos::where('show_in_details', 1)->orderBy('id', 'asc')->get();
+
+        return response()->json(['information' => $information]);
     }
 }

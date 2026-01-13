@@ -232,12 +232,9 @@
                                 const total = basePrice + siteLockFee; // Initial view assumes site lock checked
                                 
                                 tbody.append(`
-                                    <tr data-id="${unit.site_id}">
+                                    <tr class="view-site-details" data-id="${unit.site_id}" style="cursor: pointer;">
                                         <td>
-                                            <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none view-site-details" data-id="${unit.site_id}">
-                                                ${unit.name} <i class="fas fa-info-circle ms-1 small"></i>
-                                            </a>
-                                            <br>
+                                            <strong>${unit.name}</strong><br>
                                             <small class="text-muted">ID: ${unit.site_id}</small>
                                         </td>
                                         <td>${unit.class.replace(/_/g, ' ')}</td>
@@ -560,18 +557,26 @@
             }
 
 
-            // View Site Details
+            // Routes for JS
+            const routes = {
+                siteDetails: "{{ route('flow-reservation.site-details') }}",
+                information: "{{ route('flow-reservation.information') }}"
+            };
+
+            // View Site Details Handler (Row Click)
             $(document).on('click', '.view-site-details', function(e) {
-                e.preventDefault();
+                // Prevent trigger if clicking button, input, or label
+                if ($(e.target).closest('button, input, label, .form-check').length) return;
+
                 const siteId = $(this).data('id');
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
-
+                
                 // Get row data efficiently
                 const $row = $(this).closest('tr');
                 const $addBtn = $row.find('.add-to-cart');
                 
-                // Copy data to modal Add button for seamless "Add" from modal
+                // Copy data to modal Add button
                 const modalAddBtn = $('#addToCartSite');
                 modalAddBtn.data('id', $addBtn.data('id'));
                 modalAddBtn.data('name', $addBtn.data('name'));
@@ -583,74 +588,149 @@
                 // Show info that we are loading
                 $('#sdName').text('Loading...');
                 
-                // Fetch Details
-                $.get("{{ route('flow-reservation.site-details') }}", {
+                $.get(routes.siteDetails, {
                     site_id: siteId,
                     uscid: startDate,
                     uscod: endDate
                 }).done(function(res) {
-                    const data = res.response || res; // API structure
-                    const s = data.site || data; // Fallback
-
-                    // Populate Modal
-                    $('#sdName').text(s.sitename || siteId);
-                    $('#sdSiteId').text(s.siteid);
-                    $('#sdClass').text((s.siteclass || '').replace(/_/g, ' '));
-                    $('#sdHookup').text(s.hookup || 'N/A');
-                    $('#sdRig').text((s.maxlength || 0) + ' ft');
-                    
-                    // Amenities
-                    const amenities = (s.amenities || '').split(',').filter(Boolean);
-                    const $amenitiesList = $('#sdAmenities').empty();
-                    if (amenities.length) {
-                        amenities.forEach(a => $amenitiesList.append(`<li><i class="fas fa-check text-success me-1"></i> ${a}</li>`));
-                    } else {
-                        $amenitiesList.append('<li class="text-muted">No specific amenities listed.</li>');
-                    }
-                    
-                    $('#sdAttributes').text(s.description || 'No additional description.');
-
-                    // Images/Carousel
-                    const images = s.images || []; // Verify if images come as array
-                    const $carousel = $('#sdImagesContainer').empty();
-                    if (images.length > 0) {
-                        images.forEach((img, idx) => {
-                             const active = idx === 0 ? 'active' : '';
-                             const src = `/sites/images/${img.siteid}/${img.filename}`; 
-                             $carousel.append(`
-                                <div class="carousel-item ${active}">
-                                    <img src="${src}" class="d-block w-100" style="height: 300px; object-fit: cover;" alt="Site Image">
-                                </div>
-                             `);
-                        });
-                        $('#siteImagesCarousel').show();
-                    } else {
-                        // Placeholder
-                        $carousel.append(`
-                             <div class="carousel-item active has-background-light d-flex align-items-center justify-content-center" style="height: 300px; background: #f8f9fa;">
-                                <span class="text-muted">No Images Available</span>
-                             </div>
-                        `);
-                    }
-
-                    // Pricing (Using data from the row button)
-                    const base = parseFloat(modalAddBtn.data('base'));
-                    // Calculate nights
-                    const d1 = new Date(startDate);
-                    const d2 = new Date(endDate);
-                    const nights = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
-                    const avg = base / nights;
-
-                    $('#sdStay').text(nights);
-                    $('#sdAvgNight').text(avg.toFixed(2));
-                    $('#sdTotal').text(base.toFixed(2));
-                    $('#sdMinStay').text(s.min_nights || '1'); 
-
+                    populateSiteDetails(res, startDate, endDate, modalAddBtn);
                     $('#siteDetailsModal').modal('show');
                 }).fail(function() {
                     alert('Failed to load site details.');
                 });
             });
+
+            function populateSiteDetails(res, start, end, $btnData) {
+                const r = res.response || res; // API structure
+                const s = r.site || r; 
+                
+                // --- Load Important Information ---
+                $.get(routes.information).done(infoRes => {
+                    const infos = infoRes.information || [];
+                    const $infoCardBody = $('#infoCardBody'); // Ensure this ID exists in modal, else fallback or add it
+                     // If modal structure differs, we might need to adjust or inject raw html
+                     // The user request implies the modal structure IS correct or shared.
+                     // Let's assume the modal file `reservations.modals.site-details` has this structure.
+                     // If not, we might need to verify the modal file content again.
+                     // Assuming shared modal file: 'reservations/modals/site-details.blade.php'
+                    
+                    if ($infoCardBody.length) {
+                        $infoCardBody.empty();
+                        if (infos.length > 0) {
+                             $('#sdTitleInfo').text('Important Information');
+                             infos.forEach(info => {
+                                if (info.title && info.description) {
+                                    $infoCardBody.append(`
+                                        <div class="mb-3">
+                                            <h6 class="text-dark mb-0 fw-bold">${info.title}</h6>
+                                            <p class="small text-muted mb-0">${info.description}</p>
+                                        </div>
+                                    `);
+                                }
+                             });
+                        } else {
+                            $('#sdTitleInfo').text('Information Not Available');
+                            $infoCardBody.append('<p class="text-muted fst-italic">No important information currently listed.</p>');
+                        }
+                    }
+                });
+
+                // Site Info
+                $('#sdName').text(s.name || s.sitename || $btnData.data('name'));
+                $('#sdSiteId').text(s.site_id || s.siteid);
+                $('#sdClass').text((s.class || s.siteclass || '').replace(/_/g, ' '));
+                $('#sdHookup').text(s.hookup || 'N/A');
+                // Rig logic from reference
+                if (s.constraints?.rig_length) {
+                    $('#sdRig').text(`${s.constraints.rig_length.min}ft – ${s.constraints.rig_length.max}ft`);
+                } else {
+                    $('#sdRig').text((s.maxlength || 0) + ' ft');
+                }
+
+                // Attributes
+                $('#sdAttributes').text(s.attributes || s.description || 'No additional description.');
+
+                // Amenities
+                const $amenitiesList = $('#sdAmenities').empty();
+                const amenities = s.amenities || [];
+                // Handle different amenities formats (string vs array of strings vs array of objects)
+                if (Array.isArray(amenities)) {
+                    if (amenities.length > 0) {
+                        amenities.forEach(a => {
+                            const txt = typeof a === 'string' ? a : (a.amenity || a);
+                             $amenitiesList.append(`<li><span class="badge badge-pill badge-primary text-white" style="background-color: #0d6efd; margin-right:4px; margin-bottom:4px;">${txt.replace(/_/g, ' ')}</span></li>`);
+                        });
+                    } else {
+                        $amenitiesList.append('<li class="text-muted small">None Listed</li>');
+                    }
+                } else if (typeof amenities === 'string') {
+                    // existing logic for comma-separated
+                     const arr = amenities.split(',').filter(Boolean);
+                      if (arr.length) {
+                        arr.forEach(a => $amenitiesList.append(`<li><span class="badge badge-pill badge-primary text-white">${a}</span></li>`));
+                    }
+                }
+
+                 // Images
+                const siteImages = r.media?.images || r.media?.gallery || s.images || [];
+                const container = $('#sdImagesContainer');
+                container.empty();
+                const imageBasePath = '/storage/sites/'; 
+                let slidesHtml = '';
+
+                if (Array.isArray(siteImages) && siteImages.length > 0) {
+                     siteImages.forEach((img, index) => {
+                        const filename = typeof img === 'string' ? img : img.filename;
+                        const src = typeof img === 'string' ? `${imageBasePath}${filename}` : `/sites/images/${img.siteid}/${img.filename}`; // Handle both formats
+                        
+                        const isActive = index === 0 ? 'active' : '';
+                        slidesHtml += `
+                            <div class="carousel-item ${isActive}">
+                                <img src="${src}" class="d-block w-100 rounded-top" alt="Site Image" style="height: 400px; object-fit: cover;">
+                            </div>
+                        `;
+                    });
+                } else {
+                    slidesHtml = `
+                        <div class="carousel-item active has-background-light d-flex align-items-center justify-content-center" style="height: 400px; background: #f8f9fa;">
+                           <span class="text-muted">No Images Available</span>
+                        </div>
+                    `;
+                }
+                container.html(slidesHtml);
+                
+                // Re-init bootstrap carousel logic
+                const $carouselElement = $('#siteImagesCarousel');
+                if ($carouselElement.length) {
+                     // If bootstrap 5
+                     const nativeCarouselElement = $carouselElement[0];
+                     // try dispose
+                    try {
+                         const bsCarousel = bootstrap.Carousel.getInstance(nativeCarouselElement);
+                         if (bsCarousel) bsCarousel.dispose();
+                    } catch(e){}
+                    new bootstrap.Carousel(nativeCarouselElement);
+                     $carouselElement.show();
+                }
+
+                // Pricing
+                // User wants exact same display. Reference uses response data directly.
+                // We fallback to button data if response doesn't have pricing snapshot (common in direct site view vs availability view)
+                const base = parseFloat($btnData.data('base'));
+                const d1 = new Date(start);
+                const d2 = new Date(end);
+                 // Calculate nights
+                const diff = Math.abs(d2 - d1);
+                const nights = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 1;
+                const avg = base / nights;
+
+                $('#sdStay').text(nights);
+                $('#sdAvgNight').text(avg.toFixed(2));
+                $('#sdTotal').text(base.toFixed(2));
+                if (r.policies?.minimum_stay) {
+                     $('#sdMinStay').text(r.policies.minimum_stay);
+                }
+            }
 
             // Wire up Modal Add Button to trigger main Add Logic
             $('#addToCartSite').on('click', function() {
