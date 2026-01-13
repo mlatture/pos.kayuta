@@ -439,4 +439,33 @@ class FlowReservationController extends Controller
             ], 500);
         }
     }
+    public function viewSiteDetails(Request $request)
+    {
+        $data = $request->validate([
+            'site_id' => ['required', 'string'],
+            'uscid' => ['required', 'date'],
+            'uscod' => ['required', 'date'],
+        ]);
+
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('BOOKING_BEARER_KEY'),
+            ])->get(env('BOOK_API_URL') . "v1/sites/{$data['site_id']}", $data);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), 200);
+            }
+        } catch (\Exception $e) {
+            Log::error('Site details proxy failed', ['error' => $e->getMessage()]);
+
+            return response()->json(
+                [
+                    'ok' => false,
+                    'message' => 'Error connecting to booking service.',
+                ],
+                500,
+            );
+        }
+    }
 }

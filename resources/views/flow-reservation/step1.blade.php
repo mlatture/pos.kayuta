@@ -75,12 +75,9 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-4">
                         <label class="form-label">Rig Length (ft)</label>
                         <input type="number" class="form-control" name="rig_length" placeholder="e.g. 30">
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Search Sites</button>
                     </div>
                 </form>
             </div>
@@ -189,6 +186,7 @@
         </div>
     </div>
 
+    @include('reservations.modals.site-details')
 @endsection
 
 @push('js')
@@ -200,34 +198,21 @@
             // let platformFee = 0; 
             let taxRate = 0.07; // 7% placeholder, should come from settings
 
-            // Initialize Flatpickr
-            const fp = flatpickr("#dateRange", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                minDate: "today",
-                onClose: function(selectedDates, dateStr, instance) {
-                    if (selectedDates.length === 2) {
-                        $('#startDate').val(instance.formatDate(selectedDates[0], "Y-m-d"));
-                        $('#endDate').val(instance.formatDate(selectedDates[1], "Y-m-d"));
-                    }
-                }
-            });
-
-            // Handle Search
-            $('#searchForm').on('submit', function(e) {
-                e.preventDefault();
-                const $btn = $(this).find('button[type="submit"]');
-                $btn.prop('disabled', true).text('Searching...');
-
+            // Perform search function (Debounced for text input)
+            function performSearch() {
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
+                
+                if (!startDate || !endDate) return;
 
-                $.get("{{ route('flow-reservation.search') }}", $(this).serialize())
+                const tbody = $('#resultsTable tbody');
+                // Optional: Show loading state in table
+                // tbody.html('<tr><td colspan="7" class="text-center py-5"><i class="fas fa-spinner fa-spin"></i> Searching...</td></tr>');
+
+                $.get("{{ route('flow-reservation.search') }}", $('#searchForm').serialize())
                     .done(function(res) {
-                        // platformFee = parseFloat(res.platform_fee) || 5.00; // Removed
                         const siteLockFee = parseFloat(res.site_lock_fee) || 0;
                         const units = res.data.response.results.units;
-                        const tbody = $('#resultsTable tbody');
                         tbody.empty();
 
                         if (units.length === 0) {
@@ -235,16 +220,24 @@
                                 '<tr><td colspan="7" class="text-center py-5">No available sites found for these criteria.</td></tr>'
                             );
                         } else {
+                            // Calculate nights
+                            const s = new Date(startDate);
+                            const e = new Date(endDate);
+                            const diffTime = Math.abs(e - s);
+                            const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+
                             units.forEach(unit => {
                                 const basePrice = parseFloat(unit.price_quote.total);
                                 const avgNight = parseFloat(unit.price_quote.avg_nightly || 0);
-                                const total = basePrice +
-                                    siteLockFee; // Initial view assumes site lock checked
-
+                                const total = basePrice + siteLockFee; // Initial view assumes site lock checked
+                                
                                 tbody.append(`
                                     <tr data-id="${unit.site_id}">
                                         <td>
-                                            <strong>${unit.name}</strong><br>
+                                            <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none view-site-details" data-id="${unit.site_id}">
+                                                ${unit.name} <i class="fas fa-info-circle ms-1 small"></i>
+                                            </a>
+                                            <br>
                                             <small class="text-muted">ID: ${unit.site_id}</small>
                                         </td>
                                         <td>${unit.class.replace(/_/g, ' ')}</td>
@@ -261,20 +254,23 @@
                                                     <input type="number" class="form-control form-control-sm occupants-input children" value="0" min="0">
                                                 </div>
                                             </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input site-lock-toggle" type="checkbox" id="lock_${unit.site_id}" checked data-fee="${siteLockFee}">
-                                                <label class="form-check-label small" for="lock_${unit.site_id}">
-                                                    Site Lock Fee ($${siteLockFee.toFixed(2)})
-                                                </label>
-                                            </div>
                                         </td>
                                         <td>
                                             <div class="small">
-                                                <div>Site Lock Fee: $<span class="fee-display">${siteLockFee.toFixed(2)}</span></div>
-                                                <div>Sub Total: $${basePrice.toFixed(2)}</div>
-                                                <div>Avg/Night: $${avgNight.toFixed(2)}</div>
+                                                <div class="fw-bold mb-1">Price Breakdown</div>
+                                                <div>Nightly Stay (${nights} nights): $${basePrice.toFixed(2)}</div>
+                                                <div class="text-muted fst-italic mb-2" style="font-size:0.85em;">Average nightly rate: $${avgNight.toFixed(2)} (reference only)</div>
+                                                
+                                                <div class="fw-bold mb-1">Optional Fees</div>
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input site-lock-toggle" type="checkbox" id="lock_${unit.site_id}" checked data-fee="${siteLockFee}">
+                                                    <label class="form-check-label" for="lock_${unit.site_id}">
+                                                        Site Lock Fee: $<span class="fee-display">${siteLockFee.toFixed(2)}</span>
+                                                    </label>
+                                                </div>
                                                 <div>Extras: $<span class="extras-display">0.00</span></div>
-                                                <div class="fw-bold border-top mt-1 pt-1">Total: $<span class="total-display">${total.toFixed(2)}</span></div>
+                                                
+                                                <div class="fw-bold border-top mt-2 pt-1">Total: $<span class="total-display">${total.toFixed(2)}</span></div>
                                             </div>
                                         </td>
                                         <td class="text-end">
@@ -294,11 +290,35 @@
                         }
                     })
                     .fail(function() {
-                        alert('An error occurred while searching.');
-                    })
-                    .always(function() {
-                        $btn.prop('disabled', false).text('Search Sites');
+                        // alert('An error occurred while searching.'); 
+                        // Silent fail or toast on auto-search is often better than alerting
+                        console.error('Search failed');
                     });
+            }
+
+            // Initialize Flatpickr
+            const fp = flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                onClose: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length === 2) {
+                        $('#startDate').val(instance.formatDate(selectedDates[0], "Y-m-d"));
+                        $('#endDate').val(instance.formatDate(selectedDates[1], "Y-m-d"));
+                        performSearch();
+                    }
+                }
+            });
+
+            // Auto Search Listeners
+            $('#searchForm select').on('change', performSearch);
+            $('#searchForm input[name="rig_length"]').on('change keyup', function() {
+                // Simple debounce could go here if needed, but keyup might be too aggressive without it. 
+                // Let's stick to 'change' or a small timeout if keyup is desired.
+                // For now, 'change' covers blur/enter which is standard for "refresh on change".
+                // If "typing" needs to trigger it, we need a timeout.
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(performSearch, 500);
             });
 
             // Handle Site Lock Toggle for Price Update
@@ -373,12 +393,24 @@
 
                     cart.forEach((item, index) => {
                         const itemTotal = item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                        
+                        // Calculate nights
+                        let nightsText = '';
+                        if (item.start_date && item.end_date) {
+                            const s = new Date(item.start_date);
+                            const e = new Date(item.end_date);
+                            const diff = Math.abs(e - s);
+                            const nights = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 0;
+                            nightsText = `<div class="x-small text-muted">${item.start_date} – ${item.end_date} (${nights} nights)</div>`;
+                        }
+
                         $container.append(`
                             <div class="cart-item" data-index="${index}">
                                 <div class="d-flex justify-content-between">
                                     <strong>${item.name}</strong>
                                     <a href="javascript:void(0)" class="text-danger remove-item" data-index="${index}"><i class="fas fa-trash"></i></a>
                                 </div>
+                                ${nightsText}
                                 <div class="small text-muted">
                                     Base: $${item.base.toFixed(2)}
                                     ${item.lock_fee_amount > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${item.lock_fee_amount.toFixed(2)}</span>` : ''}
@@ -527,6 +559,106 @@
                 return items.filter(Boolean);
             }
 
+
+            // View Site Details
+            $(document).on('click', '.view-site-details', function(e) {
+                e.preventDefault();
+                const siteId = $(this).data('id');
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+
+                // Get row data efficiently
+                const $row = $(this).closest('tr');
+                const $addBtn = $row.find('.add-to-cart');
+                
+                // Copy data to modal Add button for seamless "Add" from modal
+                const modalAddBtn = $('#addToCartSite');
+                modalAddBtn.data('id', $addBtn.data('id'));
+                modalAddBtn.data('name', $addBtn.data('name'));
+                modalAddBtn.data('base', $addBtn.data('base'));
+                modalAddBtn.data('fee', $addBtn.data('fee'));
+                modalAddBtn.data('start', $addBtn.data('start'));
+                modalAddBtn.data('end', $addBtn.data('end'));
+                
+                // Show info that we are loading
+                $('#sdName').text('Loading...');
+                
+                // Fetch Details
+                $.get("{{ route('flow-reservation.site-details') }}", {
+                    site_id: siteId,
+                    uscid: startDate,
+                    uscod: endDate
+                }).done(function(res) {
+                    const data = res.response || res; // API structure
+                    const s = data.site || data; // Fallback
+
+                    // Populate Modal
+                    $('#sdName').text(s.sitename || siteId);
+                    $('#sdSiteId').text(s.siteid);
+                    $('#sdClass').text((s.siteclass || '').replace(/_/g, ' '));
+                    $('#sdHookup').text(s.hookup || 'N/A');
+                    $('#sdRig').text((s.maxlength || 0) + ' ft');
+                    
+                    // Amenities
+                    const amenities = (s.amenities || '').split(',').filter(Boolean);
+                    const $amenitiesList = $('#sdAmenities').empty();
+                    if (amenities.length) {
+                        amenities.forEach(a => $amenitiesList.append(`<li><i class="fas fa-check text-success me-1"></i> ${a}</li>`));
+                    } else {
+                        $amenitiesList.append('<li class="text-muted">No specific amenities listed.</li>');
+                    }
+                    
+                    $('#sdAttributes').text(s.description || 'No additional description.');
+
+                    // Images/Carousel
+                    const images = s.images || []; // Verify if images come as array
+                    const $carousel = $('#sdImagesContainer').empty();
+                    if (images.length > 0) {
+                        images.forEach((img, idx) => {
+                             const active = idx === 0 ? 'active' : '';
+                             const src = `/sites/images/${img.siteid}/${img.filename}`; 
+                             $carousel.append(`
+                                <div class="carousel-item ${active}">
+                                    <img src="${src}" class="d-block w-100" style="height: 300px; object-fit: cover;" alt="Site Image">
+                                </div>
+                             `);
+                        });
+                        $('#siteImagesCarousel').show();
+                    } else {
+                        // Placeholder
+                        $carousel.append(`
+                             <div class="carousel-item active has-background-light d-flex align-items-center justify-content-center" style="height: 300px; background: #f8f9fa;">
+                                <span class="text-muted">No Images Available</span>
+                             </div>
+                        `);
+                    }
+
+                    // Pricing (Using data from the row button)
+                    const base = parseFloat(modalAddBtn.data('base'));
+                    // Calculate nights
+                    const d1 = new Date(startDate);
+                    const d2 = new Date(endDate);
+                    const nights = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
+                    const avg = base / nights;
+
+                    $('#sdStay').text(nights);
+                    $('#sdAvgNight').text(avg.toFixed(2));
+                    $('#sdTotal').text(base.toFixed(2));
+                    $('#sdMinStay').text(s.min_nights || '1'); 
+
+                    $('#siteDetailsModal').modal('show');
+                }).fail(function() {
+                    alert('Failed to load site details.');
+                });
+            });
+
+            // Wire up Modal Add Button to trigger main Add Logic
+            $('#addToCartSite').on('click', function() {
+                const siteId = $(this).data('id');
+                // Trigger click on the original button to reuse logic
+                $(`.add-to-cart[data-id="${siteId}"]`).click();
+                $('#siteDetailsModal').modal('hide');
+            });
 
         });
     </script>
