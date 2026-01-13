@@ -148,10 +148,14 @@
                                 <button class="btn btn-outline-secondary" type="button" id="applyCoupon">Apply</button>
                             </div>
                         </div>
-                        <div class="mb-3">
+                         <div class="mb-3">
                             <label class="form-label small fw-bold">Instant Discount ($)</label>
                             <input type="number" class="form-control form-control-sm" id="instantDiscount" step="0.01"
                                 value="0.00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Discount Reason</label>
+                            <textarea class="form-control form-control-sm" id="discountReason" rows="2" placeholder="Reason for discount..."></textarea>
                         </div>
 
                         <hr>
@@ -440,8 +444,7 @@
                 });
 
                 const instantDiscount = parseFloat($('#instantDiscount').val()) || 0;
-                // Mock coupon logic for UI
-                const couponDiscount = 0;
+                const couponDiscount = parseFloat(window.appliedCouponDiscount) || 0;
 
                 const totalDiscount = instantDiscount + couponDiscount;
                 const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscount);
@@ -470,7 +473,9 @@
                 $.post("{{ route('flow-reservation.save-draft') }}", {
                         _token: "{{ csrf_token() }}",
                         cart_data: cart,
-                        totals: window.currentTotals
+                        totals: window.currentTotals,
+                        discount_reason: $('#discountReason').val(),
+                        coupon_code: window.appliedCouponCode || ''
                     })
                     .done(function(res) {
                         window.location.href = res.redirect_url;
@@ -481,14 +486,37 @@
                     });
             });
 
-            // Mock Apply Coupon
+            // Apply Coupon
             $('#applyCoupon').on('click', function() {
+                const $btn = $(this);
                 const code = $('#couponCode').val();
-                if (code) {
-                    alert(
-                        'Coupon logic would be implemented here. For this draft, the coupon record will be created at the next stage.'
-                    );
-                }
+                
+                if (!code) return alert('Please enter a coupon code.');
+                
+                let subtotal = 0;
+                cart.forEach(item => {
+                    subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                });
+
+                if (subtotal <= 0) return alert('Cart is empty.');
+
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.post("{{ route('flow-reservation.apply-coupon') }}", {
+                    _token: "{{ csrf_token() }}",
+                    code: code,
+                    subtotal: subtotal
+                }).done(function(res) {
+                    window.appliedCouponDiscount = res.discount_amount;
+                    window.appliedCouponCode = res.code;
+                    updateTotals();
+                    alert('Coupon applied: ' + res.label + ' (-$' + res.discount_amount.toFixed(2) + ')');
+                }).fail(function(xhr) {
+                    const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to apply coupon.';
+                    alert(msg);
+                }).always(function() {
+                    $btn.prop('disabled', false).text('Apply');
+                });
             });
 
 
@@ -571,7 +599,8 @@
             // Routes for JS
             const routes = {
                 siteDetails: "{{ route('flow-reservation.site-details') }}",
-                information: "{{ route('flow-reservation.information') }}"
+                information: "{{ route('flow-reservation.information') }}",
+                applyCoupon: "{{ route('flow-reservation.apply-coupon') }}"
             };
 
             // View Site Details Handler (Row Click)
