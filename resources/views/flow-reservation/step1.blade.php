@@ -237,9 +237,13 @@
                                         <td>
                                             <strong>${unit.name}</strong><br>
                                             <div class="badge bg-success small">Available</div>
+                                            <div class="mt-2 small text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i> ${startDate} to ${endDate}<br>
+                                                <i class="fas fa-moon me-1"></i> ${nights} nights
+                                            </div>
                                         </td>
                                         <td>${unit.hookup || 'N/A'}</td>
-                                        <td>${unit.maxlength || '0'} - ${unit.maxlength || 'N/A'}</td>
+                                        <td>${unit.minlength || '0'} - ${unit.maxlength || 'N/A'}</td>
                                         <td>
                                             <div class="d-flex gap-2 mb-2">
                                                 <div>
