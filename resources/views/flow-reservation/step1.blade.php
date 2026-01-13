@@ -91,17 +91,18 @@
                         <h5 class="mb-0">Available Sites</h5>
                     </div>
                     <div class="card-body p-0">
+                        <div class="px-3 py-2 bg-light border-bottom">
+                            <span class="text-muted small"><i class="fas fa-info-circle me-1"></i> Tip: Click any site row to view more details and amenities.</span>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" id="resultsTable">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Site</th>
-                                        <th>Class</th>
                                         <th>Hookup</th>
                                         <th>Rig Length</th>
-                                        <th>Occupants / Extras</th>
-                                        <th>Price Breakdown</th>
-                                        <th class="text-end">Action</th>
+                                        <th>Occupants / Site Lock Fee</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -235,43 +236,52 @@
                                     <tr class="view-site-details" data-id="${unit.site_id}" style="cursor: pointer;">
                                         <td>
                                             <strong>${unit.name}</strong><br>
-                                            <small class="text-muted">ID: ${unit.site_id}</small>
+                                            <div class="badge bg-success small">Available</div>
+                                            <div class="mt-2 small text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i> ${startDate} to ${endDate}<br>
+                                                <i class="fas fa-moon me-1"></i> ${nights} nights
+                                            </div>
                                         </td>
-                                        <td>${unit.class.replace(/_/g, ' ')}</td>
                                         <td>${unit.hookup || 'N/A'}</td>
-                                        <td>${unit.maxlength || 'N/A'} ft</td>
+                                        <td>${unit.minlength || '0'} - ${unit.maxlength || 'N/A'}</td>
                                         <td>
                                             <div class="d-flex gap-2 mb-2">
                                                 <div>
-                                                    <label class="small text-muted d-block">Adults</label>
-                                                    <input type="number" class="form-control form-control-sm occupants-input adults" value="2" min="1">
+                                                    <label class="small text-muted d-block text-center">Adults</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input adults" value="2" min="1" style="width: 60px;">
                                                 </div>
                                                 <div>
-                                                    <label class="small text-muted d-block">Children</label>
-                                                    <input type="number" class="form-control form-control-sm occupants-input children" value="0" min="0">
+                                                    <label class="small text-muted d-block text-center">Children</label>
+                                                    <input type="number" class="form-control form-control-sm occupants-input children" value="0" min="0" style="width: 60px;">
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <div class="small">
-                                                <div class="fw-bold mb-1">Price Breakdown</div>
-                                                <div>Nightly Stay (${nights} nights): $${basePrice.toFixed(2)}</div>
-                                                <div class="text-muted fst-italic mb-2" style="font-size:0.85em;">Average nightly rate: $${avgNight.toFixed(2)} (reference only)</div>
-                                                
-                                                <div class="fw-bold mb-1">Optional Fees</div>
-                                                <div class="form-check mb-1">
-                                                    <input class="form-check-input site-lock-toggle" type="checkbox" id="lock_${unit.site_id}" checked data-fee="${siteLockFee}">
-                                                    <label class="form-check-label" for="lock_${unit.site_id}">
-                                                        Site Lock Fee: $<span class="fee-display">${siteLockFee.toFixed(2)}</span>
-                                                    </label>
-                                                </div>
-                                                <div>Extras: $<span class="extras-display">0.00</span></div>
-                                                
-                                                <div class="fw-bold border-top mt-2 pt-1">Total: $<span class="total-display">${total.toFixed(2)}</span></div>
+                                            <div class="form-check small mt-2">
+                                                <input class="form-check-input site-lock-toggle" type="checkbox" id="lock_${unit.site_id}" checked data-fee="${siteLockFee}">
+                                                <label class="form-check-label text-muted" for="lock_${unit.site_id}">
+                                                    Site Lock Fee: $<span class="fee-display-label">${siteLockFee.toFixed(2)}</span>
+                                                </label>
                                             </div>
                                         </td>
                                         <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-primary add-to-cart" 
+                                            <div class="small mb-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-bold">Sub Total:</span>
+                                                    <span>$${basePrice.toFixed(2)}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-bold">Avg/Night:</span>
+                                                    <span>$${avgNight.toFixed(2)}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-bold">Extras:</span>
+                                                    <span>$<span class="extras-display-val">${siteLockFee.toFixed(2)}</span></span>
+                                                </div>
+                                                <div class="d-flex justify-content-between border-top pt-1 mt-1 fs-6">
+                                                    <span class="fw-bold">Total:</span>
+                                                    <span class="fw-bold">$<span class="total-display-val">${total.toFixed(2)}</span></span>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm w-100 add-to-cart" 
                                                 data-id="${unit.site_id}" 
                                                 data-name="${unit.name}" 
                                                 data-base="${basePrice}"
@@ -328,8 +338,9 @@
                 const currentFee = isChecked ? fee : 0;
                 const total = basePrice + currentFee;
 
-                $row.find('.fee-display').text(currentFee.toFixed(2));
-                $row.find('.total-display').text(total.toFixed(2));
+                $row.find('.fee-display-label').text(currentFee.toFixed(2));
+                $row.find('.extras-display-val').text(currentFee.toFixed(2));
+                $row.find('.total-display-val').text(total.toFixed(2));
             });
 
             // Add to Cart
