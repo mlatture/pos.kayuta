@@ -39,6 +39,8 @@ class FlowReservationController extends Controller
         $request->validate([
             'cart_data' => 'required|array',
             'totals' => 'required|array',
+            'discount_reason' => 'nullable|string',
+            'coupon_code' => 'nullable|string',
         ]);
 
         $draftId = (string) Str::uuid();
@@ -51,12 +53,75 @@ class FlowReservationController extends Controller
             'estimated_tax' => $request->totals['estimated_tax'] ?? 0,
             'platform_fee_total' => $request->totals['platform_fee_total'] ?? 0,
             'grand_total' => $request->totals['grand_total'] ?? 0,
+            'discount_reason' => $request->input('discount_reason'),
+            'coupon_code'    => $request->input('coupon_code'),
         ]);
 
         return response()->json([
             'success' => true,
             'draft_id' => $draftId,
             'redirect_url' => route('flow-reservation.step2', ['draft_id' => $draftId])
+        ]);
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:64'],
+            'subtotal' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $code = trim($data['code']);
+        $subtotal = (float) $data['subtotal'];
+        $today = now()->toDateString();
+
+        $coupon = DB::table('coupons')
+            ->whereRaw('LOWER(`code`) = ?', [mb_strtolower($code)])
+            ->where('status', 1)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $today);
+            })
+            ->where(function ($q) use ($today) {
+                $q->whereNull('expire_date')->orWhere('expire_date', '>=', $today);
+            })
+            ->first();
+
+        if (!$coupon) {
+            return response()->json(['success' => false, 'message' => 'Invalid or expired coupon.'], 422);
+        }
+
+        $minPurchase = (float) $coupon->min_purchase;
+        if ($minPurchase > 0 && $subtotal < $minPurchase) {
+            return response()->json(['success' => false, 'message' => 'Minimum purchase of $' . $minPurchase . ' not met.'], 422);
+        }
+
+        if (!is_null($coupon->limit)) {
+            $used = DB::table('reservations')->where('discountcode', $coupon->code)->count();
+            if ($used >= (int) $coupon->limit) {
+                return response()->json(['success' => false, 'message' => 'Coupon redemption limit reached.'], 422);
+            }
+        }
+
+        $discountType = strtolower((string) $coupon->discount_type);
+        $rawDiscount = (float) $coupon->discount;
+        $maxDiscount = (float) $coupon->max_discount;
+
+        $discountAmount = 0.0;
+        if (in_array($discountType, ['percentage', 'percent'], true)) {
+            $discountAmount = round($subtotal * ($rawDiscount / 100), 2);
+        } else {
+            $discountAmount = round(min($rawDiscount, $subtotal), 2);
+        }
+
+        if ($maxDiscount > 0) {
+            $discountAmount = min($discountAmount, $maxDiscount);
+        }
+
+        return response()->json([
+            'success' => true,
+            'code' => $coupon->code,
+            'discount_amount' => $discountAmount,
+            'label' => $coupon->title ?: 'Coupon'
         ]);
     }
 

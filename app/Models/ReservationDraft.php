@@ -17,6 +17,8 @@ class ReservationDraft extends Model
         'estimated_tax',
         'platform_fee_total',
         'grand_total',
+        'discount_reason',
+        'coupon_code',
     ];
 
     protected $casts = [
