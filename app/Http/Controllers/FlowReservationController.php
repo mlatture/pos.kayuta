@@ -208,12 +208,40 @@ class FlowReservationController extends Controller
             }
 
             $data = $response->json();
-            $units = collect($data['response']['results']['units'] ?? [])
-                ->filter(fn($u) => isset($u['status']['available']) && $u['status']['available'] === true)
-                ->values();
+            if (isset($data['response']['results']['units'])) {
+                $units = collect($data['response']['results']['units'])
+                    ->filter(fn($u) => isset($u['status']['available']) && $u['status']['available'] === true)
+                    ->values();
 
-            // Filter by rig length and site class manually if needed (reusing ReservationManagementController logic)
-            // For now, let's assume the API handles it well enough or we can add more filters if needed.
+                // 1. Filter by Rig Length
+                if (!empty($validated['rig_length'])) {
+                    $riglength = (float) $validated['rig_length'];
+                    $units = $units->filter(function ($unit) use ($riglength) {
+                        $max = isset($unit['maxlength']) ? (float) $unit['maxlength'] : null;
+                        return $max !== null && $riglength <= $max;
+                    })->values();
+                }
+
+                // 2. Filter by Site Class
+                if (!empty($validated['siteclass'])) {
+                    $siteclass = str_replace(' ', '_', trim($validated['siteclass']));
+                    $units = $units->filter(function ($unit) use ($siteclass) {
+                        $classes = isset($unit['class']) ? collect(explode(',', $unit['class']))->map(fn($c) => str_replace(' ', '_', trim($c))) : collect();
+                        return $classes->contains($siteclass);
+                    })->values();
+                }
+
+                // 3. Filter by Hookup
+                if (!empty($validated['hookup'])) {
+                    $hookup = str_replace(' ', '_', trim($validated['hookup']));
+                    $units = $units->filter(function ($unit) use ($hookup) {
+                        $unitHookup = isset($unit['hookup']) ? str_replace(' ', '_', trim($unit['hookup'])) : null;
+                        return $unitHookup === $hookup;
+                    })->values();
+                }
+            } else {
+                $units = collect([]);
+            }
 
             return response()->json([
                 'ok' => true,
