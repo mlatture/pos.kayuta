@@ -162,6 +162,7 @@ Route::prefix('admin')
             Route::post('/remove-item/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'removeItem'])->name('flow-reservation.remove-item');
             Route::post('/finalize/{draft_id}', [\App\Http\Controllers\FlowReservationController::class, 'finalize'])->name('flow-reservation.finalize');
             Route::get('/site-details', [\App\Http\Controllers\FlowReservationController::class, 'viewSiteDetails'])->name('flow-reservation.site-details');
+            Route::get('/information', [\App\Http\Controllers\FlowReservationController::class, 'information'])->name('flow-reservation.information');
         });
 
         Route::prefix('customers/{customer}/account')->group(function () {
