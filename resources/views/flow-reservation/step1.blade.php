@@ -198,64 +198,10 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         $(function() {
-            let cart = @json($draft->cart_data ?? []);
+            let cart = @json($draft ? $draft->cart_data : []);
             // Platform fee removed to match manage/reservation logic
             // let platformFee = 0; 
             let taxRate = 0.07; // 7% placeholder, should come from settings
-
-            // Restore from draft
-            if (cart.length > 0) {
-                const draftDiscountTotal = parseFloat(@json($draft->discount_total ?? 0));
-                const draftCouponCode = @json($draft->coupon_code ?? '');
-                
-                $('#discountReason').val(@json($draft->discount_reason ?? ''));
-                
-                if (draftCouponCode) {
-                    $('#couponCode').val(draftCouponCode);
-                    // We don't know the breakdown yet, so we'll apply the coupon to find out
-                    // and assume the remainder is the instant discount.
-                    // This is handled in the coupon application callback.
-                } else {
-                    $('#instantDiscount').val(draftDiscountTotal.toFixed(2));
-                }
-                
-                // Pre-fill date picker from first item
-                const firstItem = cart[0];
-                if (firstItem.start_date && firstItem.end_date) {
-                    $('#startDate').val(firstItem.start_date);
-                    $('#endDate').val(firstItem.end_date);
-                    // Update flatpickr
-                    const fp = document.querySelector("#dateRange")._flatpickr;
-                    if (fp) {
-                        fp.setDate([firstItem.start_date, firstItem.end_date], false);
-                    }
-                }
-
-                updateCartUI();
-
-                // If there was a coupon, try to re-apply it to get the breakdown
-                if (draftCouponCode) {
-                    let subtotal = 0;
-                    cart.forEach(item => {
-                        subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
-                    });
-
-                    $.post("{{ route('flow-reservation.apply-coupon') }}", {
-                        _token: "{{ csrf_token() }}",
-                        code: draftCouponCode,
-                        subtotal: subtotal
-                    }).done(function(res) {
-                        window.appliedCouponDiscount = res.discount_amount;
-                        window.appliedCouponCode = res.code;
-                        
-                        // Remaining is instant discount
-                        const instant = Math.max(0, draftDiscountTotal - res.discount_amount);
-                        $('#instantDiscount').val(instant.toFixed(2));
-                        
-                        updateTotals();
-                    });
-                }
-            }
 
             // Perform search function (Debounced for text input)
             function performSearch() {
@@ -826,13 +772,67 @@
                 }
             }
 
-            // Wire up Modal Add Button to trigger main Add Logic
             $('#addToCartSite').on('click', function() {
                 const siteId = $(this).data('id');
                 // Trigger click on the original button to reuse logic
                 $(`.add-to-cart[data-id="${siteId}"]`).click();
                 $('#siteDetailsModal').modal('hide');
             });
+
+            // Restore from draft (at the end to ensure UI/Flatpickr is ready)
+            @if($draft)
+            (function() {
+                const draftCart = @json($draft->cart_data);
+                if (draftCart && draftCart.length > 0) {
+                    const draftDiscountTotal = parseFloat(@json($draft->discount_total)) || 0;
+                    const draftCouponCode = @json($draft->coupon_code);
+                    
+                    $('#discountReason').val(@json($draft->discount_reason));
+                    
+                    if (draftCouponCode) {
+                        $('#couponCode').val(draftCouponCode);
+                    } else {
+                        $('#instantDiscount').val(draftDiscountTotal.toFixed(2));
+                    }
+                    
+                    // Pre-fill date picker from first item
+                    const firstItem = draftCart[0];
+                    if (firstItem.start_date && firstItem.end_date) {
+                        $('#startDate').val(firstItem.start_date);
+                        $('#endDate').val(firstItem.end_date);
+                        // Update flatpickr
+                        if (fp) {
+                            fp.setDate([firstItem.start_date, firstItem.end_date], false);
+                        }
+                    }
+
+                    updateCartUI();
+
+                    // If there was a coupon, try to re-apply it to get the breakdown
+                    if (draftCouponCode) {
+                        let subtotal = 0;
+                        cart.forEach(item => {
+                            subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                        });
+
+                        $.post("{{ route('flow-reservation.apply-coupon') }}", {
+                            _token: "{{ csrf_token() }}",
+                            code: draftCouponCode,
+                            subtotal: subtotal
+                        }).done(function(res) {
+                            window.appliedCouponDiscount = res.discount_amount;
+                            window.appliedCouponCode = res.code;
+                            
+                            // Remaining is instant discount
+                            const instant = Math.max(0, draftDiscountTotal - res.discount_amount);
+                            $('#instantDiscount').val(instant.toFixed(2));
+                            
+                            updateTotals();
+                        });
+                    }
+                }
+            })();
+            @endif
 
         });
     </script>
