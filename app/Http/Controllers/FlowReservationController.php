@@ -34,6 +34,9 @@ class FlowReservationController extends Controller
         $draft = null;
         if ($request->has('draft_id')) {
             $draft = ReservationDraft::where('draft_id', $request->draft_id)->first();
+            if (!$draft) {
+                \Log::warning('Reservation draft not found for ID: ' . $request->draft_id);
+            }
         }
         
         return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft'));
