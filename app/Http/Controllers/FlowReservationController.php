@@ -424,15 +424,28 @@ class FlowReservationController extends Controller
 
             switch ($paymentMethod) {
                 case 'CreditCard':
+                case 'Visa':
+                case 'MasterCard':
+                case 'Amex':
+                case 'Discover':
                 case 'Manual':
-                    $apiPaymentMethod = 'card';
-                    $paymentData = [
-                        'cc' => [
-                            'xCardNum' => $request->xCardNum ?? '',
-                            'xExp' => $request->xExp ?? '',
-                            'cvv' => $request->cvv ?? '',
-                        ]
-                    ];
+                    // If it's a POS swipe (has x_ref_num), we treat it as paid externally ('cash' for the booking API)
+                    if ($request->x_ref_num) {
+                        $apiPaymentMethod = 'cash';
+                        $paymentData = [
+                            'cash_tendered' => $request->amount ?? $draft->grand_total,
+                            'external_ref' => $request->x_ref_num
+                        ];
+                    } else {
+                        $apiPaymentMethod = 'card';
+                        $paymentData = [
+                            'cc' => [
+                                'xCardNum' => $request->xCardNum ?? '',
+                                'xExp' => $request->xExp ?? '',
+                                'cvv' => $request->cvv ?? '',
+                            ]
+                        ];
+                    }
                     break;
                 case 'Check':
                     $apiPaymentMethod = 'ach';
@@ -459,6 +472,8 @@ class FlowReservationController extends Controller
                     ];
                     break;
             }
+
+
 
             // Step 4: Prepare checkout data for external API
             $checkoutData = array_merge([

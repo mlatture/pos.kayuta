@@ -70,18 +70,18 @@ $(document).ready(function () {
             parseFloat($("#remainingBalance").text()) || totalAmount;
         let firstRemainingBalance = remainingBalance - amount;
         $("#remainingBalance").text(firstRemainingBalance.toFixed(2));
+        const isStep2 = window.location.href.includes('step-2');
+        const titleText = isStep2
+            ? `Change due: $${Math.max(0, change).toFixed(2)}\nDo you want to complete this sale?`
+            : (change >= 0
+                ? `Change is: $${change.toFixed(2)}. Do you want to proceed?`
+                : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(2)}`);
+
         Swal.fire({
-            title:
-                change >= 0
-                    ? `Change is: $${change.toFixed(
-                        2
-                    )}. Do you want to proceed?`
-                    : `Partial payment made! Remaining balance is: $${firstRemainingBalance.toFixed(
-                        2
-                    )}`,
+            title: titleText,
             showCancelButton: true,
-            confirmButtonText: "Save",
-            cancelButtonText: `Don't save`,
+            confirmButtonText: isStep2 ? "Complete Sale" : "Save",
+            cancelButtonText: isStep2 ? "Cancel" : `Don't save`,
             showLoaderOnConfirm: true,
             preConfirm: () => {
                 return new Promise((resolve) => {

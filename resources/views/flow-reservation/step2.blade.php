@@ -447,6 +447,7 @@ $(function() {
         $('#total-amount').val(parseFloat(draft.grand_total).toFixed(2));
         $('#subtotal-amount').val(parseFloat(draft.subtotal).toFixed(2));
         $('#tax-amount').text(fmt(draft.estimated_tax));
+        $('#orderAmountInput').val(parseFloat(draft.grand_total).toFixed(2));
 
         // Reservation Specific Fees
         $('.res-fee-row').show();
