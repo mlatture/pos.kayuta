@@ -31,7 +31,12 @@ class FlowReservationController extends Controller
         $siteClasses = SiteClass::orderBy('siteclass')->get();
         $siteHookups = SiteHookup::orderBy('orderby')->get();
         
-        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups'));
+        $draft = null;
+        if ($request->has('draft_id')) {
+            $draft = ReservationDraft::where('draft_id', $request->draft_id)->first();
+        }
+        
+        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft'));
     }
 
     public function saveDraft(Request $request)
