@@ -208,13 +208,13 @@ $(document).ready(function () {
         e.target.value = input;
     });
 
-    var offcanvasOrder = new bootstrap.Offcanvas(
-        document.getElementById("offcanvasOrder"),
-        {
+    const offcanvasEl = document.getElementById("offcanvasOrder");
+    if (offcanvasEl) {
+        var offcanvasOrder = new bootstrap.Offcanvas(offcanvasEl, {
             backdrop: false,
             keyboard: false,
-        }
-    );
+        });
+    }
     $("#submitOrderButton").on("click", function () {
         processPayment();
     });
@@ -777,9 +777,12 @@ $(document).ready(function () {
         $('#email_invoice').val(customer_email);
     });
 
-    let totalAmount = parseFloat($("#total-amount").val().replace(/,/g, ""));
-    $("#displayTotalAmount").text(totalAmount.toFixed(2));
-    $("#remainingBalance").text(totalAmount.toFixed(2));
+    const totalAmountEl = $("#total-amount");
+    if (totalAmountEl.length) {
+        let totalAmount = parseFloat(totalAmountEl.val().replace(/,/g, ""));
+        $("#displayTotalAmount").text(totalAmount.toFixed(2));
+        $("#remainingBalance").text(totalAmount.toFixed(2));
+    }
 
     if (!$('#paymentHistory').length) {
         const paymentHtml = `
