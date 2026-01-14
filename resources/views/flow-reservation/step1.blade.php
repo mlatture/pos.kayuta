@@ -404,7 +404,10 @@
                     $('#nextBtn').prop('disabled', false);
 
                     cart.forEach((item, index) => {
-                        const itemTotal = item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                        const baseVal = parseFloat(item.base) || 0;
+                        const lockFeeVal = parseFloat(item.lock_fee_amount) || 0;
+                        const feeVal = parseFloat(item.fee) || 0;
+                        const itemTotal = baseVal + lockFeeVal + feeVal;
                         
                         // Calculate nights
                         let nightsText = '';
@@ -424,8 +427,8 @@
                                 </div>
                                 ${nightsText}
                                 <div class="small text-muted">
-                                    Base: $${item.base.toFixed(2)}
-                                    ${item.lock_fee_amount > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${item.lock_fee_amount.toFixed(2)}</span>` : ''}
+                                    Base: $${baseVal.toFixed(2)}
+                                    ${lockFeeVal > 0 ? `<br><span class="text-info fs-xs">+ Site Lock: $${lockFeeVal.toFixed(2)}</span>` : ''}
                                 </div>
                                 <div class="small fw-bold text-end">Item Total: $${itemTotal.toFixed(2)}</div>
                             </div>
@@ -440,7 +443,8 @@
             function updateTotals() {
                 let subtotal = 0;
                 cart.forEach(item => {
-                    subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                                        subtotal += (parseFloat(item.base) || 0) + (parseFloat(item.lock_fee_amount) || 0) + (parseFloat(item.fee) || 0);
+
                 });
 
                 const instantDiscount = parseFloat($('#instantDiscount').val()) || 0;
@@ -495,7 +499,7 @@
                 
                 let subtotal = 0;
                 cart.forEach(item => {
-                    subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                    subtotal += (parseFloat(item.base) || 0) + (parseFloat(item.lock_fee_amount) || 0) + (parseFloat(item.fee) || 0);
                 });
 
                 if (subtotal <= 0) return alert('Cart is empty.');
@@ -812,7 +816,7 @@
                     if (draftCouponCode) {
                         let subtotal = 0;
                         cart.forEach(item => {
-                            subtotal += item.base + (item.lock_fee_amount || 0) + (item.fee || 0);
+                            subtotal += (parseFloat(item.base) || 0) + (parseFloat(item.lock_fee_amount) || 0) + (parseFloat(item.fee) || 0);
                         });
 
                         $.post("{{ route('flow-reservation.apply-coupon') }}", {
