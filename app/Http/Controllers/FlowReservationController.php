@@ -39,7 +39,10 @@ class FlowReservationController extends Controller
             }
         }
         
-        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft'));
+        // Get dynamic tax rate from settings
+        $taxRate = $this->getTaxRate();
+        
+        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft', 'taxRate'));
     }
 
     public function saveDraft(Request $request)
@@ -233,7 +236,7 @@ class FlowReservationController extends Controller
 
             $discount = $draft->discount_total;
             $subtotalAfterDiscount = max(0, $subtotal - $discount);
-            $tax = $subtotalAfterDiscount * 0.07; // Reusing 7% logic
+            $tax = $subtotalAfterDiscount * $this->getTaxRate(); // Dynamic tax rate
             
             $draft->subtotal = $subtotal;
             $draft->platform_fee_total = $platformFeeTotal;
@@ -591,5 +594,15 @@ class FlowReservationController extends Controller
         $information = Infos::where('show_in_details', 1)->orderBy('id', 'asc')->get();
 
         return response()->json(['information' => $information]);
+    }
+
+    /**
+     * Get the tax rate from business settings
+     * 
+     * @return float
+     */
+    private function getTaxRate()
+    {
+        return (float) (BusinessSettings::where('type', 'reservation_tax_rate')->value('value') ?? 0.07);
     }
 }

@@ -201,7 +201,7 @@
             let cart = @json($draft ? $draft->cart_data : []);
             // Platform fee removed to match manage/reservation logic
             // let platformFee = 0; 
-            let taxRate = 0.07; // 7% placeholder, should come from settings
+            let taxRate = {{ $taxRate ?? 0.07 }}; // Dynamic tax rate from settings
 
             // Perform search function (Debounced for text input)
             function performSearch() {
