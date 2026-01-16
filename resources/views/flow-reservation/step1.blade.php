@@ -169,10 +169,10 @@
                             <span>Discounts</span>
                             <span id="discountsDisplay">-$0.00</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                        {{-- <div class="d-flex justify-content-between mb-2">
                             <span>Estimated Tax</span>
                             <span id="taxDisplay">$0.00</span>
-                        </div>
+                        </div> --}}
                         <div class="d-flex justify-content-between mb-2 total-row">
                             <span>Grand Total</span>
                             <span id="grandTotalDisplay">$0.00</span>
@@ -201,7 +201,7 @@
             let cart = @json($draft ? $draft->cart_data : []);
             // Platform fee removed to match manage/reservation logic
             // let platformFee = 0; 
-            let taxRate = {{ $taxRate ?? 0.07 }}; // Dynamic tax rate from settings
+            // Tax calculation removed as per user request
 
             // Perform search function (Debounced for text input)
             function performSearch() {
@@ -452,8 +452,9 @@
 
                 const totalDiscount = instantDiscount + couponDiscount;
                 const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscount);
-                const tax = subtotalAfterDiscount * taxRate;
-                const grandTotal = subtotalAfterDiscount + tax;
+                // Tax calculation removed as per user request
+                const tax = 0;
+                const grandTotal = subtotalAfterDiscount; // No tax added
 
                 $('#subtotalDisplay').text('$' + subtotal.toFixed(2));
                 $('#discountsDisplay').text('-$' + totalDiscount.toFixed(2));
@@ -463,7 +464,7 @@
                 window.currentTotals = {
                     subtotal: subtotal,
                     discount_total: totalDiscount,
-                    estimated_tax: tax,
+                    estimated_tax: 0, // Tax removed
                     platform_fee_total: 0, // cart.length * platformFee (Removed)
                     grand_total: grandTotal
                 };
