@@ -188,10 +188,10 @@
                         <span>Discounts</span>
                         <span id="discountsDisplay">-${{ number_format($draft->discount_total, 2) }}</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
+                    {{-- <div class="d-flex justify-content-between mb-2">
                         <span>Estimated Tax</span>
                         <span id="taxDisplay">${{ number_format($draft->estimated_tax, 2) }}</span>
-                    </div>
+                    </div> --}}
                     <div class="d-flex justify-content-between mb-2 fw-bold h5">
                         <span>Grand Total</span>
                         <span id="grandTotalDisplay">${{ number_format($draft->grand_total, 2) }}</span>

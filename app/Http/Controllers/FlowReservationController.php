@@ -39,10 +39,9 @@ class FlowReservationController extends Controller
             }
         }
         
-        // Get dynamic tax rate from settings
-        $taxRate = $this->getTaxRate();
+        // Tax calculation removed as per user request
         
-        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft', 'taxRate'));
+        return view('flow-reservation.step1', compact('siteClasses', 'siteHookups', 'draft'));
     }
 
     public function saveDraft(Request $request)
@@ -61,7 +60,7 @@ class FlowReservationController extends Controller
             'cart_data' => $request->cart_data,
             'subtotal' => $request->totals['subtotal'] ?? 0,
             'discount_total' => $request->totals['discount_total'] ?? 0,
-            'estimated_tax' => $request->totals['estimated_tax'] ?? 0,
+            'estimated_tax' => 0, // Tax calculation removed
             'platform_fee_total' => $request->totals['platform_fee_total'] ?? 0,
             'grand_total' => $request->totals['grand_total'] ?? 0,
             'discount_reason' => $request->input('discount_reason'),
@@ -236,12 +235,12 @@ class FlowReservationController extends Controller
 
             $discount = $draft->discount_total;
             $subtotalAfterDiscount = max(0, $subtotal - $discount);
-            $tax = $subtotalAfterDiscount * $this->getTaxRate(); // Dynamic tax rate
+            // Tax calculation removed as per user request
             
             $draft->subtotal = $subtotal;
             $draft->platform_fee_total = $platformFeeTotal;
-            $draft->estimated_tax = $tax;
-            $draft->grand_total = $subtotalAfterDiscount + $tax;
+            $draft->estimated_tax = 0;
+            $draft->grand_total = $subtotalAfterDiscount; // No tax added
             
             $draft->save();
         }
