@@ -88,7 +88,7 @@
                                 <thead>
                                     <tr>
                                         <th>Actions</th>
-                                        <th>ID</th>
+                                        {{-- <th>ID</th> --}}
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Contact</th>
@@ -130,12 +130,12 @@
                         orderable: false,
                         searchable: false
                     },
-                    {
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
+                    // {
+                    //     data: 'DT_RowIndex',
+                    //     name: 'DT_RowIndex',
+                    //     orderable: false,
+                    //     searchable: false
+                    // },
                     {
                         data: 'full_name',
                         name: 'name'
@@ -159,7 +159,8 @@
                     },
                     {
                         data: 'created_at',
-                        name: 'created_at'
+                        name: 'created_at',
+                        visible: false
                     }
                 ],
                 responsive: true,

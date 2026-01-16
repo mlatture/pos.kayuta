@@ -20,4 +20,9 @@ class Receipt extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'cartid', 'cartid');
+    }
 }

@@ -44,7 +44,7 @@
                     <table class="table table-bordered">
                         <thead class="table-secondary">
                             <tr>
-                                <th>Actions</th>
+                                <th class="text-center">Actions</th>
                                 <th>ID</th>
                                 <th>Site</th>
                                 <th>Staying</th>
@@ -54,14 +54,12 @@
                             @foreach ($customer->reservations->sortByDesc('date')->groupBy('cartid') as $cartid => $group)
                                 @php $firstReservation = $group->first(); @endphp
                                 <tr class="table-primary">
-                                    <td>
+                                    <td class="text-center">
                                         <a href="{{ route('admin.reservations.show', $firstReservation->cartid) }}" 
                                            class="btn btn-info btn-sm">
-                                            <i class="fas fa-eye"></i> View
+                                            ⓘ Details
                                         </a>
                                         {{-- Edit button already points to admin.reservations.show --}}
-                                        <a href="{{ route('admin.reservations.show', $firstReservation->cartid) }}"
-                                            class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
                                     </td>
                                     <td>Booking #{{ $firstReservation->cartid }}</td>
                                     <td>{{ $groupedReservations[$cartid] ?? 'N/A' }}</td>
@@ -79,7 +77,7 @@
                     <table class="table table-bordered">
                         <thead class="table-secondary">
                             <tr>
-                                <th>Actions</th>
+                                <th class="text-center">Actions</th>
                                 <th>ID</th>
                                 <th>Site</th>
                                 <th>Staying</th>
@@ -88,13 +86,12 @@
                         <tbody>
                             @foreach ($groupedCartReservations as $cartid => $sites)
                                 <tr>
-                                    <td>
+                                    <td class="text-center">
                                         <a href="{{ route('admin.reservations.show', $cartid) }}" 
                                             class="btn btn-info btn-sm">
                                              <i class="fas fa-eye"></i> View
                                          </a>
-                                        <a href="{{ route('admin.reservations.show', $cartid) }}"
-                                            class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                                     
                                     </td>
                                     <td>Booking #{{ $cartid }}</td>
                                     <td>{{ $sites }}</td>
@@ -118,19 +115,28 @@
                     <table class="table table-bordered">
                         <thead class="table-secondary">
                             <tr>
-                                <th>ID</th>
-                                <th>Cart ID</th>
+                                <th class="text-center">Action</th>
+                                <th>Amount</th>
                                 <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($customer->receipts->sortByDesc('date') as $receipt)
+                                
                                 <tr>
-                                    <td>{{ $receipt->id }}</td>
-                                    <td>
-                                        {{ $receipt->cartid }}
+                                    <td class="text-center">
+                                        <a class="btn btn-info btn-sm">
+                                            ⓘ Details
+                                        </a>
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($receipt->createdate)->format('F j, Y') }}</td>
+                                    <td>
+                                        @if($receipt->payments) 
+                                            {{  number_format($receipt->payments->sum('payment'), 2) }}
+                                        @else
+                                            No Payment Found
+                                        @endif
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($receipt->createdate)->format('F j, Y h:i A') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
